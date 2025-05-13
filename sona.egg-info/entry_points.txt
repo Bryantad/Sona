@@ -1,0 +1,2 @@
+[console_scripts]
+sona = sona.sona_cli:main

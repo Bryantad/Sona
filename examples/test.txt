@@ -1,0 +1,11 @@
+func welcome(name) {
+    print("Welcome back, " + name)
+}
+
+let user = "Andre"
+
+if user == "Andre" {
+    welcome(user)
+} else {
+    print("Who are you?")
+}

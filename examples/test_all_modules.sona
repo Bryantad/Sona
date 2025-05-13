@@ -1,0 +1,33 @@
+# examples/test_all_modules.sona // This line is now valid
+
+import native_stdin
+import fs       
+import time     
+import io       
+import json  
+import env
+
+print("--- Testing Imports & Basic Calls ---") # Added a header
+
+print("Testing fs.exists on current dir:")
+let path = "."
+print(fs.exists(path))
+
+print("Testing time.now:")
+print(time.now())
+
+print("Writing file...")
+# Using io.write_file, so 'io' must be imported
+io.write_file("test.txt", "hello world")
+
+print("Reading file:")
+print(io.read_file("test.txt"))
+
+print("Parsing JSON:")
+# Using json.loads, so 'json' must be imported
+print(json.loads('{"key": 123}'))
+
+print("stdin input test (type something):")
+# native_stdin was imported, so this should now work better
+let name_input = native_stdin.input("Enter your name: ") # Changed variable name to avoid conflict
+print("You entered: " + name_input)

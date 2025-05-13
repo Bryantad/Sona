@@ -1,0 +1,7 @@
+func parse(s) {
+    return __native__.json.loads(s)
+}
+
+func stringify(obj) {
+    return __native__.json.dumps(obj)
+}

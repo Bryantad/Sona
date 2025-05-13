@@ -1,0 +1,8 @@
+import fs.smod
+
+fs.write("log.txt", "Hello from Sona!")
+print("File written.")
+
+let content = fs.read("log.txt")
+print("Read content:")
+print(content)

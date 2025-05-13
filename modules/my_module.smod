@@ -1,0 +1,10 @@
+# modules/my_module.smod
+const GREETING = "Hello from my_module!"
+
+func greet(name) {
+    print(GREETING + " " + name)
+}
+
+func add(a, b) {
+    return a + b
+}
