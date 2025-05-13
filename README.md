@@ -62,7 +62,7 @@ pip install lark-parser
 
 ```bash
 git clone https://github.com/YOUR_USERNAME/Sona.git
-cd sona-lang
+cd sona_core
 python sona_core/interpreter.py
 ```
 
@@ -99,7 +99,7 @@ What’s Coming Next
 * 📦 Full SonaCore LLM integration
 * 🛠️ IDE auto-complete plugin (powered by SonaCore)
 * 🔄 Transpilers: Sona → Python / JS / Go
-* 🌐 Deployment to [Sona.org](http://Sona.org)
+* 🌐 Deployment to [Sona.org](http://Sona.org) (coming soon)
 
 ---
 
@@ -131,7 +131,7 @@ Then:
 
 ---
 
-Projects Built in Sona (examples/)
+Projects Built in Sona (examples/)(coming soon!!!)
 
 * 🐍 `snake_game.sona`
 * ➕ `calculator.sona`
@@ -143,7 +143,7 @@ Projects Built in Sona (examples/)
 License
 
 MIT – Sona is free to use, build on, and share.
-Proudly created by **Netcore Solutions LLC**, a subsidiary of **Waycore Inc.**
+Proudly created by Netcore Solutions LLC, a subsidiary of (Waycore Inc.)
 
 ---
 
