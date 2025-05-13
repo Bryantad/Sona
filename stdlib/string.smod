@@ -1,0 +1,3 @@
+func upper(s) {
+    return s;  // Placeholder (to be enhanced)
+}

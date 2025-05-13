@@ -1,0 +1,3 @@
+# time.smod
+func now()
+func sleep(seconds)

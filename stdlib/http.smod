@@ -1,0 +1,7 @@
+func get(url) {
+    return __native__.http.get(url)
+}
+
+func post(url, data) {
+    return __native__.http.post(url, data)
+}

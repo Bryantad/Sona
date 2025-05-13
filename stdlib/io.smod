@@ -1,0 +1,11 @@
+func input(prompt) {
+    return __native__.io.input(prompt)
+}
+
+func write_file(path, content) {
+    return __native__.io.write_file(path, content)
+}
+
+func read_file(path) {
+    return __native__.io.read_file(path)
+}

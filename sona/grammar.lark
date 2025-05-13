@@ -1,0 +1,59 @@
+start: statement+
+
+?statement: import_stmt
+          | assignment
+          | print_stmt
+          | if_stmt
+          | while_stmt
+          | for_stmt
+          | func_def
+          | return_stmt
+          | expr
+
+import_stmt: "import" NAME ("." NAME)* -> import_stmt
+assignment: ("let" | "const") NAME "=" expr
+print_stmt: "print" "(" expr ")"
+return_stmt: "return" expr
+
+if_stmt: "if" expr block ["else" block]
+while_stmt: "while" expr block
+for_stmt: "for" NAME "in" expr ".." expr block
+func_def: "func" NAME "(" param_list? ")" block
+param_list: NAME (COMMA NAME)*
+
+block: "{" (_NL | statement)* "}"
+_NL: /(\r?\n)+/
+%ignore _NL
+
+?expr: expr "+" term   -> add
+     | expr "-" term   -> sub
+     | term
+
+?term: term "*" factor -> mul
+     | term "/" factor -> div
+     | factor
+
+?factor: dotted_func_call
+       | NAME "(" [args] ")"     -> func_call
+       | NUMBER                  -> number
+       | STRING                  -> string
+       | NAME                    -> var
+       | "(" expr ")"
+
+dotted_func_call: dotted_name "(" [args] ")" -> func_call
+dotted_name: NAME ("." NAME)+
+
+args: expr ("," expr)*
+
+COMMA: ","
+STRING: /"(?:[^"\\]|\\.)*"/ | /'(?:[^'\\]|\\.)*'/
+
+%import common.CNAME -> NAME
+%import common.NUMBER
+%import common.WS_INLINE
+%import common.SH_COMMENT -> HASH_COMMENT // Or any alias you prefer
+
+_COMMENT: /\/\/.*/
+%ignore _COMMENT
+%ignore HASH_COMMENT
+%ignore WS_INLINE

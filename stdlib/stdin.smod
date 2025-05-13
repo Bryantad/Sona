@@ -1,0 +1,11 @@
+# stdin.smod
+func read(prompt)
+func input(prompt)
+func read(prompt)
+func write(path, content)
+func append(path, content)
+func write_file(path, content)
+func read_file(path)
+func exists(path)
+func isfile(path)
+func isdir(path)
