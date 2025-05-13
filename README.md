@@ -49,17 +49,16 @@ if (creator == "Sona") {
 }
 ````
 
----
 
-## Getting Started
+-- Getting Started --
 
-### 1. Install Required Tools
+1. Install Required Tools
 
 ```bash
 pip install lark-parser
 ```
 
-### 2. Clone and Run REPL
+2. Clone and Run REPL
 
 ```bash
 git clone https://github.com/YOUR_USERNAME/Sona.git
@@ -69,18 +68,16 @@ python sona_core/interpreter.py
 
 Type or paste Sona code directly into the REPL. Press Enter twice to run a block. Type `exit` to quit.
 
----
+-- The Sona Philosophy --
 
-## 🧠 The Sona Philosophy
-
-* **Creativity before complexity**
-* **Coding should feel like expressing, not wrestling**
-* **Learning should be like storytelling, not memorization**
-* **Power belongs to those who write, test, and ship**
+* Creativity before complexity
+* Coding should feel like expressing, not wrestling
+* Learning should be like storytelling, not memorization
+* Power belongs to those who write, test, and ship
 
 ---
 
-## 🧰 Project Layout
+Project Layout
 
 ```
 sona/
@@ -95,18 +92,18 @@ sona/
 
 ---
 
-## 🔮 What’s Coming Next
+What’s Coming Next
 
 * 🧪 Built-in unit testing syntax
 * 🔁 `match` expressions and pattern destructuring
 * 📦 Full SonaCore LLM integration
 * 🛠️ IDE auto-complete plugin (powered by SonaCore)
 * 🔄 Transpilers: Sona → Python / JS / Go
-* 🌐 Deployment to [SonaLang.org](http://SonaLang.org)
+* 🌐 Deployment to [Sona.org](http://Sona.org)
 
 ---
 
-## 🤝 Contribute or Join the Movement
+Contribute or Join the Movement
 
 Sona is built **openly and publicly** — and we want you involved.
 
@@ -118,7 +115,7 @@ Ways to contribute:
 * Write example programs
 * Help train SonaCore’s brain
 
-### Setup to Contribute
+Setup to Contribute
 
 ```bash
 git clone https://github.com/YOUR_USERNAME/sona-lang.git
@@ -134,7 +131,7 @@ Then:
 
 ---
 
-## 🧪 Projects Built in Sona (examples/)
+Projects Built in Sona (examples/)
 
 * 🐍 `snake_game.sona`
 * ➕ `calculator.sona`
@@ -143,7 +140,7 @@ Then:
 
 ---
 
-## 📄 License
+License
 
 MIT – Sona is free to use, build on, and share.
 Proudly created by **Netcore Solutions LLC**, a subsidiary of **Waycore Inc.**
@@ -158,4 +155,3 @@ Ready to build something meaningful?
 
 Let me know if you want this broken into multiple language versions (like Spanish, French, etc.) or turned into a GitHub Pages landing site.
 ```
-‣潓慮⌊匠湯੡‣潓慮�
