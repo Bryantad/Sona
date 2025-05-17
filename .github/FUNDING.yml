@@ -1,0 +1,10 @@
+# Sona Language – Open Source Funding Config
+# GitHub will use this file to show sponsor buttons on your repo.
+
+github: [bryantad]              # GitHub Sponsors username
+patreon: bryantad               # Patreon profile
+ko_fi: bryantad                 # Ko-fi username
+custom:
+  - 'https://www.buymeacoffee.com/bryantad'
+  - 'https://donate.stripe.com/your-stripe-donation-link'
+  - 'https://sona-lang.dev/sponsor-us' # future landing page
