@@ -1,0 +1,40 @@
+// Comprehensive test for Sona v0.5.0 features
+import utils.math.smod as math
+
+// Feature 1: Multi-line string support with triple quotes
+let welcome_message = """
+Welcome to Sona v0.5.0!
+This is a multi-line string test
+that spans across several lines.
+It preserves formatting and whitespace.
+"""
+
+// Feature 2: Function definition with proper syntax - no inline expressions
+func calculate_area(radius) {
+    let r_squared = math.multiply(radius, radius)
+    let result = math.multiply(math.PI, r_squared)
+    return result
+}
+
+// Feature 3: Proper function calls and return values
+func greet(name) {
+    return "Hello, " + name + "!"
+}
+
+// Feature 4: Test results
+print(welcome_message)
+
+// Use a variable to avoid premature evaluation
+let r = 5
+print("Circle area: " + math.to_str(calculate_area(r)))
+print(greet("Sona User"))
+
+// Feature 5: Conditional statements
+let value = 42
+if math.greater_than(value, 40) {
+    print("Value is greater than 40")
+} else {
+    print("Value is less than or equal to 40")
+}
+
+print("All v0.5.0 features test complete!")

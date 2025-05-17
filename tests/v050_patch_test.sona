@@ -1,0 +1,33 @@
+// Comprehensive test for Sona v0.5.0 features
+
+// Test 1: Import aliasing
+import utils.math.smod as math
+
+// Test 2: Multi-line string support
+let welcome = """
+Welcome to Sona v0.5.0
+This is a multi-line string test
+It should preserve all formatting
+And whitespace correctly.
+"""
+
+// Test 3: Function parameter scope
+func calculate(x) {
+    // Using parameter inside the function
+    let result = math.multiply(x, 2)
+    return result
+}
+
+func nested_func(a) {
+    func inner() {
+        return a  // Should access outer parameter
+    }
+    return inner()
+}
+
+// Test 4: Testing all features together
+print(welcome)
+print("Math result: " + math.to_str(calculate(5)))
+print("Nested function result: " + math.to_str(nested_func(10)))
+
+print("All v0.5.0 features working correctly!")

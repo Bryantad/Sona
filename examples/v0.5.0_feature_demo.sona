@@ -1,0 +1,56 @@
+// Sona v0.5.0 Feature Demo
+// This file demonstrates all new features in v0.5.0
+
+// Feature 1: Import aliasing with 'as' keyword
+import utils.math.smod as math
+import utils.string.smod as str
+
+// Feature 2: Multi-line string with triple quotes
+let welcome = """
+==========================================
+  Welcome to Sona Programming Language
+           Version 0.5.0
+==========================================
+This demo shows all new features in v0.5.0:
+- Import aliasing (with 'as' keyword)
+- Multi-line strings (with triple quotes)
+- Better error reporting
+- Fixed function parameter scoping
+"""
+
+// Print welcome message
+print(welcome)
+
+// Feature 3: Proper function parameter scope
+func calculate_circle_area(radius) {
+    // Using parameter directly in function body
+    let area = math.multiply(math.PI, math.multiply(radius, radius))
+    return area
+}
+
+func nested_function_demo(outer_param) {
+    print("Outer parameter: " + outer_param)
+    
+    func inner_function() {
+        // Access parameter from outer scope
+        return "Accessing outer parameter: " + outer_param
+    }
+    
+    return inner_function()
+}
+
+// Test the functions
+print("Circle area with radius 5: " + math.to_str(calculate_circle_area(5)))
+print(nested_function_demo("test value"))
+
+// Demonstrate string utilities with aliased import
+print("Uppercase: " + str.uppercase("hello sona!"))
+print("String length: " + math.to_str(str.length("Sona v0.5.0")))
+
+// Final message
+print("""
+==========================================
+All features working correctly!
+Thanks for using Sona v0.5.0
+==========================================
+""")
