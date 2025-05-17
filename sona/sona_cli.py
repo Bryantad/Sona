@@ -1,47 +1,69 @@
 import sys
-from sona.interpreter import run_code
+import os
 from pathlib import Path
-from sona import repl
+from sona.interpreter import run_code
+from sona import repl as sona_repl
+from sona.utils.debug import debug, error
 from lark import Lark, UnexpectedInput
+
+def get_grammar_path():
+    """Get the grammar file path in a platform-independent way"""
+    return Path(__file__).resolve().parent / "grammar.lark"
+
 def main():
+    # Set debug mode from environment or command line flag
+    if "--debug" in sys.argv:
+        os.environ["SONA_DEBUG"] = "1"
+        sys.argv.remove("--debug")
+
     if "--version" in sys.argv:
-        version_file = Path(__file__).parent.parent / "VERSION"
-        if version_file.exists():
-            print("Sona Language Version:", version_file.read_text().strip())
-        else:
-            print("VERSION file not found.")
+        from sona import __version__
+        print(f"Sona Language Version: {__version__}")
+        return
+
+    # No arguments - start REPL
+    if len(sys.argv) == 1:
+        sona_repl.repl()  # Call repl() function directly
         return
     
-    if len(sys.argv) == 2 and sys.argv[1] == "repl":
-        repl()
+    # Handle 'repl' command explicitly
+    if len(sys.argv) == 2 and sys.argv[1] in ["repl", "--repl", "-r"]:
+        sona_repl.repl()  # Call repl() function directly
         return
-    
-    if len(sys.argv) != 2:
-        print("Usage: sona <filename.sona>")
+      # Handle file execution
+    file_path = Path(sys.argv[1])
+    if not file_path.exists():
+        error(f"File '{file_path}' does not exist.")
+        print("Usage: sona [repl] [filename.sona]")
+        sys.exit(1)
+        
+    # Process file
+    try:
+        code = file_path.read_text(encoding='utf-8')
+        if not code.strip():
+            error("File is empty.")
+            sys.exit(1)
+        debug(f"Running file: {file_path}")
+        debug(f"Code:\n{code}")
+
+        debug_mode = os.environ.get("SONA_DEBUG") == "1"
+        run_code(code, debug_mode)
+    except Exception as e:
+        error(f"Failed to read or execute file: {e}")
         sys.exit(1)
 
-    file_path = sys.argv[1]
-    if not Path(file_path).exists():
-        print(f"[ERROR] File '{file_path}' does not exist.")
-        sys.exit(1)
-
-    with open(file_path) as f:
-        code = f.read()
-
-    if not code.strip():
-        print("[ERROR] File is empty.")
-        sys.exit(1)
-    print(f"[DEBUG] Running file: {file_path}")
-    print(f"[DEBUG] Code:\n{code}")
-
-    run_code(code)
 def repl():
     print("\nSona REPL v0.4.3 - Type `exit` or `Ctrl+C` to quit.\n")
     from sona.interpreter import SonaInterpreter
     interpreter = SonaInterpreter()
 
-    with open("sona/grammar.lark") as f:
-        grammar = f.read()
+    grammar_path = get_grammar_path()
+    try:
+        with open(grammar_path, encoding='utf-8') as f:
+            grammar = f.read()
+    except Exception as e:
+        print(f"[ERROR] Failed to load grammar file: {e}")
+        sys.exit(1)
 
     parser = Lark(grammar, parser="lalr", propagate_positions=True)
     buffer = ""
@@ -49,12 +71,17 @@ def repl():
     while True:
         try:
             prompt = "sona> " if not buffer else "....> "
-            line = input(prompt)
+            try:
+                line = input(prompt)
+            except UnicodeDecodeError:
+                print("[ERROR] Input encoding error. Please use UTF-8 encoding.")
+                continue
+
             if line.strip() in ("exit", "quit"):
                 print("Exiting Sona REPL.")
                 break
 
-            buffer += line + "\n"
+            buffer += line + os.linesep  # Use OS-specific line separator
 
             try:
                 tree = parser.parse(buffer)
@@ -69,5 +96,14 @@ def repl():
         except Exception as e:
             print(f"[REPL ERROR] {e}")
             buffer = ""  # Reset the buffer after an error
+
+def run_module():
+    """Run Sona as a module (python -m sona)"""
+    argv = sys.argv[1:]  # Remove 'python -m' from args
+    sys.argv = [sys.argv[0]] + argv
+    main()
+
 if __name__ == "__main__":
+    main()
+elif __name__ == "__mp_main__":  # For multiprocessing support
     main()

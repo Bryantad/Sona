@@ -1,8 +1,10 @@
 import importlib.util
 import importlib
 import os
-from lark import Lark, Transformer, Tree, Token
+import math 
+from lark import Lark, Transformer, Tree, Token, UnexpectedInput
 from pathlib import Path
+from sona.utils.debug import debug, warn, error
 
 # Native module imports
 from sona.stdlib import (
@@ -10,12 +12,11 @@ from sona.stdlib import (
     time as time_module,
 )
 
+from sona.stdlib.native_stdin import native_stdin
+
 class ReturnSignal(Exception):
     def __init__(self, value):
         self.value = value
-
-# Update the import statement at the top of the file
-from sona.stdlib.native_stdin import native_stdin
 
 class SonaInterpreter(Transformer):
     def __init__(self):
@@ -35,6 +36,14 @@ class SonaInterpreter(Transformer):
             "sleep": time_module.sleep,
         }
 
+        # Preload commonly used modules
+        try:
+            from sona.stdlib.utils.array.smod import array
+            self.modules["array"] = array
+            debug(f"Preloaded array module: {dir(array)}")
+        except ImportError:
+            debug("Could not preload array module")
+
     def push_scope(self):
         self.env.append({})
 
@@ -45,181 +54,127 @@ class SonaInterpreter(Transformer):
         self.env[-1][name] = value
 
     def get_var(self, name):
-        # Handle dotted access: module.attr
-        if '.' in name:
-            module_name, attr_name = name.split('.', 1)
-            if module_name not in self.modules:
-                raise ImportError(f"Module '{module_name}' not loaded")
-            module = self.modules[module_name]
-            # Object-style module
-            if hasattr(module, attr_name):
-                return getattr(module, attr_name)
-            # Dict-style module
-            if isinstance(module, dict) and attr_name in module:
-                return module[attr_name]
-            raise AttributeError(f"Module '{module_name}' has no attribute '{attr_name}'")
-        # Regular variable lookup
         for scope in reversed(self.env):
             if name in scope:
                 return scope[name]
         raise NameError(f"Variable '{name}' not found")
 
-    def assignment(self, args):
-        name_token, value_expr = args
-        value = self.eval_arg(value_expr)
-        self.set_var(str(name_token), value)
-        return value
+    def var(self, args):
+        # Simple variable name
+        if isinstance(args[0], Token):
+            name = str(args[0])
 
-    def print_stmt(self, args):
-        val = self.eval_arg(args[0])
-        print(f"[OUTPUT] {val}")
-        return val
+            # Debug all available scopes
+            all_scopes = []
+            for i, scope in enumerate(self.env):
+                all_scopes.append(f"Scope {i}: {list(scope.keys())}")
+            print(f"[FIXED] Looking for variable '{name}' in scopes: {all_scopes}")
 
-    def import_stmt(self, args):
-        module_name = ".".join(str(part) for part in args)
-        module_path = module_name.replace(".smod", "").replace(".", "/")
-        py_module = f"sona.stdlib.{module_path.replace('/', '.')}"
+            # First check directly in the current scope (for parameters)
+            if len(self.env) > 0 and name in self.env[-1]:
+                print(f"[FIXED] Found '{name}' = {self.env[-1][name]} in current scope")
+                return self.env[-1][name]
 
-        try:
-            mod = importlib.import_module(py_module)
-            # Only expose the final part (e.g., `math` in `utils.math.smod`)
-            final_var = str(args[-2]) if args[-1] == "smod" else str(args[-1])
-            self.set_var(final_var, mod)
-            self.modules[final_var] = mod
-            print(f"[DEBUG] Sona import statement for: '{module_name}', sona_var_name: '{final_var}'")
-        except Exception as e:
-            raise ImportError(f"Could not import module '{module_name}': {e}")
+            # Then check other scopes
+            for scope in reversed(self.env):
+                if name in scope:
+                    print(f"[FIXED] Found '{name}' = {scope[name]} in scope")
+                    return scope[name]
 
-    def if_stmt(self, args):
-        cond, true_block, *false_block = args
-        if self.eval_arg(cond):
-            self._exec(true_block.children)
-        elif false_block:
-            self._exec(false_block[0].children)
-
-    def while_stmt(self, args):
-        cond_expr, body = args
-        while self.eval_arg(cond_expr):
-            self._exec(body.children)
-
-    def for_stmt(self, args):
-        var_token, start_expr, end_expr, body = args
-        varname = str(var_token)
-        for i in range(int(self.eval_arg(start_expr)), int(self.eval_arg(end_expr))):
-            self.push_scope()
-            self.set_var(varname, i)
-            self._exec(body.children)
-            self.pop_scope()
-
-    def func_def(self, args):
-        name = str(args[0])
-        params = [str(p) for p in args[1].children] if hasattr(args[1], "children") else [str(args[1])]
-        body = args[2] if len(args) == 3 else args[1]
-        self.functions[name] = (params, body)
-        print(f"[DEBUG] Stored function '{name}' with params {params}")
-
-    def func_call(self, args):
-        # Extract function name and arguments
-        name_node = args[0]
-        passed_args = []
-        if len(args) > 1 and isinstance(args[1], Tree) and args[1].data == "args":
-            passed_args = [self.eval_arg(a) for a in args[1].children]
-
-        # Handle dotted calls (module.method)
-        if isinstance(name_node, Tree) and name_node.data == "dotted_name":
-            name_parts = [str(t.value) if isinstance(t, Token) else str(t) for t in name_node.children]
-            obj_name, method_name = name_parts[0], name_parts[1]
-
-            # Resolve from self.modules
-            if obj_name in self.modules:
-                obj = self.modules[obj_name]
-                print(f"[DEBUG] Found {obj_name} in self.modules: {type(obj)}")
-
-                # Attribute access (object-style)
-                if hasattr(obj, method_name):
-                    attr = getattr(obj, method_name)
-                    print(f"[DEBUG] {obj_name}.{method_name} resolved via attribute: {attr} (callable={callable(attr)})")
-                    if callable(attr):
-                        return attr(*passed_args)
-                    else:
-                        raise TypeError(f"Attribute '{method_name}' of module '{obj_name}' is not callable")
-                # Dict-style access
-                elif isinstance(obj, dict) and method_name in obj:
-                    func = obj[method_name]
-                    print(f"[DEBUG] {obj_name}.{method_name} resolved via dict key: {func} (callable={callable(func)})")
-                    if callable(func):
-                        return func(*passed_args)
-                    else:
-                        raise TypeError(f"Key '{method_name}' of module '{obj_name}' is not callable")
-                else:
-                    raise AttributeError(f"Module '{obj_name}' has no method or key '{method_name}'")
-            # ... (rest of the method remains the same)
-            elif hasattr(self, "native") and obj_name in getattr(self, "native", {}):
-                native_obj = self.native[obj_name]
-                print(f"[DEBUG] Fallback: Found {obj_name} in self.native: {type(native_obj)}")
-                if hasattr(native_obj, method_name):
-                    attr = getattr(native_obj, method_name)
-                    print(f"[DEBUG] {obj_name}.{method_name} (native) resolved via attribute: {attr} (callable={callable(attr)})")
-                    if callable(attr):
-                        return attr(*passed_args)
-                    else:
-                        raise TypeError(f"Attribute '{method_name}' of native module '{obj_name}' is not callable")
-                elif isinstance(native_obj, dict) and method_name in native_obj:
-                    func = native_obj[method_name]
-                    print(f"[DEBUG] {obj_name}.{method_name} (native) resolved via dict key: {func} (callable={callable(func)})")
-                    if callable(func):
-                        return func(*passed_args)
-                    else:
-                        raise TypeError(f"Key '{method_name}' of native module '{obj_name}' is not callable")
-                else:
-                    raise AttributeError(f"Native module '{obj_name}' has no method or key '{method_name}'")
+            # If not found, improve error message with line and column information
+            if hasattr(args[0], 'line') and hasattr(args[0], 'column'):
+                line, column = args[0].line, args[0].column
+                raise NameError(f"Variable '{name}' not found at line {line}, column {column}")
             else:
-                raise NameError(f"Module '{obj_name}' not imported")
-
-        # Handle user-defined function calls
-        name = str(name_node)
-        if name not in self.functions:
-            raise NameError(f"Function '{name}' not defined")
-
-        params, body = self.functions[name]
-        if len(params) != len(passed_args):
-            raise ValueError(f"Function '{name}' expects {len(params)} arguments, got {len(passed_args)}")
-
-        # Push a new scope for the function call
-        self.push_scope()
-        for pname, pval in zip(params, passed_args):
-            self.set_var(pname, pval)
-
-        try:
-            self._exec(body.children)
-        except ReturnSignal as r:
-            self.pop_scope()
-            return r.value
-
-        # 🟢 Don't forget to pop scope on normal exit too!
-        self.pop_scope()
-
-    def return_stmt(self, args):
-        raise ReturnSignal(self.eval_arg(args[0]))
-
-    def add(self, args): 
-        return self.eval_arg(args[0]) + self.eval_arg(args[1])
-    def sub(self, args): 
-        return self.eval_arg(args[0]) - self.eval_arg(args[1])
-    def mul(self, args): 
-        return self.eval_arg(args[0]) * self.eval_arg(args[1])
-    def div(self, args): 
-        return self.eval_arg(args[0]) / self.eval_arg(args[1])
-
-    def number(self, args): 
-        return float(args[0])
-    def string(self, args): 
-        return str(args[0])[1:-1]
-    def var(self, args): 
-        return self.get_var(str(args[0]))
+                raise NameError(f"Variable '{name}' not found")
+        # Dotted name (e.g. module.attribute)
+        elif isinstance(args[0], Tree) and args[0].data == "dotted_name":
+            name_parts = [str(t) for t in args[0].children]
+            
+            # First part must be a variable or module
+            obj_name = name_parts[0]
+            
+            # Try to resolve the object (variable or module)
+            try:
+                obj = self.get_var(obj_name)
+            except NameError:
+                # Check if it's a function parameter in current scope
+                if len(self.env) > 1 and obj_name in self.env[-1]:
+                    obj = self.env[-1][obj_name]
+                else:
+                    # Improve error message with line and column information if possible
+                    if hasattr(args[0].children[0], 'line') and hasattr(args[0].children[0], 'column'):
+                        line, column = args[0].children[0].line, args[0].children[0].column
+                        raise NameError(f"Variable '{obj_name}' not found at line {line}, column {column}")
+                    else:
+                        raise NameError(f"Variable '{obj_name}' not found")
+            
+            # Access nested attributes
+            for attr in name_parts[1:]:
+                if hasattr(obj, attr):
+                    obj = getattr(obj, attr)
+                elif isinstance(obj, dict) and attr in obj:
+                    obj = obj[attr]
+                else:
+                    # Improve error message with line and column information
+                    attr_idx = name_parts.index(attr)
+                    if attr_idx < len(args[0].children) and hasattr(args[0].children[attr_idx], 'line'):
+                        line, column = args[0].children[attr_idx].line, args[0].children[attr_idx].column
+                        raise AttributeError(f"'{obj_name}' has no attribute '{attr}' at line {line}, column {column}")
+                    else:
+                        raise AttributeError(f"'{obj_name}' has no attribute '{attr}'")
+            
+            return obj
+        else:
+            # Handle unexpected input
+            name = str(args[0])
+            raise ValueError(f"Invalid variable reference: {name}")
 
     def eval_arg(self, arg):
-        return self._eval(arg) if isinstance(arg, Tree) else arg
+        # For debugging
+        debug(f"Evaluating argument: {type(arg)} - {arg}")
+        
+        if isinstance(arg, (Tree, Token)):
+            try:
+                result = self.transform(arg)
+                debug(f"Evaluated argument result: {result}")
+                return result
+            except Exception as e:
+                # Add context about the argument being evaluated
+                if hasattr(arg, 'line') and hasattr(arg, 'column'):
+                    debug(f"Error evaluating argument at line {arg.line}, column {arg.column}: {e}")
+                raise
+        else:
+            return arg
+
+    def array(self, args):
+        """Handle array literals like [1, 2, 3]"""
+        if not args:
+            return []
+        if isinstance(args[0], list):
+            # Already evaluated list, return as is
+            return args[0]
+        if hasattr(args[0], 'children'):
+            # Parse array items from AST
+            return [self.eval_arg(item) for item in args[0].children]
+        return [self.eval_arg(item) for item in args]
+    
+    def array_literal(self, args):
+        """Handle array literal syntax by creating a flat list"""
+        return self.array(args)
+    
+    def array_items(self, args):
+        """Process array items into a flat list"""
+        return [self.eval_arg(item) for item in args]
+
+    def neg(self, args):
+        return -self.eval_arg(args[0])
+
+    def pos(self, args):
+        return +self.eval_arg(args[0])
+
+    def not_op(self, args):
+        return not self.eval_arg(args[0])
 
     def _eval(self, node):
         return self.transform(node)
@@ -231,35 +186,631 @@ class SonaInterpreter(Transformer):
             for n in node:
                 self._exec(n)
 
-def load_smod_module(module_name):
-    path = os.path.join("sona", "stdlib", f"{module_name}.py")
-    if not os.path.isfile(path):
-        raise ImportError(f"No backend found for module '{module_name}'")
-    spec = importlib.util.spec_from_file_location(f"sona.stdlib.{module_name}", path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+    def import_stmt(self, args):
+        # Extract module path and check for alias
+        alias = None
+        module_parts = []
+        i = 0
 
-def run_code(code):
-    print("[DEBUG] run_code() received input:")
-    print(code[:100])
-    with open("sona/grammar.lark") as f:
-        grammar = f.read()
+        # First pass: Identify if there is an 'as' keyword and extract the alias
+        for j in range(len(args)):
+            if args[j] is not None and str(args[j]) == "as" and j + 1 < len(args):
+                alias = str(args[j + 1])
+                break
+
+        # Second pass: Extract module parts (stopping at 'as' if present)
+        while i < len(args):
+            if args[i] is None:
+                i += 1
+                continue
+                
+            current = str(args[i])
+            if current == "as":
+                # Stop collecting module parts when we hit 'as'
+                break
+            else:
+                module_parts.append(current)
+            i += 1
+        
+        module_name = ".".join(module_parts)
+        debug(f"Importing module: {module_name}")
+        if alias:
+            debug(f"Using alias: {alias}")
+
+        try:
+            # Normalize module path parts
+            module_parts = module_name.split(".")
+            base_name = ""
+            
+            # For .smod file imports
+            if module_name.endswith("smod"):
+                # Get the proper base name (e.g., array from utils.array.smod)
+                if len(module_parts) > 1:
+                    base_name = module_parts[-2]
+                else:
+                    base_name = module_parts[0].replace(".smod", "")
+                    
+                # Convert to Python module path
+                py_module = "sona.stdlib." + module_name
+            else:
+                # For regular imports
+                py_module = "sona.stdlib." + module_name
+                base_name = module_parts[-1]
+            
+            # Store original name for module lookup
+            original_name = base_name
+            # Use alias for registration if provided
+            register_name = alias if alias else base_name
+            
+            debug(f"Loading module from {py_module}")
+            debug(f"Original name: {original_name}, Register name: {register_name}")
+            debug(f"Python module path: {py_module}")
+            
+            # Ensure the module exists using platform-independent paths
+            base_path = Path(__file__).parent  # sona directory
+            stdlib_path = Path(base_path).parent / 'stdlib'  # top-level stdlib directory
+            
+            # Special handling for utils.math.smod pattern
+            if "utils" in module_parts and "smod" in module_parts:
+                # Recalculate the Python module path for utils.math.smod pattern
+                utils_index = module_name.find("utils")
+                smod_index = module_name.find("smod")
+                
+                if utils_index >= 0 and smod_index > utils_index:
+                    # Get the module between utils and smod (e.g., "math" in utils.math.smod)
+                    module_between = module_name[utils_index+6:smod_index-1]  # -1 to remove the dot
+                    if module_between:
+                        debug(f"Special case: utils.{module_between}.smod pattern detected")
+                        py_module = f"sona.stdlib.utils.{module_between}.smod"
+                        # Update base name to use the module between utils and smod
+                        base_name = module_between
+                        original_name = base_name
+                        if not alias:
+                            register_name = base_name
+            
+            # Try finding module in both standard locations
+            found_module = False
+            module_path = None
+            
+            # Use the proper last module part
+            last_module_part = module_parts[-1]
+            
+            # Determine paths to search based on module structure
+            search_paths = []
+            
+            # Standard paths (for all imports)
+            # Path 1: Inside sona/stdlib/...
+            search_paths.append(base_path / 'stdlib' / Path(*module_parts[:-1]) / f"{last_module_part}.py")
+            search_paths.append(base_path / 'stdlib' / Path(*module_parts[:-1]) / f"{last_module_part}.smod")
+            
+            # Path 2: In top-level stdlib/...
+            search_paths.append(stdlib_path / Path(*module_parts[:-1]) / f"{last_module_part}.py")
+            search_paths.append(stdlib_path / Path(*module_parts[:-1]) / f"{last_module_part}.smod")
+            
+            # Path 3: Direct access in top-level stdlib
+            search_paths.append(stdlib_path / f"{module_name}.py")
+            search_paths.append(stdlib_path / f"{module_name}.smod")
+            
+            # Path 4: Check for special case of utils.*.smod modules
+            if "utils" in module_parts and "smod" in module_parts:
+                utils_index = module_parts.index("utils")
+                smod_index = module_parts.index("smod")
+                
+                if smod_index > utils_index:
+                    # Handle the case where we have a path like utils.math.smod
+                    # by creating utils/math/smod.py search path
+                    search_paths.append(base_path / 'stdlib' / 'utils' / 
+                                       Path(*module_parts[utils_index+1:smod_index]) / "smod.py")
+                    search_paths.append(stdlib_path / 'utils' / 
+                                       Path(*module_parts[utils_index+1:smod_index]) / "smod.py")
+            
+            for path in search_paths:
+                debug(f"Checking path: {path}")
+                if path.is_file():
+                    module_path = path
+                    found_module = True
+                    debug(f"Found module at: {module_path}")
+                    break
+                    
+            if not found_module:
+                raise ImportError(f"Module file not found. Checked paths: {', '.join(str(p) for p in search_paths)}")
+            
+            mod = importlib.import_module(py_module)
+            
+            # Try to find the module instance
+            instance = None
+            
+            # First check if module exports the instance directly
+            if hasattr(mod, original_name):
+                instance = getattr(mod, original_name)
+                debug(f"Found instance directly: {type(instance)}")
+            # Then check __all__ and look for any attributes mentioned there
+            elif hasattr(mod, "__all__"):
+                all_attrs = getattr(mod, "__all__")
+                debug(f"Module __all__ attributes: {all_attrs}")
+                # Check each attribute in __all__
+                for attr_name in all_attrs:
+                    if hasattr(mod, attr_name):
+                        instance = getattr(mod, attr_name)
+                        debug(f"Found instance via __all__ -> {attr_name}: {type(instance)}")
+                        break
+            # Try matching by any case
+            elif hasattr(mod, original_name.lower()):
+                instance = getattr(mod, original_name.lower())
+                debug(f"Found instance by lowercase: {type(instance)}")
+            # Check if 'math' is specifically available (common case)
+            elif hasattr(mod, "math"):
+                instance = getattr(mod, "math")
+                debug(f"Found instance via 'math' attribute: {type(instance)}")
+            # Finally check the smod.py file directly
+            else:
+                smod_module = f"{py_module}.smod"
+                debug(f"Trying smod module: {smod_module}")
+                try:
+                    smod = importlib.import_module(smod_module)
+                    if hasattr(smod, original_name):
+                        instance = getattr(smod, original_name)
+                        debug(f"Found instance in smod.py: {type(instance)}")
+                except ImportError:
+                    pass
+                    
+            if instance is not None:
+                debug(f"Registering instance as '{register_name}'")
+                debug(f"Available methods: {dir(instance)}")
+                
+                # Register under the alias name if provided, otherwise use original name
+                self.modules[register_name] = instance
+                self.set_var(register_name, instance)
+                debug(f"Module registered successfully as '{register_name}'")
+            else:
+                debug(f"No instance found, using module: {mod}")
+                self.modules[register_name] = mod
+                self.set_var(register_name, mod)
+                
+            return True
+            
+        except ImportError as e:
+            raise ImportError(f"Failed to import module '{module_name}': {str(e)}")
+        except Exception as e:
+            raise ImportError(f"Unexpected error importing '{module_name}': {str(e)}")
+
+    def add(self, args): 
+        return self.eval_arg(args[0]) + self.eval_arg(args[1])
+        
+    def sub(self, args): 
+        return self.eval_arg(args[0]) - self.eval_arg(args[1])
+        
+    def mul(self, args): 
+        return self.eval_arg(args[0]) * self.eval_arg(args[1])
+        
+    def div(self, args): 
+        return self.eval_arg(args[0]) / self.eval_arg(args[1])
+
+    def number(self, args): 
+        return float(args[0])
+        
+    def string(self, args):
+        # Handle both single/double quoted strings and multi-line strings
+        raw_str = str(args[0])
+        
+        # Triple-quoted strings (multi-line)
+        if raw_str.startswith('"""') and raw_str.endswith('"""'):
+            return raw_str[3:-3]
+        elif raw_str.startswith("'''") and raw_str.endswith("'''"):
+            return raw_str[3:-3]
+        # Regular single/double quoted strings
+        elif raw_str.startswith('"') and raw_str.endswith('"'):
+            return raw_str[1:-1]
+        elif raw_str.startswith("'") and raw_str.endswith("'"):
+            return raw_str[1:-1]
+        
+        # Fallback
+        return raw_str
+        
+    def assignment(self, args):
+        name_token, value_expr = args
+        value = self.eval_arg(value_expr)
+        self.set_var(str(name_token), value)
+        return value
+
+    def print_stmt(self, args):
+        val = self.eval_arg(args[0])
+        # print() without [OUTPUT] prefix for cleaner output
+        print(val)
+        return val
+
+    def func_call(self, args):
+        # Extract function name and arguments
+        name_node = args[0]
+        passed_args = []
+        if len(args) > 1 and isinstance(args[1], Tree) and args[1].data == "args":
+            # Store the argument values
+            passed_args = []
+            for a in args[1].children:
+                try:
+                    val = self.eval_arg(a)
+                    passed_args.append(val)
+                except Exception as e:
+                    if hasattr(a, 'line') and hasattr(a, 'column'):
+                        line, column = a.line, a.column
+                        raise type(e)(f"{str(e)} at line {line}, column {column}")
+                    else:
+                        raise
+            
+            # Enhanced debugging for function arguments            
+            debug(f"Evaluated function arguments: {passed_args}")
+            debug(f"Current environment stack before function call: {len(self.env)} scopes")
+
+        # Handle dotted calls (module.method)
+        if isinstance(name_node, Tree) and name_node.data == "dotted_name":
+            name_parts = [str(t.value) if isinstance(t, Token) else str(t) for t in name_node.children]
+            obj_name, method_name = name_parts[0], name_parts[-1]
+            
+            # Resolve the object (could be a module or a variable)
+            if obj_name in self.modules:
+                obj = self.modules[obj_name]
+            else:
+                # Try to find it in variables
+                try:
+                    obj = self.get_var(obj_name)
+                except NameError:
+                    # Add line and column information if available
+                    if hasattr(name_node.children[0], 'line') and hasattr(name_node.children[0], 'column'):
+                        line, column = name_node.children[0].line, name_node.children[0].column
+                        raise NameError(f"Module or variable '{obj_name}' not found at line {line}, column {column}")
+                    else:
+                        raise NameError(f"Module or variable '{obj_name}' not found")
+
+            # For nested paths (e.g., pkg.submodule.func), traverse the path
+            current = obj
+            for part in name_parts[1:-1]:  # Skip first and last parts
+                if hasattr(current, part):
+                    current = getattr(current, part)
+                elif isinstance(current, dict) and part in current:
+                    current = current[part]
+                else:
+                    raise AttributeError(f"Cannot access '{part}' in '{obj_name}'")
+            
+            # Now try to get the actual method
+            if hasattr(current, method_name):
+                method = getattr(current, method_name)
+                if callable(method):
+                    return method(*passed_args)
+                else:
+                    raise TypeError(f"'{method_name}' is not callable")
+            elif isinstance(current, dict) and method_name in current:
+                method = current[method_name]
+                if callable(method):
+                    return method(*passed_args)
+                else:
+                    raise TypeError(f"'{method_name}' is not callable")
+            else:
+                # Add line and column information if available
+                method_token_index = len(name_parts) - 1
+                if method_token_index < len(name_node.children) and hasattr(name_node.children[method_token_index], 'line'):
+                    line, column = name_node.children[method_token_index].line, name_node.children[method_token_index].column
+                    raise AttributeError(f"'{obj_name}' has no method '{method_name}' at line {line}, column {column}")
+                else:
+                    raise AttributeError(f"'{obj_name}' has no method '{method_name}'")
+
+        # Handle regular function calls
+        name = str(name_node)
+        if name not in self.functions:
+            # Add line and column information if available
+            if hasattr(name_node, 'line') and hasattr(name_node, 'column'):
+                line, column = name_node.line, name_node.column
+                raise NameError(f"Function '{name}' not defined at line {line}, column {column}")
+            else:
+                raise NameError(f"Function '{name}' not defined")
+
+        params, body = self.functions[name]
+        if len(params) != len(passed_args):
+            # Add line and column information if available
+            if hasattr(name_node, 'line') and hasattr(name_node, 'column'):
+                line, column = name_node.line, name_node.column
+                raise ValueError(f"Function '{name}' expects {len(params)} arguments, got {len(passed_args)} at line {line}, column {column}")
+            else:
+                raise ValueError(f"Function '{name}' expects {len(params)} arguments, got {len(passed_args)}")
+
+        # Create a new scope for function execution
+        debug(f"Creating new scope for function '{name}'")
+        self.push_scope()
+        
+        # Add each parameter to the function scope with its value - FIXED for v0.5.0
+        for i, (param, value) in enumerate(zip(params, passed_args)):
+            param_name = str(param)
+            print(f"[FIXED] Setting parameter {i}: {param_name} = {value}")
+            # Set parameter directly in function scope
+            self.env[-1][param_name] = value
+            
+            # Verify parameter was set correctly
+            if param_name in self.env[-1]:
+                print(f"[FIXED] Verified parameter {param_name} in scope {len(self.env)-1}")
+            else:
+                print(f"[FIXED] ERROR: Failed to set parameter {param_name}!")
+                
+        # Debug the function scope contents after setting parameters
+        scope_contents = ", ".join([f"{k}={v}" for k, v in self.env[-1].items()])
+        debug(f"Function '{name}' scope parameters: {scope_contents}")
+        
+        # Ensure function parameters are visible to debug
+        debug(f"Current environment after parameter setting: {self.env}")
+
+        try:
+            # Execute the function body statements directly
+            result = None
+            
+            # Debug function scope before execution
+            param_names = [str(p) for p in params]
+            debug(f"Executing function '{name}' with params: {param_names}")
+            debug(f"Variables in function scope: {list(self.env[-1].keys())}")
+            
+            # Process each statement in the function body
+            for child in body.children:
+                debug(f"Executing statement: {type(child)} - {child}")
+                
+                # Special handling for function return statements
+                if isinstance(child, Tree) and child.data == 'return_stmt':
+                    debug(f"Processing return statement")
+                    result = self.transform(child)
+                    break
+                else:
+                    # For all other statements
+                    result = self.transform(child)
+                    debug(f"Statement result: {result}")
+            
+            debug(f"Function execution completed with result: {result}")
+            self.pop_scope()
+            return result
+        except ReturnSignal as r:
+            debug(f"Function '{name}' returned value: {r.value}")
+            self.pop_scope()
+            return r.value
+        except Exception as e:
+            # Get function location information if available
+            line_info = ""
+            if hasattr(name_node, 'line') and hasattr(name_node, 'column'):
+                line_info = f" at line {name_node.line}, column {name_node.column}"
+            
+            # Create a more informative error message with current scope
+            scope_vars = ", ".join(f"{k}" for k in self.env[-1].keys())
+            error_msg = f"Error in function '{name}'{line_info}: {str(e)}\nCurrent scope variables: {scope_vars}"
+            debug(error_msg)
+            self.pop_scope()
+            
+            # Wrap the original exception with more context
+            raise type(e)(error_msg) from e
+            
+    
+def func_def(self, args):
+    # Function name, parameters list, and body
+    name, param_list, body = args
+    
+    # Clean and store parameter names without evaluating anything in the body
+    params = []
+    
+    # Process parameter list appropriately depending on type
+    if param_list is None:
+        # No parameters
+        debug(f"Function {name} has no parameters")
+        params = []
+    elif isinstance(param_list, Tree) and param_list.data == 'param_list':
+        # This is a normal param_list tree node
+        for child in param_list.children:
+            if isinstance(child, Token) and child.type == 'NAME':
+                params.append(child)
+                debug(f"Added parameter: {child}")
+    elif hasattr(param_list, 'children'):
+        # Generic tree with children
+        for child in param_list.children:
+            if isinstance(child, Token) and child.type == 'NAME':
+                params.append(child)
+                debug(f"Added parameter from children: {child}")
+    elif isinstance(param_list, list):
+        # Already processed list of parameters
+        params = [p for p in param_list if isinstance(p, Token) and p.type == 'NAME']
+        debug(f"Parameters from list: {[str(p) for p in params]}")
+    else:
+        # Single parameter as a token
+        if isinstance(param_list, Token) and param_list.type == 'NAME':
+            params = [param_list]
+            debug(f"Single parameter: {param_list}")
+    
+    debug(f"Function '{name}' registered with parameters: {[str(p) for p in params]}")
+    
+    # Register function with its parameters and body WITHOUT evaluating body
+    self.functions[str(name)] = (params, body)
+    return name
+    
+def param_list(self, args):
+    # Process parameter list by collecting just the variable names
+    # Skip commas and other tokens
+    params = []
+    for arg in args:
+        if isinstance(arg, Token) and arg.type == 'NAME':
+            params.append(arg)
+            debug(f"Added parameter name: {arg}")
+    debug(f"Complete param list: {[str(p) for p in params]}")
+    return params
+
+    def return_stmt(self, args):
+        if args:
+            # Evaluate the return expression in the current scope
+            debug(f"Processing return statement with expression: {args[0]}")
+            value = self.eval_arg(args[0])
+            debug(f"Return statement with value: {value}")
+            raise ReturnSignal(value)
+        else:
+            debug("Return statement with no value")
+            raise ReturnSignal(None)
+
+    def if_stmt(self, args):
+        condition = self.eval_arg(args[0])
+        
+        if condition:
+            # Execute the "then" block
+            debug("If condition is true, executing then block")
+            self.push_scope()
+            result = self._exec(args[1].children)
+            self.pop_scope()
+            return result
+        elif len(args) > 2:  # Has an "else" block
+            # Execute the "else" block
+            debug("If condition is false, executing else block")
+            self.push_scope()
+            result = self._exec(args[2].children)
+            self.pop_scope()
+            return result
+            
+        return None
+
+    def while_stmt(self, args):
+        condition_expr, body = args
+        
+        while self.eval_arg(condition_expr):
+            self.push_scope()
+            try:
+                self._exec(body.children)
+            except ReturnSignal:
+                # If a return statement is encountered, propagate it
+                self.pop_scope()
+                raise
+            finally:
+                self.pop_scope()
+        
+        return None
+
+    def for_stmt(self, args):
+        var_name, start_expr, end_expr, body = args
+        
+        start = self.eval_arg(start_expr)
+        end = self.eval_arg(end_expr)
+        
+        for i in range(int(start), int(end) + 1):
+            self.push_scope()
+            self.set_var(str(var_name), i)
+            
+            try:
+                self._exec(body.children)
+            except ReturnSignal:
+                # If a return statement is encountered, propagate it
+                self.pop_scope()
+                raise
+            finally:
+                self.pop_scope()
+                
+        return None
+
+    def block(self, args):
+        return args
+
+    def start(self, args):
+        for stmt in args:
+            self._exec(stmt)
+        return None
+
+def load_smod_module(module_name):
+    """Load a .smod module in a platform-independent way"""
+    try:
+        # Convert module name to path parts
+        path_parts = ['sona', 'stdlib'] + module_name.split('.')
+        if path_parts[-1].endswith('.smod'):
+            # Remove .smod extension and add .py
+            path_parts[-1] = path_parts[-1][:-5]
+        path_parts[-1] += '.py'
+        
+        # Create path object
+        module_path = Path(*path_parts)
+        
+        if not module_path.is_file():
+            raise ImportError(f"No backend found for module '{module_name}'")
+            
+        # Create module spec using absolute path
+        spec = importlib.util.spec_from_file_location(
+            f"sona.stdlib.{module_name}",
+            str(module_path.resolve())
+        )
+        
+        if spec is None or spec.loader is None:
+            raise ImportError(f"Failed to create module spec for '{module_name}'")
+            
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+        
+    except Exception as e:
+        raise ImportError(f"Failed to load module '{module_name}': {str(e)}")
+
+def run_code(code, debug_enabled=False):
+    """Execute Sona code with proper cross-platform path handling"""
+    if debug_enabled:
+        os.environ["SONA_DEBUG"] = "1"
+        
+    debug("run_code() received input:")
+    debug(code[:100])
+    
+    # Get grammar file path in a platform-independent way
+    grammar_path = Path(__file__).parent / 'grammar.lark'
+    try:
+        grammar = grammar_path.read_text(encoding='utf-8')
+    except Exception as e:
+        error(f"Failed to load grammar: {e}")
+        return
 
     parser = Lark(grammar, parser="lalr", propagate_positions=True)
     try:
         tree = parser.parse(code)
+    except UnexpectedInput as e:
+        line_num = e.line
+        column = e.column
+        # Extract the line with the error and add ^ marker
+        error_line = code.split('\n')[line_num-1] if line_num <= len(code.split('\n')) else ""
+        pointer = ' ' * (column - 1) + '^'
+        
+        error(f"PARSER ERROR at line {line_num}, column {column}:\n{error_line}\n{pointer}\n{str(e)}")
+        return
     except Exception as e:
-        print(f"[PARSER ERROR] {e}")
+        error(f"PARSER ERROR: {str(e)}")
         return
 
-    print("[DEBUG] Starting execution...")
+    debug("Starting execution...")
     interpreter = SonaInterpreter()
     try:
-        print(tree.pretty())
+        if os.environ.get("SONA_DEBUG") == "1":
+            print(tree.pretty())
         interpreter.transform(tree)
+    except NameError as e:
+        # Extract line and column info if available from error message
+        line_info = ""
+        if "at line" in str(e):
+            line_info = str(e)
+        else:
+            line_info = str(e)
+        error(f"VARIABLE ERROR: {line_info}")
+    except AttributeError as e:
+        error(f"MODULE ERROR: {str(e)}")
+    except TypeError as e:
+        error(f"TYPE ERROR: {str(e)}")
+    except ImportError as e:
+        # Check if the error has position information
+        if hasattr(e, 'line') and hasattr(e, 'column'):
+            line_num, column = e.line, e.column
+            error_line = code.split('\n')[line_num-1] if line_num <= len(code.split('\n')) else ""
+            pointer = ' ' * (column - 1) + '^'
+            error(f"IMPORT ERROR at line {line_num}, column {column}:\n{error_line}\n{pointer}\n{str(e)}")
+        else:
+            error(f"IMPORT ERROR: {str(e)}")
+    except ValueError as e:
+        error(f"VALUE ERROR: {str(e)}")
     except Exception as e:
-        print(f"[INTERPRETER ERROR] {e}")
+        # Try to extract line and column info from the exception if possible
+        if hasattr(e, 'line') and hasattr(e, 'column'):
+            line_num, column = e.line, e.column
+            error_line = code.split('\n')[line_num-1] if line_num <= len(code.split('\n')) else ""
+            pointer = ' ' * (column - 1) + '^'
+            error(f"INTERPRETER ERROR at line {line_num}, column {column}:\n{error_line}\n{pointer}\n{str(e)}")
+        else:
+            error(f"INTERPRETER ERROR: {str(e)}")
 
 if __name__ == "__main__":
     test_files = [
@@ -269,10 +820,12 @@ if __name__ == "__main__":
     for file in test_files:
         try:
             code = Path(file).read_text()
-            print(f"Running: {file}")
+            debug(f"Running: {file}")
             run_code(code)
-            print("✅ Success\n")
+            if os.environ.get("SONA_DEBUG") == "1":
+                print("✅ Success\n")
         except Exception as e:
-            print(f"❌ Error in {file}: {e}\n")
+            error(f"Error in {file}: {e}\n")
         finally:
-            print("-" * 40)
+            if os.environ.get("SONA_DEBUG") == "1":
+                print("-" * 40)
