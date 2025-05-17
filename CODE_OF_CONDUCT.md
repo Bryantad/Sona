@@ -28,7 +28,7 @@ This Code of Conduct applies to all project spaces, including issues, pull reque
 
 ## Enforcement
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported by contacting the project maintainers at **conduct@netcoresolutions.com**. All reports will be treated confidentially.  
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported by contacting the project maintainers at **conduct@waycoreinc.com**. All reports will be treated confidentially.  
 
 Project maintainers will review and investigate all complaints, and may take action at their discretion, up to and including temporary or permanent bans from the project.
 
