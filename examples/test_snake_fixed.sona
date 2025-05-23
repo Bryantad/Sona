@@ -1,0 +1,46 @@
+// Minimal snake test file with fixed imports
+import native_stdin
+import utils.math.smod
+import utils.array.smod 
+import utils.string.smod
+
+// Constants for the game
+let BOARD_WIDTH = 15
+let BOARD_HEIGHT = 10
+let EMPTY = " "
+let SNAKE_BODY = "O"
+let SNAKE_HEAD = "@"
+let FOOD = "*"
+let WALL = "#"
+
+// Test functions
+print("Testing basic snake game functionality")
+
+// Helper function: check if a number is negative
+func is_negative(num) {
+    let num_str = utils.math.smod.to_str(num)
+    let first_char = utils.string.smod.substr(num_str, 0, 1)
+    return utils.math.smod.eq(first_char, "-")
+}
+
+// Helper function: check if a < b
+func is_less_than(a, b) {
+    let diff = utils.math.smod.subtract(a, b)
+    return is_negative(diff)
+}
+
+// Test functions
+print("Testing is_negative: " + is_negative(-5))
+print("Testing is_less_than: " + is_less_than(3, 5))
+
+// Test if-else structure
+let test_val = 2
+if utils.math.smod.eq(test_val, 1) {
+    print("Value is 1")
+} else {
+    if utils.math.smod.eq(test_val, 2) {
+        print("Value is 2")
+    } else {
+        print("Value is something else")
+    }
+}

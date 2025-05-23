@@ -1,0 +1,27 @@
+// Import test for Sona v0.4.9
+// Shows how to correctly import and use modules
+
+// Basic import
+import utils.math.smod
+
+// Testing math module functions
+print("Testing math module:")
+print("PI: " + math.to_str(math.PI))
+print("2 + 3 = " + math.to_str(math.add(2, 3)))
+
+// Multiple module imports
+import native_stdin
+
+// Using module functions
+print("\nTesting native_stdin:")
+print("Type something: (not actually reading input in this test)")
+// Uncomment to test input:
+// let input = native_stdin.input("Enter text: ")
+// print("You entered: " + input)
+
+// Important notes:
+print("\nImport Notes for v0.4.9:")
+print("1. The 'as' keyword is NOT supported")
+print("2. Modules are registered with their base name")
+print("3. For utils.math.smod, use 'math.'")
+print("4. Module path parts can't be accessed directly")

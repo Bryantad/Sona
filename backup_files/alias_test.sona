@@ -1,0 +1,5 @@
+// Test importing with alias
+import stdlib.math as m
+
+// Print PI using the alias
+print("PI value: " + m.to_str(m.PI))

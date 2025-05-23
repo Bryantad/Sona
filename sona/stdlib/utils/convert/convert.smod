@@ -1,0 +1,32 @@
+"""Conversion utility functions for Sona."""
+
+class Convert:
+    @staticmethod
+    def to_str(value):
+        """Convert a value to string."""
+        return str(value)
+
+    @staticmethod
+    def to_int(value):
+        """Convert a value to integer."""
+        try:
+            if isinstance(value, str):
+                # For strings containing decimals, truncate the decimal part
+                return int(float(value))
+            return int(value)
+        except (TypeError, ValueError) as e:
+            raise ValueError(f"Could not convert {value} to integer: {str(e)}")
+
+    @staticmethod
+    def to_float(value):
+        """Convert a value to float."""
+        try:
+            return float(value)
+        except (TypeError, ValueError) as e:
+            raise ValueError(f"Could not convert {value} to float: {str(e)}")
+
+# Create the module instance
+convert = Convert()
+
+# Export the instance
+__all__ = ['convert']

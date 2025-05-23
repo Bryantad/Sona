@@ -1,0 +1,16 @@
+// Clean v0.5.0 test
+// Define a function
+func greeting() {
+    return "Hello from v0.5.0!"
+}
+
+// Use multi-line string
+let msg = """
+Multi-line
+string
+test
+"""
+
+// Print results
+print(greeting())
+print(msg)

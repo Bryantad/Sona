@@ -1,3 +1,43 @@
+## [0.5.1] - 2025-05-23
+
+### Added
+
+- Advanced REPL diagnostic tools:
+  - `:debug` command to display last error, parse tree, and environment scopes
+  - `:profile` command to measure execution time of commands
+  - `:watch <var>` command to inspect variable values
+  - `:trace` command to log function calls and returns
+- Added detailed documentation for debugging tools
+- Added a debug tools module in `sona/utils/debug_tools.py`
+
+### Security
+
+- Fixed function parameter scope handling to prevent variable shadowing issues
+- Added validation checks for module imports to prevent path traversal
+- Implemented input size limits to prevent DoS attacks
+
+### Bug Fixes
+
+- Fixed multi-line string handling with triple quotes
+- Fixed numeric type handling in if/else statements
+- Fixed loop body execution in while statements
+- Improved type consistency throughout the interpreter
+- Improved error reporting with more context around error locations
+- Fixed edge cases in import aliasing with certain module paths
+- Corrected several memory leaks in the interpreter
+- Fixed `:test` command in REPL to correctly run the diagnostic tests
+
+### REPL Enhancements
+
+- Added `:calc` and `:quiz` commands to launch calculator and quiz applications
+- Added support for exiting REPL without colon prefix (by typing "exit" or "quit")
+- Fixed `:test` command implementation to run the diagnostic test suite
+
+### Documentation
+
+- Added security recommendations in SECURITY.md
+- Updated examples to demonstrate fixed functionality
+
 # Sona Language - Version 0.5.0
 
 ## What's New

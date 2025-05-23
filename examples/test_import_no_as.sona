@@ -1,0 +1,9 @@
+// Test file for Sona import syntax without 'as' keyword
+import native_stdin
+import utils.math.smod
+import utils.array.smod
+import utils.string.smod
+
+print("Testing imports...")
+print("Math PI: " + utils.math.smod.to_str(utils.math.smod.PI))
+print("String uppercase: " + utils.string.smod.upper("hello"))

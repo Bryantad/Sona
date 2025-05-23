@@ -1,0 +1,3 @@
+// Alias import test
+import math
+print(math.PI)

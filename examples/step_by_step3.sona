@@ -1,0 +1,7 @@
+// Test with module usage
+
+print("Starting test...")
+import utils.math.smod
+// Test using the imported module
+print("Testing math module...")
+print("PI value: " + utils.math.smod.to_str(utils.math.smod.PI))

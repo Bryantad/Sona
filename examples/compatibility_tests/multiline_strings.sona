@@ -1,0 +1,49 @@
+// Demonstrates multi-line string support in Sona v0.5.0
+
+// Import modules
+import utils.string.smod as string
+
+// Basic multi-line string with double quotes
+let poem = """
+Roses are red,
+Violets are blue,
+Multi-line strings
+Are now supported too!
+"""
+
+print("Multi-line poem:")
+print(poem)
+
+// Multi-line string with single quotes
+let code_sample = '''
+func greet(name) {
+    print("Hello, " + name + "!")
+    return 0
+}
+
+greet("World")
+'''
+
+print("\nCode sample:")
+print(code_sample)
+
+// String manipulation with multi-line strings
+let lines = string.split(poem, "\n")
+print("\nNumber of lines in poem: " + string.to_str(string.length(lines)))
+
+// Using multi-line strings for templates
+let name = "Alice"
+let age = 30
+let template = """
+User Profile:
+--------------
+Name: {{name}}
+Age: {{age}}
+--------------
+"""
+
+// Simple template replacement
+let profile = string.replace(template, "{{name}}", name)
+let profile2 = string.replace(profile, "{{age}}", string.to_str(age))
+print("\nTemplate result:")
+print(profile2)

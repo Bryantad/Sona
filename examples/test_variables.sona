@@ -1,0 +1,14 @@
+// Test variable assignment in Sona
+import native_stdin
+
+// Declare variables
+let a = 5
+let b = 10
+
+print("Initial values: a = " + a + ", b = " + b)
+
+// Try to reassign (in Sona, we need to use 'let' when reassigning)
+let a = 7
+let b = 15
+
+print("After reassignment: a = " + a + ", b = " + b)
