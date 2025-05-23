@@ -1,0 +1,22 @@
+import native_stdin
+import utils.array.smod as array
+import utils.math.smod as math
+
+let answers = array.new()
+
+func ask(question, answer) {
+    print(question)
+    let input = native_stdin.input("Your answer: ")
+    
+    if math.eq(input, answer) {
+        print("Correct!")
+    } else {
+        print("Incorrect!")
+    }
+}
+
+print("Welcome to the Simple Quiz!\n")
+ask("What is 2+2?", "4")
+ask("What is the capital of France?", "Paris")
+
+print("\nQuiz complete!")

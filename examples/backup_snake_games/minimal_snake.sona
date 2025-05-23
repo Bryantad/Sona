@@ -1,0 +1,316 @@
+// Minimal snake game that works with Sona's constraints
+
+import native_stdin
+import utils.math.smod as math
+import utils.array.smod as array
+
+// Game constants
+let WIDTH = 10
+let HEIGHT = 10
+let EMPTY = "."
+let SNAKE = "O"
+let HEAD = "@"
+let FOOD = "*"
+
+// Helper functions for comparison
+func is_negative(num) {
+    // Check if a number is negative by looking at its string representation
+    let num_str = math.to_str(num)
+    let first_char = string.substr(num_str, 0, 1)
+    return math.eq(first_char, "-")
+}
+
+func is_less_than(a, b) {
+    // a < b means a - b < 0
+    let diff = math.subtract(a, b)
+    return is_negative(diff)
+}
+
+func is_positive(num) {
+    // Positive means not zero and not negative
+    let is_zero = math.eq(num, 0)
+    if is_zero {
+        return false
+    }
+    
+    let is_neg = is_negative(num)
+    if is_neg {
+        return false
+    }
+    return true
+}
+
+// Snake state using separate arrays for x and y coordinates
+let snake_x = [5]
+let snake_y = [5]
+let food_x = 7
+let food_y = 7
+let direction = "right"
+let running = true
+let score = 0
+let grow = false
+
+// Generate random food position
+func spawn_food() {
+    let x = math.floor(math.rand() * WIDTH)
+    let y = math.floor(math.rand() * HEIGHT)
+    
+    // Check for overlap with snake
+    let i = 0
+    let collision = false
+    let snake_len = array.length(snake_x)
+    
+    while is_less_than(i, snake_len) {
+        let sx = array.get(snake_x, i)
+        let sy = array.get(snake_y, i)
+        let match_x = math.eq(sx, x)
+        let match_y = math.eq(sy, y)
+        
+        if match_x {
+            if match_y {
+                let collision = true
+            }
+        }
+        let i = i + 1
+    }
+    
+    if collision {
+        // Try again
+        spawn_food()
+    } else {
+        let food_x = x
+        let food_y = y
+    }
+}
+
+// Draw the game board
+func draw_board() {
+    // Clear screen with newlines
+    print("\n\n\n\n\n\n\n\n\n")
+    
+    // Top border
+    let border = "+"
+    let b = 0
+    while is_less_than(b, WIDTH) {
+        border = border + "-"
+        let b = b + 1
+    }
+    border = border + "+"
+    print(border)
+    
+    // Grid
+    let y = 0
+    while is_less_than(y, HEIGHT) {
+        let row = "|"
+        let x = 0
+        
+        while is_less_than(x, WIDTH) {
+            // Default cell content
+            let cell = EMPTY
+            
+            // Check for snake body
+            let s = 0
+            let snake_len = array.length(snake_x)
+            while is_less_than(s, snake_len) {
+                if math.eq(array.get(snake_x, s), x) {
+                    if math.eq(array.get(snake_y, s), y) {
+                        if math.eq(s, 0) {
+                            cell = HEAD  // Head
+                        } else {
+                            cell = SNAKE  // Body
+                        }
+                    }
+                }
+                let s = s + 1
+            }
+            
+            // Check for food
+            if math.eq(x, food_x) {
+                if math.eq(y, food_y) {
+                    cell = FOOD
+                }
+            }
+            
+            row = row + cell
+            let x = x + 1
+        }
+        
+        row = row + "|"
+        print(row)
+        let y = y + 1
+    }
+    
+    // Bottom border
+    print(border)
+    
+    // Game info
+    print("Score: " + math.to_str(score) + " | Length: " + math.to_str(array.length(snake_x)))
+    print("Controls: up, down, left, right, exit")
+}
+
+// Move the snake
+func move_snake() {
+    // Get current head position
+    let head_x = array.get(snake_x, 0)
+    let head_y = array.get(snake_y, 0)
+    
+    // Calculate new head position
+    let new_x = head_x
+    let new_y = head_y
+    
+    if math.eq(direction, "up") {
+        new_y = head_y - 1
+    }
+    if math.eq(direction, "down") {
+        new_y = head_y + 1
+    }
+    if math.eq(direction, "left") {
+        new_x = head_x - 1
+    }
+    if math.eq(direction, "right") {
+        new_x = head_x + 1
+    }
+    
+    // Add new head position to beginning
+    let new_snake_x = [new_x]
+    let new_snake_y = [new_y]
+    
+    // Add rest of body
+    let i = 0
+    let snake_len = array.length(snake_x)
+    while is_less_than(i, snake_len) {
+        array.push(new_snake_x, array.get(snake_x, i))
+        array.push(new_snake_y, array.get(snake_y, i))
+        let i = i + 1
+    }
+    
+    // Update snake arrays
+    snake_x = new_snake_x
+    snake_y = new_snake_y
+    
+    // Remove tail if not growing
+    if grow {
+        grow = false
+    } else {
+        // Remove last segment
+        array.pop(snake_x)
+        array.pop(snake_y)
+    }
+}
+
+// Check for food collision
+func check_food() {
+    let head_x = array.get(snake_x, 0)
+    let head_y = array.get(snake_y, 0)
+    
+    if math.eq(head_x, food_x) {
+        if math.eq(head_y, food_y) {
+            score = score + 10
+            grow = true
+            spawn_food()
+        }
+    }
+}
+
+// Check for game over conditions
+func check_game_over() {
+    let head_x = array.get(snake_x, 0)
+    let head_y = array.get(snake_y, 0)
+    
+    // Wall collision
+    // Check left wall
+    let is_neg_x = is_negative(head_x)
+    if is_neg_x {
+        running = false
+        print("\nGame Over! Hit the left wall.")
+        return
+    }
+    
+    // Check right wall
+    let diff_x = math.subtract(head_x, WIDTH)
+    if math.eq(diff_x, 0) {
+        running = false
+        print("\nGame Over! Hit the right wall.")
+        return
+    }
+    let is_exceed_x = is_positive(diff_x)
+    if is_exceed_x {
+        running = false
+        print("\nGame Over! Hit the right wall.")
+        return
+    }
+    
+    // Check top wall
+    let is_neg_y = is_negative(head_y)
+    if is_neg_y {
+        running = false
+        print("\nGame Over! Hit the top wall.")
+        return
+    }
+    
+    // Check bottom wall
+    let diff_y = math.subtract(head_y, HEIGHT)
+    if math.eq(diff_y, 0) {
+        running = false
+        print("\nGame Over! Hit the bottom wall.")
+        return
+    }
+    let is_exceed_y = is_positive(diff_y)
+    if is_exceed_y {
+        running = false
+        print("\nGame Over! Hit the bottom wall.")
+        return
+    }
+    
+    // Self collision (skip head)
+    let i = 1
+    let snake_len = array.length(snake_x)
+    while is_less_than(i, snake_len) {
+        if math.eq(head_x, array.get(snake_x, i)) {
+            if math.eq(head_y, array.get(snake_y, i)) {
+                running = false
+                print("\nGame Over! Snake ate itself.")
+                print("Final score: " + math.to_str(score))
+                return
+            }
+        }
+        let i = i + 1
+    }
+}
+
+// Function to check if input is a valid direction
+func is_valid_direction(input) {
+    if math.eq(input, "up") {
+        return true
+    }
+    if math.eq(input, "down") {
+        return true
+    }
+    if math.eq(input, "left") {
+        return true
+    }
+    if math.eq(input, "right") {
+        return true
+    }
+    return false
+}
+
+// Initial food placement
+spawn_food()
+
+// Main game loop
+while running {
+    draw_board()
+    let input = native_stdin.input("Move: ")
+    
+    if math.eq(input, "exit") {
+        running = false
+    } else if is_valid_direction(input) {
+        direction = input
+        move_snake()
+        check_food()
+        check_game_over()
+    }
+}
+
+print("Thanks for playing!")

@@ -1,0 +1,16 @@
+// Simple function parameter scope test for v0.5.0
+
+// Define a simple function with parameters
+func add_values(a, b) {
+    // This should print and use the parameter values correctly
+    print("Parameter a = " + a)
+    print("Parameter b = " + b)
+    return a + b
+}
+
+// Call the function with different parameters
+print("Testing function with numbers:")
+print("Result of add_values(5, 7): " + add_values(5, 7))
+
+print("\nTesting function with strings:")
+print("Result of add_values('Hello, ', 'World!'): " + add_values("Hello, ", "World!"))

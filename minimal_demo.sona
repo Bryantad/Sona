@@ -1,0 +1,22 @@
+// Sona v0.5.0 Minimal Demo
+// Testing the four key features
+
+// 1. Import aliasing with 'as' keyword
+import utils.math.smod as math
+
+// 2. Multi-line string support
+let welcome = """
+Welcome to Sona v0.5.0!
+This tests multi-line strings.
+"""
+
+// 3. Function parameter scope
+func calculate(x) {
+    // Test accessing parameter directly
+    return math.multiply(x, 2)
+}
+
+// 4. Print results
+print(welcome)
+print("Result: " + math.to_str(calculate(5)))
+print("Done!")

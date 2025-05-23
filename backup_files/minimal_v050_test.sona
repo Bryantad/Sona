@@ -1,0 +1,12 @@
+// Minimal test for Sona v0.5.0 features
+
+// Feature 1: Multiline string
+let message = """
+This is a multiline string
+It spans multiple lines
+And preserves formatting
+"""
+
+// Print the result
+print(message)
+print("Test complete!")

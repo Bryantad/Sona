@@ -1,35 +1,75 @@
-# Sona Programming Language
+````markdown
+# Sona Programming Language + SonaCore AI
 
-**Sona** is a modern, modular, and AI-forward programming language designed to empower developers, creators, and neurodivergent thinkers. It merges the accessibility of Python, the modularity of Go, the discipline of Rust, and the creative freedom of JavaScript—wrapped in a system you own.
+[![Stars](https://img.shields.io/github/stars/Bryantad/Sona?style=social)]
+[![Forks](https://img.shields.io/github/forks/Bryantad/Sona?style=social)]
+[![Release](https://img.shields.io/github/v/release/Bryantad/Sona)]
+[![Sponsor](https://img.shields.io/badge/Sponsor-Sona-blue)]
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy_Me_A_Coffee-Donate-yellow)]
 
-> _“If Python taught you to code, Sona will teach you to build legacies.”_
+**Sona** is a modern, modular, and AI-forward programming language designed to empower developers, creators, and neurodivergent thinkers. It merges the accessibility of Python, the modularity of Go, the discipline of Rust, and the creative freedom of JavaScript, wrapped in a system you own.
+
+> “If Python taught you to code, Sona will teach you to build legacies.”
+
+---
+
+## Releases
+
+- **v0.5.1**
+
+  - Advanced REPL diagnostic tools (`:debug`, `:profile`, `:watch`, `:trace`)
+  - Bug fixes for function parameter handling
+  - Improved error reporting
+
+- **v0.5.0**
+
+  - Robust module system with nested imports (`import utils.math.smod`)
+  - Dotted access (`math.PI`, `fs.exists()`)
+  - Immutable constants and enhanced error reporting
+  - Expanded standard library (algebra, trigonometry, I/O)
+  - CLI improvements and script execution
+
+- **v0.4.3**
+  - Core interpreter: variables, control flow, functions
+  - REPL enhancements: multiline functions, `:env`, `:clear`, `:reload`
+  - 12+ core modules (`fs`, `http`, `json`, `env`, `stdin`)
+  - Graceful error messages and fast iteration
+
+---
+
+## Quick Start
+
+```bash
+git clone https://github.com/Bryantad/Sona.git
+cd Sona
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -U pip setuptools wheel
+pip install -r requirements.txt   # or `pip install lark-parser`
+pip install -e .
+sona --version
+```
+````
 
 ---
 
 ## What is Sona?
 
-Sona is a clean, expressive programming language that’s:
-- Human-first** in syntax
-- AI-enhanced** with its own model (SonaCore)
-- Modular-by-default** using `.smod` files
-- Built from scratch**, using Lark (Python parser toolkit) and a custom interpreter
-
-It’s made for:
-- The solo dev tired of overhead
-- The beginner who wants to _understand_, not memorize
-- The builder who refuses to be boxed in
+- Human-first syntax
+- AI-enhanced
+- Modular-by-default via `.smod` modules
+- Built from scratch with Lark and a custom interpreter
 
 ---
 
-## Core Features (v0.4.3)
+## Core Features
 
-✅ Clean syntax: `let`, `const`, `func`, `if`, `for`, `while`, `return`  
-✅ Dual structure: indentation or braces (your choice)  
-✅ Fully working interpreter + REPL (cross-platform)  
-✅ Built-in standard modules (e.g. `math.smod`, `fs.smod`, `env.smod`)  
-✅ CLI execution: `sona file.sona`  
-✅ Modular import system  
-✅ Future-ready: SonaCore AI, transpiler support, and IDE integration
+- Clean syntax: `let`, `const`, `func`, `if`, `for`, `while`, `return`
+- Dual structure: indentation or braces
+- Fully working interpreter and REPL
+- Built-in standard modules: `math.smod`, `fs.smod`, `env.smod`, `stdin.smod`
+- CLI execution: `sona file.sona`
+- Future-ready: SonaCore AI, transpiler support, IDE integration
 
 ---
 
@@ -37,121 +77,77 @@ It’s made for:
 
 ```sona
 func greet(name) {
-    print("Welcome, " + name);
+    print("Welcome, " + name)
 }
 
 const creator = "Sona"
 
 if (creator == "Sona") {
-    greet(creator);
+    greet(creator)
 } else {
-    print("Unknown caller.");
+    print("Unknown caller")
 }
-````
-
-
--- Getting Started --
-
-1. Install Required Tools
-
-```bash
-pip install lark-parser
 ```
-
-2. Clone and Run REPL
-
-```bash
-git clone https://github.com/YOUR_USERNAME/Sona.git
-cd sona_core
-python sona_core/interpreter.py
-```
-
-Type or paste Sona code directly into the REPL. Press Enter twice to run a block. Type `exit` to quit.
-
--- The Sona Philosophy --
-
-* Creativity before complexity
-* Coding should feel like expressing, not wrestling
-* Learning should be like storytelling, not memorization
-* Power belongs to those who write, test, and ship
 
 ---
 
-Project Layout
+## Project Layout
 
 ```
 sona/
 ├── sona_core/       # Interpreter, grammar, CLI
-│   └── grammar.lark
-├── smod/            # Sona-native standard modules
-├── examples/        # Demo apps (e.g., calculator, chatbot)
+├── smod/            # Standard `.smod` modules
+├── examples/        # Demo programs (snake_game.sona, calculator.sona, ...)
 ├── tests/           # Unit tests
-├── docs/            # Guides and references
-├── datasets/        # For future SonaCore training
+├── datasets/        # SonaCore training data
+├── docs/            # Developer guide and references
+├── setup.py         # Installation config
+├── README.md        # Project overview
+├── LICENSE          # MIT License
+└── CONTRIBUTING.md  # Contribution guidelines
 ```
 
 ---
 
-What’s Coming Next
+## REPL Commands
 
-* 🧪 Built-in unit testing syntax
-* 🔁 `match` expressions and pattern destructuring
-* 📦 Full SonaCore LLM integration
-* 🛠️ IDE auto-complete plugin (powered by SonaCore)
-* 🔄 Transpilers: Sona → Python / JS / Go
-* 🌐 Deployment to [Sona.org](http://Sona.org) (coming soon)
-
----
-
-Contribute or Join the Movement
-
-Sona is built **openly and publicly** — and we want you involved.
-
-Ways to contribute:
-
-* Help build `.smod` modules
-* Add features to the interpreter
-* Test core behavior
-* Write example programs
-* Help train SonaCore’s brain
-
-Setup to Contribute
-
-```bash
-git clone https://github.com/YOUR_USERNAME/sona-lang.git
-cd sona-lang
-git checkout -b feature/your-feature
-```
-
-Then:
-
-1. Make your changes
-2. Write tests (if applicable)
-3. Submit a Pull Request
-
----
-
-Projects Built in Sona (examples/)(coming soon!!!)
-
-* 🐍 `snake_game.sona`
-* ➕ `calculator.sona`
-* 🤖 `chatbot.sona`
-* ✨ `auto-completion.sona` (hooks into SonaCore)
-
----
-
-License
-
-MIT – Sona is free to use, build on, and share.
-Proudly created by Netcore Solutions LLC, a subsidiary of (Waycore Inc.)
-
----
-
-Ready to build something meaningful?
-
-> Fork it. Write it. Shape the future with us.
+Sona v0.5.1 includes a robust REPL environment with several helpful commands:
 
 ```
-
-Let me know if you want this broken into multiple language versions (like Spanish, French, etc.) or turned into a GitHub Pages landing site.
+:help       - Show this help message
+:exit, :quit- Exit the REPL
+:calc       - Launch calculator application
+:quiz       - Launch quiz application
+:clear      - Clear the screen
+:version    - Show Sona version
+:test       - Run diagnostic tests
 ```
+
+You can also exit by typing `exit` or `quit` without the colon prefix.
+
+---
+
+## Contribute or Join the Movement
+
+1. Fork this repository
+2. Create a branch: `git checkout -b feature/your-feature`
+3. Make your changes and write tests
+4. Submit a Pull Request
+
+---
+
+## Support
+
+Your support keeps Sona and SonaCore moving forward:
+
+[![Sponsor](https://img.shields.io/badge/Sponsor-Sona-blue)](https://github.com/sponsors/Bryantad)
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy_Me_A_Coffee-Donate-yellow)](https://ko-fi.com/Bryantad)
+
+Stars, forks, pull requests, and donations are all welcome.
+
+---
+
+## License
+
+MIT License. Sona is free to use, build on, and share.
+Proudly created by Netcore Solutions LLC, a subsidiary of Waycore Inc.

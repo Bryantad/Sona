@@ -1,0 +1,33 @@
+// Simple function parameter scope test for v0.5.0
+
+// Define a function with parameters
+func add(a, b) {
+    // Access parameters within function body
+    print("a = " + a)
+    print("b = " + b)
+    return a + b
+}
+
+func greet(name) {
+    return "Hello, " + name + "!"
+}
+
+func test_nested(x) {
+    func inner(y) {
+        return x + y  // Access outer function parameter
+    }
+    return inner(10)  // Call inner function
+}
+
+// Test simple parameter access
+print("Testing add(5, 3)...")
+let result = add(5, 3)
+print("Result: " + result)
+
+// Test string parameter
+print(greet("World"))
+
+// Test nested functions (advanced)
+print("Nested function result: " + test_nested(5))
+
+print("All function parameter tests complete!")

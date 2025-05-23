@@ -1,0 +1,16 @@
+// Very simple function parameter test
+
+// Define a basic function with a parameter
+func test(x) {
+    // This should print the parameter value
+    print("Parameter x = " + x)
+    return x
+}
+
+// Call the function with a string argument
+print("Calling test() with 'hello'")
+print("Result: " + test("hello"))
+
+// Call with a number
+print("Calling test() with 42")
+print("Result: " + test(42))

@@ -1,0 +1,10 @@
+// Simple test program for Sona
+
+import native_stdin
+import utils.math.smod as math
+
+print("Hello from Sona!")
+print("2 + 2 = " + math.to_str(math.add(2, 2)))
+
+let name = native_stdin.input("What's your name? ")
+print("Hello, " + name + "!")

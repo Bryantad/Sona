@@ -1,0 +1,20 @@
+// Testing function definition and import with alias
+import utils.math.smod as math
+
+// Function definition
+func add_numbers(a, b) {
+    return a + b
+}
+
+// Call function
+let result = add_numbers(5, 10)
+print("5 + 10 = " + math.to_str(result))
+
+// Testing multi-line string
+let message = """
+This is a multi-line string
+that spans across
+multiple lines.
+"""
+
+print(message)

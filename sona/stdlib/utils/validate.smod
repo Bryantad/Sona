@@ -1,0 +1,6 @@
+"""Validation utility functions for Sona."""
+# Validation utility functions for Sona.
+
+def is_number(x): return isinstance(x, (int, float))
+def is_string(x): return isinstance(x, str)
+def is_empty(x): return x == "" or x == [] or x is None

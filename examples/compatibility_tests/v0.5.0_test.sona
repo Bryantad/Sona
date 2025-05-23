@@ -1,0 +1,34 @@
+// Full test for Sona v0.5.0 features
+import utils.math.smod as math
+
+// Test 1: Basic function with multi-line string
+func welcome(name) {
+    print("""
+    Welcome to Sona v0.5.0 testing!
+    Hello, """ + name + """!
+    We're testing multi-line strings.
+    """)
+    return 0
+}
+
+// Test 2: Function with conditional logic
+func check_value(val) {
+    if math.greater_than(val, 5) {
+        print("Value is greater than 5")
+    } else {
+        print("Value is less than or equal to 5")
+    }
+    return 0
+}
+
+// Test 3: Import with 'as' keyword usage
+print("PI value from math module: " + math.to_str(math.PI))
+
+// Test 4: Inline comments at the end of a statement
+let x = 10  // This is an inline comment
+
+// Test 5: Function calls and parameter passing
+welcome("Andre")
+check_value(x)
+
+print("All tests completed!")
