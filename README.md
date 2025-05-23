@@ -1,4 +1,5 @@
-````markdown
+
+```markdown
 # Sona Programming Language + SonaCore AI
 
 [![Stars](https://img.shields.io/github/stars/Bryantad/Sona?style=social)]
@@ -16,13 +17,11 @@
 ## Releases
 
 - **v0.5.1**
-
   - Advanced REPL diagnostic tools (`:debug`, `:profile`, `:watch`, `:trace`)
   - Bug fixes for function parameter handling
   - Improved error reporting
 
 - **v0.5.0**
-
   - Robust module system with nested imports (`import utils.math.smod`)
   - Dotted access (`math.PI`, `fs.exists()`)
   - Immutable constants and enhanced error reporting
@@ -49,7 +48,6 @@ pip install -r requirements.txt   # or `pip install lark-parser`
 pip install -e .
 sona --version
 ```
-````
 
 ---
 
@@ -114,13 +112,13 @@ sona/
 Sona v0.5.1 includes a robust REPL environment with several helpful commands:
 
 ```
-:help       - Show this help message
-:exit, :quit- Exit the REPL
-:calc       - Launch calculator application
-:quiz       - Launch quiz application
-:clear      - Clear the screen
-:version    - Show Sona version
-:test       - Run diagnostic tests
+:help        - Show this help message
+:exit, :quit - Exit the REPL
+:calc        - Launch calculator application
+:quiz        - Launch quiz application
+:clear       - Clear the screen
+:version     - Show Sona version
+:test        - Run diagnostic tests
 ```
 
 You can also exit by typing `exit` or `quit` without the colon prefix.
@@ -138,16 +136,28 @@ You can also exit by typing `exit` or `quit` without the colon prefix.
 
 ## Support
 
-Your support keeps Sona and SonaCore moving forward:
+Your support keeps Sona and SonaCore moving forward.  
+Stars, forks, pull requests, and donations are all welcome.
 
 [![Sponsor](https://img.shields.io/badge/Sponsor-Sona-blue)](https://github.com/sponsors/Bryantad)
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy_Me_A_Coffee-Donate-yellow)](https://ko-fi.com/Bryantad)
-
-Stars, forks, pull requests, and donations are all welcome.
 
 ---
 
 ## License
 
-MIT License. Sona is free to use, build on, and share.
+MIT License. Sona is free to use, build on, and share.  
 Proudly created by Netcore Solutions LLC, a subsidiary of Waycore Inc.
+```
+
+---
+
+**Explanation of Fixes:**
+1. **Release Notes**: Merged unique points from both branches, removed duplication/conflict markers.
+2. **Quick Start**: Kept the most recent and complete block, removed extra conflict markers.
+3. **Feature Lists**: Chose consistent bullet style and included all unique features.
+4. **REPL Commands**: Preserved the more detailed/updated list from v0.5.1.
+5. **Support Section**: Combined both branch notes—encouraging both support and general contributions.
+6. **Removed all conflict markers**: All <<<<<<<, =======, >>>>>>> are gone.
+
+Let me know if you need this in a different format, or want a commit message for the fix!
