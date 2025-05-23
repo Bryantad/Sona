@@ -1,0 +1,7 @@
+// String test
+print("Regular string")
+print("""
+Multi-line string
+test
+""")
+print("Done")

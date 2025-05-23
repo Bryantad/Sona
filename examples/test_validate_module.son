@@ -1,0 +1,6 @@
+import utils.validate.smod
+
+print(validate.is_number(5))       # Output: True
+print(validate.is_string("hi"))    # Output: True
+print(validate.is_empty(""))       # Output: True
+print(validate.is_empty([1]))      # Output: False

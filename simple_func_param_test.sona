@@ -1,0 +1,6 @@
+// Simple function test
+func test(x) {
+  let y = x + 1
+  return y
+}
+print(test(5))

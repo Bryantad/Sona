@@ -1,0 +1,433 @@
+// Pattern Matcher and Text Processor for Sona language
+// Demonstrates string manipulation, pattern extraction, and text transformation
+import native_stdin
+import utils.string.smod as string
+import utils.math.smod as math
+import utils.array.smod as array
+
+// Helper function: check if a string contains a substring
+func contains(source, search) {
+    let position = string.find(source, search)
+    return math.greater_than_eq(position, 0)
+}
+
+// Helper function: check if a number is negative
+func is_negative(num) {
+    let num_str = math.to_str(num)
+    let first_char = string.substr(num_str, 0, 1)
+    return math.eq(first_char, "-")
+}
+
+// Helper function: check if a < b
+func is_less_than(a, b) {
+    let diff = math.subtract(a, b)
+    return is_negative(diff)
+}
+
+// Helper function: check if a > b
+func is_greater_than(a, b) {
+    return is_less_than(b, a)
+}
+
+// Extract all occurrences of a pattern from text
+func extract_pattern(text, pattern) {
+    let results = []
+    let start_pos = 0
+    let pattern_len = string.length(pattern)
+    let text_len = string.length(text)
+    
+    while is_less_than(start_pos, text_len) {
+        let pos = string.find(text, pattern, start_pos)
+        
+        if math.eq(pos, -1) {
+            // No more matches
+            break
+        }
+        
+        array.push(results, pos)
+        let start_pos = pos + 1
+    }
+    
+    return results
+}
+
+// Extract text between two markers
+func extract_between(text, start_marker, end_marker) {
+    let results = []
+    let pos = 0
+    let text_len = string.length(text)
+    
+    while is_less_than(pos, text_len) {
+        // Find start marker
+        let start_pos = string.find(text, start_marker, pos)
+        
+        if math.eq(start_pos, -1) {
+            // No more start markers
+            break
+        }
+        
+        // Find end marker after the start marker
+        let content_start = start_pos + string.length(start_marker)
+        let end_pos = string.find(text, end_marker, content_start)
+        
+        if math.eq(end_pos, -1) {
+            // No matching end marker
+            break
+        }
+        
+        // Extract the content between markers
+        let content = string.substr(text, content_start, end_pos - content_start)
+        array.push(results, content)
+        
+        // Move past this match
+        let pos = end_pos + string.length(end_marker)
+    }
+    
+    return results
+}
+
+// Search and replace all occurrences
+func replace_all(text, search, replacement) {
+    let result = text
+    let pos = 0
+    let text_len = string.length(text)
+    let search_len = string.length(search)
+    
+    while is_less_than(pos, text_len) {
+        let find_pos = string.find(result, search, pos)
+        
+        if math.eq(find_pos, -1) {
+            // No more occurrences
+            break
+        }
+        
+        // Replace at the position
+        let before = string.substr(result, 0, find_pos)
+        let after = string.substr(result, find_pos + search_len)
+        let result = before + replacement + after
+        
+        // Update position and length
+        let pos = find_pos + string.length(replacement)
+        let text_len = string.length(result)
+    }
+    
+    return result
+}
+
+// Check if text matches a simple pattern with wildcards
+// * = any number of characters
+// ? = any single character
+func matches_pattern(text, pattern) {
+    // Convert the pattern to a more manageable form
+    let regex_pattern = string.replace(pattern, "*", ".*")
+    let regex_pattern = string.replace(regex_pattern, "?", ".")
+    
+    // Simple implementation - for full regex would need more complex logic
+    // This version just handles * and ? wildcards
+    
+    // Escape special characters except * and ?
+    let chars_to_escape = [".", "+", "(", ")", "[", "]", "{", "}", "\\", "^", "$"]
+    let i = 0
+    let len = array.length(chars_to_escape)
+    
+    while is_less_than(i, len) {
+        let char = array.get(chars_to_escape, i)
+        
+        // Skip . since we're using it for ?
+        if math.not_eq(char, ".") {
+            let regex_pattern = string.replace(regex_pattern, char, "\\" + char)
+        }
+        
+        let i = i + 1
+    }
+    
+    // Simplified pattern matching (not true regex)
+    // This is a basic approximation as Sona doesn't have built-in regex
+    
+    // For exact matches (no wildcards)
+    if math.and(math.not(contains(pattern, "*")), math.not(contains(pattern, "?"))) {
+        return math.eq(text, pattern)
+    }
+    
+    // For simple prefix matching (ends with *)
+    if math.and(string.endswith(pattern, "*"), math.not(contains(string.substr(pattern, 0, string.length(pattern) - 1), "*"))) {
+        let prefix = string.substr(pattern, 0, string.length(pattern) - 1)
+        return string.startswith(text, prefix)
+    }
+    
+    // For simple suffix matching (starts with *)
+    if math.and(string.startswith(pattern, "*"), math.not(contains(string.substr(pattern, 1), "*"))) {
+        let suffix = string.substr(pattern, 1)
+        return string.endswith(text, suffix)
+    }
+    
+    // For contains matching (*text*)
+    if math.and(string.startswith(pattern, "*"), string.endswith(pattern, "*")) {
+        let middle = string.substr(pattern, 1, string.length(pattern) - 2)
+        if math.not(contains(middle, "*")) {
+            return contains(text, middle)
+        }
+    }
+    
+    // Basic handling of ? for single character
+    if contains(pattern, "?") {
+        if math.eq(string.length(text), string.length(pattern)) {
+            let match = 1
+            let j = 0
+            
+            while is_less_than(j, string.length(pattern)) {
+                let pattern_char = string.substr(pattern, j, 1)
+                let text_char = string.substr(text, j, 1)
+                
+                if math.and(math.not_eq(pattern_char, "?"), math.not_eq(pattern_char, text_char)) {
+                    let match = 0
+                    break
+                }
+                
+                let j = j + 1
+            }
+            
+            return match
+        }
+    }
+    
+    // For other patterns, we would need a more complex implementation
+    // This is a simplified version
+    return contains(text, string.replace(pattern, "*", ""))
+}
+
+// Count words in text
+func count_words(text) {
+    // Normalize whitespace
+    let normalized = text
+    let whitespace_chars = [" ", "\t", "\n", "\r"]
+    let i = 0
+    let len = array.length(whitespace_chars)
+    
+    while is_less_than(i, len) {
+        let char = array.get(whitespace_chars, i)
+        let normalized = string.replace(normalized, char, " ")
+        let i = i + 1
+    }
+    
+    // Trim and split by space
+    let trimmed = string.trim(normalized)
+    let words = string.split(trimmed, " ")
+    
+    // Count non-empty words
+    let count = 0
+    let j = 0
+    let words_len = array.length(words)
+    
+    while is_less_than(j, words_len) {
+        let word = array.get(words, j)
+        if math.not_eq(string.length(word), 0) {
+            let count = count + 1
+        }
+        let j = j + 1
+    }
+    
+    return count
+}
+
+// Convert text to title case
+func title_case(text) {
+    let words = string.split(text, " ")
+    let result = ""
+    let i = 0
+    let len = array.length(words)
+    
+    while is_less_than(i, len) {
+        let word = array.get(words, i)
+        
+        if math.not_eq(string.length(word), 0) {
+            let first_char = string.upper(string.substr(word, 0, 1))
+            let rest = string.lower(string.substr(word, 1))
+            let title_word = first_char + rest
+            
+            if math.eq(i, 0) {
+                let result = title_word
+            } else {
+                let result = result + " " + title_word
+            }
+        }
+        
+        let i = i + 1
+    }
+    
+    return result
+}
+
+// Analyze text and return statistics
+func analyze_text(text) {
+    let stats = []
+    let char_count = string.length(text)
+    array.push(stats, char_count)
+    
+    let word_count = count_words(text)
+    array.push(stats, word_count)
+    
+    // Count lines
+    let lines = string.split(text, "\n")
+    let line_count = array.length(lines)
+    array.push(stats, line_count)
+    
+    // Count sentences (rudimentary)
+    let sentence_delimiters = [".", "!", "?"]
+    let sentence_count = 0
+    
+    let j = 0
+    let delim_len = array.length(sentence_delimiters)
+    
+    while is_less_than(j, delim_len) {
+        let delim = array.get(sentence_delimiters, j)
+        let positions = extract_pattern(text, delim)
+        let sentence_count = sentence_count + array.length(positions)
+        let j = j + 1
+    }
+    
+    array.push(stats, sentence_count)
+    
+    return stats
+}
+
+// Apply multiple text transformations
+func transform_text(text, operations) {
+    let result = text
+    let i = 0
+    let len = array.length(operations)
+    
+    while is_less_than(i, len) {
+        let operation = array.get(operations, i)
+        
+        if math.eq(operation, "upper") {
+            let result = string.upper(result)
+        } else if math.eq(operation, "lower") {
+            let result = string.lower(result)
+        } else if math.eq(operation, "title") {
+            let result = title_case(result)
+        } else if math.eq(operation, "trim") {
+            let result = string.trim(result)
+        } else if math.eq(operation, "reverse") {
+            // Reverse the string character by character
+            let reversed = ""
+            let j = string.length(result) - 1
+            
+            while is_greater_than(j, -1) {
+                let reversed = reversed + string.substr(result, j, 1)
+                let j = j - 1
+            }
+            
+            let result = reversed
+        }
+        
+        let i = i + 1
+    }
+    
+    return result
+}
+
+// Demo function to test pattern matching
+func demo_pattern_matching() {
+    print("\n=== Pattern Matching Demo ===\n")
+    
+    let test_text = "The quick brown fox jumps over the lazy dog."
+    print("Sample text: " + test_text)
+    
+    // Extract pattern positions
+    print("\nFinding occurrences of 'the':")
+    let positions = extract_pattern(string.lower(test_text), "the")
+    let i = 0
+    let len = array.length(positions)
+    
+    while is_less_than(i, len) {
+        let pos = array.get(positions, i)
+        print("  Found at position " + math.to_str(pos))
+        let i = i + 1
+    }
+    
+    // Simple wildcard matching
+    print("\nTesting wildcard patterns:")
+    let patterns = ["*fox*", "The*", "*dog.", "The ? quick", "*brown*lazy*"]
+    let j = 0
+    let patterns_len = array.length(patterns)
+    
+    while is_less_than(j, patterns_len) {
+        let pattern = array.get(patterns, j)
+        let matches = matches_pattern(test_text, pattern)
+        
+        if math.eq(matches, 1) {
+            print("  '" + pattern + "' matches")
+        } else {
+            print("  '" + pattern + "' does not match")
+        }
+        
+        let j = j + 1
+    }
+    
+    // Extract between markers
+    print("\nExtracting content between markers:")
+    let sample = "Start [item1] middle [item2] end [final item]"
+    print("Sample: " + sample)
+    
+    let extracted = extract_between(sample, "[", "]")
+    let k = 0
+    let ext_len = array.length(extracted)
+    
+    while is_less_than(k, ext_len) {
+        print("  Item " + math.to_str(k + 1) + ": " + array.get(extracted, k))
+        let k = k + 1
+    }
+    
+    return 0
+}
+
+// Demo function to test text transformations
+func demo_text_transformations() {
+    print("\n=== Text Transformation Demo ===\n")
+    
+    let test_text = "   hello WORLD, this is a TEST string   "
+    print("Original: '" + test_text + "'")
+    
+    // Individual transformations
+    print("\nIndividual transformations:")
+    print("  Upper: '" + string.upper(test_text) + "'")
+    print("  Lower: '" + string.lower(test_text) + "'")
+    print("  Title: '" + title_case(test_text) + "'")
+    print("  Trim: '" + string.trim(test_text) + "'")
+    
+    // Multiple transformations
+    print("\nChained transformations:")
+    let operations = ["trim", "lower", "title"]
+    let transformed = transform_text(test_text, operations)
+    print("  Result: '" + transformed + "'")
+    
+    // Word and character count
+    print("\nText statistics:")
+    let stats = analyze_text("Hello world! This is a sample text.\nIt has multiple lines.\nAnd multiple sentences!")
+    
+    print("  Character count: " + math.to_str(array.get(stats, 0)))
+    print("  Word count: " + math.to_str(array.get(stats, 1)))
+    print("  Line count: " + math.to_str(array.get(stats, 2)))
+    print("  Sentence count: " + math.to_str(array.get(stats, 3)))
+    
+    // Search and replace demo
+    print("\nSearch and replace:")
+    let text = "The cat sat on the mat. The cat was happy."
+    print("  Original: " + text)
+    let replaced = replace_all(text, "cat", "dog")
+    print("  Replaced: " + replaced)
+    
+    return 0
+}
+
+// Main program
+print("Pattern Matcher and Text Processor")
+print("=================================")
+print("This demo shows string pattern matching and text processing in Sona.")
+
+// Run the demo functions
+demo_pattern_matching()
+demo_text_transformations()
+
+print("\nEnd of Pattern Matcher and Text Processor Demo")

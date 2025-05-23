@@ -1,0 +1,23 @@
+// Test for Sona v0.5.0 without using the 'as' keyword
+import utils.math.smod
+
+// Basic function
+func calculate_area(radius) {
+    return utils.math.smod.multiply(utils.math.smod.PI, utils.math.smod.multiply(radius, radius))
+}
+
+// Multi-line string support
+let info = """
+This test demonstrates:
+1. Regular imports without 'as'
+2. Multi-line strings
+3. Function definition and calls
+"""
+
+print(info)
+
+let radius = 5
+let area = calculate_area(radius)
+print("Area of circle with radius " + utils.math.smod.to_str(radius) + " is: " + utils.math.smod.to_str(area))
+
+print("Test complete!")

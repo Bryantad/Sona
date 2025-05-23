@@ -1,0 +1,8 @@
+// Enhanced function parameter debug test
+func add_one(num) {
+  print("Inside function, parameter value is: " + num)
+  return num + 1
+}
+
+let result = add_one(5)
+print("Result: " + result)

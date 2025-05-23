@@ -23,12 +23,12 @@ def main():
 
     # No arguments - start REPL
     if len(sys.argv) == 1:
-        sona_repl.repl()  # Call repl() function directly
+        sona_repl.run_repl()  # Call run_repl() function directly
         return
     
     # Handle 'repl' command explicitly
     if len(sys.argv) == 2 and sys.argv[1] in ["repl", "--repl", "-r"]:
-        sona_repl.repl()  # Call repl() function directly
+        sona_repl.run_repl()  # Call run_repl() function directly
         return
       # Handle file execution
     file_path = Path(sys.argv[1])
@@ -53,7 +53,7 @@ def main():
         sys.exit(1)
 
 def repl():
-    print("\nSona REPL v0.4.3 - Type `exit` or `Ctrl+C` to quit.\n")
+    print("\nSona REPL v0.5.1 - Type `exit` or `Ctrl+C` to quit.\n")
     from sona.interpreter import SonaInterpreter
     interpreter = SonaInterpreter()
 
