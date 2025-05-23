@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-# Security Policy for Sona Programming Language...
-=======
 # Security Policy
 
 ## Supported Versions
