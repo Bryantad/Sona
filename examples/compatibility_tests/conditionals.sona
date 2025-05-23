@@ -1,0 +1,56 @@
+// Conditionals test for Sona v0.4.9
+import utils.math.smod
+
+// Simple if-else
+let x = 5
+let y = 10
+
+print("Testing simple if-else:")
+if math.eq(x, y) {
+    print("x equals y")
+} else {
+    print("x does not equal y")
+}
+
+// Nested if-else (proper structure for v0.4.9)
+print("\nTesting nested if-else:")
+if math.eq(x, 5) {
+    print("x equals 5")
+} else {
+    if math.eq(x, 10) {
+        print("x equals 10")
+    } else {
+        print("x is neither 5 nor 10")
+    }
+}
+
+// Testing comparisons
+print("\nTesting comparisons:")
+if math.less_than(x, y) {
+    print("x is less than y")
+}
+
+if math.greater_than(y, x) {
+    print("y is greater than x")
+}
+
+// Testing equality
+print("\nTesting equality:")
+let a = 7
+let b = 7
+if math.eq(a, b) {
+    print("a equals b")
+}
+
+// Boolean values are represented as 1 (true) and 0 (false)
+let is_true = 1
+let is_false = 0
+
+print("\nTesting boolean values:")
+if math.eq(is_true, 1) {
+    print("is_true is true (1)")
+}
+
+if math.eq(is_false, 0) {
+    print("is_false is false (0)")
+}

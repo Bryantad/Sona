@@ -1,0 +1,9 @@
+// Test file for function parameter handling
+import utils.math.smod as math
+
+func test_func(x, y) {
+    let z = x + y
+    return z
+}
+
+print("Function call result: " + math.to_str(test_func(5, 7)))

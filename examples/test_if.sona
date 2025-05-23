@@ -1,0 +1,21 @@
+// Test file for Sona language testing
+import utils.math.smod as math
+
+func test_if_chain(val) {
+    if math.eq(val, 1) {
+        print("Value is 1")
+    } else {
+        if math.eq(val, 2) {
+            print("Value is 2")
+        } else {
+            if math.eq(val, 3) {
+                print("Value is 3")
+            } else {
+                print("Value is something else")
+            }
+        }
+    }
+    return 0
+}
+
+test_if_chain(2)

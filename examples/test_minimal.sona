@@ -1,0 +1,3 @@
+// Minimal test file
+let x = 5
+print("X value: " + x)

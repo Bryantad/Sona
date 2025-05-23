@@ -1,0 +1,6 @@
+// Testing multi-line strings
+let msg = """This is a
+multi-line
+string test"""
+
+print(msg)

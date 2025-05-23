@@ -1,5 +1,5 @@
 Metadata-Version: 2.4
-Name: sona
-Version: 0.2
-Requires-Dist: lark-parser
-Dynamic: requires-dist
+Name: Sona
+Version: 0.5.0
+License-File: LICENSE
+Dynamic: license-file

@@ -1,0 +1,1 @@
+func simple(x) { return x + 1 } print(simple(5))

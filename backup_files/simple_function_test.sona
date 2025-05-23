@@ -1,0 +1,24 @@
+// Test for function parameter fix in v0.5.0
+
+// Simple function that uses a parameter
+func test(value) {
+    print("Parameter value: " + value)
+    return value + " processed"
+}
+
+// Call the function with a string
+print("Testing function with string parameter:")
+let result = test("hello")
+print("Function returned: " + result)
+
+// Function that uses parameters in calculations
+func multiply(a, b) {
+    let product = a * b
+    return product
+}
+
+// Call function with numeric parameters
+print("\nTesting calculation function:")
+print("5 * 3 = " + multiply(5, 3))
+
+print("\nAll tests passed!")

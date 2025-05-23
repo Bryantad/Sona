@@ -1,0 +1,550 @@
+// ASCII Visualization Demo for Sona language
+// This demo showcases text-based visualization techniques
+import native_stdin
+import utils.math.smod
+import utils.array.smod
+import utils.string.smod
+
+// Assign shorter alias names
+let math = utils.math.smod
+let array = utils.array.smod
+let string = utils.string.smod
+
+// Helper function: check if a number is negative
+func is_negative(num) {
+    let num_str = math.to_str(num)
+    let first_char = string.substr(num_str, 0, 1)
+    return math.eq(first_char, "-")
+}
+
+// Helper function: check if a < b
+func is_less_than(a, b) {
+    let diff = math.subtract(a, b)
+    return is_negative(diff)
+}
+
+// Helper function: check if a > b
+func is_greater_than(a, b) {
+    return is_less_than(b, a)
+}
+
+// Helper function: repeat a character n times
+func repeat_char(char, count) {
+    let result = ""
+    let i = 0
+    
+    while is_less_than(i, count) {
+        let result = result + char
+        let i = i + 1
+    }
+    
+    return result
+}
+
+// Generate a horizontal bar chart
+func bar_chart(labels, values) {
+    let max_value = 0
+    let i = 0
+    let len = array.length(values)
+    
+    // Find the maximum value for scaling
+    while is_less_than(i, len) {
+        let value = array.get(values, i)
+        if is_greater_than(value, max_value) {
+            let max_value = value
+        }
+        let i = i + 1
+    }
+    
+    // Find the longest label for formatting
+    let max_label_length = 0
+    let j = 0
+    
+    while is_less_than(j, len) {
+        let label = array.get(labels, j)
+        let label_length = string.length(label)
+        if is_greater_than(label_length, max_label_length) {
+            let max_label_length = label_length
+        }
+        let j = j + 1
+    }
+    
+    // Generate the bar chart
+    print("\nBar Chart:")
+    print("==========")
+    let k = 0
+    
+    while is_less_than(k, len) {
+        let label = array.get(labels, k)
+        let value = array.get(values, k)
+        
+        // Calculate the bar length (max 40 characters)
+        let bar_length = math.round((value * 40) / max_value)
+        
+        // Create the bar
+        let bar = repeat_char("█", bar_length)
+        
+        // Format the label with padding
+        let padding_length = max_label_length - string.length(label)
+        let padded_label = label + repeat_char(" ", padding_length)
+        
+        // Print the bar with label and value
+        print(padded_label + " | " + bar + " " + math.to_str(value))
+        let k = k + 1
+    }
+    
+    return 0
+}
+
+// Generate a line chart
+func line_chart(values, width, height) {
+    let len = array.length(values)
+    
+    if math.eq(len, 0) {
+        print("No data to display")
+        return 0
+    }
+    
+    // Find min and max values for scaling
+    let max_value = array.get(values, 0)
+    let min_value = array.get(values, 0)
+    let i = 1
+    
+    while is_less_than(i, len) {
+        let value = array.get(values, i)
+        if is_greater_than(value, max_value) {
+            let max_value = value
+        }
+        if is_less_than(value, min_value) {
+            let min_value = value
+        }
+        let i = i + 1
+    }
+    
+    // Add a 10% margin to min and max
+    let range = max_value - min_value
+    let margin = range * 0.1
+    let max_value = max_value + margin
+    let min_value = min_value - margin
+    let range = max_value - min_value
+    
+    // Create the chart grid
+    let grid = []
+    let y = 0
+    
+    while is_less_than(y, height) {
+        let row = repeat_char(" ", width)
+        array.push(grid, row)
+        let y = y + 1
+    }
+    
+    // Plot the points
+    let x_step = width / (len - 1)
+    
+    if is_less_than(x_step, 1) {
+        let x_step = 1
+    }
+    
+    let prev_x = -1
+    let prev_y = -1
+    let j = 0
+    
+    while is_less_than(j, len) {
+        let value = array.get(values, j)
+        // Calculate coordinates in the grid
+        let x = math.floor(j * x_step)
+        if is_greater_than(x, width - 1) {
+            let x = width - 1
+        }
+        
+        let normalized = (value - min_value) / range
+        let y = height - 1 - math.floor(normalized * (height - 1))
+        
+        // Draw a line between points
+        if math.and(math.not_eq(prev_x, -1), math.not_eq(prev_y, -1)) {
+            // Calculate line points using a simple implementation of Bresenham's algorithm
+            let dx = math.abs(x - prev_x)
+            let dy = math.abs(y - prev_y)
+            let sx = 1
+            if is_greater_than(prev_x, x) {
+                let sx = -1
+            }
+            let sy = 1
+            if is_greater_than(prev_y, y) {
+                let sy = -1
+            }
+            let err = dx - dy
+            let curr_x = prev_x
+            let curr_y = prev_y
+            
+            while math.or(math.not_eq(curr_x, x), math.not_eq(curr_y, y)) {
+                // Place a character at the current position
+                let row = array.get(grid, curr_y)
+                let new_row = string.substr(row, 0, curr_x) + "·" + string.substr(row, curr_x + 1)
+                array.set(grid, curr_y, new_row)
+                
+                let e2 = 2 * err
+                if is_greater_than(e2, -dy) {
+                    let err = err - dy
+                    let curr_x = curr_x + sx
+                }
+                if is_less_than(e2, dx) {
+                    let err = err + dx
+                    let curr_y = curr_y + sy
+                }
+            }
+        }
+        
+        // Mark the actual point
+        let row = array.get(grid, y)
+        let new_row = string.substr(row, 0, x) + "*" + string.substr(row, x + 1)
+        array.set(grid, y, new_row)
+        
+        // Save previous point
+        let prev_x = x
+        let prev_y = y
+        let j = j + 1
+    }
+    
+    // Draw the chart frame
+    let top_row = "┌" + repeat_char("─", width) + "┐"
+    let bottom_row = "└" + repeat_char("─", width) + "┘"
+    
+    print("\nLine Chart:")
+    print("===========")
+    print(top_row)
+    
+    let k = 0
+    while is_less_than(k, height) {
+        print("│" + array.get(grid, k) + "│")
+        let k = k + 1
+    }
+    
+    print(bottom_row)
+    
+    // Print the value range
+    print("Value range: " + math.to_str(min_value) + " to " + math.to_str(max_value))
+    
+    return 0
+}
+
+// Generate a scatter plot
+func scatter_plot(x_values, y_values, width, height) {
+    let len_x = array.length(x_values)
+    let len_y = array.length(y_values)
+    
+    if math.not_eq(len_x, len_y) {
+        print("Error: x and y arrays must have the same length")
+        return 0
+    }
+    
+    if math.eq(len_x, 0) {
+        print("No data to display")
+        return 0
+    }
+    
+    // Find min and max values for scaling
+    let max_x = array.get(x_values, 0)
+    let min_x = array.get(x_values, 0)
+    let max_y = array.get(y_values, 0)
+    let min_y = array.get(y_values, 0)
+    let i = 1
+    
+    while is_less_than(i, len_x) {
+        let x = array.get(x_values, i)
+        let y = array.get(y_values, i)
+        
+        if is_greater_than(x, max_x) {
+            let max_x = x
+        }
+        if is_less_than(x, min_x) {
+            let min_x = x
+        }
+        if is_greater_than(y, max_y) {
+            let max_y = y
+        }
+        if is_less_than(y, min_y) {
+            let min_y = y
+        }
+        
+        let i = i + 1
+    }
+    
+    // Add margins
+    let x_range = max_x - min_x
+    let y_range = max_y - min_y
+    let x_margin = x_range * 0.1
+    let y_margin = y_range * 0.1
+    
+    let max_x = max_x + x_margin
+    let min_x = min_x - x_margin
+    let max_y = max_y + y_margin
+    let min_y = min_y - y_margin
+    
+    let x_range = max_x - min_x
+    let y_range = max_y - min_y
+    
+    // Create the grid
+    let grid = []
+    let y = 0
+    
+    while is_less_than(y, height) {
+        let row = repeat_char(" ", width)
+        array.push(grid, row)
+        let y = y + 1
+    }
+    
+    // Plot the points
+    let j = 0
+    
+    while is_less_than(j, len_x) {
+        let x_val = array.get(x_values, j)
+        let y_val = array.get(y_values, j)
+        
+        // Calculate grid positions
+        let x_norm = (x_val - min_x) / x_range
+        let y_norm = (y_val - min_y) / y_range
+        
+        let x = math.floor(x_norm * (width - 1))
+        let y = height - 1 - math.floor(y_norm * (height - 1))
+        
+        // Place the point on the grid
+        if math.and(math.and(is_greater_than(x, -1), is_less_than(x, width)), math.and(is_greater_than(y, -1), is_less_than(y, height))) {
+            let row = array.get(grid, y)
+            let new_row = string.substr(row, 0, x) + "●" + string.substr(row, x + 1)
+            array.set(grid, y, new_row)
+        }
+        
+        let j = j + 1
+    }
+    
+    // Draw the chart frame
+    let top_row = "┌" + repeat_char("─", width) + "┐"
+    let bottom_row = "└" + repeat_char("─", width) + "┘"
+    
+    print("\nScatter Plot:")
+    print("=============")
+    print(top_row)
+    
+    let k = 0
+    while is_less_than(k, height) {
+        print("│" + array.get(grid, k) + "│")
+        let k = k + 1
+    }
+    
+    print(bottom_row)
+    
+    // Print the axis ranges
+    print("X range: " + math.to_str(min_x) + " to " + math.to_str(max_x))
+    print("Y range: " + math.to_str(min_y) + " to " + math.to_str(max_y))
+    
+    return 0
+}
+
+// Draw a box plot
+func box_plot(values, width) {
+    let len = array.length(values)
+    
+    if math.eq(len, 0) {
+        print("No data to display")
+        return 0
+    }
+    
+    // Sort the values
+    let sorted = []
+    let i = 0
+    
+    while is_less_than(i, len) {
+        array.push(sorted, array.get(values, i))
+        let i = i + 1
+    }
+    
+    // Simple bubble sort implementation
+    let j = 0
+    while is_less_than(j, len) {
+        let k = 0
+        while is_less_than(k, len - j - 1) {
+            let val1 = array.get(sorted, k)
+            let val2 = array.get(sorted, k + 1)
+            
+            if is_greater_than(val1, val2) {
+                array.set(sorted, k, val2)
+                array.set(sorted, k + 1, val1)
+            }
+            
+            let k = k + 1
+        }
+        let j = j + 1
+    }
+    
+    // Calculate quartiles
+    let min_val = array.get(sorted, 0)
+    let max_val = array.get(sorted, len - 1)
+    
+    let q1_pos = math.floor(len / 4)
+    let q1 = array.get(sorted, q1_pos)
+    
+    let q2_pos = math.floor(len / 2)
+    let q2 = array.get(sorted, q2_pos)
+    
+    let q3_pos = math.floor(3 * len / 4)
+    let q3 = array.get(sorted, q3_pos)
+    
+    // Calculate the positions on the plot
+    let range = max_val - min_val
+    
+    if math.eq(range, 0) {
+        let range = 1  // Prevent division by zero
+    }
+    
+    let min_pos = 1
+    let q1_pos = 1 + math.floor((q1 - min_val) * (width - 2) / range)
+    let q2_pos = 1 + math.floor((q2 - min_val) * (width - 2) / range)
+    let q3_pos = 1 + math.floor((q3 - min_val) * (width - 2) / range)
+    let max_pos = width - 2
+    
+    // Generate the box plot
+    print("\nBox Plot:")
+    print("=========")
+    
+    // Create the top line
+    let top_line = "┌" + repeat_char("─", width - 2) + "┐"
+    print(top_line)
+    
+    // Create the box plot line
+    let plot_line = "│"
+    let l = 1
+    
+    while is_less_than(l, width - 1) {
+        if math.eq(l, min_pos) {
+            let plot_line = plot_line + "├"
+        } else {
+            if math.eq(l, q1_pos) {
+                let plot_line = plot_line + "┌"
+            } else {
+                if math.eq(l, q2_pos) {
+                    let plot_line = plot_line + "│"
+                } else {
+                    if math.eq(l, q3_pos) {
+                        let plot_line = plot_line + "┐"
+                    } else {
+                        if math.eq(l, max_pos) {
+                            let plot_line = plot_line + "┤"
+                        } else {
+                            if math.and(is_greater_than(l, q1_pos), is_less_than(l, q3_pos)) {
+                                let plot_line = plot_line + "─"
+                            } else {
+                                if math.or(math.and(is_greater_than(l, min_pos), is_less_than(l, q1_pos)), math.and(is_greater_than(l, q3_pos), is_less_than(l, max_pos))) {
+                                    let plot_line = plot_line + "─"
+                                } else {
+                                    let plot_line = plot_line + " "
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        let l = l + 1
+    }
+    
+    let plot_line = plot_line + "│"
+    print(plot_line)
+    
+    // Create the bottom line
+    let bottom_line = "└" + repeat_char("─", width - 2) + "┘"
+    print(bottom_line)
+    
+    // Print the statistics
+    print("Min: " + math.to_str(min_val))
+    print("Q1: " + math.to_str(q1))
+    print("Median: " + math.to_str(q2))
+    print("Q3: " + math.to_str(q3))
+    print("Max: " + math.to_str(max_val))
+    
+    return 0
+}
+
+// Draw a simple pie chart
+func pie_chart(labels, values, radius) {
+    let len = array.length(values)
+    let total = 0
+    let i = 0
+    
+    // Calculate total
+    while is_less_than(i, len) {
+        let value = array.get(values, i)
+        let total = total + value
+        let i = i + 1
+    }
+    
+    if math.eq(total, 0) {
+        print("Total value is zero, cannot create pie chart")
+        return 0
+    }
+    
+    print("\nPie Chart:")
+    print("==========")
+    
+    // Print percentages
+    print("Percentages:")
+    let j = 0
+    
+    while is_less_than(j, len) {
+        let label = array.get(labels, j)
+        let value = array.get(values, j)
+        let percentage = math.round_to((value * 100) / total, 1)
+        
+        print(label + ": " + math.to_str(value) + " (" + math.to_str(percentage) + "%)")
+        let j = j + 1
+    }
+    
+    // Simple ASCII pie visualization (limited, but gives an idea)
+    print("\nSimplified pie chart representation:")
+    let k = 0
+    
+    while is_less_than(k, len) {
+        let label = array.get(labels, k)
+        let value = array.get(values, k)
+        let chars = math.round((value * 20) / total)
+        let percent = math.round_to((value * 100) / total, 1)
+        let bar = repeat_char("█", chars)
+        
+        print(label + ": " + bar + " " + math.to_str(percent) + "%")
+        let k = k + 1
+    }
+    
+    return 0
+}
+
+// Main demo
+print("ASCII Visualization Demo")
+print("=======================")
+print("This demo shows different text-based visualization techniques in Sona.")
+
+// Sample data for bar chart
+let bar_labels = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+let bar_values = [42, 78, 51, 106, 93]
+
+bar_chart(bar_labels, bar_values)
+
+// Sample data for line chart
+let line_values = [10, 15, 7, 22, 19, 30, 25]
+line_chart(line_values, 40, 10)
+
+// Sample data for scatter plot
+let x_values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+let y_values = [8, 7, 9, 6, 10, 5, 7, 8, 4, 6]
+scatter_plot(x_values, y_values, 40, 15)
+
+// Sample data for box plot
+let data_points = [12, 5, 22, 19, 18, 7, 14, 15, 16, 11, 8, 20]
+box_plot(data_points, 40)
+
+// Sample data for pie chart
+let pie_labels = ["Section A", "Section B", "Section C", "Section D"]
+let pie_values = [35, 25, 15, 25]
+pie_chart(pie_labels, pie_values, 10)
+
+print("\nThank you for exploring the ASCII Visualization Demo!")

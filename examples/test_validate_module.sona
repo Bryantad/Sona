@@ -1,0 +1,19 @@
+import utils.validate
+
+// Test number validation
+print("Testing number validation")
+print("Is 42 a number? " + validate.is_number(42))
+print("Is 3.14 a number? " + validate.is_number(3.14))
+print("Is 'abc' a number? " + validate.is_number("abc"))
+
+// Test string validation
+print("\nTesting string validation")
+print("Is 'hello' a string? " + validate.is_string("hello"))
+print("Is 42 a string? " + validate.is_string(42))
+
+// Test empty checks
+print("\nTesting empty checks")
+print("Is '' empty? " + validate.is_empty(""))
+print("Is [] empty? " + validate.is_empty([]))
+print("Is [1, 2, 3] empty? " + validate.is_empty([1, 2, 3]))
+print("Is None empty? " + validate.is_empty(None))

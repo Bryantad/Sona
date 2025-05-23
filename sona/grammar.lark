@@ -1,69 +1,81 @@
 start: statement+
 
-?statement: import_stmt
-          | assignment
-          | print_stmt
-          | if_stmt
-          | while_stmt
-          | for_stmt
-          | func_def
-          | return_stmt
-          | expr
+?statement: expr
+     | import_stmt
+     | assignment
+     | print_stmt
+     | if_stmt
+     | while_stmt
+     | for_stmt
+     | func_def
+     | return_stmt
+
+?expr: term
+     | expr "+" term   -> add
+     | expr "-" term   -> sub
+     | expr "==" term  -> eq
+     | expr "!=" term  -> neq
+     | expr ">" term   -> gt
+     | expr "<" term   -> lt
+     | expr ">=" term  -> gte
+     | expr "<=" term  -> lte
+     | expr "&&" term  -> and
+     | expr "||" term  -> or
+
+?term: factor
+     | term "*" factor  -> mul
+     | term "/" factor  -> div
+
+?factor: unary
+       | NAME "=" expr          -> assign
+
+?unary: "-" unary       -> neg
+      | "+" unary       -> pos
+      | "!" unary       -> not
+      | primary
+
+?primary: "(" expr ")"
+        | NUMBER             -> number
+        | STRING             -> string
+        | array_literal      -> array
+        | func_call
+        | dotted_name        -> var
+        | NAME               -> var
+
+array_literal: "[" [array_items] "]"
+array_items: expr ("," expr)*
+
+func_call: (NAME | dotted_name) "(" [args] ")"
+dotted_name: NAME ("." NAME)+
+
+args: expr ("," expr)*
 
 import_stmt: "import" NAME ("." NAME)* ["as" NAME] -> import_stmt
-assignment: ("let" | "const") NAME "=" expr
+assignment: ("let" | "const") NAME "=" expr -> var_assign
 print_stmt: "print" "(" expr ")"
 return_stmt: "return" expr
 
 if_stmt: "if" expr block ["else" block]
 while_stmt: "while" expr block
 for_stmt: "for" NAME "in" expr ".." expr block
-func_def: "func" NAME "(" param_list? ")" block
-param_list: NAME (COMMA NAME)*  -> param_list
-
+func_def: "func" NAME "(" [param_list] ")" block
+param_list: NAME ("," NAME)*  -> param_list
 block: "{" (_NL | statement)* "}"
-_NL: /(\r?\n)+/
-%ignore _NL
-
-?expr: expr "+" term   -> add
-     | expr "-" term   -> sub
-     | term
-
-?term: term "*" factor -> mul
-     | term "/" factor -> div
-     | factor
-
-?factor: "-" factor             -> neg
-       | "+" factor             -> pos
-       | dotted_func_call
-       | dotted_name            -> var
-       | NAME "(" [args] ")"    -> func_call
-       | array_literal          -> array
-       | NUMBER                 -> number
-       | STRING                 -> string
-       | NAME                   -> var
-       | "(" expr ")"
-
-array_literal: "[" [array_items] "]"
-array_items: expr ("," expr)*
-
-dotted_func_call: dotted_name "(" [args] ")" -> func_call
-dotted_name: NAME ("." NAME)+
-
-args: expr ("," expr)*
 
 COMMA: ","
 STRING: /"(?:[^"\\]|\\.)*"/ | /'(?:[^'\\]|\\.)*'/ | /"""(?:[^\\]|\\.)*"""/ | /'''(?:[^\\]|\\.)*'''/
+NUMBER: /[0-9]+(\.[0-9]*)?/
 
-%import common.CNAME -> NAME
-%import common.NUMBER
+%import common.CNAME -> NAME 
 %import common.WS_INLINE
-%import common.SH_COMMENT -> HASH_COMMENT // Or any alias you prefer
+%import common.NEWLINE -> _NL
+%import common.SH_COMMENT -> HASH_COMMENT
 
 _COMMENT: /\/\/.*?(?:\n|$)/
-// Enhanced support for inline comments and end-of-line comments
 _INLINE_COMMENT: /\/\/[^\n]*/
+
 %ignore _COMMENT
 %ignore _INLINE_COMMENT
 %ignore HASH_COMMENT
 %ignore WS_INLINE
+%ignore _NL

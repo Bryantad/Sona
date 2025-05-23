@@ -1,0 +1,14 @@
+// Simple parameter test with fixed scope handling
+func test_param(x) {
+    print("Parameter value: " + x)
+    return x
+}
+
+func calculate(a, b) {
+    print("a = " + a)
+    print("b = " + b)
+    return a + b
+}
+
+print(test_param("hello"))
+print(calculate(10, 32))

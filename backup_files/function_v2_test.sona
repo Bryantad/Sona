@@ -1,0 +1,15 @@
+// Simple test for v0.5.0 function parameter scope
+
+// Simple function with parameters
+func add(a, b) {
+    print("a = " + a)
+    print("b = " + b)
+    return a + b
+}
+
+// Run tests
+print("Testing add function...")
+let result = add(5, 7)
+print("Result: " + result)
+
+print("All tests complete!")
