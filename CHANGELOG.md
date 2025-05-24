@@ -9,6 +9,11 @@
   - `:trace` command to log function calls and returns
 - Added detailed documentation for debugging tools
 - Added a debug tools module in `sona/utils/debug_tools.py`
+- Improved project organization:
+  - Created structured directories for development files
+  - Organized test files into appropriate categories
+  - Added comprehensive directory documentation
+  - Created a release tools directory with cleanup script
 
 ### Security
 

@@ -98,7 +98,17 @@ sona/
 ├── sona_core/       # Interpreter, grammar, CLI
 ├── smod/            # Standard `.smod` modules
 ├── examples/        # Demo programs (snake_game.sona, calculator.sona, ...)
-├── tests/           # Unit tests
+├── tests/           # Unit tests and test cases
+│   └── backup/      # Categorized backup test files
+├── scripts/         # Test runners and utility scripts
+├── docs/            # Documentation files
+│   ├── version_upgrades/     # Version-specific documentation
+│   └── PROJECT_ORGANIZATION.md # Organization documentation
+├── development/     # Development resources
+│   ├── fixes/       # Bug fixes implementation
+│   └── patches/     # Version patches
+└── tools/           # Development and release tools
+    └── release/     # Release management scripts
 ├── datasets/        # SonaCore training data
 ├── docs/            # Developer guide and references
 ├── setup.py         # Installation config
