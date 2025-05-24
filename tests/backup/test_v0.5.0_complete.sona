@@ -1,0 +1,28 @@
+// Comprehensive test for Sona v0.5.0
+import utils.math.smod as math
+
+// Function definition with return value
+func add_numbers(a, b) {
+    return a + b
+}
+
+// Testing function calls
+let result = add_numbers(10, 20)
+print("10 + 20 = " + math.to_str(result))
+
+// Testing multi-line string
+let message = """
+This is a multi-line string
+that spans across
+multiple lines.
+"""
+print(message)
+
+// Testing if statements
+if math.greater_than(result, 25) {
+    print("Result is greater than 25")
+} else {
+    print("Result is less than or equal to 25")
+}
+
+print("Test complete!")
