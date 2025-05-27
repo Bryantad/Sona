@@ -1,4 +1,0 @@
-// Testing import from utils
-import utils.math.smod as math
-
-print("PI value: " + math.to_str(math.PI))

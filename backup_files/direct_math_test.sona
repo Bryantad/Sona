@@ -1,5 +1,0 @@
-// Import math directly
-import math.smod
-
-// Use the module
-print("PI value: " + math.smod.to_str(math.smod.PI))

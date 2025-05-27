@@ -1,3 +1,0 @@
-// Simple import test
-import utils.math.smod
-print(utils.math.smod.PI)
