@@ -1,0 +1,10 @@
+// Testing multiple module imports
+import utils.math.smod
+import utils.string.smod
+import utils.array.smod
+
+// Using the modules
+print("Testing modules...")
+print("2 + 3 = " + math.to_str(math.add(2, 3)))
+print("Uppercase: " + string.upper("hello"))
+print("Array join: " + array.join([1, 2, 3], ", "))

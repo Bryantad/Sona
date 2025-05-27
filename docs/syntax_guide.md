@@ -11,83 +11,69 @@ let name = "Alice"
 let age = 30
 ```
 
-**Variable reassignment works normally without requiring `let`**:
+Unlike many other languages, **Sona requires using `let` each time you reassign a variable**:
 
 ```sona
 // Initial declaration
 let counter = 0
 
-// Reassignment (no 'let' needed)
-counter = counter + 1
-counter = 10
-name = "Bob"
+// Reassignment (notice 'let' is required again)
+let counter = counter + 1
 ```
 
-✅ Both declaration and reassignment work correctly:
+❌ This will cause an error:
 
 ```sona
-let x = 5        // Declaration with 'let'
-x = 10           // Reassignment without 'let'
-x = x + 5        // Mathematical reassignment
+counter = counter + 1  // Error: Missing 'let' keyword
 ```
 
 ## Boolean Values
 
-Sona supports both integer values and boolean literals:
+Sona uses integers for boolean values instead of boolean literals:
 
-**Boolean literals (v0.5.1+):**
+- `1` for true
+- `0` for false
 
-```sona
-let is_active = true   // Boolean true
-let is_deleted = false // Boolean false
-```
-
-**Integer values (traditional):**
+Example:
 
 ```sona
 let is_active = 1  // true
-let is_deleted = 0 // false
-```
+let is_deleted = 0  // false
 
-Both work correctly in conditional statements:
-
-```sona
 if is_active {
     print("Active!")
 }
 ```
 
-## Comparison Operators
-
-Sona supports all standard comparison operators:
+❌ This will cause an error:
 
 ```sona
-let a = 10
-let b = 5
+let is_active = true  // Error: 'true' is not defined
+```
 
-// All comparison operators work
-if a > b {
-    print("a is greater than b")
+## Comparison Operators
+
+Sona doesn't support standard comparison operators like `<`, `>`, `<=`, `>=`. Instead, you need to use helper functions:(yet)
+
+```sona
+// Helper function: check if a < b
+func is_less_than(a, b) {
+    let diff = math.subtract(a, b)
+    return is_negative(diff)
 }
 
-if a >= b {
-    print("a is greater than or equal to b")
+// Helper function: check if a > b
+func is_greater_than(a, b) {
+    return is_less_than(b, a)
 }
+```
 
-if a == b {
-    print("a equals b")
-}
+For equality, use `math.eq()`:
 
-if a != b {
-    print("a is not equal to b")
-}
-
-if b < a {
-    print("b is less than a")
-}
-
-if b <= a {
-    print("b is less than or equal to a")
+```sona
+// Check equality
+if math.eq(x, 10) {
+    print("x equals 10")
 }
 ```
 
@@ -168,76 +154,12 @@ array.push(numbers, 5)
 let last = array.pop(numbers)
 ```
 
-## Module System
-
-Sona modules can be imported using the `import` statement:
-
-```sona
-// Direct import
-import fs.smod
-fs.write_file("example.txt", "Hello, World!")
-
-// Import with alias
-import http.smod as http
-http.get("https://example.com")
-```
-
-### Native Function Calls
-
-Sona supports native function calls through the `__native__` namespace. These functions are implemented in Python and exposed to Sona:
-
-```sona
-// Native functions are typically not called directly
-// They are used by .smod modules as an implementation detail
-
-// Example of how module functions use native functions internally:
-func exists(path) {
-    return __native__.fs_exists(path)
-}
-```
-
-## Standard Library Modules
-
-### File System (fs.smod)
-
-```sona
-import fs.smod
-
-// Check if file exists
-let exists = fs.exists("file.txt")
-
-// Read file
-let content = fs.read_file("file.txt")
-
-// Write file
-fs.write_file("output.txt", "Hello, World!")
-
-// Create directory
-fs.makedirs("new_folder")
-
-// List directory
-let files = fs.listdir(".")
-```
-
-### HTTP (http.smod)
-
-```sona
-import http.smod
-
-// GET request
-let response = http.get("https://example.com")
-
-// POST request with data
-let post_data = {"name": "Sona", "version": "0.5.1"}
-let response = http.post("https://example.com/api", post_data)
-```
-
 ## Best Practices
 
-1. Use descriptive names for variables and functions
-2. Import necessary modules at the beginning of your file
-3. Use boolean literals (`true`/`false`) rather than integers (0/1) when possible
-4. Remember that variable reassignment doesn't require the `let` keyword
-5. Add comments to explain complex logic
-6. Use modules for advanced functionality
-7. Prefer using built-in functions over reimplementing common operations
+1. Always include helper functions for comparisons in your code
+2. Use integers (0/1) consistently for boolean logic
+3. Always return a value from functions, even if just `return 0`
+4. Remember to use `let` for every variable reassignment
+5. Import necessary modules at the beginning of your file
+6. Use descriptive names for variables and functions
+7. Add comments to explain complex logic or workarounds

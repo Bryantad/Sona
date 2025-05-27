@@ -3,7 +3,6 @@ from io import StringIO
 from contextlib import redirect_stdout
 
 from sona.interpreter import SonaInterpreter, capture
-
 class TestCore(unittest.TestCase):
     def capture(self, code: str):
         """
@@ -25,9 +24,9 @@ class TestCore(unittest.TestCase):
         ok, out, interp = self.capture("const y = 3.14")
         self.assertTrue(ok)
         self.assertEqual(interp.get_var("y"), 3.14)
-        # Test that reassignment should fail
-        ok2, out2, interp2 = self.capture("const y = 3.14\ny = 2")
-        self.assertFalse(ok2)  # Should fail on reassignment
+        with self.assertRaises(TypeError):
+            # reassignment should fail
+            capture(interp, "let y = 2")
 
     def test_arithmetic_and_print(self):
         ok, out, _ = self.capture('print(2 * (3 + 4))')
@@ -37,8 +36,7 @@ class TestCore(unittest.TestCase):
     def test_comparison_and_if(self):
         code = """
         let a = 5
-        let b = 0
-        if a > 3 { b = 99 } else { b = 0 }
+        if a > 3 { let b = 99 } else { let b = 0 }
         """
         ok, out, interp = self.capture(code)
         self.assertTrue(ok)
@@ -47,7 +45,7 @@ class TestCore(unittest.TestCase):
     def test_while_loop(self):
         code = """
         let i = 0
-        while i < 3 { i = i + 1 }
+        while i < 3 { let i = i + 1 }
         """
         ok, out, interp = self.capture(code)
         self.assertTrue(ok)
@@ -56,12 +54,12 @@ class TestCore(unittest.TestCase):
     def test_for_loop(self):
         code = """
         let sum = 0
-        for n in 1..4 { sum = sum + n }
+        for n in range(1, 4) { let sum = sum + n }
         """
         ok, out, interp = self.capture(code)
         self.assertTrue(ok)
-        # 1 + 2 + 3 + 4 == 10
-        self.assertEqual(interp.get_var("sum"), 10)
+        # 1 + 2 + 3 == 6
+        self.assertEqual(interp.get_var("sum"), 6)
 
     def test_function_definition_and_call(self):
         code = """

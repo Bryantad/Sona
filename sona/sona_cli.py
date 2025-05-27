@@ -1,56 +1,36 @@
 import sys
 import os
 from pathlib import Path
-
-# Add the parent directory to Python path so we can import sona modules
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-# Import from the sona package
 from sona.interpreter import run_code
-try:
-    from sona.repl import main as sona_repl_main
-except ImportError:
-    sona_repl_main = None
-try:
-    from sona.utils.debug import debug, error
-except ImportError:
-    def debug(msg): print(f"DEBUG: {msg}")
-    def error(msg): print(f"ERROR: {msg}")
+from sona import repl as sona_repl
+from sona.utils.debug import debug, error
 from lark import Lark, UnexpectedInput
 
 def get_grammar_path():
     """Get the grammar file path in a platform-independent way"""
     return Path(__file__).resolve().parent / "grammar.lark"
 
-def main():    # Set debug mode from environment or command line flag
+def main():
+    # Set debug mode from environment or command line flag
     if "--debug" in sys.argv:
         os.environ["SONA_DEBUG"] = "1"
         sys.argv.remove("--debug")
-        
+
     if "--version" in sys.argv:
-        try:
-            from __init__ import __version__
-        except ImportError:
-            __version__ = "0.5.1+"
+        from sona import __version__
         print(f"Sona Language Version: {__version__}")
         return
 
     # No arguments - start REPL
     if len(sys.argv) == 1:
-        if sona_repl_main:
-            sona_repl_main()
-        else:
-            repl()  # Use local REPL function
-        return
-      # Handle 'repl' command explicitly
-    if len(sys.argv) == 2 and sys.argv[1] in ["repl", "--repl", "-r"]:
-        if sona_repl_main:
-            sona_repl_main()
-        else:
-            repl()  # Use local REPL function
+        sona_repl.run_repl()  # Call run_repl() function directly
         return
     
-    # Handle file execution
+    # Handle 'repl' command explicitly
+    if len(sys.argv) == 2 and sys.argv[1] in ["repl", "--repl", "-r"]:
+        sona_repl.run_repl()  # Call run_repl() function directly
+        return
+      # Handle file execution
     file_path = Path(sys.argv[1])
     if not file_path.exists():
         error(f"File '{file_path}' does not exist.")

@@ -5,19 +5,10 @@ import sys
 import time
 import pprint
 from pathlib import Path
-
-try:
-    from lark import UnexpectedInput, Lark, Tree, Token
-except ImportError as e:
-    print("Error: The 'lark' package is required but not installed.")
-    print("Please install it using one of these commands:")
-    print("  pip install lark")
-    print("  pip install lark-parser")
-    print("  python -m pip install lark")
-    sys.exit(1)
-
+from lark import UnexpectedInput, Lark, Tree, Token
 from sona.interpreter import run_code
 from sona.interpreter import SonaInterpreter
+from sona.interpreter import debug_mode
 
 # Debug state dictionary to store diagnostic information
 debug_state = {
@@ -25,41 +16,6 @@ debug_state = {
     "last_tree": None,
     "last_duration": None,
     "trace_enabled": False
-}
-
-DEMO_APPS = {
-    # Core applications
-    'hello_world': 'Simple Hello World demo',
-    'calculator': 'Basic calculator app',
-    'password_generator': 'Generate secure passwords',
-    'quiz_app': 'Interactive quiz system',
-    'note_writer': 'Simple note taking app',
-    'time_tracker': 'Track time spent on tasks',
-    'task_list': 'Todo list manager',
-    'static_site_generator': 'Generate HTML from MD',
-    'markdown_preview': 'Live markdown previewer',
-    
-    # Games
-    'snake_game': 'Classic snake game',
-    'snake_game_gui': 'Snake game with GUI window',
-    'snake_game_gui_v2': 'Enhanced Snake game (GUI)',
-    'memory_game': 'Card matching memory game',
-    'pattern_matcher': 'Pattern recognition game',
-    
-    # Utilities
-    'loan_calculator': 'Calculate loan payments',
-    'unit_converter': 'Convert between units',
-    'file_writer': 'Create and edit text files',
-    
-    # Data processing
-    'expense_tracker': 'Track daily expenses',
-    'data_formatter': 'Format JSON/CSV data',
-    
-    # Web tools
-    'http_get': 'Simple HTTP client',
-    
-    # GUI applications
-    'color_picker': 'RGB color selector'
 }
 
 def run_repl():
@@ -118,8 +74,6 @@ def run_repl():
                         print("  :clear      - Clear the screen")
                         print("  :version    - Show Sona version")
                         print("  :test       - Run diagnostic tests")
-                        print("  :apps       - List available REPL tools")
-                        print("  :run <tool> - Run a specific REPL tool")
                         print("\nDeveloper Tools:")
                         print("  :debug      - Show last error and parse tree")
                         print("  :profile    - Measure execution time of the last command")
@@ -143,7 +97,7 @@ def run_repl():
                         
                         # TODO: Maybe we should cache these files for faster loading?
                         base_dir = Path(__file__).parent.parent
-                        calc_path = base_dir / "examples" / "core" / "calculator.sona"
+                        calc_path = base_dir / "examples" / "calculator.sona"
                         
                         if calc_path.exists():
                             try:
@@ -163,7 +117,7 @@ def run_repl():
                         
                         # Find quiz application
                         base_dir = Path(__file__).parent.parent
-                        quiz_path = base_dir / "examples" / "core" / "quiz.sona"
+                        quiz_path = base_dir / "examples" / "quiz.sona"
                         
                         if quiz_path.exists():
                             try:
@@ -175,93 +129,6 @@ def run_repl():
                                 print(f"Error running quiz: {str(e)}")
                         else:
                             print(f"Error: Quiz application not found at {quiz_path}")
-                        continue
-                    
-                    # Apps command - List available demo applications
-                    elif cmd == "apps":
-                        print("\n=== Available Sona Demo Applications ===")
-                        
-                        base_dir = Path(__file__).parent.parent
-                        examples_dir = base_dir / "examples"
-                        
-                        if not examples_dir.exists():
-                            print("Examples directory not found.")
-                            print(f"Expected location: {examples_dir}")
-                            continue
-                        
-                        # Print categories and apps
-                        print("\nCore Applications:")
-                        for name, desc in {k:v for k,v in DEMO_APPS.items() if k in ['hello_world', 'calculator', 'password_generator', 'quiz']}.items():
-                            print(f"  {name:20} - {desc}")
-                            
-                        print("\nGames:")
-                        for name, desc in {k:v for k,v in DEMO_APPS.items() if k in ['memory_game', 'pattern_matcher', 'snake_game', 'snake_game_gui', 'snake_game_gui_v2']}.items():
-                            print(f"  {name:20} - {desc}")
-                            
-                        print("\nUtilities:")
-                        for name, desc in {k:v for k,v in DEMO_APPS.items() if k in ['loan_calculator', 'unit_converter', 'file_writer']}.items():
-                            print(f"  {name:20} - {desc}")
-                            
-                        print("\nData Processing:")
-                        for name, desc in {k:v for k,v in DEMO_APPS.items() if k in ['expense_tracker', 'data_formatter']}.items():
-                            print(f"  {name:20} - {desc}")
-                            
-                        print("\nWeb & GUI:")
-                        for name, desc in {k:v for k,v in DEMO_APPS.items() if k in ['http_get', 'color_picker', 'markdown_preview', 'time_tracker', 'task_list', 'static_site_generator']}.items():
-                            print(f"  {name:20} - {desc}")
-                            
-                        print("\nRun any app with: :run <app_name>")
-                        continue
-                    
-                    # Run command - Run a specific demo app
-                    elif cmd.startswith("run "):
-                        app_name = cmd[4:].strip()
-                        
-                        if not app_name:
-                            print("Error: No app name specified.")
-                            print("Usage: ':run <app_name>' (example: ':run unit_converter')")
-                            print("Use ':apps' to see available tools.")
-                            continue
-                            
-                        if app_name not in DEMO_APPS:
-                            print(f"Error: App '{app_name}' not found.")
-                            print("Use ':apps' to see available apps.")
-                            continue
-                            
-                        print(f"\n=== Launching {app_name} ===")
-                        base_dir = Path(__file__).parent.parent
-                        
-                        # Determine app location based on category
-                        app_category = "core"
-                        if app_name in ['snake_game', 'memory_game', 'pattern_matcher']:
-                            app_category = "games"
-                        elif app_name in ['loan_calculator', 'unit_converter', 'file_writer']:
-                            app_category = "utils"
-                        elif app_name in ['expense_tracker', 'data_formatter']:
-                            app_category = "data"
-                        elif app_name in ['http_get']:
-                            app_category = "web"
-                        elif app_name in ['color_picker']:
-                            app_category = "gui"
-                        elif app_name in ['calculator', 'password_generator', 'quiz_app', 'note_writer', 
-                                        'time_tracker', 'task_list', 'static_site_generator', 'markdown_preview', 'hello_world']:
-                            app_category = "core"
-                        
-                        app_path = base_dir / "examples" / app_category / f"{app_name}.sona"
-                        
-                        if not app_path.exists():
-                            print(f"Error: App '{app_name}' not found at {app_path}")
-                            print("Use ':apps' to see available apps.")
-                            continue
-                        
-                        # Run the app
-                        try:
-                            with open(app_path, "r") as f:
-                                app_code = f.read()
-                            run_code(app_code)
-                            print(f"\n{app_name} completed. Returned to Sona REPL.")
-                        except Exception as e:
-                            print(f"Error running {app_name}: {str(e)}")
                         continue
                     
                     # Test command
@@ -684,8 +551,9 @@ def run_tests():
         func max(a, b) {
             if a > b {
                 return a
+            } else {
+                return b
             }
-            return b
         }
         """)
         interpreter.transform(func_tree)
@@ -696,49 +564,6 @@ def run_tests():
         return result == 8
     
     test("If-else statements", test_if_else)
-    
-    # Test 6b: Chained if-else if-else statements
-    def test_chained_if_else(interpreter, parser):
-        # Define grade function with chained if-else if-else
-        func_tree = parser.parse("""
-        func get_grade(score) {
-            if score >= 90 {
-                return "A"
-            } else if score >= 80 {
-                return "B"
-            } else if score >= 70 {
-                return "C"
-            } else if score >= 60 {
-                return "D"
-            } else {
-                return "F"
-            }
-        }
-        """)
-        interpreter.transform(func_tree)
-        
-        # Test various grades
-        results = []
-        
-        call_a = parser.parse("get_grade(95)")
-        results.append(interpreter.transform(call_a) == "A")
-        
-        call_b = parser.parse("get_grade(85)")
-        results.append(interpreter.transform(call_b) == "B")
-        
-        call_c = parser.parse("get_grade(75)")
-        results.append(interpreter.transform(call_c) == "C")
-        
-        call_d = parser.parse("get_grade(65)")
-        results.append(interpreter.transform(call_d) == "D")
-        
-        call_f = parser.parse("get_grade(55)")
-        results.append(interpreter.transform(call_f) == "F")
-        
-        # All tests must pass
-        return all(results)
-    
-    test("Chained if-else if-else statements", test_chained_if_else)
     
     # Test 7: Loops
     def test_loops(interpreter, parser):
@@ -828,45 +653,6 @@ def run_tests():
         print("\n✅ All tests passed! Your Sona v0.5.1 installation is working correctly.")
     else:
         print("\n❌ Some tests failed. Please review the output above for details.")
-
-def handle_apps_command():
-    print("\nAvailable Demo Apps:")
-    print("-" * 50)
-    for app, desc in DEMO_APPS.items():
-        print(f"{app:20} - {desc}")
-    print("\nRun any app with :run <appname>")
-
-def handle_run_command(args):
-    if not args:
-        print("Usage: :run <appname>")
-        return
-    
-    app_name = args[0]
-    if app_name not in DEMO_APPS:
-        print(f"Unknown app: {app_name}")
-        print("Use :apps to see available demos")
-        return
-    
-    base_dir = Path(__file__).parent.parent
-    app_path = base_dir / "examples" / f"{app_name}.sona"
-    
-    if not app_path.exists():
-        print(f"Error: App '{app_name}' not found at {app_path}")
-        return
-        
-    try:
-        with open(app_path, "r") as f:
-            app_code = f.read()
-        run_code(app_code)
-        print(f"\n{app_name} completed. Returned to Sona REPL.")
-    except Exception as e:
-        print(f"Error running {app_name}: {str(e)}")
-
-COMMANDS = {
-    # ...existing commands...
-    'apps': (handle_apps_command, "List available demo apps"),
-    'run': (handle_run_command, "Run a demo app")
-}
 
 def main():
     """Entry point for the Sona REPL"""

@@ -1,7 +1,0 @@
-# Sona GUI Module Interface (gui.smod)
-# Import the main GUI implementation
-
-from .gui import gui
-
-# Export the gui instance for Sona applications
-__all__ = ['gui']

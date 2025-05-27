@@ -9,8 +9,6 @@ The Sona REPL now includes several commands that help developers understand and 
 - `:debug` - Show last error and parse tree
 - `:profile` - Measure execution time of the last command
 - `:watch <var>` - Print live value of a specific variable
-- `:apps` - List available REPL tools
-- `:run <tool>` - Run a specific REPL tool
 - `:trace` - Toggle tracing of function calls and returns
 
 ## Detailed Description
@@ -107,51 +105,3 @@ from sona.utils.debug_tools import run_code_with_trace, run_with_profiling, watc
 ## Compatibility
 
 These tools are designed to be minimally intrusive to the existing REPL flow and compatible with all standard Sona language features in v0.5.1.
-
-## REPL Tools
-
-Sona v0.5.1+ includes a collection of production-grade utility tools that can be loaded and run directly from the REPL. These tools are written in pure Sona syntax and showcase practical functionality for developers.
-
-### Available Tools
-
-- **api_formatter**: Pretty-prints and validates JSON data with path extraction capabilities
-- **color_picker**: Converts between RGB/HEX/HSL colors and provides color manipulation functions
-- **markdown_preview**: Converts Markdown to HTML with support for headings, lists, and other elements
-- **password_generator**: Creates secure passwords with custom settings and strength evaluation
-- **task_manager**: Manages to-do lists with add/list/complete functionality and task priorities
-- **time_tracker**: Tracks time spent on tasks with start/stop/pause functionality
-- **unit_converter**: Converts between temperature, length, weight, and volume units
-
-### Using REPL Tools
-
-To use these tools in the Sona REPL:
-
-1. List available tools:
-
-   ```
-   sona> :apps
-   ```
-
-2. Run a specific tool:
-
-   ```
-   sona> :run <tool_name>
-   ```
-
-   Example:
-
-   ```
-   sona> :run unit_converter
-   ```
-
-3. Each tool provides its own `show_help()` function for usage information.
-
-### Creating Custom REPL Tools
-
-You can create your own REPL tools by adding new `.sona` files to the `examples/repl_tools` directory. Include a description comment at the top:
-
-```sona
-// Description: Brief description of what your tool does
-```
-
-Implement a `show_help()` function to display usage information. Your tool will automatically appear in the `:apps` list and be available via the `:run` command.
