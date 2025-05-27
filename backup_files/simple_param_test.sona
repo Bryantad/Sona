@@ -1,8 +1,0 @@
-// Simple test for function parameters
-func sum(a, b) {
-    print("a = " + a)
-    print("b = " + b)
-    return a + b
-}
-
-print("Result: " + sum(3, 4))
