@@ -1,0 +1,174 @@
+// Description: Converts between temperature, length, weight, and volume units
+// Unit Converter for Sona v0.5.1+
+// A practical tool for converting between temperature units (Celsius/Fahrenheit)
+// and common metric/imperial measurements.
+// Usage: 
+//   - Temperature: convert_temp(value, "C", "F") or convert_temp(value, "F", "C")
+//   - Length: convert_length(value, "m", "ft") 
+//   - Weight: convert_weight(value, "kg", "lb")
+//   - Volume: convert_volume(value, "l", "gal")
+
+import utils.math.smod as math
+
+// Temperature conversion functions
+func celsius_to_fahrenheit(celsius) {
+  return (celsius * 9 / 5) + 32
+}
+
+func fahrenheit_to_celsius(fahrenheit) {
+  return (fahrenheit - 32) * 5 / 9
+}
+
+// Main temperature conversion function
+func convert_temp(value, from_unit, to_unit) {
+  if (from_unit == "C" && to_unit == "F") {
+    let result = celsius_to_fahrenheit(value)
+    print(value + " Celsius = " + result + " Fahrenheit")
+    return result
+  }
+  
+  if (from_unit == "F" && to_unit == "C") {
+    let result = fahrenheit_to_celsius(value)
+    print(value + " Fahrenheit = " + result + " Celsius")
+    return result
+  }
+  
+  // Otherwise
+    print("Error: Unsupported temperature units. Use 'C' and 'F'.")
+    return 0
+  }
+}
+
+// Length conversion functions
+func convert_length(value, from_unit, to_unit) {
+  // Conversion factors to meters
+  let to_meter = {
+    "mm": 0.001,
+    "cm": 0.01,
+    "m": 1,
+    "km": 1000,
+    "in": 0.0254,
+    "ft": 0.3048,
+    "yd": 0.9144,
+    "mi": 1609.344
+  }
+  
+  // Check if units are supported
+  if (from_unit in to_meter && to_unit in to_meter) {
+    // Convert to meters first, then to target unit
+    let meters = value * to_meter[from_unit]
+    let result = meters / to_meter[to_unit]
+    let rounded = math.round(result, 4)
+    print(value + " " + from_unit + " = " + rounded + " " + to_unit)
+    return rounded
+  } else {
+    print("Error: Unsupported length units.")
+    print("Supported units: mm, cm, m, km, in, ft, yd, mi")
+    return 0
+  }
+}
+
+// Weight conversion functions
+func convert_weight(value, from_unit, to_unit) {
+  // Conversion factors to kilograms
+  let to_kg = {
+    "mg": 0.000001,
+    "g": 0.001,
+    "kg": 1,
+    "t": 1000,
+    "oz": 0.0283495,
+    "lb": 0.453592,
+    "st": 6.35029
+  }
+  
+  // Check if units are supported
+  if (from_unit in to_kg && to_unit in to_kg) {
+    // Convert to kg first, then to target unit
+    let kg = value * to_kg[from_unit]
+    let result = kg / to_kg[to_unit]
+    let rounded = math.round(result, 4)
+    print(value + " " + from_unit + " = " + rounded + " " + to_unit)
+    return rounded
+  } else {
+    print("Error: Unsupported weight units.")
+    print("Supported units: mg, g, kg, t, oz, lb, st")
+    return 0
+  }
+}
+
+// Volume conversion functions
+func convert_volume(value, from_unit, to_unit) {
+  // Conversion factors to liters
+  let to_liter = {
+    "ml": 0.001,
+    "l": 1,
+    "m3": 1000,
+    "fl_oz": 0.0295735,
+    "pt": 0.473176,
+    "qt": 0.946353,
+    "gal": 3.78541
+  }
+  
+  // Check if units are supported
+  if (from_unit in to_liter && to_unit in to_liter) {
+    // Convert to liters first, then to target unit
+    let liters = value * to_liter[from_unit]
+    let result = liters / to_liter[to_unit]
+    let rounded = math.round(result, 4)
+    print(value + " " + from_unit + " = " + rounded + " " + to_unit)
+    return rounded
+  } else {
+    print("Error: Unsupported volume units.")
+    print("Supported units: ml, l, m3, fl_oz, pt, qt, gal")
+    return 0
+  }
+}
+
+// Display help information
+func show_converter_help() {
+  print("\n=== Unit Converter Help ===")
+  print("Temperature: convert_temp(value, from_unit, to_unit)")
+  print("  Example: convert_temp(32, \"F\", \"C\")")
+  print("  Units: C (Celsius), F (Fahrenheit)\n")
+  
+  print("Length: convert_length(value, from_unit, to_unit)")
+  print("  Example: convert_length(10, \"m\", \"ft\")")
+  print("  Units: mm, cm, m, km, in, ft, yd, mi\n")
+  
+  print("Weight: convert_weight(value, from_unit, to_unit)")
+  print("  Example: convert_weight(1, \"kg\", \"lb\")")
+  print("  Units: mg, g, kg, t, oz, lb, st\n")
+  
+  print("Volume: convert_volume(value, from_unit, to_unit)")
+  print("  Example: convert_volume(1, \"l\", \"gal\")")
+  print("  Units: ml, l, m3, fl_oz, pt, qt, gal\n")
+}
+
+// Example usage demonstration
+func run_examples() {
+  print("\n=== Unit Converter Examples ===")
+  convert_temp(100, "C", "F")
+  convert_temp(32, "F", "C")
+  convert_length(1, "m", "ft")
+  convert_weight(1, "kg", "lb")
+  convert_volume(3.78541, "l", "gal")
+}
+
+// Main function to run when executed directly
+func main() {
+  print("\nSona Unit Converter v1.0")
+  print("------------------------")
+  show_converter_help()
+  
+  // Simple interactive menu (uncomment in REPL)
+  // print("\nChoose conversion type:")
+  // print("1. Temperature")
+  // print("2. Length")
+  // print("3. Weight")
+  // print("4. Volume")
+  // print("5. Run examples")
+  // print("6. Exit")
+}
+
+// Show help by default when loaded
+show_converter_help()

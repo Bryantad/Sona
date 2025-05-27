@@ -1,0 +1,15 @@
+// Snake Game GUI Launcher for Sona v0.5.1
+// This script launches a Python-based GUI version of the Snake game
+
+print("Launching Snake Game GUI v2...")
+print("Controls:")
+print("- Arrow keys OR WASD to move (for true gamers)")
+print("- Space to restart after game over")
+print("The GUI will launch in a separate window.")
+print("Please wait a moment...")
+
+// In Sona v0.5.1, we don't have direct access to system commands
+// Use the Python executable to launch the game directly
+print("\nIf the game doesn't launch automatically, run this command in your terminal:")
+print("python examples/games/snake_game_gui_v2.py")
+print("\nClosing Sona launcher...")

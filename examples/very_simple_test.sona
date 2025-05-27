@@ -1,8 +1,0 @@
-// Very simple test with only basic operations
-print("Testing basic Sona functionality")
-
-let x = 5
-let y = 10
-print("x = " + x)
-print("y = " + y)
-print("x + y = " + (x + y))

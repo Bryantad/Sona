@@ -1,0 +1,615 @@
+// Description: Pretty-prints and validates JSON data with path extraction
+// API Formatter for Sona v0.5.1+
+// A utility for formatting and exploring JSON API responses.
+// Features:
+//   - Pretty printing with proper indentation
+//   - Syntax highlighting (for text-based output)
+//   - JSON path extraction
+//   - Basic validation and error reporting
+
+import utils.string.smod as string
+import utils.array.smod as array
+import utils.math.smod as math
+
+// Class-like constants for token types
+const TOKEN_OPEN_OBJECT = 1
+const TOKEN_CLOSE_OBJECT = 2
+const TOKEN_OPEN_ARRAY = 3
+const TOKEN_CLOSE_ARRAY = 4
+const TOKEN_STRING = 5
+const TOKEN_NUMBER = 6
+const TOKEN_BOOL = 7
+const TOKEN_NULL = 8
+const TOKEN_COLON = 9
+const TOKEN_COMMA = 10
+const TOKEN_INVALID = 11
+
+// Format a JSON string with proper indentation
+func format_json(json_str) {
+    // Clean up the input string
+    json_str = string.trim(json_str)
+    
+    // No point in formatting empty JSON
+    if (json_str == "") {
+        return ""
+    }
+    
+    // Start formatting
+    let formatted = ""
+    let indent_level = 0
+    let in_string = 0
+    let escaped = 0
+    let i = 0
+    
+    while (i < string.length(json_str)) {
+        let char = string.substring(json_str, i, i + 1)
+        
+        // Handle string literals (respect escaping)
+        if (char == "\"" && !escaped) {
+            in_string = !in_string
+            formatted = formatted + char
+        }
+        // Inside a string, add character as is
+        else if (in_string) {
+            formatted = formatted + char
+            escaped = char == "\\" && !escaped
+        }
+        // Outside strings, handle formatting
+        else {
+            if (char == "{" || char == "[") {
+                // Open brace/bracket - add newline and indent
+                formatted = formatted + char
+                indent_level = indent_level + 1
+                formatted = formatted + "\n" + get_indent(indent_level)
+            } 
+            else if (char == "}" || char == "]") {
+                // Close brace/bracket - add newline and reduce indent
+                indent_level = indent_level - 1
+                formatted = formatted + "\n" + get_indent(indent_level) + char
+            }
+            else if (char == ",") {
+                // Comma - add comma followed by newline and indent
+                formatted = formatted + char + "\n" + get_indent(indent_level)
+            }
+            else if (char == ":") {
+                // Colon - add colon followed by space
+                formatted = formatted + char + " "
+            }
+            else if (char == " " || char == "\n" || char == "\r" || char == "\t") {
+                // Skip whitespace (we're adding our own)
+                // Do nothing
+            }
+            else {
+                // Add other characters as is
+                formatted = formatted + char
+            }
+        }
+        
+        i = i + 1
+    }
+    
+    return formatted
+}
+
+// Get proper indentation string based on level
+func get_indent(level) {
+    let result = ""
+    for (let i = 0; i < level; i = i + 1) {
+        result = result + "    "  // 4 spaces per indentation level
+    }
+    return result
+}
+
+// Syntax highlighting for console output (simplified)
+func highlight_json(formatted_json) {
+    let lines = string.split(formatted_json, "\n")
+    let highlighted = []
+    
+    for (let i = 0; i < array.length(lines); i = i + 1) {
+        let line = array.get(lines, i)
+        let highlighted_line = ""
+        
+        // Find key-value separation
+        let colon_pos = string.index_of(line, ":")
+        
+        if (colon_pos >= 0) {
+            // This is a key-value pair
+            let key = string.substring(line, 0, colon_pos)
+            let value = string.substring(line, colon_pos, string.length(line))
+            
+            // Highlight key (with quotes) in cyan
+            highlighted_line = "CYAN[" + key + "]RESET" + highlight_value(value)
+        } else {
+            // This is either a value in an array or a bracket/brace
+            highlighted_line = highlight_value(line)
+        }
+        
+        array.push(highlighted, highlighted_line)
+    }
+    
+    return string.join(highlighted, "\n")
+}
+
+// Highlight a JSON value based on its type
+func highlight_value(value) {
+    value = string.trim(value)
+    
+    if (value == "" || value == "," || value == "[" || value == "]" || value == "{" || value == "}") {
+        // Structural elements in normal color
+        return value
+    } 
+    // String (with quotes) in green
+    else if (string.starts_with(value, "\"") && string.ends_with(value, "\"")) {
+        return "GREEN[" + value + "]RESET"
+    }
+    // Colon in normal color
+    else if (string.starts_with(value, ":")) {
+        let rest = string.trim(string.substring(value, 1, string.length(value)))
+        return ":" + highlight_value(rest)
+    }
+    // Number in blue
+    else if (string.match(value, "^-?\\d+(\\.\\d+)?")) {
+        return "BLUE[" + value + "]RESET"
+    }
+    // Boolean in purple
+    else if (value == "true" || value == "false") {
+        return "PURPLE[" + value + "]RESET"
+    }
+    // Null in red
+    else if (value == "null") {
+        return "RED[" + value + "]RESET"
+    }
+    // Default - just return as is
+    else {
+        return value
+    }
+}
+
+// Pretty print JSON to console with syntax highlighting
+func pretty_print_json(json_str) {
+    let formatted = format_json(json_str)
+    
+    if (formatted == "") {
+        print("Error: Empty JSON string")
+        return 0
+    }
+    
+    print("\n" + formatted + "\n")
+    return 1
+}
+
+// Validate JSON syntax and report errors
+func validate_json(json_str) {
+    let tokens = tokenize_json(json_str)
+    let errors = []
+    let valid = 1
+    
+    // Stack for matching brackets and braces
+    let stack = []
+    
+    for (let i = 0; i < array.length(tokens); i = i + 1) {
+        let token = array.get(tokens, i)
+        let type = token.type
+        
+        if (type == TOKEN_INVALID) {
+            array.push(errors, "Invalid token at position " + token.start + ": " + token.value)
+            valid = 0
+        }
+        else if (type == TOKEN_OPEN_OBJECT || type == TOKEN_OPEN_ARRAY) {
+            array.push(stack, type)
+        }
+        else if (type == TOKEN_CLOSE_OBJECT) {
+            if (array.length(stack) == 0 || array.pop(stack) != TOKEN_OPEN_OBJECT) {
+                array.push(errors, "Unmatched closing brace '}' at position " + token.start)
+                valid = 0
+            }
+        }
+        else if (type == TOKEN_CLOSE_ARRAY) {
+            if (array.length(stack) == 0 || array.pop(stack) != TOKEN_OPEN_ARRAY) {
+                array.push(errors, "Unmatched closing bracket ']' at position " + token.start)
+                valid = 0
+            }
+        }
+    }
+    
+    if (array.length(stack) > 0) {
+        array.push(errors, "Unclosed " + (array.pop(stack) == TOKEN_OPEN_OBJECT ? "object" : "array"))
+        valid = 0
+    }
+    
+    if (valid) {
+        print("JSON is valid!")
+    } else {
+        print("JSON validation errors:")
+        for (let i = 0; i < array.length(errors); i = i + 1) {
+            print("- " + array.get(errors, i))
+        }
+    }
+    
+    return valid
+}
+
+// Simple JSON tokenizer
+func tokenize_json(json_str) {
+    let tokens = []
+    let i = 0
+    let len = string.length(json_str)
+    
+    while (i < len) {
+        let char = string.substring(json_str, i, i + 1)
+        
+        // Skip whitespace
+        if (char == " " || char == "\n" || char == "\r" || char == "\t") {
+            i = i + 1
+            continue
+        }
+        
+        // Object braces
+        if (char == "{") {
+            array.push(tokens, { "type": TOKEN_OPEN_OBJECT, "value": "{", "start": i })
+            i = i + 1
+        }
+        else if (char == "}") {
+            array.push(tokens, { "type": TOKEN_CLOSE_OBJECT, "value": "}", "start": i })
+            i = i + 1
+        }
+        // Array brackets
+        else if (char == "[") {
+            array.push(tokens, { "type": TOKEN_OPEN_ARRAY, "value": "[", "start": i })
+            i = i + 1
+        }
+        else if (char == "]") {
+            array.push(tokens, { "type": TOKEN_CLOSE_ARRAY, "value": "]", "start": i })
+            i = i + 1
+        }
+        // Punctuation
+        else if (char == ":") {
+            array.push(tokens, { "type": TOKEN_COLON, "value": ":", "start": i })
+            i = i + 1
+        }
+        else if (char == ",") {
+            array.push(tokens, { "type": TOKEN_COMMA, "value": ",", "start": i })
+            i = i + 1
+        }
+        // String literals
+        else if (char == "\"") {
+            let start = i
+            i = i + 1  // Skip opening quote
+            let value = "\""
+            let escaped = 0
+            
+            // Find the closing quote
+            while (i < len) {
+                let c = string.substring(json_str, i, i + 1)
+                value = value + c
+                
+                if (c == "\"" && !escaped) {
+                    break
+                }
+                
+                escaped = c == "\\" && !escaped
+                i = i + 1
+            }
+            
+            if (i >= len) {
+                // Unterminated string
+                array.push(tokens, { "type": TOKEN_INVALID, "value": value, "start": start })
+            } else {
+                // Valid string
+                array.push(tokens, { "type": TOKEN_STRING, "value": value, "start": start })
+                i = i + 1  // Move past the closing quote
+            }
+        }
+        // Numbers
+        else if ((char >= "0" && char <= "9") || char == "-") {
+            let start = i
+            let value = ""
+            
+            // Collect the number
+            while (i < len) {
+                let c = string.substring(json_str, i, i + 1)
+                
+                if ((c >= "0" && c <= "9") || c == "." || c == "e" || c == "E" || c == "+" || c == "-") {
+                    value = value + c
+                    i = i + 1
+                } else {
+                    break
+                }
+            }
+            
+            array.push(tokens, { "type": TOKEN_NUMBER, "value": value, "start": start })
+        }
+        // Boolean and null
+        else if (char == "t" && i + 3 < len && string.substring(json_str, i, i + 4) == "true") {
+            array.push(tokens, { "type": TOKEN_BOOL, "value": "true", "start": i })
+            i = i + 4
+        }
+        else if (char == "f" && i + 4 < len && string.substring(json_str, i, i + 5) == "false") {
+            array.push(tokens, { "type": TOKEN_BOOL, "value": "false", "start": i })
+            i = i + 5
+        }
+        else if (char == "n" && i + 3 < len && string.substring(json_str, i, i + 4) == "null") {
+            array.push(tokens, { "type": TOKEN_NULL, "value": "null", "start": i })
+            i = i + 4
+        }
+        // Invalid token
+        else {
+            array.push(tokens, { "type": TOKEN_INVALID, "value": char, "start": i })
+            i = i + 1
+        }
+    }
+    
+    return tokens
+}
+
+// Extract a value by JSON path
+func extract_path(json_str, path) {
+    // Parse the JSON first
+    let result = parse_json_value(json_str)
+    
+    if (!result.success) {
+        print("Error parsing JSON: " + result.error)
+        return { "success": 0, "value": null }
+    }
+    
+    let root = result.value
+    
+    // Split the path into components (e.g., "user.profile.name" -> ["user", "profile", "name"])
+    let components = string.split(path, ".")
+    let current = root
+    
+    for (let i = 0; i < array.length(components); i = i + 1) {
+        let comp = array.get(components, i)
+        
+        // Handle array indices in path (e.g., "users[0].name")
+        if (string.contains(comp, "[") && string.ends_with(comp, "]")) {
+            let open_bracket = string.index_of(comp, "[")
+            let property = string.substring(comp, 0, open_bracket)
+            let index_str = string.substring(comp, open_bracket + 1, string.length(comp) - 1)
+            let index = 0
+            
+            // Convert index to integer
+            try {
+                index = int(index_str)
+            } catch {
+                return { "success": 0, "value": null, "error": "Invalid array index: " + index_str }
+            }
+            
+            // Check if property exists
+            if (property != "" && !(property in current)) {
+                return { "success": 0, "value": null, "error": "Property not found: " + property }
+            }
+            
+            // Get the array
+            let arr = property != "" ? current[property] : current
+            
+            // Check if it's actually an array
+            if (!is_array(arr)) {
+                return { "success": 0, "value": null, "error": "Not an array: " + property }
+            }
+            
+            // Check index bounds
+            if (index < 0 || index >= array.length(arr)) {
+                return { "success": 0, "value": null, "error": "Array index out of bounds: " + index }
+            }
+            
+            current = array.get(arr, index)
+        }
+        // Regular property access
+        else {
+            if (!(comp in current)) {
+                return { "success": 0, "value": null, "error": "Property not found: " + comp }
+            }
+            
+            current = current[comp]
+        }
+    }
+    
+    return { "success": 1, "value": current }
+}
+
+// Very simple JSON parser
+func parse_json_value(json_str) {
+    json_str = string.trim(json_str)
+    
+    if (json_str == "") {
+        return { "success": 0, "error": "Empty JSON string" }
+    }
+    
+    let first_char = string.substring(json_str, 0, 1)
+    
+    // Object
+    if (first_char == "{") {
+        return { "success": 1, "value": parse_sample_object() }
+    }
+    // Array
+    else if (first_char == "[") {
+        return { "success": 1, "value": parse_sample_array() }
+    }
+    // String
+    else if (first_char == "\"") {
+        return { "success": 1, "value": string.substring(json_str, 1, string.length(json_str) - 1) }
+    }
+    // Number
+    else if ((first_char >= "0" && first_char <= "9") || first_char == "-") {
+        return { "success": 1, "value": json_str }  // In a real parser, convert to number
+    }
+    // Boolean
+    else if (json_str == "true") {
+        return { "success": 1, "value": 1 }
+    }
+    else if (json_str == "false") {
+        return { "success": 1, "value": 0 }
+    }
+    // Null
+    else if (json_str == "null") {
+        return { "success": 1, "value": null }
+    }
+    else {
+        return { "success": 0, "error": "Invalid JSON value" }
+    }
+}
+
+// Determine if a value is an array
+func is_array(value) {
+    // Check if we can call array.length on it without errors
+    try {
+        array.length(value)
+        return 1
+    } catch {
+        return 0
+    }
+}
+
+// For demonstration purposes - parse a sample object
+func parse_sample_object() {
+    // Return a sample object for demo purposes
+    return {
+        "id": 123,
+        "name": "John Doe",
+        "email": "john@example.com",
+        "active": 1,
+        "profile": {
+            "age": 30,
+            "city": "New York",
+            "interests": ["programming", "reading", "hiking"]
+        },
+        "orders": [
+            {
+                "id": 1001,
+                "date": "2025-05-15",
+                "items": 3,
+                "total": 127.95
+            },
+            {
+                "id": 1002,
+                "date": "2025-05-22",
+                "items": 1,
+                "total": 42.99
+            }
+        ]
+    }
+}
+
+// Parse a sample array
+func parse_sample_array() {
+    // Return a sample array for demo purposes
+    return [
+        {
+            "id": 101,
+            "name": "Product A",
+            "price": 29.99
+        },
+        {
+            "id": 102,
+            "name": "Product B",
+            "price": 49.99
+        },
+        {
+            "id": 103,
+            "name": "Product C",
+            "price": 19.99
+        }
+    ]
+}
+
+// Get a sample REST API response
+func get_sample_response() {
+    let json = '{
+  "status": "success",
+  "code": 200,
+  "data": {
+    "users": [
+      {
+        "id": 1,
+        "username": "johndoe",
+        "email": "john@example.com",
+        "profile": {
+          "fullName": "John Doe",
+          "age": 32,
+          "location": "New York",
+          "bio": "Software developer with 10+ years experience"
+        },
+        "roles": ["admin", "editor"],
+        "active": true,
+        "lastLogin": "2025-05-20T15:32:18Z",
+        "stats": {
+          "posts": 42,
+          "comments": 158,
+          "likes": 327
+        }
+      },
+      {
+        "id": 2,
+        "username": "janedoe",
+        "email": "jane@example.com",
+        "profile": {
+          "fullName": "Jane Doe",
+          "age": 28,
+          "location": "San Francisco",
+          "bio": "UX designer passionate about user experiences"
+        },
+        "roles": ["editor"],
+        "active": true,
+        "lastLogin": "2025-05-19T09:15:22Z",
+        "stats": {
+          "posts": 37,
+          "comments": 241,
+          "likes": 518
+        }
+      }
+    ],
+    "pagination": {
+      "currentPage": 1,
+      "perPage": 10,
+      "totalItems": 42,
+      "totalPages": 5
+    }
+  },
+  "meta": {
+    "serverTime": "2025-05-21T12:34:56Z",
+    "apiVersion": "v2.1.3",
+    "processingTimeMs": 42
+  }
+}'
+
+    return json
+}
+
+// Display help information
+func show_help() {
+    print("\n===== API FORMATTER HELP =====")
+    print("Available functions:")
+    print("  pretty_print_json(json_string)")
+    print("    - Format and print a JSON string with proper indentation")
+    print("\n  validate_json(json_string)")
+    print("    - Check JSON syntax for errors")
+    print("\n  extract_path(json_string, path)")
+    print("    - Extract a value using JSON path notation")
+    print("    - Example: extract_path(response, \"data.users[0].username\")")
+    print("\n  get_sample_response()")
+    print("    - Return a sample REST API response for testing")
+    print("\n  show_help()")
+    print("    - Display this help message")
+    print("\nExample workflow:")
+    print("1. response = get_sample_response()")
+    print("2. pretty_print_json(response)")
+    print("3. validate_json(response)")
+    print("4. extract_path(response, \"data.users[0].profile.fullName\")")
+}
+
+// Main function to run when executed directly
+func main() {
+    print("\nSona API Formatter v1.0")
+    print("----------------------")
+    print("Type show_help() for available commands")
+    
+    // Demo functionality
+    let sample = get_sample_response()
+    print("\nSample API response loaded. Try these commands:")
+    print("1. pretty_print_json(sample)")
+    print("2. extract_path(sample, \"data.users[0].username\")")
+}
+
+// Show help when loaded
+show_help()

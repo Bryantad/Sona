@@ -1,0 +1,192 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# celery beat schedule file
+celerybeat-schedule
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*~
+
+# Log files
+*.log
+log.txt
+*.txt
+
+# Test files
+test_*.py
+test_*.sona
+*_test.py
+*_test.sona
+debug_*.py
+debug_*.sona
+simple_*.sona
+comprehensive_*.sona
+final_*.sona
+minimal_*.sona
+basic_*.sona
+quick_*.sona
+bounds_*.sona
+array_*.sona
+error_*.sona
+platform_*.sona
+
+# Batch files
+*.bat
+
+# Backup files
+*.bak
+*_backup
+*_bak
+backup_files/
+**/backup/
+**/_backup/
+
+# Build and distribution
+*.whl
+*.tar.gz
+
+# IDE files
+*.swp
+*.swo
+
+# Local configuration
+settings.json
+
+# Release tools
+verify_release.py
+tools/release/
+
+# Platform compatibility files
+platform_compat/
+
+# Web content
+web_content.txt
+
+# Game files (keep organized examples but remove test versions)
+launch_*.bat
+simple.sona
+
+# Development files
+run_*.py
+create_test.py
+fix_*.py
+check_*.py
+debug_for_parse.py

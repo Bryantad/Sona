@@ -1,0 +1,274 @@
+import io from "stdlib/io"
+import http from "stdlib/http"
+import json from "stdlib/json"
+
+fn main() {
+    io.println("HTTP Client")
+    io.println("==========")
+    
+    while true {
+        io.println("\nOptions:")
+        io.println("1. GET Request")
+        io.println("2. POST Request")
+        io.println("3. API Query")
+        io.println("4. Exit")
+        
+        io.print("\nSelect option (1-4): ")
+        let choice = io.readline()
+        
+        if choice == "4" {
+            break
+        }
+        
+        if choice == "1" {
+            make_get_request()
+        } elif choice == "2" {
+            make_post_request()
+        } elif choice == "3" {
+            query_api()
+        } else {
+            io.println("Invalid choice. Please select 1-4.")
+        }
+    }
+}
+
+fn make_get_request() {
+    io.print("\nEnter URL: ")
+    let url = io.readline()
+    
+    io.println(f"\nMaking GET request to {url}...")
+    try {
+        let response = http.get(url)
+        
+        io.println(f"\nStatus Code: {response.status_code}")
+        io.println("\nHeaders:")
+        for key, value in response.headers {
+            io.println(f"{key}: {value}")
+        }
+        
+        io.print("\nShow response body? (y/n): ")
+        if io.readline().lower() == "y" {
+            io.println("\nResponse Body:")
+            io.println(response.text)
+        }
+        
+    } catch {
+        io.println("Error making request. Check URL and internet connection.")
+    }
+}
+
+fn make_post_request() {
+    io.print("\nEnter URL: ")
+    let url = io.readline()
+    
+    io.println("\nEnter data (JSON format):")
+    let data_str = io.readline()
+    
+    try {
+        let data = json.parse(data_str)
+        
+        io.println("\nEnter headers (JSON format, leave empty for default):")
+        let headers_str = io.readline()
+        let headers = {}
+        
+        if headers_str.trim() != "" {
+            headers = json.parse(headers_str)
+        } else {
+            headers = {"Content-Type": "application/json"}
+        }
+        
+        io.println(f"\nMaking POST request to {url}...")
+        let response = http.post(url, data=data, headers=headers)
+        
+        io.println(f"\nStatus Code: {response.status_code}")
+        io.println("\nHeaders:")
+        for key, value in response.headers {
+            io.println(f"{key}: {value}")
+        }
+        
+        io.print("\nShow response body? (y/n): ")
+        if io.readline().lower() == "y" {
+            io.println("\nResponse Body:")
+            io.println(response.text)
+            
+            # Try to parse as JSON
+            try {
+                let json_resp = json.parse(response.text)
+                io.println("\nParsed JSON Response:")
+                io.println(json.stringify(json_resp, 2))
+            } catch {
+                # Not JSON, that's fine
+            }
+        }
+        
+    } catch {
+        io.println("Error making request. Check URL, data format, and internet connection.")
+    }
+}
+
+fn query_api() {
+    io.println("\nCommon APIs:")
+    io.println("1. Weather (OpenWeatherMap)")
+    io.println("2. Exchange Rates")
+    io.println("3. IP Geolocation")
+    io.println("4. Custom API")
+    
+    io.print("\nSelect API (1-4): ")
+    let api_choice = io.readline()
+    
+    if api_choice == "1" {
+        query_weather_api()
+    } elif api_choice == "2" {
+        query_exchange_api()
+    } elif api_choice == "3" {
+        query_geolocation_api()
+    } elif api_choice == "4" {
+        make_custom_api_request()
+    } else {
+        io.println("Invalid choice.")
+    }
+}
+
+fn query_weather_api() {
+    io.print("\nEnter city name: ")
+    let city = io.readline()
+    
+    # Note: In a real app, you would use your own API key
+    let url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid=DEMO_KEY&units=metric"
+    
+    io.println(f"\nQuerying weather for {city}...")
+    try {
+        let response = http.get(url)
+        
+        if response.status_code == 200 {
+            let data = json.parse(response.text)
+            io.println(f"\nWeather in {data['name']}, {data['sys']['country']}:")
+            io.println(f"Temperature: {data['main']['temp']}°C")
+            io.println(f"Humidity: {data['main']['humidity']}%")
+            io.println(f"Conditions: {data['weather'][0]['description']}")
+        } else {
+            io.println(f"Error: {response.status_code}")
+            io.println(response.text)
+        }
+    } catch {
+        io.println("Error querying weather API.")
+    }
+}
+
+fn query_exchange_api() {
+    io.print("\nEnter base currency code (e.g. USD): ")
+    let base = io.readline().upper()
+    
+    let url = f"https://open.er-api.com/v6/latest/{base}"
+    
+    io.println(f"\nQuerying exchange rates for {base}...")
+    try {
+        let response = http.get(url)
+        
+        if response.status_code == 200 {
+            let data = json.parse(response.text)
+            
+            io.println(f"\nExchange rates for {base} (Last updated: {data['time_last_update_utc']}):")
+            let rates = data["rates"]
+            
+            # Show top 5 common currencies
+            let common = ["USD", "EUR", "GBP", "JPY", "CAD"]
+            for currency in common {
+                if currency != base and currency in rates {
+                    io.println(f"{base} to {currency}: {rates[currency]}")
+                }
+            }
+            
+            io.print("\nShow all rates? (y/n): ")
+            if io.readline().lower() == "y" {
+                for currency, rate in rates {
+                    if currency != base {
+                        io.println(f"{base} to {currency}: {rate}")
+                    }
+                }
+            }
+        } else {
+            io.println(f"Error: {response.status_code}")
+            io.println(response.text)
+        }
+    } catch {
+        io.println("Error querying exchange API.")
+    }
+}
+
+fn query_geolocation_api() {
+    io.print("\nLookup your IP? (y/n): ")
+    let lookup_own = io.readline().lower() == "y"
+    
+    let ip = ""
+    if not lookup_own {
+        io.print("Enter IP address to lookup: ")
+        ip = io.readline()
+    }
+    
+    let url = "https://ipapi.co/"
+    if ip != "" {
+        url += f"{ip}/"
+    }
+    url += "json/"
+    
+    io.println("\nQuerying IP geolocation...")
+    try {
+        let response = http.get(url)
+        
+        if response.status_code == 200 {
+            let data = json.parse(response.text)
+            
+            io.println(f"\nIP: {data['ip']}")
+            io.println(f"Location: {data['city']}, {data['region']}, {data['country_name']}")
+            io.println(f"Coordinates: {data['latitude']}, {data['longitude']}")
+            io.println(f"ISP: {data['org']}")
+            io.println(f"Timezone: {data['timezone']}")
+        } else {
+            io.println(f"Error: {response.status_code}")
+            io.println(response.text)
+        }
+    } catch {
+        io.println("Error querying geolocation API.")
+    }
+}
+
+fn make_custom_api_request() {
+    io.print("\nEnter API URL: ")
+    let url = io.readline()
+    
+    io.print("Enter request method (GET/POST): ")
+    let method = io.readline().upper()
+    
+    if method != "GET" and method != "POST" {
+        io.println("Only GET and POST methods are supported.")
+        return
+    }
+    
+    try {
+        let response = null
+        
+        if method == "GET" {
+            response = http.get(url)
+        } else {  # POST
+            io.println("\nEnter data (JSON format):")
+            let data_str = io.readline()
+            let data = json.parse(data_str)
+            response = http.post(url, data=data)
+        }
+        
+        io.println(f"\nStatus Code: {response.status_code}")
+        
+        # Try to parse as JSON
+        try {
+            let json_resp = json.parse(response.text)
+            io.println("\nResponse (JSON):")
+            io.println(json.stringify(json_resp, 2))
+        } catch {
+            io.println("\nResponse:")
+            io.println(response.text)
+        }
+    } catch {
+        io.println("Error making API request.")
+    }
+}

@@ -2,6 +2,9 @@
 
 ### Added
 
+- Support for native function calls through `__native__` namespace
+- Implemented complete file system module (`fs.smod`) with native bindings
+- Implemented HTTP module (`http.smod`) with native function support
 - Advanced REPL diagnostic tools:
   - `:debug` command to display last error, parse tree, and environment scopes
   - `:profile` command to measure execution time of commands
@@ -23,6 +26,10 @@
 
 ### Bug Fixes
 
+- **CRITICAL**: Fixed for loop execution that was completely broken due to missing `_execute_for_body` method
+  - Range-based for loops (`for i in 1..3`) now work correctly
+  - Array-based for loops (`for item in array`) now work correctly
+  - Fixed by replacing calls to non-existent `_execute_for_body()` with proper `_exec(body.children)`
 - Fixed multi-line string handling with triple quotes
 - Fixed numeric type handling in if/else statements
 - Fixed loop body execution in while statements
@@ -93,12 +100,12 @@ This release introduces several new features, improvements, and bug fixes to enh
 - **Fixed boolean logic issues**: Replaced direct boolean operators with math.eq() and custom comparison functions
 - **Resolved parsing errors** in snake_game related to comparison operators and boolean values
 
-### Known Issues
+### Resolved Issues
 
-- Variable reassignment requires using `let` keyword each time
-- Direct comparison operators (`<`, `>`, `<=`, `>=`) are not supported
-- Boolean literals (`true`, `false`) are not supported, use integers (1,0) instead
-- All functions must include return values, empty returns are not allowed
+- ✅ **Direct comparison operators** (`<`, `>`, `<=`, `>=`, `==`, `!=`) are now fully supported
+- ✅ **Boolean literals** (`true`, `false`) are now supported
+- ✅ **Variable reassignment** works without requiring `let` keyword each time
+- ✅ **Empty return statements** are now supported
 
 # Sona Language - Version 0.4.9
 

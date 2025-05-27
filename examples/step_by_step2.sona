@@ -1,5 +1,0 @@
-// Simple test with direct imports
-
-print("Starting test...")
-// Import directly into the root namespace
-import utils.math.smod

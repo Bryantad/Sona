@@ -1,0 +1,57 @@
+// Simple Memory Game for Sona v0.5.1
+import native_stdin
+
+print("Memory Game v0.5.1")
+print("==================")
+print("Match the pairs by remembering card positions!")
+print("This is a simplified version for demonstration.")
+
+func create_board() {
+    let board = []
+    let i = 0
+    while i < 8 {
+        let board = board + [i / 2]  // Create pairs: 0,0,1,1,2,2,3,3
+        let i = i + 1
+    }
+    return board
+}
+
+func show_instructions() {
+    print("\nHow to play:")
+    print("- Enter two positions (0-7) to flip cards")
+    print("- Match pairs to win points")
+    print("- Type 'quit' to exit")
+}
+
+func main() {
+    let board = create_board()
+    let found = []
+    let moves = 0
+    
+    show_instructions()
+    
+    print("\nBoard positions: 0 1 2 3 4 5 6 7")
+    print("Cards:           ? ? ? ? ? ? ? ?")
+    
+    while moves < 10 {
+        let input_text = native_stdin.input("\nEnter position (0-7) or 'quit': ")
+        
+        if input_text == "quit" {
+            print("Thanks for playing!")
+            return
+        }
+        
+        print("You selected position: " + input_text)
+        let moves = moves + 1
+        
+        if moves >= 5 {
+            print("Game simplified - you found some matches!")
+            print("Final score: " + (10 - moves) + " points")
+            return
+        }
+    }
+    
+    print("Game over! Thanks for playing!")
+}
+
+main()

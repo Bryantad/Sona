@@ -1,0 +1,264 @@
+// Task List Manager - Simple Todo list application
+import io from "stdlib/io"
+import time from "stdlib/time"
+import fmt from "stdlib/fmt"
+import file from "stdlib/file"
+
+// Global variables
+let tasks = []
+let filename = "tasks.json"
+
+fn add_task() {
+    io.print("Enter task description: ")
+    let description = io.readline().trim()
+    
+    if description == "" {
+        io.println("Error: Task description cannot be empty.")
+        return
+    }
+    
+    io.print("Enter priority (1-5, where 1 is highest): ")
+    let priority_str = io.readline().trim()
+    let priority = 3  // Default medium priority
+    
+    try {
+        priority = priority_str.to_num()
+        if priority < 1 || priority > 5 {
+            io.println("Invalid priority. Using default priority 3.")
+            priority = 3
+        }
+    } catch e {
+        io.println("Invalid priority. Using default priority 3.")
+    }
+    
+    io.print("Enter due date (YYYY-MM-DD or press Enter to skip): ")
+    let due_date = io.readline().trim()
+    
+    // Create new task
+    let task = {
+        "id": time.now(),  // Use timestamp as unique ID
+        "description": description,
+        "priority": priority,
+        "completed": false,
+        "created_at": time.now(),
+        "due_date": due_date == "" ? null : due_date,
+    }
+    
+    tasks.append(task)
+    io.println("Task added successfully!")
+    save_tasks()
+}
+
+fn list_tasks() {
+    if tasks.length() == 0 {
+        io.println("No tasks found.")
+        return
+    }
+    
+    // Sort tasks by priority
+    let sorted_tasks = sort_tasks_by_priority(tasks)
+    
+    // Group by completion status
+    let pending = []
+    let completed = []
+    
+    for task in sorted_tasks {
+        if task.completed {
+            completed.append(task)
+        } else {
+            pending.append(task)
+        }
+    }
+    
+    // Display pending tasks first
+    io.println("\n===== PENDING TASKS =====")
+    if pending.length() == 0 {
+        io.println("No pending tasks!")
+    } else {
+        for i in range(0, pending.length()) {
+            display_task(pending[i], i + 1)
+        }
+    }
+    
+    // Then display completed tasks
+    io.println("\n===== COMPLETED TASKS =====")
+    if completed.length() == 0 {
+        io.println("No completed tasks.")
+    } else {
+        for i in range(0, completed.length()) {
+            display_task(completed[i], i + 1)
+        }
+    }
+}
+
+fn display_task(task, index) {
+    let status = task.completed ? "[X]" : "[ ]"
+    let priority_indicator = "*" * task.priority
+    let date_info = ""
+    
+    if task.due_date != null {
+        date_info = f" (Due: {task.due_date})"
+    }
+    
+    io.println(f"{index}. {status} {priority_indicator} {task.description}{date_info}")
+}
+
+fn sort_tasks_by_priority(task_list) {
+    // Simple bubble sort by priority (higher priority first)
+    let result = task_list.copy()
+    for i in range(0, result.length()) {
+        for j in range(0, result.length() - i - 1) {
+            if result[j].priority > result[j + 1].priority {
+                let temp = result[j]
+                result[j] = result[j + 1]
+                result[j + 1] = temp
+            }
+        }
+    }
+    return result
+}
+
+fn complete_task() {
+    if tasks.length() == 0 {
+        io.println("No tasks to complete.")
+        return
+    }
+    
+    // Show only uncompleted tasks
+    let uncompleted = []
+    for task in tasks {
+        if !task.completed {
+            uncompleted.append(task)
+        }
+    }
+    
+    if uncompleted.length() == 0 {
+        io.println("No pending tasks to complete!")
+        return
+    }
+    
+    io.println("\n===== PENDING TASKS =====")
+    for i in range(0, uncompleted.length()) {
+        display_task(uncompleted[i], i + 1)
+    }
+    
+    io.print("\nEnter task number to mark as complete (or 0 to cancel): ")
+    let choice_str = io.readline().trim()
+    
+    try {
+        let choice = choice_str.to_num()
+        if choice == 0 {
+            return
+        }
+        
+        if choice >= 1 && choice <= uncompleted.length() {
+            let task = uncompleted[choice - 1]
+            
+            // Find and update the actual task in the main list
+            for i in range(0, tasks.length()) {
+                if tasks[i].id == task.id {
+                    tasks[i].completed = true
+                    io.println(f"Task '{tasks[i].description}' marked as complete!")
+                    save_tasks()
+                    return
+                }
+            }
+        } else {
+            io.println("Invalid task number.")
+        }
+    } catch e {
+        io.println("Invalid input. Please enter a number.")
+    }
+}
+
+fn delete_task() {
+    if tasks.length() == 0 {
+        io.println("No tasks to delete.")
+        return
+    }
+    
+    // Display all tasks
+    io.println("\n===== ALL TASKS =====")
+    for i in range(0, tasks.length()) {
+        display_task(tasks[i], i + 1)
+    }
+    
+    io.print("\nEnter task number to delete (or 0 to cancel): ")
+    let choice_str = io.readline().trim()
+    
+    try {
+        let choice = choice_str.to_num()
+        if choice == 0 {
+            return
+        }
+        
+        if choice >= 1 && choice <= tasks.length() {
+            let removed = tasks[choice - 1]
+            tasks.remove(choice - 1)
+            io.println(f"Task '{removed.description}' deleted!")
+            save_tasks()
+        } else {
+            io.println("Invalid task number.")
+        }
+    } catch e {
+        io.println("Invalid input. Please enter a number.")
+    }
+}
+
+fn save_tasks() {
+    try {
+        let json_str = tasks.to_json()
+        file.write(filename, json_str)
+    } catch e {
+        io.println(f"Error saving tasks: {e}")
+    }
+}
+
+fn load_tasks() {
+    try {
+        if file.exists(filename) {
+            let content = file.read(filename)
+            tasks = content.from_json()
+            io.println(f"Loaded {tasks.length()} tasks from {filename}")
+        }
+    } catch e {
+        io.println(f"Error loading tasks: {e}")
+        tasks = []
+    }
+}
+
+fn main() {
+    io.println("Task List Manager")
+    io.println("================")
+    
+    load_tasks()
+    
+    while true {
+        io.println("\nOptions:")
+        io.println("1. Add a task")
+        io.println("2. List all tasks")
+        io.println("3. Mark task as complete")
+        io.println("4. Delete a task")
+        io.println("5. Exit")
+        
+        io.print("\nChoice: ")
+        let choice = io.readline()
+        
+        if choice == "1" {
+            add_task()
+        } else if choice == "2" {
+            list_tasks()
+        } else if choice == "3" {
+            complete_task()
+        } else if choice == "4" {
+            delete_task()
+        } else if choice == "5" {
+            io.println("Goodbye!")
+            break
+        } else {
+            io.println("Invalid choice. Please try again.")
+        }
+    }
+}
+
+main()

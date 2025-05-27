@@ -1,6 +1,0 @@
-// Testing importing math module
-import utils.math.smod
-
-// Using the module directly by its base name (math)
-print("Testing math module directly...")
-print("2 + 3 = " + math.to_str(math.add(2, 3)))

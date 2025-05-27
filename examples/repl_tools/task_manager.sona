@@ -1,0 +1,287 @@
+// Description: Manages to-do lists with add/list/complete functionality and task priorities
+// Task Manager for Sona v0.5.1+
+// A simple CLI-based task management system for developers to track TODOs.
+// Features:
+//   - Add, list, complete, and remove tasks
+//   - Priority levels (1-3)
+//   - Simple persistence via memory array
+//   - Clean interface with color-coded status
+
+import utils.array.smod as array
+import utils.string.smod as string
+import utils.time.smod as time
+
+// Initialize the task list as a global variable
+let tasks = []
+let next_id = 1
+
+// Task status constants
+const STATUS_PENDING = 0
+const STATUS_COMPLETED = 1
+
+// Create a new task with the given details
+func add_task(description, priority) {
+    let task = {
+        "id": next_id,
+        "description": description,
+        "priority": priority,
+        "status": STATUS_PENDING,
+        "created_at": time.now(),
+        "completed_at": 0
+    }
+    
+    array.push(tasks, task)
+    print("Task #" + next_id + " added: " + description)
+    next_id = next_id + 1
+    return task
+}
+
+// Mark a task as completed
+func complete_task(id) {
+    let found = 0
+    
+    for (let i = 0; i < array.length(tasks); i = i + 1) {
+        let task = array.get(tasks, i)
+        if (task.id == id) {
+            task.status = STATUS_COMPLETED
+            task.completed_at = time.now()
+            found = 1
+            print("Task #" + id + " marked as completed")
+            break
+        }
+    }
+    
+    if (found == 0) {
+        print("Error: Task #" + id + " not found")
+    }
+    
+    return found
+}
+
+// Remove a task from the list
+func remove_task(id) {
+    let new_tasks = []
+    let found = 0
+    
+    for (let i = 0; i < array.length(tasks); i = i + 1) {
+        let task = array.get(tasks, i)
+        if (task.id == id) {
+            found = 1
+            print("Task #" + id + " removed: " + task.description)
+        } else {
+            array.push(new_tasks, task)
+        }
+    }
+    
+    if (found == 0) {
+        print("Error: Task #" + id + " not found")
+    } else {
+        tasks = new_tasks
+    }
+    
+    return found
+}
+
+// Format priority display with color indicators (simplified for text)
+func format_priority(priority) {
+    if (priority == 1) {
+        return "LOW"
+    } else if (priority == 2) {
+        return "MED"
+    } else if (priority == 3) {
+        return "HIGH"
+    } else {
+        return "???"
+    }
+}
+
+// Format status display for tasks
+func format_status(status) {
+    if (status == STATUS_PENDING) {
+        return "PENDING"
+    } else if (status == STATUS_COMPLETED) {
+        return "COMPLETED"
+    } else {
+        return "UNKNOWN"
+    }
+}
+
+// Format timestamp to readable date/time
+func format_time(timestamp) {
+    // For now, just return the timestamp
+    // In a full implementation, this would convert to a human-readable format
+    return timestamp
+}
+
+// List all tasks with their details
+func list_tasks(show_completed) {
+    print("\n----- TASK LIST -----")
+    
+    if (array.length(tasks) == 0) {
+        print("No tasks found.")
+        return 0
+    }
+    
+    let count = 0
+    
+    for (let i = 0; i < array.length(tasks); i = i + 1) {
+        let task = array.get(tasks, i)
+        
+        // Skip completed tasks if show_completed is 0
+        if (show_completed == 0 && task.status == STATUS_COMPLETED) {
+            continue
+        }
+        
+        let priority_text = format_priority(task.priority)
+        let status_text = format_status(task.status)
+        
+        print("#" + task.id + ": [" + priority_text + "] " + task.description)
+        print("    Status: " + status_text + ", Created: " + format_time(task.created_at))
+        
+        if (task.status == STATUS_COMPLETED && task.completed_at > 0) {
+            print("    Completed: " + format_time(task.completed_at))
+        }
+        
+        count = count + 1
+    }
+    
+    print("\nTotal: " + count + " task(s)")
+    return count
+}
+
+// Find tasks by description (partial match)
+func find_tasks(keyword) {
+    print("\n----- SEARCH RESULTS -----")
+    
+    let results = []
+    let keyword_lower = string.to_lower(keyword)
+    
+    for (let i = 0; i < array.length(tasks); i = i + 1) {
+        let task = array.get(tasks, i)
+        let desc_lower = string.to_lower(task.description)
+        
+        if (string.contains(desc_lower, keyword_lower)) {
+            array.push(results, task)
+            
+            let priority_text = format_priority(task.priority)
+            let status_text = format_status(task.status)
+            
+            print("#" + task.id + ": [" + priority_text + "] " + task.description)
+            print("    Status: " + status_text)
+        }
+    }
+    
+    print("\nFound: " + array.length(results) + " task(s)")
+    return results
+}
+
+// Update a task's description or priority
+func update_task(id, description, priority) {
+    let found = 0
+    
+    for (let i = 0; i < array.length(tasks); i = i + 1) {
+        let task = array.get(tasks, i)
+        if (task.id == id) {
+            if (description != "") {
+                task.description = description
+            }
+            
+            if (priority > 0 && priority <= 3) {
+                task.priority = priority
+            }
+            
+            print("Task #" + id + " updated")
+            found = 1
+            break
+        }
+    }
+    
+    if (found == 0) {
+        print("Error: Task #" + id + " not found")
+    }
+    
+    return found
+}
+
+// Get statistics about tasks
+func get_stats() {
+    let total = array.length(tasks)
+    let completed = 0
+    let pending = 0
+    let high_priority = 0
+    
+    for (let i = 0; i < total; i = i + 1) {
+        let task = array.get(tasks, i)
+        
+        if (task.status == STATUS_COMPLETED) {
+            completed = completed + 1
+        } else {
+            pending = pending + 1
+        }
+        
+        if (task.priority == 3) {
+            high_priority = high_priority + 1
+        }
+    }
+    
+    print("\n----- TASK STATISTICS -----")
+    print("Total tasks: " + total)
+    print("Pending: " + pending)
+    print("Completed: " + completed)
+    print("High priority: " + high_priority)
+    
+    if (total > 0) {
+        let completion_rate = (completed * 100) / total
+        print("Completion rate: " + completion_rate + "%")
+    }
+}
+
+// Display help information
+func show_help() {
+    print("\n===== TASK MANAGER HELP =====")
+    print("Available commands:")
+    print("  add_task(description, priority) - Add a new task")
+    print("    - priority: 1 (low), 2 (medium), 3 (high)")
+    print("  list_tasks(show_completed) - List all tasks")
+    print("    - show_completed: 1 (show all), 0 (hide completed)")
+    print("  complete_task(id) - Mark a task as completed")
+    print("  remove_task(id) - Delete a task")
+    print("  update_task(id, description, priority) - Update a task")
+    print("  find_tasks(keyword) - Search tasks by description")
+    print("  get_stats() - Show task statistics")
+    print("  show_help() - Display this help message")
+    print("\nExample:")
+    print("  add_task(\"Fix bug in login form\", 3)")
+    print("  list_tasks(0)")
+    print("  complete_task(1)")
+}
+
+// Load sample tasks for demo purposes
+func load_samples() {
+    add_task("Implement user authentication", 3)
+    add_task("Create database schema", 2)
+    add_task("Write unit tests", 2)
+    add_task("Set up CI/CD pipeline", 1)
+    add_task("Update documentation", 1)
+    
+    // Complete one task for demonstration
+    complete_task(2)
+    
+    print("\nSample tasks loaded!")
+}
+
+// Main function to run when executed directly
+func main() {
+    print("\nSona Task Manager v1.0")
+    print("----------------------")
+    print("Type show_help() for available commands\n")
+    
+    // Load sample tasks for demonstration
+    load_samples()
+    
+    // List the tasks
+    list_tasks(1)
+}
+
+// Show help when loaded
+show_help()

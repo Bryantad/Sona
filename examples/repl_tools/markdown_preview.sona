@@ -1,0 +1,470 @@
+// Description: Converts Markdown to HTML with support for headings, lists, and other common elements
+// Markdown Preview for Sona v0.5.1+
+// A lightweight tool for converting basic Markdown to HTML.
+// Features:
+//   - Headings (h1-h6)
+//   - Bold, italic text
+//   - Lists (ordered and unordered)
+//   - Code blocks and inline code
+//   - Links and images
+//   - Blockquotes
+
+import utils.string.smod as string
+import utils.array.smod as array
+
+// Convert Markdown text to HTML
+func md_to_html(markdown_text) {
+    // Split the markdown into lines for processing
+    let lines = string.split(markdown_text, "\n")
+    let html_lines = []
+    let in_code_block = 0
+    let in_list = 0
+    
+    for (let i = 0; i < array.length(lines); i = i + 1) {
+        let line = array.get(lines, i)
+        let html_line = ""
+        
+        // Handle code blocks
+        if (string.starts_with(string.trim(line), "```")) {
+            if (in_code_block == 0) {
+                // Start of code block
+                in_code_block = 1
+                html_line = "<pre><code>"
+            } else {
+                // End of code block
+                in_code_block = 0
+                html_line = "</code></pre>"
+            }
+        } 
+        // Inside a code block, preserve formatting
+        else if (in_code_block == 1) {
+            html_line = escape_html(line)
+        }
+        // Handle empty lines
+        else if (string.trim(line) == "") {
+            // Close list if we were in one
+            if (in_list == 1) {
+                array.push(html_lines, "</ul>")
+                in_list = 0
+            }
+            html_line = "<br>"
+        }
+        // Handle headings (# Heading)
+        else if (string.starts_with(string.trim(line), "#")) {
+            // Close list if we were in one
+            if (in_list == 1) {
+                array.push(html_lines, "</ul>")
+                in_list = 0
+            }
+            
+            let level = 1
+            while (string.substring(line, level, level + 1) == "#" && level < 6) {
+                level = level + 1
+            }
+            
+            // Extract the heading text
+            let heading_text = string.trim(string.substring(line, level, string.length(line)))
+            html_line = "<h" + level + ">" + process_inline_formatting(heading_text) + "</h" + level + ">"
+        }
+        // Handle unordered lists
+        else if (string.starts_with(string.trim(line), "- ") || 
+                 string.starts_with(string.trim(line), "* ") ||
+                 string.starts_with(string.trim(line), "+ ")) {
+            
+            // Start a new list if we're not already in one
+            if (in_list == 0) {
+                array.push(html_lines, "<ul>")
+                in_list = 1
+            }
+            
+            // Extract the list item content (removing the marker)
+            let item_text = string.trim(string.substring(line, string.index_of(line, " ") + 1, string.length(line)))
+            html_line = "<li>" + process_inline_formatting(item_text) + "</li>"
+        }
+        // Handle ordered lists
+        else if (string.match(string.trim(line), "^\\d+\\.\\s")) {
+            // Start a new list if we're not already in one
+            if (in_list == 0) {
+                array.push(html_lines, "<ol>")
+                in_list = 2  // 2 for ordered list
+            }
+            
+            // Extract the list item content (removing the marker)
+            let period_pos = string.index_of(line, ".")
+            let item_text = string.trim(string.substring(line, period_pos + 1, string.length(line)))
+            html_line = "<li>" + process_inline_formatting(item_text) + "</li>"
+        }
+        // Handle blockquotes
+        else if (string.starts_with(string.trim(line), ">")) {
+            // Close list if we were in one
+            if (in_list == 1) {
+                array.push(html_lines, "</ul>")
+                in_list = 0
+            }
+            
+            // Extract the quote content
+            let quote_text = string.trim(string.substring(line, string.index_of(line, ">") + 1, string.length(line)))
+            html_line = "<blockquote>" + process_inline_formatting(quote_text) + "</blockquote>"
+        }
+        // Handle horizontal rules
+        else if (string.trim(line) == "---" || string.trim(line) == "***" || string.trim(line) == "___") {
+            // Close list if we were in one
+            if (in_list == 1) {
+                array.push(html_lines, "</ul>")
+                in_list = 0
+            }
+            
+            html_line = "<hr>"
+        }
+        // Regular paragraph text
+        else {
+            // Close list if we were in one
+            if (in_list == 1) {
+                array.push(html_lines, "</ul>")
+                in_list = 0
+            } else if (in_list == 2) {
+                array.push(html_lines, "</ol>")
+                in_list = 0
+            }
+            
+            html_line = "<p>" + process_inline_formatting(line) + "</p>"
+        }
+        
+        array.push(html_lines, html_line)
+    }
+    
+    // Close any open tags
+    if (in_code_block == 1) {
+        array.push(html_lines, "</code></pre>")
+    }
+    
+    if (in_list == 1) {
+        array.push(html_lines, "</ul>")
+    } else if (in_list == 2) {
+        array.push(html_lines, "</ol>")
+    }
+    
+    // Join all lines into a single HTML string
+    return string.join(html_lines, "\n")
+}
+
+// Process inline formatting elements like bold, italic, code, etc.
+func process_inline_formatting(text) {
+    // Process inline code (backticks)
+    text = process_inline_code(text)
+    
+    // Process bold text (**text**)
+    text = process_bold(text)
+    
+    // Process italic text (*text*)
+    text = process_italic(text)
+    
+    // Process links [text](url)
+    text = process_links(text)
+    
+    // Process images ![alt](url)
+    text = process_images(text)
+    
+    return text
+}
+
+// Process inline code formatting `code`
+func process_inline_code(text) {
+    let result = ""
+    let in_code = 0
+    let code_start = -1
+    
+    for (let i = 0; i < string.length(text); i = i + 1) {
+        let char = string.substring(text, i, i + 1)
+        
+        if (char == "`" && (i == 0 || string.substring(text, i - 1, i) != "\\")) {
+            if (in_code == 0) {
+                // Start of inline code
+                in_code = 1
+                code_start = i
+                result = result + "<code>"
+            } else {
+                // End of inline code
+                in_code = 0
+                code_start = -1
+                result = result + "</code>"
+            }
+        } else {
+            if (in_code == 1) {
+                // Inside code, escape HTML
+                result = result + escape_html_char(char)
+            } else {
+                // Outside code, add character as-is
+                result = result + char
+            }
+        }
+    }
+    
+    // If we ended with an unclosed code section, add the backtick literally
+    if (in_code == 1 && code_start >= 0) {
+        // Reset result and add the backtick literally
+        result = string.substring(result, 0, string.length(result) - 6)  // Remove "<code>"
+        result = result + "`" + string.substring(text, code_start + 1, string.length(text))
+    }
+    
+    return result
+}
+
+// Process bold formatting **text**
+func process_bold(text) {
+    let pattern = "\\*\\*(.*?)\\*\\*"
+    let replacement = "<strong>$1</strong>"
+    return string.replace_all(text, pattern, replacement)
+}
+
+// Process italic formatting *text*
+func process_italic(text) {
+    // Avoid replacing inside already processed tags
+    let pattern = "(^|>|[^\\*])\\*(.*?)\\*([^\\*]|<|$)"
+    let replacement = "$1<em>$2</em>$3"
+    return string.replace_all(text, pattern, replacement)
+}
+
+// Process links [text](url)
+func process_links(text) {
+    let result = ""
+    let i = 0
+    
+    while (i < string.length(text)) {
+        if (string.substring(text, i, i + 1) == "[" && 
+            (i == 0 || string.substring(text, i - 1, i) != "\\") &&
+            string.substring(text, i, i + 2) != "![") {
+            
+            // Find closing bracket
+            let link_text_end = string.index_of(string.substring(text, i, string.length(text)), "]")
+            
+            if (link_text_end > 0 && i + link_text_end + 1 < string.length(text) && 
+                string.substring(text, i + link_text_end + 1, i + link_text_end + 2) == "(") {
+                
+                // Find closing parenthesis
+                let url_end = string.index_of(string.substring(text, i + link_text_end + 2, string.length(text)), ")")
+                
+                if (url_end > 0) {
+                    let link_text = string.substring(text, i + 1, i + link_text_end)
+                    let url = string.substring(text, i + link_text_end + 2, i + link_text_end + 2 + url_end)
+                    
+                    result = result + "<a href=\"" + url + "\">" + link_text + "</a>"
+                    i = i + link_text_end + 2 + url_end + 1
+                    continue
+                }
+            }
+        }
+        
+        // If not a link, add character as-is
+        result = result + string.substring(text, i, i + 1)
+        i = i + 1
+    }
+    
+    return result
+}
+
+// Process images ![alt](url)
+func process_images(text) {
+    let result = ""
+    let i = 0
+    
+    while (i < string.length(text)) {
+        if (string.substring(text, i, i + 2) == "![" && 
+            (i == 0 || string.substring(text, i - 1, i) != "\\")) {
+            
+            // Find closing bracket
+            let alt_text_end = string.index_of(string.substring(text, i + 1, string.length(text)), "]")
+            
+            if (alt_text_end > 0 && i + alt_text_end + 2 < string.length(text) && 
+                string.substring(text, i + alt_text_end + 2, i + alt_text_end + 3) == "(") {
+                
+                // Find closing parenthesis
+                let url_end = string.index_of(string.substring(text, i + alt_text_end + 3, string.length(text)), ")")
+                
+                if (url_end > 0) {
+                    let alt_text = string.substring(text, i + 2, i + alt_text_end + 1)
+                    let url = string.substring(text, i + alt_text_end + 3, i + alt_text_end + 3 + url_end)
+                    
+                    result = result + "<img src=\"" + url + "\" alt=\"" + alt_text + "\">"
+                    i = i + alt_text_end + 3 + url_end + 1
+                    continue
+                }
+            }
+        }
+        
+        // If not an image, add character as-is
+        result = result + string.substring(text, i, i + 1)
+        i = i + 1
+    }
+    
+    return result
+}
+
+// Escape HTML special characters
+func escape_html(text) {
+    let result = text
+    result = string.replace_all(result, "&", "&amp;")
+    result = string.replace_all(result, "<", "&lt;")
+    result = string.replace_all(result, ">", "&gt;")
+    result = string.replace_all(result, "\"", "&quot;")
+    return result
+}
+
+// Escape a single HTML character
+func escape_html_char(char) {
+    if (char == "&") return "&amp;"
+    if (char == "<") return "&lt;"
+    if (char == ">") return "&gt;"
+    if (char == "\"") return "&quot;"
+    return char
+}
+
+// Preview markdown with a surrounding HTML document
+func preview_markdown(markdown_text, title) {
+    let html_content = md_to_html(markdown_text)
+    
+    let html_document = "<!DOCTYPE html>\n" +
+                        "<html lang=\"en\">\n" +
+                        "<head>\n" +
+                        "    <meta charset=\"UTF-8\">\n" +
+                        "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n" +
+                        "    <title>" + title + "</title>\n" +
+                        "    <style>\n" +
+                        "        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; padding: 20px; max-width: 800px; margin: 0 auto; color: #333; }\n" +
+                        "        pre { background-color: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto; }\n" +
+                        "        code { background-color: #f5f5f5; padding: 2px 5px; border-radius: 3px; font-family: monospace; }\n" +
+                        "        pre code { padding: 0; background-color: transparent; }\n" +
+                        "        blockquote { border-left: 4px solid #ddd; padding-left: 15px; margin-left: 0; color: #666; }\n" +
+                        "        img { max-width: 100%; height: auto; }\n" +
+                        "        h1, h2, h3 { border-bottom: 1px solid #eee; padding-bottom: 5px; }\n" +
+                        "        a { color: #0366d6; text-decoration: none; }\n" +
+                        "        a:hover { text-decoration: underline; }\n" +
+                        "    </style>\n" +
+                        "</head>\n" +
+                        "<body>\n" +
+                        html_content + "\n" +
+                        "</body>\n" +
+                        "</html>"
+    
+    return html_document
+}
+
+// Save the HTML output to a file
+func save_html(html_content, file_path) {
+    // This is a placeholder function since file writing requires OS-specific functionality
+    print("HTML output would be saved to: " + file_path)
+    print("Sample of HTML output:")
+    
+    // Print a preview of the HTML (first 200 chars)
+    let preview_length = 200
+    if (string.length(html_content) > preview_length) {
+        print(string.substring(html_content, 0, preview_length) + "...")
+    } else {
+        print(html_content)
+    }
+    
+    return 1
+}
+
+// Display markdown preview in REPL
+func preview(markdown_text) {
+    let html = md_to_html(markdown_text)
+    print("\n=== Markdown Preview ===")
+    print(html)
+    print("\n======================")
+    return html
+}
+
+// Show examples of markdown syntax
+func show_examples() {
+    let example_md = "# Markdown Example\n\n" +
+                    "## Formatting\n\n" +
+                    "This is **bold** text and this is *italic* text.\n\n" +
+                    "## Lists\n\n" +
+                    "Unordered list:\n" +
+                    "- Item 1\n" +
+                    "- Item 2\n" +
+                    "- Item 3\n\n" +
+                    "Ordered list:\n" +
+                    "1. First item\n" +
+                    "2. Second item\n" +
+                    "3. Third item\n\n" +
+                    "## Code\n\n" +
+                    "Inline `code` example.\n\n" +
+                    "```\nMulti-line code block\nfunction example() {\n  return true;\n}\n```\n\n" +
+                    "## Blockquote\n\n" +
+                    "> This is a blockquote.\n> It can span multiple lines.\n\n" +
+                    "## Links and Images\n\n" +
+                    "[Visit Sona Language](https://sonalang.org)\n\n" +
+                    "![Sona Logo](https://sonalang.org/logo.png)\n\n" +
+                    "## Horizontal Rule\n\n" +
+                    "---\n\n" +
+                    "That's all folks!"
+    
+    print("\n=== Markdown Syntax Examples ===")
+    print(example_md)
+    print("\n=== HTML Output ===")
+    preview(example_md)
+    
+    return example_md
+}
+
+// Display help information
+func show_help() {
+    print("\n===== MARKDOWN PREVIEW HELP =====")
+    print("Available functions:")
+    print("  preview(markdown_text)")
+    print("    - Convert markdown text to HTML and display it")
+    print("\n  md_to_html(markdown_text)")
+    print("    - Convert markdown text to HTML and return it without displaying")
+    print("\n  preview_markdown(markdown_text, title)")
+    print("    - Generate a complete HTML document with styling")
+    print("\n  show_examples()")
+    print("    - Show examples of markdown syntax")
+    print("\n  show_help()")
+    print("    - Display this help message")
+    
+    print("\nSupported Markdown features:")
+    print("- Headings (# to ######)")
+    print("- Bold text (**bold**)")
+    print("- Italic text (*italic*)")
+    print("- Lists (- or * for unordered, 1. for ordered)")
+    print("- Code blocks (```code```)")
+    print("- Inline code (`code`)")
+    print("- Links ([text](url))")
+    print("- Images (![alt](url))")
+    print("- Blockquotes (> quote)")
+    print("- Horizontal rules (---)")
+}
+
+// Sample markdown document for demo
+func get_sample_doc() {
+    return "# Sona Programming Language\n\n" +
+           "## Overview\n\n" +
+           "**Sona** is a modern, modular, and AI-forward programming language designed " +
+           "to empower developers, creators, and neurodivergent thinkers.\n\n" +
+           "## Key Features\n\n" +
+           "- Clean syntax inspired by Python\n" +
+           "- Modular by default via `.smod` modules\n" +
+           "- Built-in standard modules\n\n" +
+           "## Example Code\n\n" +
+           "```\nfunc greet(name) {\n    print(\"Hello, \" + name + \"!\")\n}\n\n" +
+           "greet(\"World\")\n```\n\n" +
+           "## Learn More\n\n" +
+           "[Visit our website](https://sonalang.org) for documentation.\n\n" +
+           "> If Python taught you to code, Sona will teach you to build legacies."
+}
+
+// Main function to run when executed directly
+func main() {
+    print("\nSona Markdown Preview v1.0")
+    print("-------------------------")
+    print("Type show_help() for available commands")
+    
+    // Show a sample preview
+    let sample = get_sample_doc()
+    preview(sample)
+}
+
+// Show help when loaded
+show_help()

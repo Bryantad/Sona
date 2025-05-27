@@ -1,0 +1,7 @@
+# Sona JSON Module Interface (json.smod)
+# Import the enhanced JSON implementation
+
+from .json_enhanced import json_module
+
+# Export the json_module instance for Sona applications
+__all__ = ['json_module']

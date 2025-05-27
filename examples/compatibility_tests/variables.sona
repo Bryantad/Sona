@@ -1,4 +1,4 @@
-// Variables test for Sona v0.4.9
+// Variables test for Sona v0.5.1+
 import utils.math.smod
 
 // Basic variable declarations
@@ -6,26 +6,31 @@ print("Testing variable declarations:")
 let x = 5
 let name = "Sona"
 let pi_value = math.PI
-let is_active = 1  // 1 for true, 0 for false
+let is_active = true  // Boolean literals now supported
 
-print("x = " + math.to_str(x))
+print("x = " + str(x))
 print("name = " + name)
-print("pi_value = " + math.to_str(pi_value))
-print("is_active = " + math.to_str(is_active))
+print("pi_value = " + str(pi_value))
+print("is_active = " + str(is_active))
 
 // Variable reassignment
 print("\nTesting variable reassignment:")
-let x = 10  // Note: 'let' is required for reassignment
-print("New x = " + math.to_str(x))
+x = 10  // No 'let' needed for reassignment
+print("New x = " + str(x))
+
+// Multiple reassignments
+x = x + 5
+x = x * 2
+print("After operations: " + str(x))
 
 // Arrays
 print("\nTesting arrays:")
 let numbers = [1, 2, 3, 4, 5]
-print("Array length: " + math.to_str(math.len(numbers)))
+print("Array length: " + str(len(numbers)))
 
 // Accessing array elements
-print("First element: " + math.to_str(numbers[0]))
-print("Third element: " + math.to_str(numbers[2]))
+print("First element: " + str(numbers[0]))
+print("Third element: " + str(numbers[2]))
 
 // String variables
 let first_name = "John"
@@ -33,9 +38,15 @@ let last_name = "Doe"
 let full_name = first_name + " " + last_name
 print("\nFull name: " + full_name)
 
+// String reassignment
+first_name = "Jane"
+full_name = first_name + " " + last_name
+print("Updated full name: " + full_name)
+
 // Important notes
-print("\nVariable Notes for v0.4.9:")
-print("1. Always use 'let' for variable declaration AND reassignment")
-print("2. Convert numbers to strings with math.to_str() when concatenating")
-print("3. Boolean values use 1 for true and 0 for false")
-print("4. Arrays are zero-indexed")
+print("\nVariable Notes for v0.5.1+:")
+print("1. Use 'let' for variable declaration only")
+print("2. Reassignment works without 'let'")
+print("3. Boolean literals 'true' and 'false' are supported")
+print("4. Built-in str() function available")
+print("5. Arrays are zero-indexed")

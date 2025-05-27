@@ -1,0 +1,323 @@
+// Markdown Preview - Live markdown previewer with HTML output
+import io from "stdlib/io"
+import file from "stdlib/file"
+import path from "stdlib/path"
+import time from "stdlib/time"
+
+fn markdown_to_html(text) {
+    // A simple markdown to HTML converter
+    let html = text
+    
+    // Replace headings
+    html = html.replace(/^# (.+)$/gm, "<h1>$1</h1>")
+    html = html.replace(/^## (.+)$/gm, "<h2>$1</h2>")
+    html = html.replace(/^### (.+)$/gm, "<h3>$1</h3>")
+    html = html.replace(/^#### (.+)$/gm, "<h4>$1</h4>")
+    html = html.replace(/^##### (.+)$/gm, "<h5>$1</h5>")
+    html = html.replace(/^###### (.+)$/gm, "<h6>$1</h6>")
+    
+    // Replace bold and italic
+    html = html.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    html = html.replace(/\*([^*]+)\*/g, "<em>$1</em>")
+    
+    // Replace lists
+    html = html.replace(/^\* (.+)$/gm, "<li>$1</li>")
+    html = html.replace(/^- (.+)$/gm, "<li>$1</li>")
+    html = html.replace(/^(\d+)\. (.+)$/gm, "<li>$2</li>")
+    
+    // Handle list grouping
+    let lines = html.split("\n")
+    let in_list = false
+    let result = ""
+    
+    for i in range(0, lines.length()) {
+        let line = lines[i]
+        if line.starts_with("<li>") {
+            if !in_list {
+                result += "<ul>\n"
+                in_list = true
+            }
+            result += line + "\n"
+        } else {
+            if in_list {
+                result += "</ul>\n"
+                in_list = false
+            }
+            result += line + "\n"
+        }
+    }
+    
+    if in_list {
+        result += "</ul>\n"
+    }
+    
+    html = result
+    
+    // Replace links
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, "<a href=\"$2\">$1</a>")
+    
+    // Replace code blocks
+    html = html.replace(/```([^`]+)```/g, "<pre><code>$1</code></pre>")
+    
+    // Replace inline code
+    html = html.replace(/`([^`]+)`/g, "<code>$1</code>")
+    
+    // Replace blockquotes
+    html = html.replace(/^> (.+)$/gm, "<blockquote>$1</blockquote>")
+    
+    // Replace horizontal rules
+    html = html.replace(/^---+$/gm, "<hr>")
+    
+    // Add paragraphs (simple approach)
+    let paragraphs = html.split("\n\n")
+    result = ""
+    
+    for i in range(0, paragraphs.length()) {
+        let p = paragraphs[i].trim()
+        if p.length() > 0 && 
+           !p.starts_with("<h") && 
+           !p.starts_with("<ul") && 
+           !p.starts_with("<pre") && 
+           !p.starts_with("<blockquote") &&
+           !p.starts_with("<hr") {
+            result += "<p>" + p + "</p>\n\n"
+        } else {
+            result += p + "\n\n"
+        }
+    }
+    
+    return result
+}
+
+fn generate_html_page(content, title) {
+    // Create a full HTML document with the converted content
+    return f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="refresh" content="5"> <!-- Auto-refresh every 5 seconds -->
+    <title>{title}</title>
+    <style>
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }}
+        h1, h2, h3, h4, h5, h6 {{
+            margin-top: 24px;
+            margin-bottom: 16px;
+            font-weight: 600;
+            line-height: 1.25;
+        }}
+        h1 {{
+            font-size: 2em;
+            border-bottom: 1px solid #eaecef;
+            padding-bottom: .3em;
+        }}
+        h2 {{
+            font-size: 1.5em;
+            border-bottom: 1px solid #eaecef;
+            padding-bottom: .3em;
+        }}
+        a {{
+            color: #0366d6;
+            text-decoration: none;
+        }}
+        a:hover {{
+            text-decoration: underline;
+        }}
+        pre {{
+            background-color: #f6f8fa;
+            border-radius: 3px;
+            padding: 16px;
+            overflow: auto;
+        }}
+        code {{
+            font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace;
+            background-color: rgba(27, 31, 35, .05);
+            border-radius: 3px;
+            padding: 0.2em 0.4em;
+        }}
+        blockquote {{
+            padding: 0 1em;
+            color: #6a737d;
+            border-left: 0.25em solid #dfe2e5;
+            margin: 0;
+        }}
+        ul, ol {{
+            padding-left: 2em;
+        }}
+        hr {{
+            height: 0.25em;
+            padding: 0;
+            margin: 24px 0;
+            background-color: #e1e4e8;
+            border: 0;
+        }}
+    </style>
+</head>
+<body>
+    <div id="content">
+        {content}
+    </div>
+    <hr>
+    <footer>
+        <p><em>Preview auto-refreshes every 5 seconds. Last updated: {time.now()}</em></p>
+    </footer>
+</body>
+</html>"""
+}
+
+fn create_preview(input_file, output_file) {
+    try {
+        // Read the markdown file
+        io.println(f"Reading {input_file}...")
+        let markdown = file.read(input_file)
+        
+        // Convert to HTML
+        io.println("Converting markdown to HTML...")
+        let html_content = markdown_to_html(markdown)
+        
+        // Generate full HTML page
+        let title = path.basename(input_file)
+        let html_page = generate_html_page(html_content, title)
+        
+        // Write to output file
+        io.println(f"Writing HTML preview to {output_file}...")
+        file.write(output_file, html_page)
+        
+        return true
+    } catch e {
+        io.println(f"Error creating preview: {e}")
+        return false
+    }
+}
+
+fn watch_file(input_file, output_file, interval) {
+    let last_modified = 0
+    let first_run = true
+    
+    io.println(f"Starting watch mode for {input_file}")
+    io.println(f"Preview will be written to {output_file}")
+    io.println("Press Ctrl+C to stop")
+    
+    while true {
+        try {
+            let stats = file.stat(input_file)
+            let current_modified = stats.modified_time
+            
+            if first_run || current_modified > last_modified {
+                io.println(f"\nFile changed at {time.format_time(current_modified)}")
+                create_preview(input_file, output_file)
+                last_modified = current_modified
+                first_run = false
+            }
+        } catch e {
+            io.println(f"Error checking file: {e}")
+        }
+        
+        time.sleep(interval)
+    }
+}
+
+fn create_sample_markdown() {
+    let sample_file = "sample.md"
+    let content = """# Markdown Preview Example
+
+This is a sample markdown file to demonstrate the live preview functionality.
+
+## Features
+
+- **Real-time** preview
+- Basic markdown syntax support
+- Automatic refreshing
+
+### Code Example
+
+```
+fn hello() {
+    io.println("Hello, Markdown!")
+}
+```
+
+> This is a blockquote section that demonstrates blockquote formatting.
+
+Visit the [Sona language website](https://sonalang.org) for more information.
+
+---
+
+#### Lists
+
+1. First item
+2. Second item
+3. Third item
+
+- Bullet point 1
+- Bullet point 2
+- Bullet point 3
+
+"""
+    
+    try {
+        file.write(sample_file, content)
+        io.println(f"Created sample markdown file: {sample_file}")
+        return sample_file
+    } catch e {
+        io.println(f"Error creating sample file: {e}")
+        return null
+    }
+}
+
+fn main() {
+    io.println("Markdown Preview Tool")
+    io.println("====================")
+    
+    while true {
+        io.println("\nOptions:")
+        io.println("1. Preview an existing markdown file")
+        io.println("2. Create and preview a sample markdown file")
+        io.println("3. Exit")
+        
+        io.print("\nChoice: ")
+        let choice = io.readline()
+        
+        if choice == "1" {
+            io.print("Enter path to markdown file: ")
+            let input_file = io.readline().trim()
+            
+            if !file.exists(input_file) {
+                io.println(f"Error: File '{input_file}' does not exist.")
+                continue
+            }
+            
+            let output_file = input_file + ".html"
+            io.println(f"Output will be written to {output_file}")
+            
+            io.print("Enable watch mode? (y/n): ")
+            let watch = io.readline().lowercase()
+            
+            if watch == "y" || watch == "yes" {
+                watch_file(input_file, output_file, 1)  // Check every second
+            } else {
+                create_preview(input_file, output_file)
+                io.println("Preview created successfully!")
+            }
+        } else if choice == "2" {
+            let sample_file = create_sample_markdown()
+            if sample_file != null {
+                let output_file = sample_file + ".html"
+                watch_file(sample_file, output_file, 1)
+            }
+        } else if choice == "3" {
+            io.println("Goodbye!")
+            break
+        } else {
+            io.println("Invalid choice. Please try again.")
+        }
+    }
+}
+
+main()
