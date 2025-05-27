@@ -1,0 +1,157 @@
+// Time Tracker - Track time spent on different tasks
+import io from "stdlib/io"
+import time from "stdlib/time"
+import fmt from "stdlib/fmt"
+import file from "stdlib/file"
+
+// Global state
+let tasks = []
+let current_task = null
+let start_time = 0
+let log_file = "time_tracker_log.txt"
+
+fn format_duration(seconds) {
+    let hours = math.floor(seconds / 3600)
+    let minutes = math.floor((seconds % 3600) / 60)
+    let secs = seconds % 60
+    
+    return f"{hours}h {minutes}m {secs}s"
+}
+
+fn start_task() {
+    if current_task != null {
+        io.println("Error: You already have a task in progress.")
+        io.println(f"Current task: {current_task}")
+        return
+    }
+    
+    io.print("Enter task name: ")
+    let task_name = io.readline().trim()
+    
+    if task_name == "" {
+        io.println("Error: Task name cannot be empty.")
+        return
+    }
+    
+    current_task = task_name
+    start_time = time.now()
+    
+    io.println(f"Started tracking time for: {task_name}")
+    io.println(f"Start time: {fmt.format_time(start_time, '%H:%M:%S')}")
+}
+
+fn stop_task() {
+    if current_task == null {
+        io.println("Error: No task is currently in progress.")
+        return
+    }
+    
+    let end_time = time.now()
+    let duration = end_time - start_time
+    
+    let task_entry = {
+        "name": current_task,
+        "start": start_time,
+        "end": end_time,
+        "duration": duration
+    }
+    
+    tasks.append(task_entry)
+    
+    io.println(f"Stopped tracking: {current_task}")
+    io.println(f"Duration: {format_duration(duration)}")
+    
+    // Log to file
+    try {
+        let log_entry = f"{fmt.format_time(start_time, '%Y-%m-%d %H:%M:%S')} to {fmt.format_time(end_time, '%H:%M:%S')} - {current_task} - {format_duration(duration)}\n"
+        file.append(log_file, log_entry)
+    } catch e {
+        io.println(f"Warning: Could not write to log file: {e}")
+    }
+    
+    // Reset current task
+    current_task = null
+    start_time = 0
+}
+
+fn view_tasks() {
+    if tasks.length() == 0 {
+        io.println("No completed tasks in this session.")
+        return
+    }
+    
+    io.println("\n===== Completed Tasks =====")
+    let total_time = 0
+    
+    for i in range(0, tasks.length()) {
+        let task = tasks[i]
+        let start_str = fmt.format_time(task.start, "%H:%M:%S")
+        let end_str = fmt.format_time(task.end, "%H:%M:%S")
+        let duration_str = format_duration(task.duration)
+        
+        io.println(f"{i + 1}. {task.name}")
+        io.println(f"   {start_str} - {end_str} ({duration_str})")
+        
+        total_time += task.duration
+    }
+    
+    io.println("\nTotal time tracked: " + format_duration(total_time))
+}
+
+fn view_current_task() {
+    if current_task == null {
+        io.println("No task is currently in progress.")
+        return
+    }
+    
+    let now = time.now()
+    let elapsed = now - start_time
+    
+    io.println(f"Current task: {current_task}")
+    io.println(f"Started at: {fmt.format_time(start_time, '%H:%M:%S')}")
+    io.println(f"Elapsed time: {format_duration(elapsed)}")
+}
+
+fn main() {
+    io.println("Time Tracker v1.0")
+    io.println("=================")
+    
+    while true {
+        io.println("\nOptions:")
+        io.println("1. Start a task")
+        io.println("2. Stop current task")
+        io.println("3. View completed tasks")
+        io.println("4. View current task")
+        io.println("5. Exit")
+        
+        io.print("\nChoice: ")
+        let choice = io.readline()
+        
+        if choice == "1" {
+            start_task()
+        } else if choice == "2" {
+            stop_task()
+        } else if choice == "3" {
+            view_tasks()
+        } else if choice == "4" {
+            view_current_task()
+        } else if choice == "5" {
+            if current_task != null {
+                io.println(f"Warning: You have an active task: {current_task}")
+                io.print("Do you want to stop it before exiting? (y/n): ")
+                let confirm = io.readline().lowercase()
+                
+                if confirm == "y" || confirm == "yes" {
+                    stop_task()
+                }
+            }
+            
+            io.println("Goodbye!")
+            break
+        } else {
+            io.println("Invalid choice. Please try again.")
+        }
+    }
+}
+
+main()

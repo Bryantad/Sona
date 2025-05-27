@@ -1,8 +1,0 @@
-// Simple hello world program
-
-print("Hello, Sona World!")
-let x = 5
-
-// Let's try to add an import
-import utils.math.smod
-print("Math PI: " + utils.math.smod.to_str(utils.math.smod.PI))

@@ -1,6 +1,0 @@
-import utils.array.smod
-
-let a = [1, 2, 3]
-print(array.push(a, 4))   # Output: [1, 2, 3, 4]
-print(array.pop(a))       # Output: 4
-print(array.length(a))    # Output: 3

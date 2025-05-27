@@ -1,0 +1,312 @@
+// Static Site Generator - Converts Markdown files to HTML
+import io from "stdlib/io"
+import file from "stdlib/file"
+import fmt from "stdlib/fmt"
+import path from "stdlib/path"
+
+// Simple Markdown parser functions
+fn md_to_html(markdown) {
+    // Convert markdown text to HTML
+    let html = markdown
+    
+    // Handle headings
+    html = html.replace(/^# (.+)$/gm, "<h1>$1</h1>")
+    html = html.replace(/^## (.+)$/gm, "<h2>$1</h2>")
+    html = html.replace(/^### (.+)$/gm, "<h3>$1</h3>")
+    
+    // Handle paragraphs (simplistic approach)
+    html = html.replace(/^(?!<h[1-6]|<ul|<ol|<li|<blockquote|<pre)(.+)$/gm, "<p>$1</p>")
+    
+    // Handle bold
+    html = html.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    
+    // Handle italic
+    html = html.replace(/\*([^*]+)\*/g, "<em>$1</em>")
+    
+    // Handle links
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, "<a href=\"$2\">$1</a>")
+    
+    // Handle code blocks
+    html = html.replace(/```([^`]+)```/g, "<pre><code>$1</code></pre>")
+    
+    // Handle inline code
+    html = html.replace(/`([^`]+)`/g, "<code>$1</code>")
+    
+    // Handle lists
+    html = html.replace(/^- (.+)$/gm, "<li>$1</li>")
+    
+    // Wrap list items in ul tags
+    let lines = html.split("\n")
+    let in_list = false
+    let result = ""
+    
+    for i in range(0, lines.length()) {
+        let line = lines[i]
+        if line.starts_with("<li>") {
+            if !in_list {
+                result += "<ul>\n"
+                in_list = true
+            }
+        } else if in_list {
+            result += "</ul>\n"
+            in_list = false
+        }
+        result += line + "\n"
+    }
+    
+    if in_list {
+        result += "</ul>\n"
+    }
+    
+    return result
+}
+
+fn generate_html_page(title, content, template) {
+    // Replace placeholders in the template
+    return template
+        .replace("{{TITLE}}", title)
+        .replace("{{CONTENT}}", content)
+}
+
+fn create_default_template() {
+    return """<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{TITLE}}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            background-color: #f4f4f4;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 0.8em;
+            color: #777;
+        }
+        nav {
+            margin-bottom: 20px;
+        }
+        nav a {
+            margin-right: 10px;
+        }
+        pre {
+            background-color: #f6f8fa;
+            padding: 16px;
+            overflow: auto;
+            border-radius: 6px;
+        }
+        code {
+            font-family: monospace;
+            background-color: #f6f8fa;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>{{TITLE}}</h1>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="about.html">About</a>
+        </nav>
+    </header>
+
+    <main>
+        {{CONTENT}}
+    </main>
+
+    <footer>
+        <p>Generated with Sona Static Site Generator</p>
+    </footer>
+</body>
+</html>
+"""
+}
+
+fn generate_site(input_dir, output_dir, overwrite) {
+    // Check if directories exist
+    if !file.is_directory(input_dir) {
+        io.println(f"Error: Input directory '{input_dir}' does not exist.")
+        return false
+    }
+    
+    // Create output directory if it doesn't exist
+    if !file.exists(output_dir) {
+        file.create_directory(output_dir)
+        io.println(f"Created output directory: {output_dir}")
+    } else if !file.is_directory(output_dir) {
+        io.println(f"Error: Output path '{output_dir}' exists but is not a directory.")
+        return false
+    } else if !overwrite {
+        io.print(f"Output directory '{output_dir}' already exists. Overwrite? (y/n): ")
+        let response = io.readline().lowercase()
+        if response != "y" && response != "yes" {
+            io.println("Aborted.")
+            return false
+        }
+    }
+    
+    // Create default template
+    let template = create_default_template()
+    
+    // Process all markdown files
+    let files = file.list_files(input_dir)
+    let md_files = []
+    
+    for f in files {
+        if f.ends_with(".md") {
+            md_files.append(f)
+        }
+    }
+    
+    if md_files.length() == 0 {
+        io.println(f"No markdown files found in '{input_dir}'.")
+        return false
+    }
+    
+    let processed = 0
+    
+    for md_file in md_files {
+        let input_path = path.join(input_dir, md_file)
+        let filename = path.basename(md_file)
+        let name_without_ext = filename.substring(0, filename.length() - 3)  // Remove .md
+        let output_filename = name_without_ext + ".html"
+        let output_path = path.join(output_dir, output_filename)
+        
+        try {
+            // Read markdown file
+            let md_content = file.read(input_path)
+            
+            // Convert to HTML
+            let html_content = md_to_html(md_content)
+            
+            // Generate full HTML page
+            let page = generate_html_page(name_without_ext, html_content, template)
+            
+            // Write to output file
+            file.write(output_path, page)
+            
+            io.println(f"Generated: {output_path}")
+            processed += 1
+            
+        } catch e {
+            io.println(f"Error processing {md_file}: {e}")
+        }
+    }
+    
+    io.println(f"\nProcessed {processed} of {md_files.length()} files.")
+    return true
+}
+
+fn create_sample_site() {
+    // Create a sample site if requested
+    let sample_dir = "sample_site"
+    let input_dir = path.join(sample_dir, "content")
+    let output_dir = path.join(sample_dir, "public")
+    
+    // Create directories
+    if !file.exists(sample_dir) {
+        file.create_directory(sample_dir)
+    }
+    
+    if !file.exists(input_dir) {
+        file.create_directory(input_dir)
+    }
+    
+    // Create sample markdown files
+    let index_md = """# Welcome to My Site
+    
+This is a sample site generated with the Sona Static Site Generator.
+
+## Features
+
+- Simple markdown to HTML conversion
+- Responsive design
+- Easy to customize
+
+Check out the [about page](about.html) for more information.
+
+```
+// Some code example
+fn hello_world() {
+    io.println("Hello, world!")
+}
+```
+"""
+
+    let about_md = """# About This Site
+
+This site was created using **Sona Static Site Generator**, a simple tool for converting Markdown files to HTML.
+
+## How It Works
+
+1. Write content in Markdown
+2. Run the generator
+3. Deploy the HTML files
+
+*It's that simple!*
+"""
+
+    // Write sample files
+    file.write(path.join(input_dir, "index.md"), index_md)
+    file.write(path.join(input_dir, "about.md"), about_md)
+    
+    io.println(f"Created sample site in '{sample_dir}'")
+    io.println(f"- Content directory: '{input_dir}'")
+    io.println(f"- Output directory: '{output_dir}'")
+    
+    // Generate the site
+    generate_site(input_dir, output_dir, true)
+    
+    return true
+}
+
+fn main() {
+    io.println("Sona Static Site Generator")
+    io.println("=========================")
+    
+    while true {
+        io.println("\nOptions:")
+        io.println("1. Generate site from existing markdown files")
+        io.println("2. Create and generate a sample site")
+        io.println("3. Exit")
+        
+        io.print("\nChoice: ")
+        let choice = io.readline()
+        
+        if choice == "1" {
+            io.print("Enter input directory path: ")
+            let input_dir = io.readline().trim()
+            
+            io.print("Enter output directory path: ")
+            let output_dir = io.readline().trim()
+            
+            generate_site(input_dir, output_dir, false)
+            
+        } else if choice == "2" {
+            create_sample_site()
+            
+        } else if choice == "3" {
+            io.println("Goodbye!")
+            break
+            
+        } else {
+            io.println("Invalid choice. Please try again.")
+        }
+    }
+}
+
+main()

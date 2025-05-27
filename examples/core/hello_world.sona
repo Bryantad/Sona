@@ -1,0 +1,21 @@
+// Simple Hello World Demo for Sona v0.5.1
+
+print("Hello from Sona v0.5.1!")
+print("======================")
+print("This is a simple demo application.")
+print("Current features working:")
+print("- Basic print statements")
+print("- String concatenation")
+print("- Variables and functions")
+
+let message = "Welcome to Sona!"
+print(message)
+
+func greet(name) {
+    return "Hello, " + name + "!"
+}
+
+let greeting = greet("Sona User")
+print(greeting)
+
+print("Demo completed successfully!")

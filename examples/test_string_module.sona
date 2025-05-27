@@ -1,7 +1,0 @@
-import utils.string.smod as string
-
-print(string.upper("sona"))          // Output: SONA
-print(string.lower("Sona"))          // Output: sona
-print(string.title("hello world"))   // Output: Hello World
-print(string.reverse("abc"))         // Output: cba
-print(string.length("hello"))        // Output: 5

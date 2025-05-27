@@ -1,5 +1,0 @@
-// Test with proper type conversion
-import utils.math.smod
-
-let x = 5
-print("X value: " + utils.math.smod.to_str(x))

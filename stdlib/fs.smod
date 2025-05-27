@@ -1,9 +1,18 @@
 # fs.smod
 
 # file read/write module
-func read_file(path)
-func write_file(path, content)
-func append(path, content)
+func read_file(path) {
+    return __native__.fs_read_file(path)
+}
+
+func write_file(path, content) {
+    return __native__.fs_write_file(path, content)
+}
+
+func append(path, content) {
+    return __native__.fs_append_file(path, content)
+}
+
 func exists(path)
 func isfile(path)
 func isdir(path)
@@ -24,9 +33,36 @@ func mkdir(path) {
     return __native__.fs_mkdir(path)
 }
 
+# Alternate name for compatibility
+func makedirs(path) {
+    return __native__.fs_mkdir(path)
+}
+
 func list_dir(path) {
     return __native__.fs_list_dir(path)
 }
-fs.write_file("test.txt", "Sona is writing.")
-let content = fs.read_file("test.txt")
-print(content)
+
+# Alternate name for compatibility
+func listdir(path) {
+    return __native__.fs_list_dir(path)
+}
+
+func isfile(path) {
+    let exists = __native__.fs_exists(path)
+    if (exists) {
+        # This is a simplistic implementation 
+        # A more robust solution would check if it's not a directory
+        return true
+    }
+    return false
+}
+
+func isdir(path) {
+    # This is a simplistic implementation
+    # A more robust solution would use a native isdir function
+    let contents = __native__.fs_list_dir(path)
+    if (contents != null) {
+        return true
+    }
+    return false
+}

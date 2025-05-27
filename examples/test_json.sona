@@ -1,6 +1,0 @@
-let data = {"name": "Sona", "version": 1}
-let encoded = __native__.json.dumps(data)
-print(encoded)
-
-let decoded = __native__.json.loads(encoded)
-print(decoded["name"])

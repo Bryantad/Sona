@@ -1,0 +1,385 @@
+// Pure Sona Snake Game using GUI Module
+// Demonstrates comprehensive use of Sona v0.5.1 native modules
+
+import gui.smod
+import time_enhanced.smod
+import json_enhanced.smod
+
+// Game configuration
+const GRID_SIZE = 20
+const CANVAS_WIDTH = 600
+const CANVAS_HEIGHT = 400
+const GAME_SPEED = 150  // milliseconds between moves
+
+// Game state
+let gameWindow = null
+let gameCanvas = null
+let gameRunning = false
+let snake = []
+let food = {}
+let direction = "right"
+let nextDirection = "right"
+let score = 0
+let gameTimer = null
+
+// GUI elements
+let scoreLabel = null
+let statusLabel = null
+
+func initGame() {
+    // Create main game window
+    gameWindow = gui.create_window("Sona Snake Game", 700, 500, false)
+    gui.set_window_background(gameWindow, "#2c3e50")
+    
+    // Create game canvas
+    gameCanvas = gui.create_canvas(gameWindow, CANVAS_WIDTH, CANVAS_HEIGHT, "#34495e")
+    
+    // Create UI elements
+    scoreLabel = gui.create_label(gameWindow, "Score: 0", 620, 50, 16)
+    statusLabel = gui.create_label(gameWindow, "Press SPACE to start!", 620, 100, 12)
+    
+    let controlsLabel = gui.create_label(gameWindow, "Controls:", 620, 150, 14)
+    gui.create_label(gameWindow, "WASD or Arrow Keys", 620, 180, 10)
+    gui.create_label(gameWindow, "SPACE: Start/Pause", 620, 200, 10)
+    gui.create_label(gameWindow, "R: Restart", 620, 220, 10)
+    gui.create_label(gameWindow, "Q: Quit", 620, 240, 10)
+    
+    // Initialize game state
+    resetGame()
+    
+    // Bind keyboard events
+    gui.bind_key(gameWindow, "space", toggleGame)
+    gui.bind_key(gameWindow, "r", restartGame)
+    gui.bind_key(gameWindow, "q", quitGame)
+    
+    // Movement controls
+    gui.bind_key(gameWindow, "w", moveUp)
+    gui.bind_key(gameWindow, "a", moveLeft)
+    gui.bind_key(gameWindow, "s", moveDown)
+    gui.bind_key(gameWindow, "d", moveRight)
+    gui.bind_key(gameWindow, "Up", moveUp)
+    gui.bind_key(gameWindow, "Left", moveLeft)
+    gui.bind_key(gameWindow, "Down", moveDown)
+    gui.bind_key(gameWindow, "Right", moveRight)
+    
+    print("Sona Snake Game initialized!")
+    return true
+}
+
+func resetGame() {
+    // Initialize snake in center
+    snake = []
+    snake.push({"x": 10, "y": 10})
+    snake.push({"x": 9, "y": 10})
+    snake.push({"x": 8, "y": 10})
+    
+    direction = "right"
+    nextDirection = "right"
+    score = 0
+    
+    // Place first food
+    spawnFood()
+    
+    // Update UI
+    updateScore()
+    gui.set_widget_text(statusLabel, "Ready to play!")
+    
+    // Draw initial state
+    drawGame()
+}
+
+func spawnFood() {
+    let validPositions = []
+    
+    // Find all valid positions (not occupied by snake)
+    for x = 0 to (CANVAS_WIDTH / GRID_SIZE) - 1 {
+        for y = 0 to (CANVAS_HEIGHT / GRID_SIZE) - 1 {
+            let occupied = false
+            for i = 0 to snake.length - 1 {
+                if snake[i].x == x && snake[i].y == y {
+                    occupied = true
+                    break
+                }
+            }
+            if !occupied {
+                validPositions.push({"x": x, "y": y})
+            }
+        }
+    }
+    
+    // Choose random position from valid ones
+    if validPositions.length > 0 {
+        let randomIndex = math.floor(math.random() * validPositions.length)
+        food = validPositions[randomIndex]
+    }
+}
+
+func toggleGame() {
+    if gameRunning {
+        pauseGame()
+    } else {
+        startGame()
+    }
+}
+
+func startGame() {
+    gameRunning = true
+    gui.set_widget_text(statusLabel, "Playing... SPACE to pause")
+    
+    // Start game timer
+    gameTimer = time_enhanced.start_timer()
+    gameLoop()
+}
+
+func pauseGame() {
+    gameRunning = false
+    gui.set_widget_text(statusLabel, "Paused - SPACE to continue")
+}
+
+func restartGame() {
+    gameRunning = false
+    resetGame()
+}
+
+func quitGame() {
+    gameRunning = false
+    gui.close_window(gameWindow)
+}
+
+// Movement functions
+func moveUp() {
+    if direction != "down" {
+        nextDirection = "up"
+    }
+}
+
+func moveDown() {
+    if direction != "up" {
+        nextDirection = "down"
+    }
+}
+
+func moveLeft() {
+    if direction != "right" {
+        nextDirection = "left"
+    }
+}
+
+func moveRight() {
+    if direction != "left" {
+        nextDirection = "right"
+    }
+}
+
+func gameLoop() {
+    if !gameRunning {
+        return
+    }
+    
+    // Update direction
+    direction = nextDirection
+    
+    // Calculate new head position
+    let head = snake[0]
+    let newHead = {"x": head.x, "y": head.y}
+    
+    if direction == "up" {
+        newHead.y = newHead.y - 1
+    } else if direction == "down" {
+        newHead.y = newHead.y + 1
+    } else if direction == "left" {
+        newHead.x = newHead.x - 1
+    } else if direction == "right" {
+        newHead.x = newHead.x + 1
+    }
+    
+    // Check wall collision
+    if newHead.x < 0 || newHead.x >= (CANVAS_WIDTH / GRID_SIZE) ||
+       newHead.y < 0 || newHead.y >= (CANVAS_HEIGHT / GRID_SIZE) {
+        gameOver()
+        return
+    }
+    
+    // Check self collision
+    for i = 0 to snake.length - 1 {
+        if snake[i].x == newHead.x && snake[i].y == newHead.y {
+            gameOver()
+            return
+        }
+    }
+    
+    // Add new head
+    snake.unshift(newHead)
+    
+    // Check food collision
+    if newHead.x == food.x && newHead.y == food.y {
+        score = score + 10
+        updateScore()
+        spawnFood()
+        
+        // Show score increase effect
+        gui.set_widget_text(statusLabel, "Food eaten! Score: " + score)
+    } else {
+        // Remove tail (snake doesn't grow)
+        snake.pop()
+    }
+    
+    // Draw updated game
+    drawGame()
+    
+    // Schedule next update
+    time_enhanced.set_timeout(gameLoop, GAME_SPEED / 1000.0)
+}
+
+func gameOver() {
+    gameRunning = false
+    gui.set_widget_text(statusLabel, "Game Over! R to restart")
+    
+    // Flash the snake red
+    gui.clear_canvas(gameCanvas)
+    
+    // Draw game over snake in red
+    for i = 0 to snake.length - 1 {
+        let segment = snake[i]
+        gui.draw_rectangle(gameCanvas, 
+            segment.x * GRID_SIZE, segment.y * GRID_SIZE,
+            GRID_SIZE - 1, GRID_SIZE - 1, "#e74c3c", "#c0392b")
+    }
+    
+    // Draw food
+    gui.draw_circle(gameCanvas,
+        food.x * GRID_SIZE + GRID_SIZE / 2,
+        food.y * GRID_SIZE + GRID_SIZE / 2,
+        GRID_SIZE / 2 - 1, "#f1c40f", "#f39c12")
+    
+    // Draw game over text
+    gui.draw_text(gameCanvas, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2,
+        "GAME OVER", "#ecf0f1", ("Arial", 24))
+    gui.draw_text(gameCanvas, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 30,
+        "Score: " + score, "#ecf0f1", ("Arial", 16))
+}
+
+func drawGame() {
+    // Clear canvas
+    gui.clear_canvas(gameCanvas)
+    
+    // Draw grid lines (subtle)
+    for x = 0 to CANVAS_WIDTH step GRID_SIZE {
+        gui.draw_line(gameCanvas, x, 0, x, CANVAS_HEIGHT, "#2c3e50", 1)
+    }
+    for y = 0 to CANVAS_HEIGHT step GRID_SIZE {
+        gui.draw_line(gameCanvas, 0, y, CANVAS_WIDTH, y, "#2c3e50", 1)
+    }
+    
+    // Draw snake with gradient effect
+    for i = 0 to snake.length - 1 {
+        let segment = snake[i]
+        let intensity = 255 - (i * 10)  // Fade effect
+        if intensity < 100 { intensity = 100 }
+        
+        let color = "#27ae60"  // Green
+        if i == 0 {
+            color = "#2ecc71"  // Brighter green for head
+            
+            // Draw eyes on head
+            let eyeSize = 3
+            let eyeOffset = 5
+            if direction == "right" {
+                gui.draw_circle(gameCanvas,
+                    segment.x * GRID_SIZE + GRID_SIZE - eyeOffset,
+                    segment.y * GRID_SIZE + eyeOffset, eyeSize, "#2c3e50", "#2c3e50")
+                gui.draw_circle(gameCanvas,
+                    segment.x * GRID_SIZE + GRID_SIZE - eyeOffset,
+                    segment.y * GRID_SIZE + GRID_SIZE - eyeOffset, eyeSize, "#2c3e50", "#2c3e50")
+            } else if direction == "left" {
+                gui.draw_circle(gameCanvas,
+                    segment.x * GRID_SIZE + eyeOffset,
+                    segment.y * GRID_SIZE + eyeOffset, eyeSize, "#2c3e50", "#2c3e50")
+                gui.draw_circle(gameCanvas,
+                    segment.x * GRID_SIZE + eyeOffset,
+                    segment.y * GRID_SIZE + GRID_SIZE - eyeOffset, eyeSize, "#2c3e50", "#2c3e50")
+            } else if direction == "up" {
+                gui.draw_circle(gameCanvas,
+                    segment.x * GRID_SIZE + eyeOffset,
+                    segment.y * GRID_SIZE + eyeOffset, eyeSize, "#2c3e50", "#2c3e50")
+                gui.draw_circle(gameCanvas,
+                    segment.x * GRID_SIZE + GRID_SIZE - eyeOffset,
+                    segment.y * GRID_SIZE + eyeOffset, eyeSize, "#2c3e50", "#2c3e50")
+            } else if direction == "down" {
+                gui.draw_circle(gameCanvas,
+                    segment.x * GRID_SIZE + eyeOffset,
+                    segment.y * GRID_SIZE + GRID_SIZE - eyeOffset, eyeSize, "#2c3e50", "#2c3e50")
+                gui.draw_circle(gameCanvas,
+                    segment.x * GRID_SIZE + GRID_SIZE - eyeOffset,
+                    segment.y * GRID_SIZE + GRID_SIZE - eyeOffset, eyeSize, "#2c3e50", "#2c3e50")
+            }
+        }
+        
+        gui.draw_rectangle(gameCanvas,
+            segment.x * GRID_SIZE, segment.y * GRID_SIZE,
+            GRID_SIZE - 1, GRID_SIZE - 1, color, "#1e8449")
+    }
+    
+    // Draw food with pulsing effect
+    gui.draw_circle(gameCanvas,
+        food.x * GRID_SIZE + GRID_SIZE / 2,
+        food.y * GRID_SIZE + GRID_SIZE / 2,
+        GRID_SIZE / 2 - 1, "#e74c3c", "#c0392b")
+    
+    // Add sparkle effect to food
+    gui.draw_circle(gameCanvas,
+        food.x * GRID_SIZE + GRID_SIZE / 2 - 3,
+        food.y * GRID_SIZE + GRID_SIZE / 2 - 3,
+        2, "#ffffff", "#ffffff")
+}
+
+func updateScore() {
+    gui.set_widget_text(scoreLabel, "Score: " + score)
+}
+
+// Save/Load high score
+func saveHighScore() {
+    let gameData = json_enhanced.create_object()
+    json_enhanced.set_value(gameData, "high_score", score)
+    json_enhanced.set_value(gameData, "date", time_enhanced.now())
+    
+    return json_enhanced.save_file("snake_highscore.json", gameData)
+}
+
+func loadHighScore() {
+    let gameData = json_enhanced.load_file("snake_highscore.json")
+    if gameData != null {
+        return json_enhanced.get_value(gameData, "high_score", 0)
+    }
+    return 0
+}
+
+// Main game initialization
+func main() {
+    print("Starting Sona Snake Game...")
+    
+    if !initGame() {
+        print("Failed to initialize game!")
+        return
+    }
+    
+    // Load previous high score
+    let highScore = loadHighScore()
+    if highScore > 0 {
+        print("Previous high score: " + highScore)
+    }
+    
+    // Start the GUI main loop
+    gui.start_mainloop(gameWindow)
+    
+    // Save high score when game ends
+    if score > highScore {
+        print("New high score: " + score)
+        saveHighScore()
+    }
+    
+    print("Thanks for playing Sona Snake!")
+}
+
+// Run the game
+main()

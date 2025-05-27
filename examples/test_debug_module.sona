@@ -1,4 +1,0 @@
-import utils.debug.smod
-
-print(debug.type_of(123))     # Output: int
-print(debug.type_of("abc"))   # Output: str

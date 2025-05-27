@@ -1,0 +1,230 @@
+import io from "stdlib/io"
+import fs from "stdlib/fs"
+import json from "stdlib/json"
+import fmt from "stdlib/fmt"
+import string from "stdlib/string"
+
+fn main() {
+    io.println("Data Formatter")
+    io.println("=============")
+    
+    while true {
+        io.println("\nOptions:")
+        io.println("1. Convert CSV to JSON")
+        io.println("2. Convert JSON to CSV")
+        io.println("3. Pretty-print JSON")
+        io.println("4. Extract data from JSON")
+        io.println("5. Exit")
+        
+        io.print("\nSelect option (1-5): ")
+        let choice = io.readline()
+        
+        if choice == "5" {
+            break
+        }
+        
+        if choice == "1" {
+            csv_to_json()
+        } elif choice == "2" {
+            json_to_csv()
+        } elif choice == "3" {
+            pretty_print_json()
+        } elif choice == "4" {
+            extract_from_json()
+        } else {
+            io.println("Invalid choice. Please select 1-5.")
+        }
+    }
+}
+
+fn csv_to_json() {
+    io.print("\nEnter CSV file path: ")
+    let csv_path = io.readline()
+    
+    if not fs.file_exists(csv_path) {
+        io.println(f"Error: File '{csv_path}' not found.")
+        return
+    }
+    
+    try {
+        let csv_data = fs.read_file(csv_path)
+        let lines = csv_data.split("\n")
+        
+        # Parse headers
+        let headers = lines[0].split(",")
+        headers = [h.trim() for h in headers]
+        
+        # Parse data
+        let json_array = []
+        for i in range(1, lines.length()) {
+            if lines[i].trim() == "" {
+                continue
+            }
+            
+            let values = lines[i].split(",")
+            values = [v.trim() for v in values]
+            
+            let row = {}
+            for j in range(headers.length()) {
+                if j < values.length() {
+                    row[headers[j]] = values[j]
+                }
+            }
+            
+            json_array.append(row)
+        }
+        
+        # Write JSON output
+        io.print("Enter output JSON file path: ")
+        let json_path = io.readline()
+        
+        let json_str = json.stringify(json_array, 2)  # Pretty printing with 2 spaces
+        fs.write_file(json_path, json_str)
+        
+        io.println(f"\nConversion successful! Wrote {json_array.length()} records to {json_path}")
+        
+    } catch {
+        io.println("Error converting CSV to JSON. Check file format.")
+    }
+}
+
+fn json_to_csv() {
+    io.print("\nEnter JSON file path: ")
+    let json_path = io.readline()
+    
+    if not fs.file_exists(json_path) {
+        io.println(f"Error: File '{json_path}' not found.")
+        return
+    }
+    
+    try {
+        let json_data = fs.read_file(json_path)
+        let data = json.parse(json_data)
+        
+        if not isinstance(data, list) {
+            io.println("Error: JSON data must be an array of objects.")
+            return
+        }
+        
+        if data.length() == 0 {
+            io.println("Error: Empty JSON array.")
+            return
+        }
+        
+        # Extract headers from first object
+        let headers = data[0].keys()
+        let csv_lines = [",".join(headers)]
+        
+        # Convert each object to CSV row
+        for item in data {
+            let row = []
+            for header in headers {
+                let value = item[header]
+                # Handle strings with commas by quoting
+                if isinstance(value, string) and "," in value {
+                    value = '"' + value + '"'
+                }
+                row.append(f"{value}")
+            }
+            csv_lines.append(",".join(row))
+        }
+        
+        # Write CSV output
+        io.print("Enter output CSV file path: ")
+        let csv_path = io.readline()
+        
+        fs.write_file(csv_path, "\n".join(csv_lines))
+        
+        io.println(f"\nConversion successful! Wrote {data.length()} records to {csv_path}")
+        
+    } catch {
+        io.println("Error converting JSON to CSV. Check file format.")
+    }
+}
+
+fn pretty_print_json() {
+    io.print("\nEnter JSON file path: ")
+    let json_path = io.readline()
+    
+    if not fs.file_exists(json_path) {
+        io.println(f"Error: File '{json_path}' not found.")
+        return
+    }
+    
+    try {
+        let json_data = fs.read_file(json_path)
+        let data = json.parse(json_data)
+        
+        io.print("Enter indent level (2-4): ")
+        let indent = io.readline().to_num()
+        if indent < 2 or indent > 4 {
+            indent = 2
+        }
+        
+        io.print("Enter output file path (leave empty to print to console): ")
+        let output_path = io.readline()
+        
+        let pretty_json = json.stringify(data, indent)
+        
+        if output_path == "" {
+            io.println("\nPretty JSON:")
+            io.println(pretty_json)
+        } else {
+            fs.write_file(output_path, pretty_json)
+            io.println(f"\nPretty JSON written to {output_path}")
+        }
+        
+    } catch {
+        io.println("Error formatting JSON. Check file format.")
+    }
+}
+
+fn extract_from_json() {
+    io.print("\nEnter JSON file path: ")
+    let json_path = io.readline()
+    
+    if not fs.file_exists(json_path) {
+        io.println(f"Error: File '{json_path}' not found.")
+        return
+    }
+    
+    try {
+        let json_data = fs.read_file(json_path)
+        let data = json.parse(json_data)
+        
+        io.println("\nEnter path to extract (e.g. 'users.0.name' or 'settings.theme'):")
+        let path = io.readline()
+        
+        let parts = path.split(".")
+        let result = data
+        
+        for part in parts {
+            if part.isdigit() {
+                # Handle array access
+                let idx = part.to_num()
+                if idx >= 0 and idx < result.length() {
+                    result = result[idx]
+                } else {
+                    io.println(f"Error: Index {idx} out of bounds.")
+                    return
+                }
+            } elif part in result {
+                # Handle object property access
+                result = result[part]
+            } else {
+                io.println(f"Error: Path '{part}' not found in data.")
+                return
+            }
+        }
+        
+        io.println("\nExtracted data:")
+        if isinstance(result, dict) or isinstance(result, list) {
+            io.println(json.stringify(result, 2))
+        } else {
+            io.println(result)
+        }
+        
+    } catch {
+        io.println("Error extracting from JSON. Check file format.")
+    }
+}

@@ -1,3 +1,8 @@
-// Simple hello world program
+// Basic Hello World Example
+print("Hello, World!")
 
-print("Hello, Sona World!")
+func greet(name) {
+    print("Hello, " + name + "!")
+}
+
+greet("Sona")

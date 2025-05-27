@@ -1,0 +1,143 @@
+import io from "stdlib/io"
+import fmt from "stdlib/fmt"
+
+let CONVERSIONS = {
+    "length": {
+        "m_to_ft": 3.28084,
+        "ft_to_m": 0.3048,
+        "km_to_mi": 0.621371,
+        "mi_to_km": 1.60934
+    },
+    "weight": {
+        "kg_to_lb": 2.20462,
+        "lb_to_kg": 0.453592
+    },
+    "temp": {
+        "c_to_f": fn(c) { return (c * 9/5) + 32 },
+        "f_to_c": fn(f) { return (f - 32) * 5/9 }
+    }
+}
+
+fn main() {
+    io.println("Unit Converter")
+    io.println("=============")
+    
+    while true {
+        io.println("\nAvailable conversions:")
+        io.println("1. Length (m/ft, km/mi)")
+        io.println("2. Weight (kg/lb)")
+        io.println("3. Temperature (°C/°F)")
+        io.println("4. Exit")
+        
+        io.print("\nSelect conversion (1-4): ")
+        let choice = io.readline()
+        
+        if choice == "4" {
+            break
+        }
+        
+        if choice == "1" {
+            convert_length()
+        } elif choice == "2" {
+            convert_weight()
+        } elif choice == "3" {
+            convert_temperature()
+        } else {
+            io.println("Invalid choice. Please select 1-4.")
+        }
+    }
+}
+
+fn convert_length() {
+    io.println("\nLength Conversion")
+    io.println("1. Meters to Feet")
+    io.println("2. Feet to Meters")
+    io.println("3. Kilometers to Miles")
+    io.println("4. Miles to Kilometers")
+    
+    io.print("Select conversion (1-4): ")
+    let choice = io.readline()
+    
+    io.print("Enter value: ")
+    let value = io.readline().to_num()
+    
+    let result = 0
+    let unit_from = ""
+    let unit_to = ""
+    
+    if choice == "1" {
+        result = value * CONVERSIONS["length"]["m_to_ft"]
+        unit_from = "meters"
+        unit_to = "feet"
+    } elif choice == "2" {
+        result = value * CONVERSIONS["length"]["ft_to_m"]
+        unit_from = "feet"
+        unit_to = "meters"
+    } elif choice == "3" {
+        result = value * CONVERSIONS["length"]["km_to_mi"]
+        unit_from = "kilometers"
+        unit_to = "miles"
+    } elif choice == "4" {
+        result = value * CONVERSIONS["length"]["mi_to_km"]
+        unit_from = "miles"
+        unit_to = "kilometers"
+    }
+    
+    io.println(f"{value} {unit_from} = {fmt.format_float(result, 3)} {unit_to}")
+}
+
+fn convert_weight() {
+    io.println("\nWeight Conversion")
+    io.println("1. Kilograms to Pounds")
+    io.println("2. Pounds to Kilograms")
+    
+    io.print("Select conversion (1-2): ")
+    let choice = io.readline()
+    
+    io.print("Enter value: ")
+    let value = io.readline().to_num()
+    
+    let result = 0
+    let unit_from = ""
+    let unit_to = ""
+    
+    if choice == "1" {
+        result = value * CONVERSIONS["weight"]["kg_to_lb"]
+        unit_from = "kilograms"
+        unit_to = "pounds"
+    } elif choice == "2" {
+        result = value * CONVERSIONS["weight"]["lb_to_kg"]
+        unit_from = "pounds"
+        unit_to = "kilograms"
+    }
+    
+    io.println(f"{value} {unit_from} = {fmt.format_float(result, 3)} {unit_to}")
+}
+
+fn convert_temperature() {
+    io.println("\nTemperature Conversion")
+    io.println("1. Celsius to Fahrenheit")
+    io.println("2. Fahrenheit to Celsius")
+    
+    io.print("Select conversion (1-2): ")
+    let choice = io.readline()
+    
+    io.print("Enter value: ")
+    let value = io.readline().to_num()
+    
+    let result = 0
+    let unit_from = ""
+    let unit_to = ""
+    
+    if choice == "1" {
+        result = CONVERSIONS["temp"]["c_to_f"](value)
+        unit_from = "°C"
+        unit_to = "°F"
+    } elif choice == "2" {
+        result = CONVERSIONS["temp"]["f_to_c"](value)
+        unit_from = "°F"
+        unit_to = "°C"
+    }
+    
+    io.println(f"{value} {unit_from} = {fmt.format_float(result, 1)} {unit_to}")
+}

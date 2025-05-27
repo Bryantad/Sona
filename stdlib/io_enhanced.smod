@@ -1,0 +1,7 @@
+# Sona Enhanced IO Module Interface (io.smod)
+# Import the enhanced IO implementation
+
+from .io_enhanced import io
+
+# Export the io instance for Sona applications
+__all__ = ['io']

@@ -1,0 +1,571 @@
+// Description: Converts between RGB/HEX/HSL colors and provides color manipulation functions
+// Color Picker for Sona v0.5.1+
+// A utility for color conversion and manipulation.
+// Features:
+//   - RGB to HEX conversion
+//   - HEX to RGB conversion
+//   - HSL to RGB conversion
+//   - Color blending and manipulation
+//   - Named color lookup
+
+import utils.string.smod as string
+import utils.math.smod as math
+import utils.array.smod as array
+
+// Convert RGB values to HEX color code
+func rgb_to_hex(r, g, b) {
+    // Validate RGB values
+    r = clamp(r, 0, 255)
+    g = clamp(g, 0, 255)
+    b = clamp(b, 0, 255)
+    
+    // Convert to integers
+    r = math.floor(r)
+    g = math.floor(g)
+    b = math.floor(b)
+    
+    // Convert each component to hex
+    let hex_r = decimal_to_hex(r)
+    let hex_g = decimal_to_hex(g)
+    let hex_b = decimal_to_hex(b)
+    
+    // Ensure each component is two characters
+    if (string.length(hex_r) == 1) {
+        hex_r = "0" + hex_r
+    }
+    
+    if (string.length(hex_g) == 1) {
+        hex_g = "0" + hex_g
+    }
+    
+    if (string.length(hex_b) == 1) {
+        hex_b = "0" + hex_b
+    }
+    
+    // Combine and return
+    let hex_color = "#" + hex_r + hex_g + hex_b
+    print("RGB(" + r + ", " + g + ", " + b + ") = " + hex_color)
+    return hex_color
+}
+
+// Convert a decimal to hex
+func decimal_to_hex(decimal) {
+    if (decimal == 0) {
+        return "0"
+    }
+    
+    const hex_chars = "0123456789ABCDEF"
+    let result = ""
+    
+    while (decimal > 0) {
+        let remainder = decimal % 16
+        result = string.substring(hex_chars, remainder, remainder + 1) + result
+        decimal = math.floor(decimal / 16)
+    }
+    
+    return result
+}
+
+// Convert HEX color code to RGB values
+func hex_to_rgb(hex_color) {
+    // Remove # if present
+    if (string.starts_with(hex_color, "#")) {
+        hex_color = string.substring(hex_color, 1, string.length(hex_color))
+    }
+    
+    // Validate hex color format
+    if (!validate_hex_color(hex_color)) {
+        print("Error: Invalid hex color code")
+        return null
+    }
+    
+    // Normalize to 6 digits
+    if (string.length(hex_color) == 3) {
+        let r = string.substring(hex_color, 0, 1)
+        let g = string.substring(hex_color, 1, 2)
+        let b = string.substring(hex_color, 2, 3)
+        hex_color = r + r + g + g + b + b
+    }
+    
+    // Extract RGB components
+    let r_hex = string.substring(hex_color, 0, 2)
+    let g_hex = string.substring(hex_color, 2, 4)
+    let b_hex = string.substring(hex_color, 4, 6)
+    
+    // Convert to decimal
+    let r = hex_to_decimal(r_hex)
+    let g = hex_to_decimal(g_hex)
+    let b = hex_to_decimal(b_hex)
+    
+    print("HEX " + hex_color + " = RGB(" + r + ", " + g + ", " + b + ")")
+    
+    // Return as object
+    return {
+        "r": r,
+        "g": g,
+        "b": b
+    }
+}
+
+// Validate a hex color format
+func validate_hex_color(hex_color) {
+    // Check length (3 or 6 characters)
+    let len = string.length(hex_color)
+    if (len != 3 && len != 6) {
+        return 0
+    }
+    
+    // Check if all characters are valid hex
+    for (let i = 0; i < len; i = i + 1) {
+        let char = string.substring(hex_color, i, i + 1)
+        let is_digit = char >= "0" && char <= "9"
+        let is_hex_letter = (char >= "A" && char <= "F") || (char >= "a" && char <= "f")
+        
+        if (!is_digit && !is_hex_letter) {
+            return 0
+        }
+    }
+    
+    return 1
+}
+
+// Convert a hex string to decimal
+func hex_to_decimal(hex_str) {
+    // Convert to uppercase for consistency
+    hex_str = string.to_upper(hex_str)
+    
+    let result = 0
+    let len = string.length(hex_str)
+    
+    for (let i = 0; i < len; i = i + 1) {
+        let char = string.substring(hex_str, i, i + 1)
+        let value = 0
+        
+        if (char >= "0" && char <= "9") {
+            value = string.index_of("0123456789", char)
+        } else if (char >= "A" && char <= "F") {
+            value = string.index_of("ABCDEF", char) + 10
+        }
+        
+        result = result * 16 + value
+    }
+    
+    return result
+}
+
+// Convert HSL to RGB
+func hsl_to_rgb(h, s, l) {
+    // Validate input ranges
+    h = h % 360
+    if (h < 0) {
+        h = h + 360
+    }
+    
+    s = clamp(s, 0, 100) / 100
+    l = clamp(l, 0, 100) / 100
+    
+    if (s == 0) {
+        // Achromatic (gray)
+        let gray = math.round(l * 255)
+        print("HSL(" + h + ", " + (s * 100) + "%, " + (l * 100) + "%) = RGB(" + gray + ", " + gray + ", " + gray + ")")
+        return {
+            "r": gray,
+            "g": gray,
+            "b": gray
+        }
+    }
+    
+    let q = l < 0.5 ? l * (1 + s) : l + s - (l * s)
+    let p = 2 * l - q
+    
+    let r = hue_to_rgb(p, q, h / 360 + 1/3)
+    let g = hue_to_rgb(p, q, h / 360)
+    let b = hue_to_rgb(p, q, h / 360 - 1/3)
+    
+    let rgb_r = math.round(r * 255)
+    let rgb_g = math.round(g * 255)
+    let rgb_b = math.round(b * 255)
+    
+    print("HSL(" + h + ", " + (s * 100) + "%, " + (l * 100) + "%) = RGB(" + rgb_r + ", " + rgb_g + ", " + rgb_b + ")")
+    
+    return {
+        "r": rgb_r,
+        "g": rgb_g,
+        "b": rgb_b
+    }
+}
+
+// Helper function for HSL to RGB conversion
+func hue_to_rgb(p, q, t) {
+    if (t < 0) {
+        t = t + 1
+    }
+    
+    if (t > 1) {
+        t = t - 1
+    }
+    
+    if (t < 1/6) {
+        return p + (q - p) * 6 * t
+    }
+    
+    if (t < 1/2) {
+        return q
+    }
+    
+    if (t < 2/3) {
+        return p + (q - p) * (2/3 - t) * 6
+    }
+    
+    return p
+}
+
+// Convert RGB to HSL
+func rgb_to_hsl(r, g, b) {
+    // Normalize RGB values
+    r = clamp(r, 0, 255) / 255
+    g = clamp(g, 0, 255) / 255
+    b = clamp(b, 0, 255) / 255
+    
+    let max_val = max(max(r, g), b)
+    let min_val = min(min(r, g), b)
+    let delta = max_val - min_val
+    
+    let h = 0
+    let s = 0
+    let l = (max_val + min_val) / 2
+    
+    if (delta != 0) {
+        s = l > 0.5 ? delta / (2 - max_val - min_val) : delta / (max_val + min_val)
+        
+        if (max_val == r) {
+            h = (g - b) / delta + (g < b ? 6 : 0)
+        } else if (max_val == g) {
+            h = (b - r) / delta + 2
+        } else {
+            h = (r - g) / delta + 4
+        }
+        
+        h = h * 60
+    }
+    
+    // Convert to integers for display
+    let hsl_h = math.round(h)
+    let hsl_s = math.round(s * 100)
+    let hsl_l = math.round(l * 100)
+    
+    print("RGB(" + math.round(r * 255) + ", " + math.round(g * 255) + ", " + math.round(b * 255) + ") = HSL(" + hsl_h + ", " + hsl_s + "%, " + hsl_l + "%)")
+    
+    return {
+        "h": hsl_h,
+        "s": hsl_s,
+        "l": hsl_l
+    }
+}
+
+// Blend two RGB colors
+func blend_colors(r1, g1, b1, r2, g2, b2, ratio) {
+    // Validate inputs
+    r1 = clamp(r1, 0, 255)
+    g1 = clamp(g1, 0, 255)
+    b1 = clamp(b1, 0, 255)
+    
+    r2 = clamp(r2, 0, 255)
+    g2 = clamp(g2, 0, 255)
+    b2 = clamp(b2, 0, 255)
+    
+    ratio = clamp(ratio, 0, 1)
+    
+    // Linear interpolation
+    let r = math.round(r1 + ratio * (r2 - r1))
+    let g = math.round(g1 + ratio * (g2 - g1))
+    let b = math.round(b1 + ratio * (b2 - b1))
+    
+    print("Blend: " + rgb_to_hex(r1, g1, b1) + " + " + rgb_to_hex(r2, g2, b2) + " (" + ratio + ") = " + rgb_to_hex(r, g, b))
+    
+    return {
+        "r": r,
+        "g": g,
+        "b": b,
+        "hex": rgb_to_hex(r, g, b)
+    }
+}
+
+// Get a complementary color
+func get_complementary(r, g, b) {
+    r = clamp(r, 0, 255)
+    g = clamp(g, 0, 255)
+    b = clamp(b, 0, 255)
+    
+    // Convert to HSL
+    let hsl = rgb_to_hsl(r, g, b)
+    
+    // Get complementary hue (opposite on color wheel)
+    let comp_h = (hsl.h + 180) % 360
+    
+    // Convert back to RGB
+    let comp = hsl_to_rgb(comp_h, hsl.s, hsl.l)
+    
+    print("Complementary color of " + rgb_to_hex(r, g, b) + " is " + rgb_to_hex(comp.r, comp.g, comp.b))
+    
+    return comp
+}
+
+// Get analogous colors (adjacent on color wheel)
+func get_analogous(r, g, b) {
+    r = clamp(r, 0, 255)
+    g = clamp(g, 0, 255)
+    b = clamp(b, 0, 255)
+    
+    // Convert to HSL
+    let hsl = rgb_to_hsl(r, g, b)
+    
+    // Get analogous hues (±30°)
+    let analog1_h = (hsl.h - 30 + 360) % 360
+    let analog2_h = (hsl.h + 30) % 360
+    
+    // Convert back to RGB
+    let analog1 = hsl_to_rgb(analog1_h, hsl.s, hsl.l)
+    let analog2 = hsl_to_rgb(analog2_h, hsl.s, hsl.l)
+    
+    print("Analogous colors of " + rgb_to_hex(r, g, b) + ":")
+    print("1. " + rgb_to_hex(analog1.r, analog1.g, analog1.b))
+    print("2. " + rgb_to_hex(analog2.r, analog2.g, analog2.b))
+    
+    return [analog1, analog2]
+}
+
+// Look up a named color
+func get_named_color(name) {
+    let color_name = string.trim(string.to_lower(name))
+    
+    // Common named colors
+    let named_colors = {
+        "red": {"r": 255, "g": 0, "b": 0},
+        "green": {"r": 0, "g": 128, "b": 0},
+        "blue": {"r": 0, "g": 0, "b": 255},
+        "black": {"r": 0, "g": 0, "b": 0},
+        "white": {"r": 255, "g": 255, "b": 255},
+        "gray": {"r": 128, "g": 128, "b": 128},
+        "silver": {"r": 192, "g": 192, "b": 192},
+        "maroon": {"r": 128, "g": 0, "b": 0},
+        "purple": {"r": 128, "g": 0, "b": 128},
+        "fuchsia": {"r": 255, "g": 0, "b": 255},
+        "lime": {"r": 0, "g": 255, "b": 0},
+        "olive": {"r": 128, "g": 128, "b": 0},
+        "yellow": {"r": 255, "g": 255, "b": 0},
+        "navy": {"r": 0, "g": 0, "b": 128},
+        "teal": {"r": 0, "g": 128, "b": 128},
+        "aqua": {"r": 0, "g": 255, "b": 255},
+        "orange": {"r": 255, "g": 165, "b": 0},
+        "gold": {"r": 255, "g": 215, "b": 0},
+        "coral": {"r": 255, "g": 127, "b": 80},
+        "pink": {"r": 255, "g": 192, "b": 203}
+    }
+    
+    if (color_name in named_colors) {
+        let color = named_colors[color_name]
+        print("Color '" + name + "' = RGB(" + color.r + ", " + color.g + ", " + color.b + ") = " + rgb_to_hex(color.r, color.g, color.b))
+        return color
+    } else {
+        print("Color name '" + name + "' not found.")
+        print("Available colors: red, green, blue, black, white, gray, silver, maroon, purple, fuchsia, lime, olive, yellow, navy, teal, aqua, orange, gold, coral, pink")
+        return null
+    }
+}
+
+// Utility function to clamp values to range
+func clamp(value, min_val, max_val) {
+    if (value < min_val) {
+        return min_val
+    } else if (value > max_val) {
+        return max_val
+    } else {
+        return value
+    }
+}
+
+// Find the max of two values
+func max(a, b) {
+    if (a > b) {
+        return a
+    } else {
+        return b
+    }
+}
+
+// Find the min of two values
+func min(a, b) {
+    if (a < b) {
+        return a
+    } else {
+        return b
+    }
+}
+
+// Generate a random color
+func random_color() {
+    let r = math.floor(math.random() * 256)
+    let g = math.floor(math.random() * 256)
+    let b = math.floor(math.random() * 256)
+    
+    print("Random color: RGB(" + r + ", " + g + ", " + b + ") = " + rgb_to_hex(r, g, b))
+    
+    return {
+        "r": r,
+        "g": g,
+        "b": b,
+        "hex": rgb_to_hex(r, g, b)
+    }
+}
+
+// Generate a color palette (using analogous colors)
+func generate_palette(base_r, base_g, base_b, count) {
+    base_r = clamp(base_r, 0, 255)
+    base_g = clamp(base_g, 0, 255)
+    base_b = clamp(base_b, 0, 255)
+    
+    count = clamp(count, 3, 8)  // Reasonable palette size limits
+    
+    // Convert to HSL for better control
+    let hsl = rgb_to_hsl(base_r, base_g, base_b)
+    let h = hsl.h
+    let s = hsl.s
+    let l = hsl.l
+    
+    print("\n===== Color Palette =====")
+    print("Base color: " + rgb_to_hex(base_r, base_g, base_b))
+    
+    let palette = []
+    let hue_step = 360 / count
+    
+    for (let i = 0; i < count; i = i + 1) {
+        let color_h = (h + i * hue_step) % 360
+        let color_s = s
+        let color_l = l
+        
+        // Slightly adjust saturation and lightness for variety
+        if (i % 3 == 1) {
+            color_s = min(100, color_s + 10)
+        } else if (i % 3 == 2) {
+            color_l = clamp(color_l - 15, 20, 80)
+        }
+        
+        let rgb = hsl_to_rgb(color_h, color_s, color_l)
+        let hex = rgb_to_hex(rgb.r, rgb.g, rgb.b)
+        
+        let color = {
+            "r": rgb.r,
+            "g": rgb.g,
+            "b": rgb.b,
+            "hex": hex
+        }
+        
+        array.push(palette, color)
+        print("Color " + (i + 1) + ": " + color.hex)
+    }
+    
+    return palette
+}
+
+// Darken a color by percentage
+func darken_color(r, g, b, percent) {
+    r = clamp(r, 0, 255)
+    g = clamp(g, 0, 255)
+    b = clamp(b, 0, 255)
+    percent = clamp(percent, 0, 100)
+    
+    let factor = 1 - (percent / 100)
+    
+    let new_r = math.floor(r * factor)
+    let new_g = math.floor(g * factor)
+    let new_b = math.floor(b * factor)
+    
+    print("Darkened by " + percent + "%: " + rgb_to_hex(r, g, b) + " -> " + rgb_to_hex(new_r, new_g, new_b))
+    
+    return {
+        "r": new_r,
+        "g": new_g,
+        "b": new_b,
+        "hex": rgb_to_hex(new_r, new_g, new_b)
+    }
+}
+
+// Lighten a color by percentage
+func lighten_color(r, g, b, percent) {
+    r = clamp(r, 0, 255)
+    g = clamp(g, 0, 255)
+    b = clamp(b, 0, 255)
+    percent = clamp(percent, 0, 100)
+    
+    let factor = percent / 100
+    
+    let new_r = math.floor(r + (255 - r) * factor)
+    let new_g = math.floor(g + (255 - g) * factor)
+    let new_b = math.floor(b + (255 - b) * factor)
+    
+    print("Lightened by " + percent + "%: " + rgb_to_hex(r, g, b) + " -> " + rgb_to_hex(new_r, new_g, new_b))
+    
+    return {
+        "r": new_r,
+        "g": new_g,
+        "b": new_b,
+        "hex": rgb_to_hex(new_r, new_g, new_b)
+    }
+}
+
+// Display help information
+func show_help() {
+    print("\n===== COLOR PICKER HELP =====")
+    print("Available functions:")
+    print("\n=== Color Conversion ===")
+    print("  rgb_to_hex(r, g, b)")
+    print("    - Convert RGB values (0-255) to HEX color code")
+    print("  hex_to_rgb(hex_color)")
+    print("    - Convert HEX color code to RGB values")
+    print("  rgb_to_hsl(r, g, b)")
+    print("    - Convert RGB values to HSL")
+    print("  hsl_to_rgb(h, s, l)")
+    print("    - Convert HSL values to RGB")
+    
+    print("\n=== Color Manipulation ===")
+    print("  blend_colors(r1, g1, b1, r2, g2, b2, ratio)")
+    print("    - Blend two colors with the given ratio (0-1)")
+    print("  get_complementary(r, g, b)")
+    print("    - Get the complementary color")
+    print("  get_analogous(r, g, b)")
+    print("    - Get analogous colors")
+    print("  darken_color(r, g, b, percent)")
+    print("    - Darken a color by percentage (0-100)")
+    print("  lighten_color(r, g, b, percent)")
+    print("    - Lighten a color by percentage (0-100)")
+    
+    print("\n=== Color Creation ===")
+    print("  get_named_color(name)")
+    print("    - Get RGB values for a named color")
+    print("  random_color()")
+    print("    - Generate a random color")
+    print("  generate_palette(r, g, b, count)")
+    print("    - Create a color palette based on a color")
+    
+    print("\nExamples:")
+    print("  rgb_to_hex(255, 165, 0)")
+    print("  hex_to_rgb(\"#FFA500\")")
+    print("  get_named_color(\"teal\")")
+}
+
+// Main function to run when executed directly
+func main() {
+    print("\nSona Color Picker v1.0")
+    print("---------------------")
+    print("Type show_help() for available commands")
+    
+    // Demo functionality
+    print("\nDemo examples:")
+    rgb_to_hex(30, 144, 255)  // Dodger Blue
+    hex_to_rgb("FF6347")       // Tomato
+    get_named_color("teal")
+}
+
+// Show help when loaded
+show_help()

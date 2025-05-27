@@ -1,0 +1,308 @@
+import io from "stdlib/io"
+import console from "stdlib/console"
+import math from "stdlib/math"
+
+# ANSI color constants
+let RESET = "\033[0m"
+let BG_BASE = "\033[48;2;"
+let FG_BASE = "\033[38;2;"
+
+fn main() {
+    console.clear()
+    io.println("Color Picker")
+    io.println("===========")
+    
+    let color = {
+        "r": 128,
+        "g": 128,
+        "b": 128
+    }
+    
+    while true {
+        # Display current color
+        display_color(color)
+        
+        io.println("\nOptions:")
+        io.println("1. Adjust Red value")
+        io.println("2. Adjust Green value")
+        io.println("3. Adjust Blue value")
+        io.println("4. Enter RGB values")
+        io.println("5. Select from presets")
+        io.println("6. Generate color scheme")
+        io.println("7. Exit")
+        
+        io.print("\nSelect option (1-7): ")
+        let choice = io.readline()
+        
+        if choice == "7" {
+            break
+        }
+        
+        if choice == "1" {
+            adjust_component(color, "r")
+        } elif choice == "2" {
+            adjust_component(color, "g")
+        } elif choice == "3" {
+            adjust_component(color, "b")
+        } elif choice == "4" {
+            enter_rgb(color)
+        } elif choice == "5" {
+            select_preset(color)
+        } elif choice == "6" {
+            generate_scheme(color)
+        }
+        
+        console.clear()
+    }
+}
+
+fn rgb_to_ansi(r, g, b) {
+    return f"{r};{g};{b}m"
+}
+
+fn display_color(color) {
+    let r = color["r"]
+    let g = color["g"]
+    let b = color["b"]
+    
+    let rgb_str = rgb_to_ansi(r, g, b)
+    let hex = f"#{r:02x}{g:02x}{b:02x}".upper()
+    
+    io.println("\nCurrent Color:")
+    
+    # Create a color box
+    print(BG_BASE + rgb_str + "          " + RESET)
+    print(BG_BASE + rgb_str + "          " + RESET)
+    print(BG_BASE + rgb_str + "          " + RESET + "\n")
+    
+    # Color information
+    io.println(f"RGB: ({r}, {g}, {b})")
+    io.println(f"HEX: {hex}")
+    
+    # Calculate HSL
+    let r_norm = r / 255
+    let g_norm = g / 255
+    let b_norm = b / 255
+    
+    let c_max = max(r_norm, max(g_norm, b_norm))
+    let c_min = min(r_norm, min(g_norm, b_norm))
+    let delta = c_max - c_min
+    
+    # Calculate hue
+    let h = 0
+    if delta == 0 {
+        h = 0
+    } elif c_max == r_norm {
+        h = 60 * (((g_norm - b_norm) / delta) % 6)
+    } elif c_max == g_norm {
+        h = 60 * ((b_norm - r_norm) / delta + 2)
+    } else {
+        h = 60 * ((r_norm - g_norm) / delta + 4)
+    }
+    
+    # Calculate lightness and saturation
+    let l = (c_max + c_min) / 2
+    let s = 0
+    if delta != 0 {
+        s = delta / (1 - abs(2 * l - 1))
+    }
+    
+    io.println(f"HSL: ({round(h)}°, {round(s*100)}%, {round(l*100)}%)")
+}
+
+fn adjust_component(color, component) {
+    let name = {"r": "Red", "g": "Green", "b": "Blue"}[component]
+    let current = color[component]
+    
+    io.println(f"\nAdjust {name} ({current}/255):")
+    io.println("1. +5")
+    io.println("2. +10")
+    io.println("3. +25")
+    io.println("4. -5")
+    io.println("5. -10")
+    io.println("6. -25")
+    io.println("7. Set exact value")
+    
+    io.print("\nSelect option (1-7): ")
+    let choice = io.readline()
+    
+    if choice == "1" {
+        color[component] = min(255, current + 5)
+    } elif choice == "2" {
+        color[component] = min(255, current + 10)
+    } elif choice == "3" {
+        color[component] = min(255, current + 25)
+    } elif choice == "4" {
+        color[component] = max(0, current - 5)
+    } elif choice == "5" {
+        color[component] = max(0, current - 10)
+    } elif choice == "6" {
+        color[component] = max(0, current - 25)
+    } elif choice == "7" {
+        io.print(f"\nEnter {name} value (0-255): ")
+        let value = io.readline().to_num()
+        color[component] = max(0, min(255, value))
+    }
+}
+
+fn enter_rgb(color) {
+    io.print("\nEnter RGB values (format: r,g,b): ")
+    let input = io.readline()
+    
+    try {
+        let parts = input.split(",")
+        if parts.length() == 3 {
+            let r = min(255, max(0, parts[0].to_num()))
+            let g = min(255, max(0, parts[1].to_num()))
+            let b = min(255, max(0, parts[2].to_num()))
+            
+            color["r"] = r
+            color["g"] = g
+            color["b"] = b
+        } else {
+            io.println("Invalid format. Expected r,g,b (e.g. 255,0,128)")
+            io.print("Press Enter to continue...")
+            io.readline()
+        }
+    } catch {
+        io.println("Invalid input. Please enter numbers separated by commas.")
+        io.print("Press Enter to continue...")
+        io.readline()
+    }
+}
+
+fn select_preset(color) {
+    io.println("\nColor Presets:")
+    io.println("1. Red")
+    io.println("2. Green")
+    io.println("3. Blue")
+    io.println("4. Yellow")
+    io.println("5. Cyan")
+    io.println("6. Magenta")
+    io.println("7. Black")
+    io.println("8. White")
+    io.println("9. Gray")
+    
+    io.print("\nSelect preset (1-9): ")
+    let choice = io.readline()
+    
+    if choice == "1" {
+        color["r"] = 255; color["g"] = 0; color["b"] = 0
+    } elif choice == "2" {
+        color["r"] = 0; color["g"] = 255; color["b"] = 0
+    } elif choice == "3" {
+        color["r"] = 0; color["g"] = 0; color["b"] = 255
+    } elif choice == "4" {
+        color["r"] = 255; color["g"] = 255; color["b"] = 0
+    } elif choice == "5" {
+        color["r"] = 0; color["g"] = 255; color["b"] = 255
+    } elif choice == "6" {
+        color["r"] = 255; color["g"] = 0; color["b"] = 255
+    } elif choice == "7" {
+        color["r"] = 0; color["g"] = 0; color["b"] = 0
+    } elif choice == "8" {
+        color["r"] = 255; color["g"] = 255; color["b"] = 255
+    } elif choice == "9" {
+        color["r"] = 128; color["g"] = 128; color["b"] = 128
+    }
+}
+
+fn generate_scheme(color) {
+    io.println("\nGenerate Color Scheme:")
+    io.println("1. Complementary")
+    io.println("2. Analogous")
+    io.println("3. Triadic")
+    io.println("4. Monochromatic")
+    
+    io.print("\nSelect scheme (1-4): ")
+    let choice = io.readline()
+    
+    let r = color["r"]
+    let g = color["g"]
+    let b = color["b"]
+    
+    console.clear()
+    io.println("Color Scheme:")
+    io.println("============")
+    
+    # Display original color
+    print("\nOriginal: ")
+    print(BG_BASE + rgb_to_ansi(r, g, b) + "          " + RESET)
+    io.println(f" RGB({r},{g},{b})")
+    
+    # Calculate color schemes
+    if choice == "1" {
+        # Complementary (opposite on color wheel)
+        let comp_r = 255 - r
+        let comp_g = 255 - g
+        let comp_b = 255 - b
+        
+        print("Complement: ")
+        print(BG_BASE + rgb_to_ansi(comp_r, comp_g, comp_b) + "          " + RESET)
+        io.println(f" RGB({comp_r},{comp_g},{comp_b})")
+        
+    } elif choice == "2" {
+        # Analogous (adjacent on color wheel)
+        # Convert to HSV, shift hue by +30 and -30 degrees
+        # This is simplified - a proper implementation would use full HSV conversion
+        let h_shift = 30 / 360  # 30 degrees as fraction of 360
+        
+        # Simplified analogous calculation
+        let ana1_r = min(255, max(0, r + int(g * h_shift)))
+        let ana1_g = min(255, max(0, g + int(b * h_shift)))
+        let ana1_b = min(255, max(0, b + int(r * h_shift)))
+        
+        let ana2_r = min(255, max(0, r - int(b * h_shift)))
+        let ana2_g = min(255, max(0, g - int(r * h_shift)))
+        let ana2_b = min(255, max(0, b - int(g * h_shift)))
+        
+        print("Analogous 1: ")
+        print(BG_BASE + rgb_to_ansi(ana1_r, ana1_g, ana1_b) + "          " + RESET)
+        io.println(f" RGB({ana1_r},{ana1_g},{ana1_b})")
+        
+        print("Analogous 2: ")
+        print(BG_BASE + rgb_to_ansi(ana2_r, ana2_g, ana2_b) + "          " + RESET)
+        io.println(f" RGB({ana2_r},{ana2_g},{ana2_b})")
+        
+    } elif choice == "3" {
+        # Triadic (evenly spaced on color wheel)
+        # Simplified approach
+        let tri1_r = b
+        let tri1_g = r
+        let tri1_b = g
+        
+        let tri2_r = g
+        let tri2_g = b
+        let tri2_b = r
+        
+        print("Triadic 1: ")
+        print(BG_BASE + rgb_to_ansi(tri1_r, tri1_g, tri1_b) + "          " + RESET)
+        io.println(f" RGB({tri1_r},{tri1_g},{tri1_b})")
+        
+        print("Triadic 2: ")
+        print(BG_BASE + rgb_to_ansi(tri2_r, tri2_g, tri2_b) + "          " + RESET)
+        io.println(f" RGB({tri2_r},{tri2_g},{tri2_b})")
+        
+    } elif choice == "4" {
+        # Monochromatic (same hue, different saturation/value)
+        # Simplified approach - just adjust brightness
+        let mono1_r = min(255, int(r * 0.7))
+        let mono1_g = min(255, int(g * 0.7))
+        let mono1_b = min(255, int(b * 0.7))
+        
+        let mono2_r = min(255, int(r * 1.3))
+        let mono2_g = min(255, int(g * 1.3))
+        let mono2_b = min(255, int(b * 1.3))
+        
+        print("Darker: ")
+        print(BG_BASE + rgb_to_ansi(mono1_r, mono1_g, mono1_b) + "          " + RESET)
+        io.println(f" RGB({mono1_r},{mono1_g},{mono1_b})")
+        
+        print("Lighter: ")
+        print(BG_BASE + rgb_to_ansi(mono2_r, mono2_g, mono2_b) + "          " + RESET)
+        io.println(f" RGB({mono2_r},{mono2_g},{mono2_b})")
+    }
+    
+    io.print("\nPress Enter to continue...")
+    io.readline()
+}

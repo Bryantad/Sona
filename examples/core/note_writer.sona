@@ -1,0 +1,163 @@
+// Simple note-taking application for Sona language
+import io from "stdlib/io"
+import fmt from "stdlib/fmt"
+import time from "stdlib/time"
+import file from "stdlib/file"
+
+// Global variables for note management
+let notes = []
+let filename = "notes.txt"
+
+fn add_note() {
+    io.println("\nEnter your note (type '.done' on a new line to finish):")
+    let note_text = ""
+    let line = ""
+    
+    while true {
+        line = io.readline()
+        if line == ".done" {
+            break
+        }
+        if note_text == "" {
+            note_text = line
+        } else {
+            note_text = note_text + "\n" + line
+        }
+    }
+    
+    if note_text != "" {
+        let timestamp = time.now()
+        let formatted_time = fmt.format_time(timestamp, "%Y-%m-%d %H:%M:%S")
+        let note = {
+            "timestamp": formatted_time,
+            "text": note_text
+        }
+        notes.append(note)
+        io.println("Note added successfully!")
+    } else {
+        io.println("Empty note not added.")
+    }
+}
+
+fn view_notes() {
+    io.println("\n=== Your Notes ===")
+    if notes.length() == 0 {
+        io.println("No notes found.")
+        return
+    }
+    
+    for i in range(0, notes.length()) {
+        let note = notes[i]
+        io.println(f"[{i + 1}] {note.timestamp}")
+        io.println("-" * 40)
+        io.println(note.text)
+        io.println("-" * 40)
+        io.println("")
+    }
+}
+
+fn save_notes() {
+    let content = ""
+    for note in notes {
+        content += f"[{note.timestamp}]\n"
+        content += "-" * 40 + "\n"
+        content += note.text + "\n"
+        content += "-" * 40 + "\n\n"
+    }
+    
+    try {
+        file.write(filename, content)
+        io.println(f"\nNotes saved to {filename}")
+    } catch e {
+        io.println(f"Error saving notes: {e}")
+    }
+}
+
+fn load_notes() {
+    try {
+        if file.exists(filename) {
+            let content = file.read(filename)
+            let sections = content.split("-" * 40 + "\n\n")
+            
+            for section in sections {
+                if section.trim() == "" {
+                    continue
+                }
+                
+                let parts = section.split("-" * 40 + "\n")
+                if parts.length() < 2 {
+                    continue
+                }
+                
+                let header = parts[0].trim()
+                let timestamp = header.substring(1, header.length() - 1)
+                let text = parts[1].trim()
+                
+                notes.append({
+                    "timestamp": timestamp,
+                    "text": text
+                })
+            }
+            
+            io.println(f"Loaded {notes.length()} notes from {filename}")
+        }
+    } catch e {
+        io.println(f"Error loading notes: {e}")
+    }
+}
+
+fn delete_note() {
+    if notes.length() == 0 {
+        io.println("No notes to delete.")
+        return
+    }
+    
+    view_notes()
+    io.print("Enter note number to delete (or 0 to cancel): ")
+    let choice = io.readline().to_num()
+    
+    if choice == 0 {
+        return
+    }
+    
+    if choice >= 1 && choice <= notes.length() {
+        notes.remove(choice - 1)
+        io.println("Note deleted successfully!")
+    } else {
+        io.println("Invalid note number.")
+    }
+}
+
+fn main() {
+    io.println("Simple Note Writer")
+    io.println("=================")
+    
+    load_notes()
+    
+    while true {
+        io.println("\nOptions:")
+        io.println("1. Add a new note")
+        io.println("2. View all notes")
+        io.println("3. Delete a note")
+        io.println("4. Save and exit")
+        
+        io.print("\nChoice: ")
+        let choice = io.readline()
+        
+        if choice == "1" {
+            add_note()
+        } else if choice == "2" {
+            view_notes()
+        } else if choice == "3" {
+            delete_note()
+        } else if choice == "4" {
+            save_notes()
+            io.println("Goodbye!")
+            break
+        } else {
+            io.println("Invalid choice, please try again.")
+        }
+    }
+}
+
+main()

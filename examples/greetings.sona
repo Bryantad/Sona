@@ -1,8 +1,0 @@
-import greeting
-
-print(greeting.hi())
-print(greeting.hello("Sona"))
-print(greeting.greet("User"))
-
-let message = greeting.say("This is a custom message!")
-print(message)
