@@ -1,7 +1,0 @@
-# Sona Enhanced Time Module Interface (time.smod)
-# Import the enhanced time implementation
-
-from .time_enhanced import time_enhanced
-
-# Export the time_enhanced instance for Sona applications
-__all__ = ['time_enhanced']

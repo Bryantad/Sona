@@ -1,7 +1,0 @@
-# Sona Audio Module Interface (audio.smod)
-# Import the main audio implementation
-
-from .audio import audio
-
-# Export the audio instance for Sona applications
-__all__ = ['audio']

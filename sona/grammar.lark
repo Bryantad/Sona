@@ -3,16 +3,12 @@ start: statement+
 ?statement: expr
      | import_stmt
      | assignment
-     | property_assign
      | print_stmt
      | if_stmt
      | while_stmt
      | for_stmt
      | func_def
      | return_stmt
-     | break_stmt
-     | continue_stmt
-     | try_stmt
 
 ?expr: term
      | expr "+" term   -> add
@@ -25,7 +21,6 @@ start: statement+
      | expr "<=" term  -> lte
      | expr "&&" term  -> and
      | expr "||" term  -> or
-     | expr "in" term  -> in_op
 
 ?term: factor
      | term "*" factor  -> mul
@@ -37,62 +32,39 @@ start: statement+
 ?unary: "-" unary       -> neg
       | "+" unary       -> pos
       | "!" unary       -> not
-      | "not" unary     -> not
       | primary
 
 ?primary: "(" expr ")"
         | NUMBER             -> number
         | STRING             -> string
-        | f_string           -> f_string
-        | BOOLEAN            -> boolean
         | array_literal      -> array
-        | object_literal     -> object
         | func_call
-        | chained_access
+        | dotted_name        -> var
         | NAME               -> var
 
-func_call: NAME "(" [args] ")"
-
-chained_access: NAME access_chain+
-access_chain: "[" expr "]"           -> array_access_chain
-            | "." NAME "(" [args] ")" -> method_call_chain  
-            | "." NAME               -> property_access_chain
-
-assignment: ("let" | "const") NAME "=" expr -> var_assign
-property_assign: chained_access "=" expr        -> property_assign
-
-array_literal: "[" [array_items] "]" | "[" list_comprehension "]"
+array_literal: "[" [array_items] "]"
 array_items: expr ("," expr)*
-list_comprehension: expr "for" NAME "in" expr
 
-object_literal: "{" [object_items] "}"
-object_items: object_item ("," object_item)*
-object_item: (NAME | STRING) ":" expr
-
-f_string: "f" STRING
+func_call: (NAME | dotted_name) "(" [args] ")"
+dotted_name: NAME ("." NAME)+
 
 args: expr ("," expr)*
 
-import_stmt: "import" NAME ("." NAME)* [AS NAME] -> import_stmt
+import_stmt: "import" NAME ("." NAME)* ["as" NAME] -> import_stmt
+assignment: ("let" | "const") NAME "=" expr -> var_assign
 print_stmt: "print" "(" expr ")"
-return_stmt: "return" [expr]
-break_stmt: "break"
-continue_stmt: "continue"
-try_stmt: "try" block "catch" block
+return_stmt: "return" expr
 
-if_stmt: "if" expr block else_part?
-else_part: "else" (block | "if" expr block else_part?) | "elif" expr block else_part?
+if_stmt: "if" expr block ["else" block]
 while_stmt: "while" expr block
-for_stmt: "for" NAME "in" expr ".." expr block | "for" NAME "in" expr block
-func_def: ("func" | "fn") NAME "(" [param_list] ")" block
+for_stmt: "for" NAME "in" expr ".." expr block
+func_def: "func" NAME "(" [param_list] ")" block
 param_list: NAME ("," NAME)*  -> param_list
 block: "{" (_NL | statement)* "}"
 
-BOOLEAN.5: "true" | "false"
-AS: "as"
 COMMA: ","
 STRING: /"(?:[^"\\]|\\.)*"/ | /'(?:[^'\\]|\\.)*'/ | /"""(?:[^\\]|\\.)*"""/ | /'''(?:[^\\]|\\.)*'''/
-NUMBER: /[0-9]+(\.[0-9]+)?/
+NUMBER: /[0-9]+(\.[0-9]*)?/
 
 %import common.CNAME -> NAME 
 %import common.WS_INLINE

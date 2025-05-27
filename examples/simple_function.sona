@@ -1,0 +1,11 @@
+// Simple function test
+import utils.math.smod
+
+func add_and_print(x, y) {
+    let result = math.add(x, y)
+    print("Result: " + math.to_str(result))
+    return result
+}
+
+print("Testing simple function...")
+add_and_print(3, 4)
