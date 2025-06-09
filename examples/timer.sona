@@ -1,7 +1,7 @@
 // Timer demo for Sona language
 import native_stdin
 import utils.math.smod as math
-import time.smod as time
+import native_time as time
 
 // Helper function: check if a number is negative
 func is_negative(num) {
@@ -62,11 +62,12 @@ print("3. Exit")
 let choice = native_stdin.input("\nEnter your choice (1-3): ")
 
 if math.eq(choice, "1") {
-    let seconds_str = native_stdin.input("Enter number of seconds for countdown: ")
-    let seconds = math.parse_int(seconds_str)
+    let seconds_str = native_stdin.input("Enter number of seconds for countdown: ")    let seconds = math.parse_int(seconds_str)
     countdown_timer(seconds)
-} else if math.eq(choice, "2") {
-    stopwatch()
 } else {
-    print("Exiting timer demo.")
+    if math.eq(choice, "2") {
+        stopwatch()
+    } else {
+        print("Exiting timer demo.")
+    }
 }

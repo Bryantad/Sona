@@ -113,41 +113,38 @@ func initialize_board() {
 func print_board() {
     print("\n  Memory Card Game")
     print("  ==============\n")
-    
-    // Print column headers (indices)
-    print("    ", end="")
+      // Print column headers (indices)
+    let header = "    "
     let col = 0
     while is_less_than(col, board_size) {
-        print(math.to_str(col + 1) + " ", end="")
+        let header = header + math.to_str(col + 1) + " "
         let col = col + 1
     }
-    print("")
-    
-    // Print separator line
-    print("   ", end="")
+    print(header)
+      // Print separator line
+    let separator = "   "
     let s = 0
     while is_less_than(s, board_size * 2 + 1) {
-        print("-", end="")
+        let separator = separator + "-"
         let s = s + 1
     }
-    print("")
-    
-    // Print rows
+    print(separator)
+      // Print rows
     let row = 0
     while is_less_than(row, board_size) {
-        // Print row index
-        print(math.to_str(row + 1) + " | ", end="")
+        // Build the row string
+        let row_str = math.to_str(row + 1) + " | "
         
-        // Print cells in this row
+        // Add cells in this row
         let col = 0
         while is_less_than(col, board_size) {
             let index = row * board_size + col
             let card = array.get(visible_board, index)
-            print(card + " ", end="")
+            let row_str = row_str + card + " "
             let col = col + 1
         }
         
-        print("")
+        print(row_str)
         let row = row + 1
     }
     

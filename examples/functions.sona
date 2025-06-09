@@ -1,5 +1,6 @@
 func greet(name) {
     print("Hello, " + name)
+    return 0
 }
 
 greet("Sona")

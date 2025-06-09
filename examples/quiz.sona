@@ -81,13 +81,14 @@ func run_quiz() {
     // Give feedback based on score
     let percentage = math.multiply(math.divide(score, total), 100)
     print("Percentage: " + math.to_str(percentage) + "%")
-    
-    if math.gte(percentage, 80) {
+      if math.gte(percentage, 80) {
         print("Excellent job!")
-    } else if math.gte(percentage, 60) {
-        print("Good work!")
     } else {
-        print("Keep practicing!")
+        if math.gte(percentage, 60) {
+            print("Good work!")
+        } else {
+            print("Keep practicing!")
+        }
     }
 }
 

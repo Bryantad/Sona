@@ -5,10 +5,13 @@ start: statement+
      | assignment
      | print_stmt
      | if_stmt
+     | match_stmt  // New match/switch statement
      | while_stmt
      | for_stmt
      | func_def
+     | try_stmt    // New try/catch statement
      | return_stmt
+     | doc_comment // New documentation comment
 
 ?expr: term
      | expr "+" term   -> add
@@ -38,12 +41,18 @@ start: statement+
         | NUMBER             -> number
         | STRING             -> string
         | array_literal      -> array
+        | map_literal        -> map        // New map literal
         | func_call
         | dotted_name        -> var
         | NAME               -> var
 
 array_literal: "[" [array_items] "]"
 array_items: expr ("," expr)*
+
+// New map literal implementation
+map_literal: "{" [map_items] "}"
+map_items: map_item ("," map_item)*
+map_item: expr ":" expr
 
 func_call: (NAME | dotted_name) "(" [args] ")"
 dotted_name: NAME ("." NAME)+
@@ -57,10 +66,22 @@ return_stmt: "return" expr
 
 if_stmt: "if" expr block ["else" block]
 while_stmt: "while" expr block
-for_stmt: "for" NAME "in" expr ".." expr block
+for_stmt: "for" NAME "in" expr block
 func_def: "func" NAME "(" [param_list] ")" block
 param_list: NAME ("," NAME)*  -> param_list
 block: "{" (_NL | statement)* "}"
+
+// New documentation comment
+doc_comment: "///" [DOC_TEXT] -> doc_comment
+DOC_TEXT: /[^\n]*/
+
+// New match/switch statement
+match_stmt: "match" expr "{" match_case+ ["default" ":" block] "}"
+match_case: case_value ":" block
+case_value: expr
+
+// New try/catch statement 
+try_stmt: "try" block "catch" ["(" NAME ")"] block ["finally" block]
 
 COMMA: ","
 STRING: /"(?:[^"\\]|\\.)*"/ | /'(?:[^'\\]|\\.)*'/ | /"""(?:[^\\]|\\.)*"""/ | /'''(?:[^\\]|\\.)*'''/

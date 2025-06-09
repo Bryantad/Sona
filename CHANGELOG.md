@@ -1,3 +1,43 @@
+## [0.6.0] - 2025-06-09
+
+### Added
+
+- Enhanced interpreter with improved error handling and stability
+- Advanced grammar features for better syntax support
+- Enhanced standard library modules:
+  - Improved math module with additional functions
+  - Enhanced string manipulation capabilities
+  - Better I/O operations and file handling
+  - Enhanced environment variable support
+  - Improved time and date functions
+- New example programs showcasing v0.6.0 features
+- Enhanced function parameter handling and scope management
+- Improved module system with better import resolution
+
+### Improved
+
+- Interpreter performance optimizations
+- Better error messages with more context
+- Enhanced REPL functionality
+- Improved syntax highlighting and parsing
+- Better memory management
+- Enhanced testing framework
+
+### Fixed
+
+- Function parameter scope issues
+- Module import resolution bugs
+- String parsing edge cases
+- Numeric type conversion issues
+- Loop execution stability
+- Variable assignment consistency
+
+### Security
+
+- Enhanced input validation
+- Improved module loading security
+- Better error handling to prevent information leakage
+
 ## [0.5.1] - 2025-05-23
 
 ### Added

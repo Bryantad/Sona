@@ -1,14 +1,9 @@
 // ASCII Visualization Demo for Sona language
 // This demo showcases text-based visualization techniques
 import native_stdin
-import utils.math.smod
-import utils.array.smod
-import utils.string.smod
-
-// Assign shorter alias names
-let math = utils.math.smod
-let array = utils.array.smod
-let string = utils.string.smod
+import utils.math.smod as math
+import utils.array.smod as array
+import utils.string.smod as string
 
 // Helper function: check if a number is negative
 func is_negative(num) {
