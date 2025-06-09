@@ -299,26 +299,32 @@ func transform_text(text, operations) {
     
     while is_less_than(i, len) {
         let operation = array.get(operations, i)
-        
-        if math.eq(operation, "upper") {
+          if math.eq(operation, "upper") {
             let result = string.upper(result)
-        } else if math.eq(operation, "lower") {
-            let result = string.lower(result)
-        } else if math.eq(operation, "title") {
-            let result = title_case(result)
-        } else if math.eq(operation, "trim") {
-            let result = string.trim(result)
-        } else if math.eq(operation, "reverse") {
-            // Reverse the string character by character
-            let reversed = ""
-            let j = string.length(result) - 1
-            
-            while is_greater_than(j, -1) {
-                let reversed = reversed + string.substr(result, j, 1)
-                let j = j - 1
+        } else {
+            if math.eq(operation, "lower") {
+                let result = string.lower(result)
+            } else {
+                if math.eq(operation, "title") {
+                    let result = title_case(result)
+                } else {
+                    if math.eq(operation, "trim") {
+                        let result = string.trim(result)
+                    } else {
+                        if math.eq(operation, "reverse") {
+                            // Reverse the string character by character
+                            let reversed = ""
+                            let j = string.length(result) - 1
+                            
+                            while is_greater_than(j, -1) {
+                                let reversed = reversed + string.substr(result, j, 1)
+                                let j = j - 1
+                            }
+                              let result = reversed
+                        }
+                    }
+                }
             }
-            
-            let result = reversed
         }
         
         let i = i + 1

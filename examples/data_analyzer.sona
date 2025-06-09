@@ -7,8 +7,8 @@ import utils.string.smod as string
 import native_file
 
 // Data storage
-let data_points = []
-let data_labels = []
+let data_points = array.new()
+let data_labels = array.new()
 let running = 1
 
 // Helper function: check if a number is negative
@@ -147,10 +147,9 @@ func text_histogram(arr, bins) {
         print("Cannot create histogram: all values are the same")
         return 0
     }
-    
-    let range = max - min
+      let range = max - min
     let bin_size = range / bins
-    let histogram = []
+    let histogram = array.new()
     let i = 0
     
     // Initialize histogram bins with zeros
@@ -241,23 +240,22 @@ func analyze_data() {
 // Add a single data point
 func add_data_point() {
     print("\nEnter a numeric value:")
-    let input = native_stdin.readline()
+    let input = native_stdin.read_line()
     let value = parse_number(input)
     
     print("Enter a label for this data point (optional):")
-    let label = native_stdin.readline()
+    let label = native_stdin.read_line()
     
     array.push(data_points, value)
     array.push(data_labels, label)
-    
-    print("Data point added: " + math.to_str(value))
+      print("Data point added: " + math.to_str(value))
     return 0
 }
 
 // Add multiple data points at once
 func add_multiple_data_points() {
     print("\nEnter multiple values separated by spaces:")
-    let input = native_stdin.readline()
+    let input = native_stdin.read_line()
     let parts = string.split(input, " ")
     let count = 0
     let i = 0
@@ -309,16 +307,15 @@ func display_data() {
 
 // Clear all data
 func clear_data() {
-    let data_points = []
-    let data_labels = []
+    let data_points = array.new()
+    let data_labels = array.new()
     print("All data has been cleared")
     return 0
 }
 
 // Import data from a file (each line should have one number)
-func import_from_file() {
-    print("\nEnter the path to the file:")
-    let file_path = native_stdin.readline()
+func import_from_file() {    print("\nEnter the path to the file:")
+    let file_path = native_stdin.read_line()
     
     // Try to read the file
     if math.eq(native_file.exists(file_path), 0) {
@@ -359,28 +356,37 @@ func show_menu() {
     print("4. Display all data")
     print("5. Analyze data and show statistics")
     print("6. Clear all data")
-    print("7. Exit")
-    print("Enter your choice (1-7):")
+    print("7. Exit")    print("Enter your choice (1-7):")
     
-    let choice = native_stdin.readline()
-    
-    if math.eq(choice, "1") {
+    let choice = native_stdin.read_line()
+      if math.eq(choice, "1") {
         add_data_point()
-    } else if math.eq(choice, "2") {
-        add_multiple_data_points()
-    } else if math.eq(choice, "3") {
-        import_from_file()
-    } else if math.eq(choice, "4") {
-        display_data()
-    } else if math.eq(choice, "5") {
-        analyze_data()
-    } else if math.eq(choice, "6") {
-        clear_data()
-    } else if math.eq(choice, "7") {
-        let running = 0
-        print("Thank you for using Data Analyzer!")
     } else {
-        print("Invalid choice. Please try again.")
+        if math.eq(choice, "2") {
+            add_multiple_data_points()
+        } else {
+            if math.eq(choice, "3") {
+                import_from_file()
+            } else {
+                if math.eq(choice, "4") {
+                    display_data()
+                } else {
+                    if math.eq(choice, "5") {
+                        analyze_data()
+                    } else {                        if math.eq(choice, "6") {
+                            clear_data()
+                        } else {
+                            if math.eq(choice, "7") {
+                                let running = 0
+                                print("Thank you for using Data Analyzer!")
+                            } else {
+                                print("Invalid choice. Please try again.")
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
     
     return 0
@@ -414,7 +420,7 @@ print("\nTIP: Use the menu to add your own data, or continue for sample data.")
 
 // Ask if user wants to use sample data or start empty
 print("\nWould you like to start with sample data? (y/n)")
-let response = native_stdin.readline()
+let response = native_stdin.read_line()
 
 if math.eq(string.lower(response), "y") {
     add_sample_data()

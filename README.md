@@ -1,5 +1,4 @@
-
-```markdown
+````markdown
 # Sona Programming Language + SonaCore AI
 
 [![Stars](https://img.shields.io/github/stars/Bryantad/Sona?style=social)]
@@ -16,12 +15,23 @@
 
 ## Releases
 
+- **v0.6.0** ✨ **Latest**
+
+  - Enhanced interpreter with improved stability and performance
+  - Advanced grammar features and better syntax support
+  - Enhanced standard library with new modules and functions
+  - Improved function parameter handling and scope management
+  - Better error messages and debugging capabilities
+  - New example programs showcasing advanced features
+
 - **v0.5.1**
+
   - Advanced REPL diagnostic tools (`:debug`, `:profile`, `:watch`, `:trace`)
   - Bug fixes for function parameter handling
   - Improved error reporting
 
 - **v0.5.0**
+
   - Robust module system with nested imports (`import utils.math.smod`)
   - Dotted access (`math.PI`, `fs.exists()`)
   - Immutable constants and enhanced error reporting
@@ -48,6 +58,7 @@ pip install -r requirements.txt   # or `pip install lark-parser`
 pip install -e .
 sona --version
 ```
+````
 
 ---
 
@@ -158,6 +169,7 @@ Stars, forks, pull requests, and donations are all welcome.
 
 MIT License. Sona is free to use, build on, and share.  
 Proudly created by Netcore Solutions LLC, a subsidiary of Waycore Inc.
+
 ```
 
 ---
@@ -171,3 +183,4 @@ Proudly created by Netcore Solutions LLC, a subsidiary of Waycore Inc.
 6. **Removed all conflict markers**: All <<<<<<<, =======, >>>>>>> are gone.
 
 Let me know if you need this in a different format, or want a commit message for the fix!
+```

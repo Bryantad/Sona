@@ -2,8 +2,7 @@
 import native_stdin
 import utils.math.smod as math
 import utils.string.smod as string
-import io.smod as io
-import fs.smod as fs
+import native_file as fs
 
 // Helper function: check if a number is negative
 func is_negative(num) {
@@ -92,24 +91,31 @@ while running {
     print("5. Exit")
     
     let choice = native_stdin.input("\nEnter your choice (1-5): ")
-    
-    if math.eq(choice, "1") {
+      if math.eq(choice, "1") {
         let content = native_stdin.input("Enter content to write: ")
         write_to_file(filename, content)
-    } else if math.eq(choice, "2") {
-        let content = native_stdin.input("Enter content to append: ")
-        append_to_file(filename, content)
-    } else if math.eq(choice, "3") {
-        read_file(filename)
-    } else if math.eq(choice, "4") {
-        let message = native_stdin.input("Enter log message: ")
-        let entry = create_log_entry(message)
-        append_to_file(filename, entry)
-        print("Log entry added: " + entry)
-    } else if math.eq(choice, "5") {
-        let running = 0
     } else {
-        print("Invalid choice. Please enter a number between 1 and 5.")
+        if math.eq(choice, "2") {
+            let content = native_stdin.input("Enter content to append: ")
+            append_to_file(filename, content)
+        } else {
+            if math.eq(choice, "3") {
+                read_file(filename)
+            } else {
+                if math.eq(choice, "4") {
+                    let message = native_stdin.input("Enter log message: ")
+                    let entry = create_log_entry(message)
+                    append_to_file(filename, entry)
+                    print("Log entry added: " + entry)
+                } else {
+                    if math.eq(choice, "5") {
+                        let running = 0
+                    } else {
+                        print("Invalid choice. Please enter a number between 1 and 5.")
+                    }
+                }
+            }
+        }
     }
 }
 

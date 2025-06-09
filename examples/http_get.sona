@@ -132,15 +132,20 @@ let choice = native_stdin.input("\nEnter your choice (1-4): ")
 
 if math.eq(choice, "1") {
     fetch_data("https://example.com")
-} else if math.eq(choice, "2") {
-    fetch_data("https://api/users")
-} else if math.eq(choice, "3") {
-    fetch_data("https://api/weather")
-} else if math.eq(choice, "4") {
-    let url = native_stdin.input("Enter URL: ")
-    fetch_data(url)
 } else {
-    print("Invalid choice.")
+    if math.eq(choice, "2") {
+        fetch_data("https://api/users")
+    } else {        if math.eq(choice, "3") {
+            fetch_data("https://api/weather")
+        } else {
+            if math.eq(choice, "4") {
+                let url = native_stdin.input("Enter URL: ")
+                fetch_data(url)
+            } else {
+                print("Invalid choice.")
+            }
+        }
+    }
 }
 
 print("\nThank you for using Sona HTTP Client!")

@@ -147,18 +147,25 @@ while running {
     
     let choice = native_stdin.input("\nEnter your choice (1-5): ")
     
-    if math.eq(choice, "1") {
-        add_todo()
-    } else if math.eq(choice, "2") {
-        list_todos()
-    } else if math.eq(choice, "3") {
-        complete_todo()
-    } else if math.eq(choice, "4") {
-        list_completed()
-    } else if math.eq(choice, "5") {
-        let running = 0
+    if math.eq(choice, "1") {        add_todo()
     } else {
-        print("Invalid choice. Please enter a number between 1 and 5.")
+        if math.eq(choice, "2") {
+            list_todos()
+        } else {
+            if math.eq(choice, "3") {
+                complete_todo()
+            } else {
+                if math.eq(choice, "4") {
+                    list_completed()
+                } else {
+                    if math.eq(choice, "5") {
+                        let running = 0
+                    } else {
+                        print("Invalid choice. Please enter a number between 1 and 5.")
+                    }
+                }
+            }
+        }
     }
 }
 
