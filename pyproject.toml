@@ -1,3 +1,11 @@
+codex/update-version-consistency-across-files
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+[project]
+name = "Sona"
+version = "0.6.0"
+=======
 codex/add-project-details-and-verify-setup
 [build-system]
 requires = ["setuptools", "wheel"]
@@ -16,3 +24,4 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "Sona"
 version = "0.6.0"
+main
