@@ -1,6 +1,27 @@
+codex/update-version-consistency-across-files
 [build-system]
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 [project]
 name = "Sona"
 version = "0.6.0"
+=======
+codex/add-project-details-and-verify-setup
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+[project]
+name = "Sona"
+version = "0.6.0"
+description = "Sona Programming Language with AI Assistance"
+authors = [{name = "WayCore Inc.", email = "info@waycore.com"}]
+readme = "README.md"
+dependencies = ["lark-parser>=0.12.0"]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+[project]
+name = "Sona"
+version = "0.6.0"
+main
