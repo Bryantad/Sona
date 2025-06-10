@@ -11,12 +11,7 @@ sona/License.mdc
 sona/__init__.py
 sona/__main__.py
 sona/grammar.lark
-sona/interpreter(debug).py
 sona/interpreter.py
-sona/interpreter2.py
-sona/interpreter3.py
-sona/interpreter_fixed.py
-sona/interpreter_v049.py
 sona/repl.py
 sona/sona_cli.py
 sona.egg-info/PKG-INFO

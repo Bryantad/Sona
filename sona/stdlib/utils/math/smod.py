@@ -96,4 +96,5 @@ class MathModule:
 # ✅ Export as instance (required by Sona's dynamic loader)
 math = MathModule()
 __all__ = ["math"]
-print("[DEBUG] math module loaded:", math.PI)
+if os.environ.get("SONA_DEBUG") == "1" and os.environ.get("SONA_MODULE_SILENT") != "1":
+    print("[DEBUG] math module loaded:", math.PI)
