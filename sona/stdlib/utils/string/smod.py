@@ -61,5 +61,6 @@ class StringModule:
 # Create the singleton instance
 string = StringModule()
 
-# For debugging
-print("[DEBUG] string module loaded")
+import os
+if os.environ.get("SONA_DEBUG") == "1" and os.environ.get("SONA_MODULE_SILENT") != "1":
+    print("[DEBUG] string module loaded")
