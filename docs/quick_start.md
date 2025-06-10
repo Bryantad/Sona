@@ -8,19 +8,19 @@
 
    ```bash
    cd sona_core
-   python tools/install.py
+   python3.10 tools/install.py
    ```
 
    For a virtual environment:
 
    ```bash
-   python tools/install.py --venv
+   python3.10 tools/install.py --venv
    source venv/bin/activate  # On Linux/macOS
    ```
 
 3. **Verify installation**:
    ```bash
-   python -m sona.sona_cli -c "print('Hello from Sona!')"
+   python3.10 -m sona.sona_cli -c "print('Hello from Sona!')"
    ```
 
 ## Running Sona Programs
@@ -30,7 +30,7 @@
 Run a Sona file:
 
 ```bash
-python -m sona.sona_cli path/to/file.sona
+python3.10 -m sona.sona_cli path/to/file.sona
 ```
 
 ### Interactive REPL
@@ -38,7 +38,7 @@ python -m sona.sona_cli path/to/file.sona
 Start the interactive REPL:
 
 ```bash
-python -m sona.repl
+python3.10 -m sona.repl
 ```
 
 Type Sona code directly. Press Enter twice to execute.
@@ -117,10 +117,10 @@ Try running the included examples:
 
 ```bash
 # Hello World
-python -m sona.sona_cli examples/hello_world.sona
+python3.10 -m sona.sona_cli examples/hello_world.sona
 
 # Calculator
-python -m sona.sona_cli examples/calculator.sona
+python3.10 -m sona.sona_cli examples/calculator.sona
 
 # More examples in the examples/ directory
 ```
@@ -130,7 +130,7 @@ python -m sona.sona_cli examples/calculator.sona
 Run the test suite:
 
 ```bash
-python tools/run_tests.py
+python3.10 tools/run_tests.py
 ```
 
 ## Getting Help
