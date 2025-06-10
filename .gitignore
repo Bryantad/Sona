@@ -1,0 +1,6 @@
+# Build artifacts
+build/
+sona.egg-info/
+
+# Python cache
+__pycache__/
