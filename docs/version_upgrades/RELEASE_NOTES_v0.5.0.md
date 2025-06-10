@@ -67,18 +67,18 @@ sona_core/
 1. **Installation**:
 
    ```bash
-   python tools/install.py
+   python3.10 tools/install.py
    ```
 
 2. **Running Sona programs**:
 
    ```bash
-   python -m sona.sona_cli path/to/program.sona
+   python3.10 -m sona.sona_cli path/to/program.sona
    ```
 
 3. **Running tests**:
    ```bash
-   python tools/run_tests.py
+   python3.10 tools/run_tests.py
    ```
 
 ## Documentation
