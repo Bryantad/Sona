@@ -94,8 +94,8 @@ def run_repl():
                     # Calculator command - added this in v0.5.1 after users requested it
                     elif cmd.lower() in ["calc", "cal", "calculator"]:
                         print("\n=== Launching Sona Calculator ===")
-                        
-                        # TODO: Maybe we should cache these files for faster loading?
+
+                        # Load the calculator example from the repository
                         base_dir = Path(__file__).parent.parent
                         calc_path = base_dir / "examples" / "calculator.sona"
                         

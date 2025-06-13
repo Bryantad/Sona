@@ -76,5 +76,6 @@ class ArrayModule:
 # Create the singleton instance
 array = ArrayModule()
 
-# For debugging
-print("[DEBUG] array module loaded")
+import os
+if os.environ.get("SONA_DEBUG") == "1" and os.environ.get("SONA_MODULE_SILENT") != "1":
+    print("[DEBUG] array module loaded")
