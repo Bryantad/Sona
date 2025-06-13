@@ -72,8 +72,8 @@ param_list: NAME ("," NAME)*  -> param_list
 block: "{" (_NL | statement)* "}"
 
 // New documentation comment
-doc_comment: "///" [DOC_TEXT] -> doc_comment
-DOC_TEXT: /[^\n]*/
+doc_comment: "///" DOC_TEXT -> doc_comment
+DOC_TEXT: /[^\n]+/
 
 // New match/switch statement
 match_stmt: "match" expr "{" match_case+ ["default" ":" block] "}"
