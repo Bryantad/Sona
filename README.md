@@ -51,7 +51,7 @@
 ```bash
 git clone https://github.com/Bryantad/Sona.git
 cd Sona
-python3 -m venv .venv
+python3.10 -m venv .venv
 source .venv/bin/activate
 pip install -U pip setuptools wheel
 pip install -r requirements.txt   # or `pip install lark-parser`
@@ -167,20 +167,9 @@ Stars, forks, pull requests, and donations are all welcome.
 
 ## License
 
-MIT License. Sona is free to use, build on, and share.  
+MIT License. Sona is free to use, build on, and share.
 Proudly created by Netcore Solutions LLC, a subsidiary of Waycore Inc.
 
 ```
 
 ---
-
-**Explanation of Fixes:**
-1. **Release Notes**: Merged unique points from both branches, removed duplication/conflict markers.
-2. **Quick Start**: Kept the most recent and complete block, removed extra conflict markers.
-3. **Feature Lists**: Chose consistent bullet style and included all unique features.
-4. **REPL Commands**: Preserved the more detailed/updated list from v0.5.1.
-5. **Support Section**: Combined both branch notes—encouraging both support and general contributions.
-6. **Removed all conflict markers**: All <<<<<<<, =======, >>>>>>> are gone.
-
-Let me know if you need this in a different format, or want a commit message for the fix!
-```

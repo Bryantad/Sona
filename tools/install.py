@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# filepath: /Volumes/project usb/WayCore Inc/sona_core/tools/install.py
+# tools/install.py - installation helper for Sona
 # Sona v0.5.0 Installation Helper
 
 """
@@ -96,12 +96,12 @@ def setup_cli_alias():
             print("Unsupported shell. Please manually add the alias to your shell config.")
             return
 
-    # Get absolute path to Sona
-    sona_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-    sona_command = f"python -m sona.sona_cli"
-    
+    # Command to invoke the Sona CLI.  Use a relative path so the alias works
+    # even if the project directory is moved after installation.
+    sona_command = "python -m sona.sona_cli"
+
     # Create alias
-    alias_line = f'\n# Sona Programming Language v0.5.0\nalias sona=\'cd "{sona_path}" && {sona_command}\'\n'
+    alias_line = f'\n# Sona Programming Language v0.5.0\nalias sona="{sona_command}"\n'
     
     try:
         # Check if alias already exists
