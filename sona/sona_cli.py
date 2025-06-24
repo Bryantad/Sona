@@ -53,7 +53,7 @@ def main():
         sys.exit(1)
 
 def repl():
-    print("\nSona REPL v0.5.1 - Type `exit` or `Ctrl+C` to quit.\n")
+    print("\nSona REPL v0.6.1 - Type `exit` or `Ctrl+C` to quit.\n")
     from sona.interpreter import SonaInterpreter
     interpreter = SonaInterpreter()
 

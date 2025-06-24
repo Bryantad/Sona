@@ -1,0 +1,64 @@
+// Space Shooter Game Example
+// This is a 2D arcade-style space shooter game in Sona
+
+print("Space Shooter - Welcome to Sona Space Shooter!")
+print("Defend Earth from the alien invasion!")
+
+// Game variables
+let player_health = 3
+let score = 0
+let enemies_destroyed = 0
+let level = 1
+
+print("Mission Briefing:")
+print("- Pilot your spaceship through enemy territory")
+print("- Destroy alien ships to earn points")
+print("- Avoid enemy contact to preserve your ship")
+print("- Survive as long as possible!")
+
+print("Ship Controls:")
+print("- A/Left Arrow: Move left")
+print("- D/Right Arrow: Move right")
+print("- W/Up Arrow: Move up") 
+print("- S/Down Arrow: Move down")
+print("- Spacebar: Fire weapons")
+
+print("Weapons System:")
+print("- Plasma cannons ready")
+print("- Limited fire rate for accuracy")
+print("- Direct hits award 10 points")
+
+print("Threat Assessment:")
+print("- Red alien fighters incoming")
+print("- They move faster each wave")
+print("- Contact will damage your ship")
+
+// Game mechanics simulation
+func start_mission() {
+    print("Launching spaceship...")
+    print("Entering combat zone...")
+    print("Enemy fighters detected!")
+}
+
+func combat_report() {
+    print("Engaging hostiles...")
+    print("Target destroyed! +10 points")
+    print("New enemy wave incoming...")
+    print("Warning: Enemy approaching your position!")
+}
+
+func mission_status() {
+    print("Mission Status:")
+    print("Enemies Destroyed: " + str(enemies_destroyed))
+    print("Current Score: " + str(score))
+    print("Ship Integrity: " + str(player_health) + "/3")
+    print("Combat Level: " + str(level))
+}
+
+// Start the mission
+start_mission()
+combat_report()
+mission_status()
+
+print("Use the embedded game above for the full space combat experience!")
+print("Good luck, pilot! The fate of Earth is in your hands!")

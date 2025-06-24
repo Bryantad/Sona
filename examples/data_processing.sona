@@ -1,0 +1,92 @@
+# Data Processing Example - Sona v0.7.0
+# Demonstrates practical data manipulation
+
+print("=== Data Processing Demo ===")
+
+# Student data using dictionaries
+let student1 = {"name": "Alice", "grade": 85, "subject": "Math"}
+let student2 = {"name": "Bob", "grade": 92, "subject": "Science"}
+let student3 = {"name": "Carol", "grade": 78, "subject": "Math"}
+let student4 = {"name": "David", "grade": 89, "subject": "Science"}
+
+print("Student Records:")
+print("1. " + student1.name + ": " + student1.grade + " in " + student1.subject)
+print("2. " + student2.name + ": " + student2.grade + " in " + student2.subject)
+print("3. " + student3.name + ": " + student3.grade + " in " + student3.subject)
+print("4. " + student4.name + ": " + student4.grade + " in " + student4.subject)
+
+# Calculate average grade manually
+let total_grade = student1.grade + student2.grade + student3.grade + student4.grade
+let average_grade = total_grade / 4
+
+print("Total points: " + total_grade)
+print("Average grade: " + average_grade)
+
+# Product inventory system
+let inventory = {
+    "laptop": {"price": 899, "stock": 15, "category": "Electronics"},
+    "book": {"price": 25, "stock": 50, "category": "Education"},
+    "chair": {"price": 150, "stock": 8, "category": "Furniture"}
+}
+
+print("=== Inventory System ===")
+print("Laptop: $" + inventory.laptop.price + " (Stock: " + inventory.laptop.stock + ")")
+print("Book: $" + inventory.book.price + " (Stock: " + inventory.book.stock + ")")
+print("Chair: $" + inventory.chair.price + " (Stock: " + inventory.chair.stock + ")")
+
+# Calculate total inventory value
+let laptop_value = inventory.laptop.price * inventory.laptop.stock
+let book_value = inventory.book.price * inventory.book.stock
+let chair_value = inventory.chair.price * inventory.chair.stock
+let total_value = laptop_value + book_value + chair_value
+
+print("Laptop inventory value: $" + laptop_value)
+print("Book inventory value: $" + book_value)
+print("Chair inventory value: $" + chair_value)
+print("Total inventory value: $" + total_value)
+
+# Update inventory (simulate sales)
+inventory.laptop.stock = inventory.laptop.stock - 2
+inventory.book.stock = inventory.book.stock - 5
+inventory.chair.stock = inventory.chair.stock - 1
+
+print("=== After Sales ===")
+print("Laptop stock: " + inventory.laptop.stock)
+print("Book stock: " + inventory.book.stock)
+print("Chair stock: " + inventory.chair.stock)
+
+# Weather data processing
+import string
+import math
+
+let weather_data = {
+    "monday": {"temp": 72, "humidity": 65, "condition": "sunny"},
+    "tuesday": {"temp": 68, "humidity": 70, "condition": "cloudy"},
+    "wednesday": {"temp": 75, "humidity": 60, "condition": "sunny"}
+}
+
+print("=== Weather Analysis ===")
+print("Monday: " + weather_data.monday.temp + "°F, " + weather_data.monday.humidity + "% humidity, " + weather_data.monday.condition)
+print("Tuesday: " + weather_data.tuesday.temp + "°F, " + weather_data.tuesday.humidity + "% humidity, " + weather_data.tuesday.condition)
+print("Wednesday: " + weather_data.wednesday.temp + "°F, " + weather_data.wednesday.humidity + "% humidity, " + weather_data.wednesday.condition)
+
+# Calculate weather averages
+let temp_sum = weather_data.monday.temp + weather_data.tuesday.temp + weather_data.wednesday.temp
+let humidity_sum = weather_data.monday.humidity + weather_data.tuesday.humidity + weather_data.wednesday.humidity
+let avg_temp = temp_sum / 3
+let avg_humidity = humidity_sum / 3
+
+print("Average temperature: " + avg_temp + "°F")
+print("Average humidity: " + avg_humidity + "%")
+
+# Text processing with weather descriptions
+let monday_desc = "Monday was " + weather_data.monday.condition + " with " + weather_data.monday.temp + " degrees"
+let tuesday_desc = "Tuesday was " + weather_data.tuesday.condition + " with " + weather_data.tuesday.temp + " degrees"
+let wednesday_desc = "Wednesday was " + weather_data.wednesday.condition + " with " + weather_data.wednesday.temp + " degrees"
+
+print("Weather Summary:")
+print(string.title(monday_desc))
+print(string.title(tuesday_desc)) 
+print(string.title(wednesday_desc))
+
+print("=== Data Processing Complete ===")

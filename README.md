@@ -1,175 +1,242 @@
-````markdown
-# Sona Programming Language + SonaCore AI
+# Sona Programming Language v0.7.0
 
-[![Stars](https://img.shields.io/github/stars/Bryantad/Sona?style=social)]
-[![Forks](https://img.shields.io/github/forks/Bryantad/Sona?style=social)]
-[![Release](https://img.shields.io/github/v/release/Bryantad/Sona)]
-[![Sponsor](https://img.shields.io/badge/Sponsor-Sona-blue)]
-[![Buy Me a Coffee](https://img.shields.io/badge/Buy_Me_A_Coffee-Donate-yellow)]
+![Version](https://img.shields.io/badge/version-0.7.0-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Language](https://img.shields.io/badge/language-Python-yellow.svg)
 
-**Sona** is a modern, modular, and AI-forward programming language designed to empower developers, creators, and neurodivergent thinkers. It merges the accessibility of Python, the modularity of Go, the discipline of Rust, and the creative freedom of JavaScript, wrapped in a system you own.
+Sona is a modern, interpreted programming language featuring object-oriented programming, advanced dictionary operations, and an intuitive module system. Designed for readability and ease of use, Sona combines familiar syntax with powerful features.
 
-> “If Python taught you to code, Sona will teach you to build legacies.”
+## ✨ Key Features
 
----
+### Object-Oriented Programming
 
-## Releases
+- **Classes and Inheritance**: Full support for class definitions, method calls, and inheritance chains
+- **Property Access**: Clean dotted notation for accessing object properties and methods
+- **Method Calls**: Intuitive syntax for calling methods on objects
 
-- **v0.6.0** ✨ **Latest**
+### Advanced Dictionary Support
 
-  - Enhanced interpreter with improved stability and performance
-  - Advanced grammar features and better syntax support
-  - Enhanced standard library with new modules and functions
-  - Improved function parameter handling and scope management
-  - Better error messages and debugging capabilities
-  - New example programs showcasing advanced features
+- **Dictionary Literals**: Create dictionaries with `{key: value}` syntax
+- **Dotted Property Access**: Access dictionary values using dot notation (`dict.property`)
+- **Dynamic Properties**: Set and get properties dynamically at runtime
 
-- **v0.5.1**
+### Enhanced Module System
 
-  - Advanced REPL diagnostic tools (`:debug`, `:profile`, `:watch`, `:trace`)
-  - Bug fixes for function parameter handling
-  - Improved error reporting
+- **Dotted Imports**: Import modules with clean dotted notation
+- **Standard Library**: Rich collection of built-in modules for common operations
+- **Custom Modules**: Easy creation and sharing of custom module files
 
-- **v0.5.0**
+### Developer-Friendly Features
 
-  - Robust module system with nested imports (`import utils.math.smod`)
-  - Dotted access (`math.PI`, `fs.exists()`)
-  - Immutable constants and enhanced error reporting
-  - Expanded standard library (algebra, trigonometry, I/O)
-  - CLI improvements and script execution
+- **Interactive REPL**: Full-featured read-eval-print loop for rapid development
+- **Detailed Error Messages**: Comprehensive error reporting with line/column information
+- **Cross-Platform**: Runs on Windows, macOS, and Linux
 
-- **v0.4.3**
-  - Core interpreter: variables, control flow, functions
-  - REPL enhancements: multiline functions, `:env`, `:clear`, `:reload`
-  - 12+ core modules (`fs`, `http`, `json`, `env`, `stdin`)
-  - Graceful error messages and fast iteration
+## 🚀 Installation
 
----
+### Prerequisites
 
-## Quick Start
+- Python 3.8 or higher
+- pip package manager
+
+### Install from PyPI
+
+```bash
+pip install sona
+```
+
+### Install from Source
 
 ```bash
 git clone https://github.com/Bryantad/Sona.git
 cd Sona
-python3.10 -m venv .venv
-source .venv/bin/activate
-pip install -U pip setuptools wheel
-pip install -r requirements.txt   # or `pip install lark-parser`
 pip install -e .
+```
+
+### Verify Installation
+
+```bash
 sona --version
 ```
-````
 
----
+## 📚 Quick Start
 
-## What is Sona?
+### Running Sona Programs
 
-- Human-first syntax
-- AI-enhanced
-- Modular-by-default via `.smod` modules
-- Built from scratch with Lark and a custom interpreter
+```bash
+# Run a Sona file
+sona program.sona
 
----
+# Start interactive REPL
+sona
+```
 
-## Core Features
+### Basic Syntax Examples
 
-- Clean syntax: `let`, `const`, `func`, `if`, `for`, `while`, `return`
-- Dual structure: indentation or braces
-- Fully working interpreter and REPL
-- Built-in standard modules: `math.smod`, `fs.smod`, `env.smod`, `stdin.smod`
-- CLI execution: `sona file.sona`
-- Future-ready: SonaCore AI, transpiler support, IDE integration
-
----
-
-## Example Code
+#### Variables and Functions
 
 ```sona
-func greet(name) {
-    print("Welcome, " + name)
+// Variables and basic operations
+let name = "Sona"
+let version = 0.7
+
+func greet(user) {
+    return "Welcome to " + name + " v" + str(version) + ", " + user + "!"
 }
 
-const creator = "Sona"
+print(greet("Developer"))
+```
 
-if (creator == "Sona") {
-    greet(creator)
+#### Object-Oriented Programming
+
+```sona
+class Person {
+    func init(name, age) {
+        self.name = name
+        self.age = age
+    }
+
+    func introduce() {
+        return "Hi, I'm " + self.name + " and I'm " + str(self.age) + " years old."
+    }
+}
+
+let person = Person("Alice", 30)
+print(person.introduce())
+```
+
+#### Dictionary Operations
+
+```sona
+// Dictionary literals with dotted access
+let config = {
+    app_name: "My App",
+    version: "1.0.0",
+    debug: true
+}
+
+print("Running " + config.app_name + " v" + config.version)
+
+// Dynamic property setting
+config.environment = "production"
+```
+
+#### Module System
+
+```sona
+import math
+import string
+
+let result = math.sqrt(25)
+print("Square root: " + str(result))
+
+let text = "hello world"
+print("Capitalized: " + string.capitalize(text))
+```
+
+## 📖 Language Guide
+
+### Control Flow
+
+```sona
+// Conditional statements
+if (condition) {
+    // code
+} else if (other_condition) {
+    // code
 } else {
-    print("Unknown caller")
+    // code
+}
+
+// Pattern matching
+match value {
+    case 1: print("One")
+    case 2: print("Two")
+    default: print("Other")
+}
+
+// Loops
+for (let i = 0; i < 10; i += 1) {
+    print(i)
+}
+
+while (condition) {
+    // code
 }
 ```
 
----
+### Error Handling
 
-## Project Layout
-
-```
-sona/
-├── sona_core/       # Interpreter, grammar, CLI
-├── smod/            # Standard `.smod` modules
-├── examples/        # Demo programs (snake_game.sona, calculator.sona, ...)
-├── tests/           # Unit tests and test cases
-│   └── backup/      # Categorized backup test files
-├── scripts/         # Test runners and utility scripts
-├── docs/            # Documentation files
-│   ├── version_upgrades/     # Version-specific documentation
-│   └── PROJECT_ORGANIZATION.md # Organization documentation
-├── development/     # Development resources
-│   ├── fixes/       # Bug fixes implementation
-│   └── patches/     # Version patches
-└── tools/           # Development and release tools
-    └── release/     # Release management scripts
-├── datasets/        # SonaCore training data
-├── docs/            # Developer guide and references
-├── setup.py         # Installation config
-├── README.md        # Project overview
-├── LICENSE          # MIT License
-└── CONTRIBUTING.md  # Contribution guidelines
+```sona
+try {
+    // risky code
+} catch (error) {
+    print("Error occurred: " + str(error))
+}
 ```
 
----
+## 🧪 Examples
 
-## REPL Commands
+Explore the `examples/` directory for comprehensive code samples:
 
-Sona v0.5.1 includes a robust REPL environment with several helpful commands:
+- `dictionary_operations.sona` - Advanced dictionary usage
+- `module_system.sona` - Module import and usage patterns
+- `object_oriented.sona` - Class definitions and inheritance
+- `basic_features.sona` - Core language functionality
 
-```
-:help        - Show this help message
-:exit, :quit - Exit the REPL
-:calc        - Launch calculator application
-:quiz        - Launch quiz application
-:clear       - Clear the screen
-:version     - Show Sona version
-:test        - Run diagnostic tests
-```
+## 🔧 Development
 
-You can also exit by typing `exit` or `quit` without the colon prefix.
+### Setting Up Development Environment
 
----
-
-## Contribute or Join the Movement
-
-1. Fork this repository
-2. Create a branch: `git checkout -b feature/your-feature`
-3. Make your changes and write tests
-4. Submit a Pull Request
-
----
-
-## Support
-
-Your support keeps Sona and SonaCore moving forward.  
-Stars, forks, pull requests, and donations are all welcome.
-
-[![Sponsor](https://img.shields.io/badge/Sponsor-Sona-blue)](https://github.com/sponsors/Bryantad)
-[![Buy Me a Coffee](https://img.shields.io/badge/Buy_Me_A_Coffee-Donate-yellow)](https://ko-fi.com/Bryantad)
-
----
-
-## License
-
-MIT License. Sona is free to use, build on, and share.
-Proudly created by Netcore Solutions LLC, a subsidiary of Waycore Inc.
-
+```bash
+git clone https://github.com/Bryantad/Sona.git
+cd Sona
+pip install -e .[dev]
 ```
 
+### Running Tests
+
+```bash
+python -m pytest tests/
+```
+
+### Code Style
+
+We follow PEP 8 guidelines. Format code using:
+
+```bash
+black sona/
+```
+
+## 📋 Version 0.7.0 Highlights
+
+- **Enhanced OOP Support**: Improved class syntax and inheritance mechanisms
+- **Dictionary Enhancements**: Better performance and cleaner syntax for dictionary operations
+- **Module System Improvements**: More intuitive import syntax and better standard library organization
+- **Developer Experience**: Enhanced error messages and debugging capabilities
+- **Performance Optimizations**: Faster execution and reduced memory usage
+
+## 🤝 Contributing
+
+We welcome contributions from the community! Please read our [Contributing Guidelines](Contributing.md) for details on:
+
+- Code of conduct
+- Development workflow
+- Coding standards
+- Testing requirements
+- Pull request process
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🔗 Links
+
+- **Documentation**: [docs/](docs/)
+- **Examples**: [examples/](examples/)
+- **Issues**: [GitHub Issues](https://github.com/Bryantad/Sona/issues)
+- **Releases**: [GitHub Releases](https://github.com/Bryantad/Sona/releases)
+
 ---
+
+**Happy coding with Sona! 🎵**

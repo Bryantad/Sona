@@ -1,10 +1,28 @@
+﻿"""
+Sona Language Interpreter v0.7.0
+
+This module provides the core interpreter for the Sona programming language,
+implementing object-oriented programming features, dictionary support,
+and enhanced dotted notation for property access and method calls.
+
+Key Features:
+- Object-Oriented Programming (classes, inheritance, methods)
+- Dictionary literals and dotted property access
+- Module system with dotted notation
+- Enhanced error reporting with line/column information
+- Standard library integration
+
+Author: Sona Development Team
+Version: 0.7.0
+License: See LICENSE file
+"""
+
 import importlib.util
 import importlib
 import os
-import math 
-from lark import Lark, Transformer, Tree, Token, UnexpectedInput
+from lark import Transformer, Tree, Token
 from pathlib import Path
-from sona.utils.debug import debug, warn, error
+from sona.utils.debug import debug, warn
 
 # Native module imports
 from sona.stdlib import (
@@ -14,9 +32,54 @@ from sona.stdlib import (
 
 from sona.stdlib.native_stdin import native_stdin
 
+
 class ReturnSignal(Exception):
+    """Exception used to handle return statements in functions."""
+    
     def __init__(self, value):
         self.value = value
+
+
+class DeferredVariable:
+    """Represents a variable reference that should be resolved later"""
+    def __init__(self, name):
+        self.name = name
+    
+    def __str__(self):
+        return f"DeferredVariable({self.name})"
+    
+    def __repr__(self):
+        return f"DeferredVariable({self.name})"
+
+
+class DeferredAssignment:
+    """Represents an assignment that should be executed later"""
+    def __init__(self, name, value_expr):
+        self.name = name
+        self.value_expr = value_expr
+    
+    def __str__(self):
+        return f"DeferredAssignment({self.name} = {self.value_expr})"
+    
+    def __repr__(self):
+        return f"DeferredAssignment({self.name} = {self.value_expr})"
+
+
+class DeferredPropertyAssignment:
+    """Represents a property assignment that should be executed later"""
+    def __init__(self, obj_name, prop_name, value_expr):
+        self.obj_name = obj_name
+        self.prop_name = prop_name
+        self.value_expr = value_expr
+    
+    def __str__(self):
+        return (f"DeferredPropertyAssignment("
+                f"{self.obj_name}.{self.prop_name} = {self.value_expr})")
+    
+    def __repr__(self):
+        return (f"DeferredPropertyAssignment("
+                f"{self.obj_name}.{self.prop_name} = {self.value_expr})")
+
 
 class SonaInterpreter(Transformer):
     def __init__(self):
@@ -43,6 +106,68 @@ class SonaInterpreter(Transformer):
             debug(f"Preloaded array module: {dir(array)}")
         except ImportError:
             debug("Could not preload array module")
+        # Track processing context to avoid executing constructor bodies
+        # during class definition
+        self._processing_context = []
+        self._extracting_definitions = False
+        
+        # Initialize Phase 2 features
+        self._initialize_phase2_features()
+
+    def _initialize_phase2_features(self):
+        """Initialize Phase 2 advanced language features"""
+        # Always initialize OOP system first since it's needed for classes
+        self._initialize_oop_system()
+        
+        try:
+            # Import and integrate Phase 2 features
+            from sona.control import integrate_phase2_features
+            
+            # Apply Phase 2 integrations to this instance's class
+            integrate_phase2_features(self.__class__)
+            
+            debug("✅ Phase 2 features initialized successfully")
+            
+        except ImportError as e:
+            debug(f"Phase 2 features not available: {e}")
+        except Exception as e:
+            debug(f"Failed to initialize Phase 2 features: {e}")
+            # Continue anyway since OOP system is already initialized
+    
+    def _initialize_oop_system(self):
+        """Initialize the Object-Oriented Programming system"""
+        try:
+            debug("Attempting to import OOP system...")
+            from sona.core import (
+                SonaClass, SonaObject, create_class, super_call,
+                InheritanceManager
+            )
+            
+            debug(f"Imported OOP classes: {SonaClass}, {SonaObject}")
+            debug(f"Imported functions: {create_class}, {super_call}")
+            
+            # Store OOP system references as instance attributes
+            self.SonaClass = SonaClass
+            self.SonaObject = SonaObject
+            self.create_class = create_class
+            self.super_call_func = super_call  # Rename to avoid conflict
+            self.inheritance_manager = InheritanceManager
+            
+            # Registry for user-defined classes
+            self.classes = {}
+            
+            debug("✅ OOP system initialized successfully")
+            
+        except ImportError as e:
+            debug(f"OOP system not available: {e}")
+            # Set fallback functions
+            self.create_class = lambda name, bases=None: None
+            self.classes = {}
+        except Exception as e:
+            debug(f"Failed to initialize OOP system: {e}")
+            # Set fallback empty registry
+            self.create_class = lambda name, bases=None: None
+            self.classes = {}
 
     # IMPORT_SYSTEM_FIXES_APPLIED = True
     
@@ -64,11 +189,10 @@ class SonaInterpreter(Transformer):
         if hasattr(node, 'line'):
             error_info['line'] = node.line
         if hasattr(node, 'column'):
-            error_info['column'] = node.column
-        
-        # Create formatted error message
+            error_info['column'] = node.column        # Create formatted error message
         if error_info['line'] and error_info['column']:
-            formatted_msg = f"{message} at line {error_info['line']}, column {error_info['column']}"
+            formatted_msg = (f"{message} at line {error_info['line']}, "
+                             f"column {error_info['column']}")
         else:
             formatted_msg = message
         
@@ -80,10 +204,10 @@ class SonaInterpreter(Transformer):
         message = str(e)
         
         if node:
-            formatted_msg, error_info = self.create_error_context(node, error_type, message)
+            formatted_msg, _ = self.create_error_context(node, error_type,
+                                                         message)
         else:
             formatted_msg = f"{error_type}: {message}"
-            error_info = {'type': error_type, 'message': message}
         
         # Add context information if available
         if context:
@@ -375,6 +499,12 @@ class SonaInterpreter(Transformer):
         if isinstance(args[0], Token):
             name = str(args[0])
             
+            # Special handling during class definition extraction
+            if hasattr(self, '_extracting_definitions') and self._extracting_definitions:
+                # During class definition, treat variable references as deferred
+                debug(f"var: Deferring variable '{name}' during class definition")
+                return DeferredVariable(name)
+            
             # [BUG FIX] First prioritize current scope for function parameters
             # This ensures function parameters are found before outer scope variables
             if len(self.env) > 1 and name in self.env[-1]:
@@ -467,8 +597,7 @@ class SonaInterpreter(Transformer):
                 return result
             except Exception as e:
                 # Add context about the argument being evaluated
-                if hasattr(arg, 'line') and hasattr(arg, 'column'):
-                    debug(f"Error evaluating argument at line {arg.line}, column {arg.column}: {e}")
+                if hasattr(arg, 'line') and hasattr(arg, 'column'):                    debug(f"Error evaluating argument at line {arg.line}, column {arg.column}: {e}")
                 raise
         else:
             return arg
@@ -492,6 +621,46 @@ class SonaInterpreter(Transformer):
     def array_items(self, args):
         """Process array items into a flat list"""
         return [self.eval_arg(item) for item in args]
+
+    def dict(self, args):
+        """Handle dictionary literals like {"key": "value"}"""
+        debug(f"dict method called with args: {args}")
+        if not args:
+            return {}
+        
+        # If we receive a single dict argument (from dict_literal), just return it
+        if len(args) == 1 and isinstance(args[0], dict):
+            debug(f"Returning existing dict: {args[0]}")
+            return args[0]
+            
+        result = {}
+        for item in args:
+            debug(f"Processing dict item: {item} (type: {type(item)})")
+            if isinstance(item, tuple) and len(item) == 2:
+                result[item[0]] = item[1]
+            elif hasattr(item, 'children') and len(item.children) == 2:
+                key = self.eval_arg(item.children[0])
+                value = self.eval_arg(item.children[1])
+                result[key] = value
+                debug(f"Added dict entry: {key} = {value}")
+            else:
+                debug(f"Unhandled dict item format: {item}")
+        debug(f"Final dict result: {result}")
+        return result
+    
+    def dict_literal(self, args):
+        """Handle dictionary literal syntax by creating a dict"""
+        debug(f"dict_literal method called with args: {args}")
+        # If we already have a dict (from a single item), return it
+        if len(args) == 1 and isinstance(args[0], dict):
+            return args[0]
+        return self.dict(args)
+    
+    def dict_item(self, args):
+        """Process dict item into a key-value tuple"""
+        key = self.eval_arg(args[0])
+        value = self.eval_arg(args[1])
+        return (key, value)
 
     def neg(self, args):
         return -self.eval_arg(args[0])
@@ -700,12 +869,17 @@ class SonaInterpreter(Transformer):
             return True
         except ImportError as e:
             raise ImportError(f"Failed to import module '{module_name}': {str(e)}")
-        except Exception as e:
-            raise ImportError(f"Unexpected error importing '{module_name}': {str(e)}")
+        except Exception as e:            raise ImportError(f"Unexpected error importing '{module_name}': {str(e)}")
     
     def add(self, args):
         left = self.eval_arg(args[0])
         right = self.eval_arg(args[1])
+        
+        # Handle string concatenation
+        if isinstance(left, str) or isinstance(right, str):
+            return str(left) + str(right)
+        
+        # Handle numeric addition
         if hasattr(self, 'perform_numeric_operation'):
             return self.perform_numeric_operation('+', left, right)
         return left + right
@@ -737,28 +911,69 @@ class SonaInterpreter(Transformer):
     def string(self, args):
         # Handle both single/double quoted strings and multi-line strings
         raw_str = str(args[0])
-        
-        # Triple-quoted strings (multi-line)
+          # Triple-quoted strings (multi-line)
         if raw_str.startswith('"""') and raw_str.endswith('"""'):
             return raw_str[3:-3]
-        elif raw_str.startswith("'''") and raw_str.endswith("'''"):
+       
             return raw_str[3:-3]
         # Regular single/double quoted strings
         elif raw_str.startswith('"') and raw_str.endswith('"'):
             return raw_str[1:-1]
         elif raw_str.startswith("'") and raw_str.endswith("'"):
             return raw_str[1:-1]
-        
-        # Fallback
-        return raw_str
-
+          # Fallback        return raw_str    
     def assignment(self, args):
         name_token, value_expr = args
         value = self.eval_arg(value_expr)
         self.set_var(str(name_token), value)
         return value
 
+    def assign(self, args):
+        """Handle simple assignment without let/const (NAME = expr)"""
+        name_token, value_expr = args
+        name = str(name_token)
+        
+        # Special handling during class definition extraction
+        if hasattr(self, '_extracting_definitions') and self._extracting_definitions:
+            debug(f"assign: Deferring assignment '{name} = ?' during class definition")
+            return DeferredAssignment(name, value_expr)
+        
+        debug(f"Simple assignment: {name} = ?")
+        debug(f"Value expression: {value_expr}")
+        debug(f"Value expression type: {type(value_expr)}")
+        
+        value = self.eval_arg(value_expr)
+        
+        debug(f"Simple assignment: {name} = {value}")
+        debug(f"Value type: {type(value)}")
+        
+        self.set_var(name, value)
+        return value
+
+    def var_assign(self, args):
+        """Handle variable assignment with let/const"""
+        debug(f"var_assign called with args: {args}")
+        
+        # args should be [NAME, value_expr] from grammar "let" NAME "=" expr
+        name_token = args[0]
+        value_expr = args[1]
+        
+        name = str(name_token)
+        value = self.eval_arg(value_expr)
+        
+        debug(f"Variable assignment: let {name} = {value}")
+        self.set_var(name, value)
+        return value
+
     def print_stmt(self, args):
+        # Check if we're in the middle of parsing a class - if so, don't execute
+        # This is a hack to prevent constructor bodies from executing during class definition
+        if hasattr(self, '_processing_context') and 'class_definition' in self._processing_context:
+            debug("Skipping print_stmt execution during class definition parsing")
+            # Return a placeholder that represents the print statement for later execution
+            return ('deferred_print', args[0])
+        
+        debug(f"print_stmt called during execution")
         val = self.eval_arg(args[0])
         # print() without [OUTPUT] prefix for cleaner output
         print(val)
@@ -874,8 +1089,7 @@ class SonaInterpreter(Transformer):
                 debug(f"[FIXED] Parameter {param_name} = {value} set in scope {len(self.env)-1}")
             else:
                 debug(f"[ERROR] Failed to set parameter {param_name}!")
-        
-        # Debug the function scope contents after setting parameters
+          # Debug the function scope contents after setting parameters
         scope_contents = ", ".join([f"{k}={v}" for k, v in self.env[-1].items()])
         debug(f"Function '{name}' scope parameters: {scope_contents}")
         
@@ -1027,37 +1241,80 @@ class SonaInterpreter(Transformer):
             
             try:
                 self._exec(body.children)
-            except ReturnSignal:
-                # If a return statement is encountered, propagate it
+            except ReturnSignal:                # If a return statement is encountered, propagate it
                 self.pop_scope()
                 raise
             finally:
                 self.pop_scope()
-                
+        
         return None
-
-    def block(self, args):
+      # ====== Prevent Auto-Transformation of Class Members ======
+    
+    def constructor_def(self, args):
+        """Handle constructor definition - completely bypass transformation during class definition"""
+        debug(f"constructor_def called with args: {args}")
+        
+        # If we're in definition extraction mode, store the raw tree
+        if hasattr(self, '_extracting_definitions') and self._extracting_definitions:
+            debug("constructor_def: Bypassing transformation - in extraction mode")
+            return Tree('constructor_def', args)
+        
+        # Otherwise handle normally (though this shouldn't happen in class contexts)
+        debug("constructor_def: Normal processing (unexpected)")
+        return args
+    
+    def method_def(self, args):
+        """Handle method definition - completely bypass transformation during class definition"""
+        debug(f"method_def called with args: {args}")
+          # If we're in definition extraction mode, store the raw tree
+        if hasattr(self, '_extracting_definitions') and self._extracting_definitions:
+            debug("method_def: Bypassing transformation - in extraction mode")
+            return Tree('method_def', args)
+        
+        # Otherwise handle normally (though this shouldn't happen in class contexts)
+        debug("method_def: Normal processing (unexpected)")
+        return args
+    
+    def static_method_def(self, args):
+        """Handle static method definition - bypass transformation during class definition"""
+        debug(f"static_method_def called with args: {args}")
+        if getattr(self, '_extracting_definitions', False):
+            return Tree('static_method_def', args)
+        debug("static_method_def: Normal processing (unexpected)")
         return args
 
-    def start(self, args):
-        """Two-pass execution: first extract functions, then execute statements"""
-        debug("Starting two-pass execution...")
+    def class_method_def(self, args):
+        """Handle class method definition - bypass transformation during class definition"""
+        debug(f"class_method_def called with args: {args}")
+        if getattr(self, '_extracting_definitions', False):
+            return Tree('class_method_def', args)
+        debug("class_method_def: Normal processing (unexpected)")
+        return args
+
+    def block(self, args):
+        """Override block to prevent transformation during class definition"""
+        debug(f"block: Processing block with {len(args)} statements")
+          # If we're extracting definitions, keep blocks as raw trees
+        if hasattr(self, '_extracting_definitions') and self._extracting_definitions:
+            debug("block: Storing block as raw tree during definition extraction")
+            return Tree('block', args)
         
-        # Pass 1: Extract all function definitions without executing them
-        debug("Pass 1: Extracting function definitions...")
-        for stmt in args:
-            if isinstance(stmt, Tree) and stmt.data == 'func_def':
-                self._extract_function_definition(stmt)
-        
-        # Pass 2: Execute all non-function statements
-        debug("Pass 2: Executing statements...")
+        # Normal block processing
         result = None
         for stmt in args:
-            if not (isinstance(stmt, Tree) and stmt.data == 'func_def'):
-                result = self._exec(stmt)
-        
-        # Return the result of the last expression/statement
+            result = stmt
         return result
+
+    def class_member(self, args):
+        """Override class_member to prevent transformation of constructor/method bodies"""
+        debug(f"class_member: Processing member: {args}")
+          # If we're extracting definitions, return raw class member
+        if hasattr(self, '_extracting_definitions') and self._extracting_definitions:
+            debug("class_member: Returning raw member during definition extraction")
+            return Tree('class_member', args)
+        
+        # Normal processing for other contexts
+        return args[0]
 
     def _extract_function_definition(self, func_tree):
         """Extract function definition from raw tree without transforming body"""
@@ -1086,139 +1343,559 @@ class SonaInterpreter(Transformer):
         
         return func_name
 
-# Global debug mode function for REPL
-def debug_mode(enabled=True):
-    """Enable or disable debug mode globally"""
-    import os
-    if enabled:
-        os.environ["SONA_DEBUG"] = "1"
-    else:
-        os.environ.pop("SONA_DEBUG", None)
+    def _extract_class_definition(self, class_tree):
+        """Extract class definition from raw tree without transforming constructor bodies"""
+        debug(f"🏗️ Extracting class definition from: {class_tree}")
+        
+        # Extract class name (first child)
+        name_token = class_tree.children[0]
+        class_name = str(name_token)
+        debug(f"🏗️ Extracting class: {class_name}")
+        
+        # Extract inheritance list
+        base_classes = []
+        if len(class_tree.children) > 1 and class_tree.children[1] is not None:
+            inheritance_tree = class_tree.children[1]
+            if hasattr(inheritance_tree, 'children'):
+                for child in inheritance_tree.children:
+                    if isinstance(child, Token) and child.type == 'NAME':
+                        base_name = str(child)
+                        if base_name in self.classes:
+                            base_classes.append(self.classes[base_name])
+                        else:
+                            warn(f"Base class '{base_name}' not found")
+        
+        # Create class builder
+        builder = self.create_class(class_name, base_classes)
+        
+        # Extract class body WITHOUT transforming constructor bodies
+        class_body = class_tree.children[-1]
+        debug(f"🏗️ Processing class body: {class_body}")
+        
+        if hasattr(class_body, 'children'):
+            debug(f"🏗️ Processing {len(class_body.children)} class members")
+            for i, member in enumerate(class_body.children):
+                debug(f"🏗️ Processing member {i}: {member}")
+                if hasattr(member, 'data') and member.data == 'class_member':
+                    actual_member = member.children[0]
+                    if hasattr(actual_member, 'data'):
+                        if actual_member.data == 'constructor_def':
+                            self._extract_constructor_def(builder, actual_member)
+                        elif actual_member.data == 'method_def':
+                            self._extract_method_def(builder, actual_member, 'instance')
+                        elif actual_member.data == 'property_def':
+                            self._extract_property_def(builder, actual_member)
+                        elif actual_member.data == 'static_method_def':
+                            self._extract_method_def(builder, actual_member, 'static')
+                        elif actual_member.data == 'class_method_def':
+                            self._extract_method_def(builder, actual_member, 'class')
+                elif member.data == 'constructor_def':
+                    self._extract_constructor_def(builder, member)
+                elif member.data == 'method_def':
+                    self._extract_method_def(builder, member, 'instance')
+                elif member.data == 'property_def':
+                    self._extract_property_def(builder, member)
+                elif member.data == 'static_method_def':
+                    self._extract_method_def(builder, member, 'static')
+                elif member.data == 'class_method_def':
+                    self._extract_method_def(builder, member, 'class')
+        # Build and store the class
+        sona_class = builder.build()
+        self.classes[class_name] = sona_class
+        
+        debug(f"🏗️ Extracted class '{class_name}' with {len(base_classes)} base classes")
+        return class_name
 
+    def _extract_constructor_def(self, builder, member):
+        """Extract constructor definition without transforming its body"""
+        debug(f"🔧 Extracting constructor definition: {member}")
+        args = member.children
+        
+        # Extract parameters
+        params = []
+        if len(args) > 0 and args[0] is not None:
+            if isinstance(args[0], list):
+                params = args[0]
+            elif hasattr(args[0], 'children'):
+                for child in args[0].children:
+                    if isinstance(child, Token) and child.type == 'NAME':
+                        params.append(str(child))
+        
+        # Extract constructor body WITHOUT transforming it
+        body = args[-1]
+        debug(f"🔧 Constructor body stored as raw AST: {body}")
+        
+        # Create constructor function that will transform body only when called
+        def constructor_impl(instance, *constructor_args, **kwargs):
+            debug(f"🔥 Constructor implementation called with args: {constructor_args}")
+            # Only execute if we're not in definition extraction mode
+            if self._extracting_definitions:
+                debug("🔥 Skipping constructor execution - in definition extraction mode")
+                return None
+                
+            # Push new scope for constructor execution
+            self.push_scope()
+            try:
+                # Bind 'self' to the instance
+                self.env[-1]['self'] = instance
+                
+                # Bind parameters
+                for i, param in enumerate(params):
+                    if i < len(constructor_args):
+                        self.env[-1][param] = constructor_args[i]
+                
+                # NOW transform and execute constructor body
+                debug("🔥 About to transform and execute constructor body")
+                result = self.transform(body)
+                debug("🔥 Constructor body execution complete")
+                return result
+            finally:
+                self.pop_scope()
+        
+        builder.add_method('__init__', constructor_impl)
+        debug(f"🔧 Extracted constructor with {len(params)} parameters")
 
-def load_smod_module(module_name):
-    """Load a .smod module in a platform-independent way"""
-    try:
-        # Convert module name to path parts
-        path_parts = ['sona', 'stdlib'] + module_name.split('.')
-        if path_parts[-1].endswith('.smod'):
-            # Remove .smod extension and add .py
-            path_parts[-1] = path_parts[-1][:-5]
-        path_parts[-1] += '.py'
+    def _extract_method_def(self, builder, member, method_type):
+        """Extract method definition without transforming its body"""
+        debug(f"🔧 Extracting {method_type} method definition: {member}")
+        args = member.children
+        method_name = str(args[0])
         
-        # Create path object
-        module_path = Path(*path_parts)
+        # Extract parameters
+        params = []
+        if len(args) > 1 and args[1] is not None:
+            if isinstance(args[1], list):
+                params = args[1]
+            elif hasattr(args[1], 'children'):
+                for child in args[1].children:
+                    if isinstance(child, Token) and child.type == 'NAME':
+                        params.append(str(child))
         
-        if not module_path.is_file():
-            raise ImportError(f"No backend found for module '{module_name}'")
+        # Extract method body WITHOUT transforming it
+        body = args[-1]
+        debug(f"🔧 Method body stored as raw AST: {body}")
+        
+        # Create method function that will transform body only when called
+        def method_impl(*method_args, **kwargs):
+            debug(f"🔥 Method {method_name} called with args: {method_args}")
+            # Push new scope for method execution
+            self.push_scope()
+            try:
+                # Bind parameters
+                for i, param in enumerate(params):
+                    if i < len(method_args):
+                        self.env[-1][param] = method_args[i]
+                
+                # Transform and execute method body
+                debug(f"🔥 About to transform and execute method {method_name} body")
+                result = self.transform(body)
+                debug(f"🔥 Method {method_name} execution complete")
+                return result
+            finally:
+                self.pop_scope()
+        
+        builder.add_method(method_name, method_impl, method_type)
+        debug(f"🔧 Extracted {method_type} method '{method_name}' with {len(params)} parameters")
+
+    def _extract_property_def(self, builder, member):
+        """Extract property definition"""
+        debug(f"🔧 Extracting property definition: {member}")
+        args = member.children
+        prop_name = str(args[0])
+          # Simple property with default value
+        if len(args) > 1 and args[1] is not None:
+            # Transform the default value during extraction (this is safe)
+            default_value = self.transform(args[1])
+            builder.add_instance_variable(prop_name, default_value)
+        else:
+            builder.add_instance_variable(prop_name, None)
+        
+        debug(f"🔧 Extracted property '{prop_name}'")
+    
+    # ====== Object-Oriented Programming Methods ======    def class_def(self, args):
+        """Handle class definition by completely bypassing auto-transformation"""
+        debug(f"class_def: Manually processing class definition with args: {args}")
+        
+        # Extract class name manually
+        name_token = args[0] 
+        class_name = str(name_token)
+        debug(f"Defining class: {class_name}")
+        
+        # Create class object using the classes module
+        from sona.core.classes import ClassBuilder
+        builder = ClassBuilder(class_name)
+        
+        # Find the class body
+        class_body = None
+        for arg in args:
+            if hasattr(arg, 'data') and arg.data == 'class_body':
+                class_body = arg
+                break
+        
+        if class_body and hasattr(class_body, 'children'):
+            debug(f"Found class body with {len(class_body.children)} members")
             
-        # Create module spec using absolute path
-        spec = importlib.util.spec_from_file_location(
-            f"sona.stdlib.{module_name}",
-            str(module_path.resolve())
-        )
+            # Process each member manually without transformation
+            for member_tree in class_body.children:
+                debug(f"Processing class member: {member_tree}")
+                
+                if hasattr(member_tree, 'data') and member.data == 'class_member':
+                    actual_member = member_tree.children[0]
+                    
+                    if hasattr(actual_member, 'data'):
+                        if actual_member.data == 'constructor_def':
+                            self._process_raw_constructor(builder, actual_member)
+                        elif actual_member.data == 'method_def':
+                            self._process_raw_method(builder, actual_member)
+                        elif actual_member.data == 'property_def':
+                            self._process_raw_property(builder, actual_member)
         
-        if spec is None or spec.loader is None:
-            raise ImportError(f"Failed to create module spec for '{module_name}'")
+        # Build and store the class
+        sona_class = builder.build()
+        self.classes[class_name] = sona_class
+        
+        debug(f"Class '{class_name}' defined successfully")
+        return class_name
+
+    def _process_constructor_def_manual(self, builder, constructor_tree):
+        """Process constructor definition manually from raw tree"""
+        debug(f"Processing constructor manually: {constructor_tree}")
+        
+        # Extract parameters manually from the raw tree
+        params = []
+        body_tree = None
+        
+        for child in constructor_tree.children:
+            if hasattr(child, 'data') and child.data == 'param_list':
+                # Extract parameter names without transformation
+                for param_token in child.children:
+                    if isinstance(param_token, Token) and param_token.type == 'NAME':
+                        params.append(str(param_token))
+            elif hasattr(child, 'data') and child.data == 'block':
+                body_tree = child
+        
+        debug(f"Constructor params: {params}, body: {body_tree}")
+        
+        # Create constructor function that will execute body only when called
+        def constructor_impl(instance, *constructor_args, **kwargs):
+            debug(f"🔥 Constructor executing with args: {constructor_args}")
             
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        return module
+            # Push new scope for constructor execution
+            self.push_scope()
+            try:
+                # Bind 'self' to the instance
+                self.env[-1]['self'] = instance
+                
+                # Bind parameters
+                for i, param in enumerate(params):
+                    if i < len(constructor_args):
+                        self.env[-1][param] = constructor_args[i]
+                        debug(f"Bound parameter {param} = {constructor_args[i]}")
+                
+                # NOW transform and execute constructor body
+                debug("🔥 About to transform and execute constructor body")
+                result = self.transform(body_tree)
+                debug("🔥 Constructor body execution complete")
+                return result
+            finally:
+                self.pop_scope()
         
-    except Exception as e:
-        raise ImportError(f"Failed to load module '{module_name}': {str(e)}")
+        builder.add_method('__init__', constructor_impl)
+        debug(f"Added constructor with {len(params)} parameters")
+
+    def _process_method_def_manual(self, builder, method_tree):
+        """Process method definition manually from raw tree"""
+        debug(f"Processing method manually: {method_tree}")
+        
+        # Extract method name
+        method_name = str(method_tree.children[0])
+        
+        # Extract parameters manually
+        params = []
+        body_tree = None
+        
+        for child in method_tree.children[1:]:  # Skip method name
+            if hasattr(child, 'data') and child.data == 'param_list':
+                for param_token in child.children:
+                    if isinstance(param_token, Token) and param_token.type == 'NAME':
+                        params.append(str(param_token))
+            elif hasattr(child, 'data') and child.data == 'block':
+                body_tree = child
+        
+        debug(f"Method {method_name} params: {params}, body: {body_tree}")
+        
+        # Create method function
+        def method_impl(instance, *method_args, **kwargs):
+            debug(f"🔥 Method {method_name} executing with args: {method_args}")
+            
+            # Push new scope for method execution
+            self.push_scope()
+            try:
+                # Bind 'self' to the instance
+                self.env[-1]['self'] = instance
+                
+                # Bind parameters
+                for i, param in enumerate(params):
+                    if i < len(method_args):
+                        self.env[-1][param] = method_args[i]
+                  # Transform and execute method body
+                debug(f"About to transform and execute method {method_name} body")
+                result = self.transform(body_tree)
+                debug(f"Method {method_name} execution complete")
+                return result
+            finally:
+                self.pop_scope()
+        
+        builder.add_method(method_name, method_impl)
+        debug(f"Added method {method_name} with {len(params)} parameters")
+
+    def object_new(self, args):
+        """Handle object instantiation with 'new' keyword"""
+        debug(f"object_new called with args: {args}")
+        debug(f"Number of args: {len(args)}")
+        for i, arg in enumerate(args):
+            debug(f"  args[{i}] type: {type(arg)}, value: {arg}")
+        
+        # Based on grammar: object_instantiation: "new" NAME "(" [args] ")"
+        # args should be [class_name, constructor_args_list] or just [class_name]
+        
+        if len(args) == 0:
+            raise ValueError("object_new called with no arguments")
+        
+        # First argument should be the class name
+        class_name_arg = args[0]
+        if isinstance(class_name_arg, Token):
+            class_name = str(class_name_arg)
+        else:
+            class_name = str(class_name_arg)
+        
+        debug(f"Instantiating class: {class_name}")
+        
+        if class_name not in self.classes:
+            debug(f"Available classes: {list(self.classes.keys())}")
+            raise NameError(f"Class '{class_name}' is not defined")
+        
+        # Get constructor arguments (if any)
+        constructor_args = []
+        if len(args) > 1:
+            constructor_args = args[1:]  # Rest of args are constructor parameters
+        
+        debug(f"Constructor args: {constructor_args}")
+        
+        # Get the class and create instance
+        sona_class = self.classes[class_name]
+        debug(f"Creating instance of class: {sona_class}")
+        
+        # Create new instance
+        instance = sona_class.create_instance()
+        debug(f"Created instance: {instance}")
+        
+        # Call constructor if it exists
+        if hasattr(sona_class, 'get_method') and sona_class.get_method('__init__'):
+            constructor = sona_class.get_method('__init__')
+            debug(f"Calling constructor with args: {constructor_args}")
+            constructor(instance, *constructor_args)
+        
+        debug(f"Object instantiation complete: {instance}")
+        return instance
+
+    def object_instantiation(self, args):
+        """Handle object instantiation syntax: new ClassName(args)"""
+        debug(f"object_instantiation called with args: {args}")
+        
+        # Get class name from the first argument (should be a Token)
+        class_name_token = args[0]  # Should be the class name token
+        if hasattr(class_name_token, 'value'):
+            class_name = class_name_token.value
+        else:
+            class_name = str(class_name_token)
+        
+        debug(f"Instantiating class: {class_name}")
+        
+        if class_name not in self.classes:
+            debug(f"Available classes: {list(self.classes.keys())}")
+            raise NameError(f"Class '{class_name}' is not defined")
+        
+        sona_class = self.classes[class_name]
+        
+        # Extract constructor arguments if present
+        constructor_args = []
+        if len(args) > 1 and args[1] is not None:
+            # Handle args tree - extract the actual arguments
+            args_node = args[1]
+            debug(f"Constructor args node: {args_node}, type: {type(args_node)}")
+            if hasattr(args_node, 'children'):
+                # Transform each argument if it's still a Tree
+                for arg in args_node.children:
+                    if hasattr(arg, 'children') or hasattr(arg, 'data'):
+                        # It's still a Tree, transform it
+                        transformed_arg = self.transform(arg)
+                        constructor_args.append(transformed_arg)
+                    else:
+                        # It's already transformed
+                        constructor_args.append(arg)
+            else:
+                # Single argument or already transformed
+                if hasattr(args_node, 'children') or hasattr(args_node, 'data'):
+                    transformed_arg = self.transform(args_node)
+                    constructor_args.append(transformed_arg)
+                else:
+                    constructor_args.append(args_node)
+        
+        # Create instance
+        debug(f"Creating instance with args: {constructor_args}")
+        instance = sona_class.create_instance(*constructor_args)
+        debug(f"Created instance of class '{class_name}': {instance}")
+        return instance    # ====== Dotted Expression Handling ======
+    
+    def dotted_expr(self, args):
+        """Handle dotted expressions like obj.method() or obj.prop"""
+        debug(f"dotted_expr called with args: {args}")
+        
+        # First argument is the base object
+        base_obj = args[0]
+        
+        # Process each dotted suffix sequentially
+        current_obj = base_obj
+        for i in range(1, len(args)):
+            suffix = args[i]
+            debug(f"Processing dotted suffix {i}: {suffix}")
+            
+            if hasattr(suffix, 'data'):
+                if suffix.data == 'method_call':
+                    current_obj = self._handle_method_call(current_obj, suffix)
+                elif suffix.data == 'property_access':
+                    current_obj = self._handle_property_access(current_obj, suffix)
+                elif suffix.data == 'property_assignment':
+                    return self._handle_property_assignment(current_obj, suffix)
+                else:
+                    debug(f"Unknown dotted suffix type: {suffix.data}")
+                    return current_obj
+            else:
+                debug(f"Unexpected suffix format: {suffix}")
+                return current_obj
+        
+        return current_obj
+    
+    def _handle_method_call(self, obj, method_call_node):
+        """Handle method call on an object"""
+        debug(f"_handle_method_call: obj={obj}, node={method_call_node}")
+        
+        # Extract method name and arguments
+        method_name = str(method_call_node.children[0])
+        method_args = []
+        
+        # Check if there are arguments
+        if len(method_call_node.children) > 1:
+            args_node = method_call_node.children[1]
+            if hasattr(args_node, 'children'):
+                for arg in args_node.children:
+                    method_args.append(self.eval_arg(arg))
+        
+        debug(f"Calling method '{method_name}' with args: {method_args}")
+        
+        # Handle different object types
+        if hasattr(obj, method_name):
+            method = getattr(obj, method_name)
+            if callable(method):
+                return method(*method_args)
+            else:
+                raise TypeError(f"'{method_name}' is not callable")
+        elif isinstance(obj, dict) and method_name in obj:
+            method = obj[method_name]
+            if callable(method):
+                return method(*method_args)
+            else:
+                raise TypeError(f"'{method_name}' is not callable")
+        else:
+            raise AttributeError(f"Object has no method '{method_name}'")
+    
+    def _handle_property_access(self, obj, property_access_node):
+        """Handle property access on an object"""
+        debug(f"_handle_property_access: obj={obj}, node={property_access_node}")
+        
+        # Extract property name
+        property_name = str(property_access_node.children[0])
+        debug(f"Accessing property '{property_name}'")
+        
+        # Handle different object types - check dict first
+        if isinstance(obj, dict) and property_name in obj:            return obj[property_name]
+        elif hasattr(obj, property_name):
+            return getattr(obj, property_name)
+        else:
+            raise AttributeError(f"Object has no property '{property_name}'")
+    
+    def _handle_property_assignment(self, obj, property_assignment_node):
+        """Handle property assignment on an object"""
+        debug(f"_handle_property_assignment: obj={obj}, node={property_assignment_node}")
+        
+        # Extract property name and value
+        property_name = str(property_assignment_node.children[0])
+        value = self.eval_arg(property_assignment_node.children[1])
+        
+        debug(f"Setting property '{property_name}' = {value}")
+        
+        # Handle different object types - check dict first
+        if isinstance(obj, dict):
+            obj[property_name] = value
+        elif hasattr(obj, property_name) or hasattr(obj, '__setattr__'):
+            setattr(obj, property_name, value)
+        else:
+            # Try to set it anyway
+            try:
+                setattr(obj, property_name, value)
+            except Exception as e:
+                raise AttributeError(f"Cannot set property '{property_name}' on object: {e}")
+        
+        return value
+      # Legacy transformer methods for handling parse tree nodes
+    def method_call(self, args):
+        """Handle method_call nodes from the parse tree"""
+        debug(f"method_call transformer called with args: {args}")
+        # Return a special marker that dotted_expr can handle
+        return Tree('method_call', args)
+    
+    def property_access(self, args):
+        """Handle property_access nodes from the parse tree"""
+        debug(f"property_access transformer called with args: {args}")
+        # Return a special marker that dotted_expr can handle
+        return Tree('property_access', args)
+    
+    def property_assignment(self, args):
+        """Handle property_assignment nodes from the parse tree"""
+        debug(f"property_assignment transformer called with args: {args}")
+        # Return a special marker that dotted_expr can handle
+        return Tree('property_assignment', args)
+# Global debug mode flag for REPL compatibility
+debug_mode = False
+
+# Utility function to execute code string using the interpreter
 
 def run_code(code, debug_enabled=False):
-    """Execute Sona code with proper cross-platform path handling"""
-    if debug_enabled:
-        os.environ["SONA_DEBUG"] = "1"
-        
-    debug("run_code() received input:")
-    debug(code[:100])
-    
-    # Get grammar file path in a platform-independent way
+    from lark import Lark
+    from pathlib import Path
+    import os
+    # Load grammar
     grammar_path = Path(__file__).parent / 'grammar.lark'
-    try:
-        grammar = grammar_path.read_text(encoding='utf-8')
-    except Exception as e:
-        error(f"Failed to load grammar: {e}")
-        return None
+    grammar = grammar_path.read_text(encoding='utf-8')
+    parser = Lark(grammar, parser='lalr', propagate_positions=True)
+    # Create interpreter instance
+    interp = SonaInterpreter()
+    if debug_enabled:
+        os.environ['SONA_DEBUG'] = '1'
+    # Parse and execute
+    tree = parser.parse(code)
+    return interp.transform(tree)
 
-    parser = Lark(grammar, parser="lalr", propagate_positions=True)
-    try:
-        tree = parser.parse(code)
-    except UnexpectedInput as e:
-        line_num = e.line
-        column = e.column
-        # Extract the line with the error and add ^ marker        error_line = code.split('\n')[line_num-1] if line_num <= len(code.split('\n')) else ""
-        pointer = ' ' * (column - 1) + '^'
-        error(f"PARSER ERROR at line {line_num}, column {column}:\n{error_line}\n{pointer}\n{str(e)}")
-        return None
-    except Exception as e:
-        error(f"PARSER ERROR: {str(e)}")
-        return None
+# Utility function to capture interpreter output for testing
 
-    debug("Starting execution...")
-    interpreter = SonaInterpreter()
-    try:
-        if os.environ.get("SONA_DEBUG") == "1":
-            print(tree.pretty())
-        # Use the two-pass start method instead of direct transform
-        result = interpreter.start(tree.children)
-        return result
-    except NameError as e:
-        # Extract line and column info if available from error message
-        line_info = ""
-        if "at line" in str(e):
-            line_info = str(e)
-        else:
-            line_info = str(e)
-        error(f"VARIABLE ERROR: {line_info}")
-        return None
-    except AttributeError as e:
-        error(f"MODULE ERROR: {str(e)}")
-        return None
-    except TypeError as e:
-        error(f"TYPE ERROR: {str(e)}")
-        return None
-    except ImportError as e:
-        # Check if the error has position information
-        if hasattr(e, 'line') and hasattr(e, 'column'):
-            line_num, column = e.line, e.column
-            error_line = code.split('\n')[line_num-1] if line_num <= len(code.split('\n')) else ""
-            pointer = ' ' * (column - 1) + '^'
-            error(f"IMPORT ERROR at line {line_num}, column {column}:\n{error_line}\n{pointer}\n{str(e)}")
-        else:
-            error(f"IMPORT ERROR: {str(e)}")
-        return None
-    except ValueError as e:
-        error(f"VALUE ERROR: {str(e)}")
-        return None
-    except Exception as e:
-        # Try to extract line and column info from the exception if possible
-        if hasattr(e, 'line') and hasattr(e, 'column'):
-            line_num, column = e.line, e.column
-            error_line = code.split('\n')[line_num-1] if line_num <= len(code.split('\n')) else ""
-            pointer = ' ' * (column - 1) + '^'
-            error(f"INTERPRETER ERROR at line {line_num}, column {column}:\n{error_line}\n{pointer}\n{str(e)}")
-        else:
-            error(f"INTERPRETER ERROR: {str(e)}")
-        return None
-
-if __name__ == "__main__":
-    test_files = [
-        "examples/test_all_modules.sona",
-    ]
-
-    for file in test_files:
-        try:
-            code = Path(file).read_text()
-            debug(f"Running: {file}")
-            run_code(code)
-            if os.environ.get("SONA_DEBUG") == "1":
-                print("✅ Success\n")
-        except Exception as e:
-            error(f"Error in {file}: {e}\n")
-        finally:
-            if os.environ.get("SONA_DEBUG") == "1":
-                print("-" * 40)
+def capture(interpreter, code):
+    from lark import Lark
+    from pathlib import Path
+    # Load grammar
+    grammar_path = Path(__file__).parent / 'grammar.lark'
+    grammar = grammar_path.read_text(encoding='utf-8')
+    parser = Lark(grammar, parser='lalr', propagate_positions=True)
+    # Parse and execute with provided interpreter
+    tree = parser.parse(code)
+    return interpreter.transform(tree)

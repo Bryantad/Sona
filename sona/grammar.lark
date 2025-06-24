@@ -3,15 +3,20 @@ start: statement+
 ?statement: expr
      | import_stmt
      | assignment
+     | destructuring_assignment
      | print_stmt
      | if_stmt
-     | match_stmt  // New match/switch statement
+     | match_stmt
      | while_stmt
+     | while_else_stmt
      | for_stmt
+     | loop_until_stmt
      | func_def
-     | try_stmt    // New try/catch statement
+     | class_def
+     | try_stmt
      | return_stmt
-     | doc_comment // New documentation comment
+     | break_stmt
+     | continue_stmt
 
 ?expr: term
      | expr "+" term   -> add
@@ -29,35 +34,40 @@ start: statement+
      | term "*" factor  -> mul
      | term "/" factor  -> div
 
-?factor: unary
-       | NAME "=" expr          -> assign
+// ======== Factor-level method and property calls ========
+?factor: "-" factor         -> neg
+       | "!" factor         -> not
+       | dotted_expr
 
-?unary: "-" unary       -> neg
-      | "+" unary       -> pos
-      | "!" unary       -> not
-      | primary
+// ======== Dotted expressions (method calls and property access) ========
+?dotted_expr: atom call_or_access*
 
-?primary: "(" expr ")"
-        | NUMBER             -> number
-        | STRING             -> string
-        | array_literal      -> array
-        | map_literal        -> map        // New map literal
-        | func_call
-        | dotted_name        -> var
-        | NAME               -> var
+call_or_access: "." NAME "(" [args] ")" -> method_call
+              | "." NAME "=" expr     -> property_assignment
+              | "." NAME              -> property_access
 
-array_literal: "[" [array_items] "]"
-array_items: expr ("," expr)*
+// ======== Atomic expressions ========
+array_literal: "[" [expr ("," expr)*] "]"
+dict_literal: "{" [dict_item ("," dict_item)*] "}"
+dict_item: expr ":" expr
 
-// New map literal implementation
-map_literal: "{" [map_items] "}"
-map_items: map_item ("," map_item)*
-map_item: expr ":" expr
+?atom: "(" expr ")"
+     | NUMBER             -> number
+     | STRING             -> string
+     | F_STRING           -> interpolated_string
+     | array_literal      -> array
+     | dict_literal       -> dict
+     | list_comprehension -> list_comp
+     | dict_comprehension -> dict_comp
+     | object_instantiation -> object_new
+     | func_call
+     | NAME               -> var  // single name only
 
-func_call: (NAME | dotted_name) "(" [args] ")"
-dotted_name: NAME ("." NAME)+
+// ======== Function calls ========
+func_call: NAME "(" [args] ")" -> func_call
 
 args: expr ("," expr)*
+    | // empty alternative
 
 import_stmt: "import" NAME ("." NAME)* ["as" NAME] -> import_stmt
 assignment: ("let" | "const") NAME "=" expr -> var_assign
@@ -66,25 +76,90 @@ return_stmt: "return" expr
 
 if_stmt: "if" expr block ["else" block]
 while_stmt: "while" expr block
+while_else_stmt: "while" expr block "else" block
 for_stmt: "for" NAME "in" expr block
+loop_until_stmt: "loop" block "until" expr [NAME]
 func_def: "func" NAME "(" [param_list] ")" block
+class_def: "class" NAME ["(" inheritance_list ")"] "{" class_body "}"
 param_list: NAME ("," NAME)*  -> param_list
 block: "{" (_NL | statement)* "}"
 
+// Control flow statements
+break_stmt: "break" [NAME]
+continue_stmt: "continue" [NAME]
+
+// Enhanced inheritance support
+inheritance_list: NAME ("," NAME)*
+
+// Class definition support
+class_body: class_member*
+class_member: method_def | property_def | constructor_def | static_method_def | class_method_def
+
+method_def: "method" NAME "(" [param_list] ")" block
+static_method_def: "static" "method" NAME "(" [param_list] ")" block
+class_method_def: "class" "method" NAME "(" [param_list] ")" block
+property_def: "property" NAME ["=" expr] ["{" property_accessors "}"]
+constructor_def: "constructor" "(" [param_list] ")" block
+
+// Property accessors (getters/setters)
+property_accessors: property_accessor+
+property_accessor: ("get" | "set") ["(" param_list ")"] block
+
+// Destructuring assignment (simplified)
+destructuring_assignment: "let" simple_pattern "=" expr
+simple_pattern: tuple_pattern | dict_pattern | simple_variable_pattern
+
+// Pattern types (simplified to avoid grammar conflicts)
+tuple_pattern: "(" simple_variable_pattern ("," simple_variable_pattern)* ")"
+dict_pattern: "{" dict_pattern_item ("," dict_pattern_item)* "}"
+dict_pattern_item: NAME ":" simple_variable_pattern
+list_pattern: "[" simple_variable_pattern ("," simple_variable_pattern)* ["|" simple_variable_pattern] "]"
+simple_variable_pattern: NAME
+wildcard_pattern: "_"
+
+// Comprehensions
+list_comprehension: "[" expr for_clause+ [if_clause] "]"
+dict_comprehension: "{" expr ":" expr for_clause+ [if_clause] "}"
+for_clause: "for" NAME "in" expr
+if_clause: "if" expr
+
 // New documentation comment
 doc_comment: "///" DOC_TEXT -> doc_comment
-DOC_TEXT: /[^\n]+/
+DOC_TEXT: /[^\n\r]+/
 
-// New match/switch statement
-match_stmt: "match" expr "{" match_case+ ["default" ":" block] "}"
-match_case: case_value ":" block
-case_value: expr
+// Enhanced match statement with pattern matching
+match_stmt: "match" expr "{" match_case+ "}"
+match_case: "case" match_pattern ["if" expr] "=>" block
+match_pattern: literal_pattern | wildcard_pattern | tuple_pattern 
+             | dict_pattern | simple_type_pattern | range_pattern | list_pattern
+
+// Pattern types for matching (simplified to avoid conflicts)
+literal_pattern: NUMBER | STRING
+simple_type_pattern: "int" | "str" | "float" | "bool" | "list" | "dict"
+range_pattern: NUMBER ".." NUMBER ["exclusive"]
 
 // New try/catch statement 
 try_stmt: "try" block "catch" ["(" NAME ")"] block ["finally" block]
 
+// Enhanced struct support for RPG entities
+struct_def: "struct" NAME "{" struct_fields "}"
+struct_fields: struct_field ("," struct_field)*
+struct_field: NAME ":" expr
+
+// String interpolation for RPG text
+interpolated_string: "f" STRING
+template_string: "`" template_content "`"
+template_content: (template_text | template_expr)*  
+template_text: /[^{]+/
+template_expr: "{" expr "}"
+
+// Object-oriented programming expressions
+object_instantiation: "new" NAME "(" [args] ")"
+super_call: "super" "." NAME "(" [args] ")"
+
 COMMA: ","
 STRING: /"(?:[^"\\]|\\.)*"/ | /'(?:[^'\\]|\\.)*'/ | /"""(?:[^\\]|\\.)*"""/ | /'''(?:[^\\]|\\.)*'''/
+F_STRING: /f"(?:[^"\\]|\\.)*"/ | /f'(?:[^'\\]|\\.)*'/ | /f"""(?:[^\\]|\\.)*"""/ | /f'''(?:[^\\]|\\.)*'''/
 NUMBER: /[0-9]+(\.[0-9]*)?/
 
 %import common.CNAME -> NAME 

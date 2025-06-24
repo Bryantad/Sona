@@ -1,0 +1,5 @@
+// Sona Media Player
+// This is a placeholder - the actual media player runs as an embedded GUI app
+print("=== Sona Media Player ===")
+print("This example demonstrates an embedded media player application")
+print("Switch to 'Embedded App' mode to use the interactive media player")

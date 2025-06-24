@@ -1,0 +1,5 @@
+// Sona Calendar Application
+// This is a placeholder - the actual calendar runs as an embedded GUI app
+print("=== Sona Calendar ===")
+print("This example demonstrates an embedded calendar application")
+print("Switch to 'Embedded App' mode to use the interactive calendar")

@@ -58,6 +58,47 @@ venv.bak/
 *.swo
 *~
 
+# Project-specific excludes
+# GUI components
+gui/
+launch_gui.py
+run_gui.py
+run_modern_launcher.py
+launch_modern_gui.py
+
+# Testing and debugging files
+advanced_oop_test.py
+comprehensive_method_test.py
+core_features_demo.sona
+debug_*.py
+demo_*.py
+direct_oop_test.py
+execution_test.py
+final_test.py
+just_func_def.sona
+minimal_class_test*.py
+phase2_comprehensive_oop_test.sona
+proper_object_test.py
+simple_*_test.py
+simple_*_test.sona
+sona_v070_release_demo.sona
+test_*.py
+test_*.sona
+tests/
+validate_*.py
+verify_*.py
+working_execution_test.py
+
+# Reports and additional documentation (keep only core docs)
+*.md
+!README.md
+!CHANGELOG.md
+!LICENSE
+!MANIFEST.in
+!CODE_OF_CONDUCT.md
+!Contributing.md
+!SECURITY.md
+
 # OS
 .DS_Store
 .DS_Store?

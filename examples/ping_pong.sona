@@ -1,0 +1,36 @@
+// Ping Pong Game Example
+// This is a simple ping pong game implementation in Sona
+
+print("Ping Pong - Welcome to Sona Ping Pong!")
+print("This is a classic ping pong game where you play against the AI.")
+
+// Game variables
+let player_score = 0
+let ai_score = 0
+let game_running = true
+
+print("Game Features:")
+print("- Player vs AI gameplay")
+print("- W/S keys for paddle control")
+print("- Real-time score tracking")
+print("- First to 5 points wins!")
+
+print("Controls:")
+print("- W: Move paddle up")
+print("- S: Move paddle down")
+print("- Click the game canvas to focus")
+
+print("Starting Ping Pong Game...")
+print("Use the embedded game interface above for the full experience!")
+
+// Game loop simulation
+func simulate_game() {
+    print("Ball in play...")
+    print("Player hits the ball!")
+    print("AI returns the shot...")
+    print("Rally continues...")
+}
+
+// Start game simulation
+simulate_game()
+print("Game completed! Check your score above.")
