@@ -1,0 +1,24 @@
+// Sona Platformer Game
+// Level-based 2D platformer with physics, enemies, coins, and progression
+// This example demonstrates advanced game mechanics in Sona
+
+print("=== Sona Platformer ===")
+print("Welcome to the Sona Platformer engine demonstration!")
+print("Features:")
+print("  * Multiple levels with increasing difficulty")
+print("  * Physics-based movement and collision detection")
+print("  * Collectible coins and high score tracking")
+print("  * Enemies with patrol patterns")
+print("  * Life system and level progression")
+print("  * Exit doors to complete levels")
+print("")
+print("How to Play:")
+print("1. Switch to 'Embedded App' mode in the launcher")
+print("2. Click 'Start' to begin the game")
+print("3. Use LEFT/RIGHT arrow keys to move")
+print("4. Press UP arrow to jump")
+print("5. Collect all coins for bonus points")
+print("6. Jump on enemies to defeat them")
+print("7. Reach the exit door to complete each level")
+print("")
+print("Try to complete all three levels with a perfect score! Good luck!")

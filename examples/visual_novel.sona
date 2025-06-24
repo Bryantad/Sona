@@ -1,0 +1,20 @@
+// Sona Visual Novel Game
+// Interactive story with branching narratives based on player choices
+// This example demonstrates dynamic storytelling in Sona
+
+print("=== Sona Visual Novel: Academy of Digital Arts & Sciences ===")
+print("Welcome to the Sona Visual Novel engine demonstration!")
+print("Features:")
+print("  * Branching storyline with multiple endings")
+print("  * Character relationship tracking")
+print("  * Decision consequences that affect the narrative")
+print("  * Visual character display and scene transitions")
+print("")
+print("How to Play:")
+print("1. Switch to 'Embedded App' mode in the launcher")
+print("2. Click 'Start Story' to begin your adventure")
+print("3. Make choices that shape your character's journey")
+print("4. Track your relationship stats with other characters")
+print("5. Try different choices to discover all possible endings")
+print("")
+print("Your choices matter! Enjoy exploring the Academy of Digital Arts & Sciences!")

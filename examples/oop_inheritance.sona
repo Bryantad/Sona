@@ -1,0 +1,128 @@
+# Sona v0.7.0 - Advanced OOP Features
+# This example demonstrates inheritance and advanced OOP concepts
+
+print("=== Inheritance Example ===")
+
+class Animal {
+    constructor(name, species) {
+        this.name = name
+        this.species = species
+        this.energy = 100
+    }
+    
+    method speak() {
+        print(this.name + " makes a sound")
+    }
+    
+    method eat() {
+        this.energy = this.energy + 20
+        print(this.name + " is eating. Energy: " + this.energy)
+    }
+    
+    method getInfo() {
+        return this.name + " is a " + this.species
+    }
+}
+
+class Dog {
+    constructor(name, breed) {
+        this.name = name
+        this.species = "Dog"
+        this.breed = breed
+        this.loyalty = 100
+        this.energy = 100
+    }
+    
+    method speak() {
+        print(this.name + " barks: Woof! Woof!")
+    }
+    
+    method eat() {
+        this.energy = this.energy + 20
+        print(this.name + " is eating. Energy: " + this.energy)
+    }
+    
+    method getInfo() {
+        return this.name + " is a " + this.species
+    }
+    
+    method wagTail() {
+        print(this.name + " is wagging its tail happily!")
+        this.loyalty = this.loyalty + 5
+    }
+    
+    method getBreed() {
+        return this.breed
+    }
+}
+
+class Cat {
+    constructor(name, indoor) {
+        this.name = name
+        this.species = "Cat"
+        this.indoor = indoor
+        this.independence = 80
+        this.energy = 100
+    }
+    
+    method speak() {
+        print(this.name + " meows: Meow!")
+    }
+    
+    method eat() {
+        this.energy = this.energy + 20
+        print(this.name + " is eating. Energy: " + this.energy)
+    }
+    
+    method getInfo() {
+        return this.name + " is a " + this.species
+    }
+    
+    method purr() {
+        print(this.name + " is purring contentedly")
+    }
+    
+    method isIndoor() {
+        return this.indoor
+    }
+}
+
+# Creating animal objects
+print("\n=== Creating Animals ===")
+let buddy = Dog("Buddy", "Golden Retriever")
+let whiskers = Cat("Whiskers", true)
+let generic = Animal("Generic", "Unknown")
+
+# Testing basic functionality
+print("\n=== Basic Animal Functions ===")
+print(generic.getInfo())
+generic.speak()
+generic.eat()
+
+# Testing dog-specific functionality
+print("\n=== Dog-Specific Functions ===")
+print(buddy.getInfo())
+print("Breed: " + buddy.getBreed())
+buddy.speak()
+buddy.wagTail()
+buddy.eat()
+
+# Testing cat-specific functionality
+print("\n=== Cat-Specific Functions ===")
+print(whiskers.getInfo())
+print("Indoor cat: " + whiskers.isIndoor())
+whiskers.speak()
+whiskers.purr()
+whiskers.eat()
+
+# Property access and modification
+print("\n=== Property Manipulation ===")
+print("Buddy's loyalty: " + buddy.loyalty)
+buddy.loyalty = 95
+print("Buddy's updated loyalty: " + buddy.loyalty)
+
+print("Whiskers' independence: " + whiskers.independence)
+whiskers.independence = 90
+print("Whiskers' updated independence: " + whiskers.independence)
+
+print("\n=== Advanced OOP Example completed successfully! ===")

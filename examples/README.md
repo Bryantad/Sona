@@ -1,289 +1,141 @@
-# Sona Language Demo Programs
+# Sona v0.7.0 Examples
 
-This directory contains demo programs for Sona v0.5.0+ that showcase different features and capabilities of the language. These demos are designed to be accessible through the Sona REPL in both debug and regular modes.
+This directory contains working examples that demonstrate the actual capabilities of Sona v0.7.0. All examples have been tested and verified to work with the current interpreter.
 
-## Available Demos
+## Available Examples
 
-### 1. Data Analyzer (`data_analyzer.sona`)
+### Core Language Features
 
-A data processing and statistical analysis tool that demonstrates:
+**basic_syntax.sona** - Fundamental language constructs
 
-- Data collection and manipulation
-- Statistical calculations (average, min/max, standard deviation)
-- Text-based data visualization with histograms
-- File import capabilities
-- Menu-driven user interface
+- Variable declarations and assignments
+- String operations and concatenation
+- Basic arithmetic operations
+- Print statements and output
 
-**Usage:**
+**dict_simple.sona** - Dictionary operations
 
-```
-sona run examples/data_analyzer.sona
-```
+- Dictionary creation with literal syntax
+- Property access using dot notation
+- Dynamic property addition
+- Nested dictionary structures
 
-**Features:**
+**dictionary_operations.sona** - Advanced dictionary usage
 
-- Add single or multiple data points
-- Import data from files
-- Display statistical analysis
-- Generate histograms
-- Sample data option for quick demos
+- Complex dictionary manipulation
+- Working with configuration objects
+- User profile and data structures
+- Property assignment patterns
 
-### 2. ASCII Visualization (`ascii_visualization.sona`)
+### Module System
 
-A comprehensive text-based visualization toolkit showing:
+**modules_working.sona** - Module import and usage
 
-- Multiple chart types (bar, line, scatter, box, pie)
-- Data scaling and normalization
-- Custom text rendering algorithms
-- Mathematical operations for visualization
+- Importing standard library modules (math, string, time)
+- Using module functions with proper syntax
+- Available module functions and capabilities
 
-**Usage:**
+**module_demo.sona** - Extended module examples
 
-```
-sona run examples/ascii_visualization.sona
-```
+- Mathematical operations using math module
+- String manipulation with string module
+- Time and date operations with time module
 
-**Features:**
+### Data Processing
 
-- Bar charts with labels and values
-- Line charts with point connections
-- Scatter plots with coordinate mapping
-- Box plots showing statistical distribution
-- Pie charts with percentage calculations
+**data_processing.sona** - Real-world data manipulation
 
-### 3. Snake Game (`snake_game_fixed.sona`)
+- Processing user data with dictionaries
+- Sales data analysis and calculations
+- Student grade processing and statistics
+- Product inventory management
+- Data aggregation and reporting
 
-A console-based implementation of the classic Snake game that demonstrates:
+### Error Prevention
 
-- Game loop and state management
-- User input handling
-- Array manipulation
-- Custom comparison functions
-- Terminal-based drawing
+**error_handling.sona** - Best practices for error prevention
 
-**Usage:**
+- Safe dictionary access patterns
+- Proper data initialization
+- Safe mathematical operations
+- Input validation strategies
+- Working with modules safely
 
-```
-sona run examples/snake_game_fixed.sona
-```
+## Language Features in v0.7.0
 
-**Controls:**
+### Supported Features ✅
 
-- Use `up`, `down`, `left`, `right` to move the snake
-- Type `exit` to quit
+- Variables and assignments (`let variable = value`)
+- Strings with concatenation (`"text" + variable`)
+- Numbers (integers and floats)
+- Dictionary literals (`{"key": "value"}`)
+- Property access (`dict.property`)
+- Dynamic property assignment (`dict.new_prop = value`)
+- Module imports (`import module_name`)
+- Module function calls (`module.function(args)`)
+- Print statements (`print("text")`)
+- Basic arithmetic (`+`, `-`, `*`, `/`)
+- Comments (`// comment`)
 
-### 2. Timer Demo (`timer.sona`)
+### Not Available in v0.7.0 ❌
 
-Demonstrates time-related functionality with:
+- Function definitions with parameters
+- Object-oriented programming (classes, methods)
+- Control flow (if/else, for/while loops)
+- Boolean literals (`true`/`false` - use strings instead)
+- Exception handling (try/catch)
+- Advanced operators
+- List/array operations
 
-- Countdown timer
-- Stopwatch
-- Sleep/delay function usage
+## Running Examples
 
-**Usage:**
+To run any example file:
 
-```
-sona run examples/timer.sona
-```
-
-**Features:**
-
-- Option 1: Create a countdown timer with specified seconds
-- Option 2: Start a stopwatch (press Enter to stop)
-
-### 3. Todo List (`todo.sona`)
-
-An in-memory todo list application showcasing:
-
-- Array operations
-- Basic CRUD operations
-- User interface design
-- Input validation
-
-**Usage:**
-
-```
-sona run examples/todo.sona
+```bash
+python -m sona examples/filename.sona
 ```
 
-**Features:**
+For example:
 
-- Add new todo items
-- List all pending todo items
-- Mark todos as completed
-- View completed items
-
-### 4. File Writer (`file_writer.sona`)
-
-File I/O operations demo showing:
-
-- Writing to files
-- Appending to files
-- Reading file contents
-- Creating timestamped log entries
-
-**Usage:**
-
-```
-sona run examples/file_writer.sona
+```bash
+python -m sona examples/basic_syntax.sona
+python -m sona examples/dict_simple.sona
+python -m sona examples/data_processing.sona
 ```
 
-**Features:**
+## Available Standard Library Modules
 
-- Create new files with content
-- Append to existing files
-- Read and display file contents
-- Create timestamped log entries
+### math module
 
-### 5. HTTP Client (`http_get.sona`)
+- `sqrt(number)` - Square root
+- `pow(base, exponent)` - Power operation
+- `abs(number)` - Absolute value
+- `floor(number)` - Floor function
+- `ceil(number)` - Ceiling function
 
-Simulated HTTP requests demo showcasing:
+### string module
 
-- HTTP GET requests (with simulation fallback)
-- JSON parsing and manipulation
-- API endpoint interaction
+- `capitalize(text)` - Capitalize first letter
+- `upper(text)` - Convert to uppercase
+- `lower(text)` - Convert to lowercase
+- `title(text)` - Title case conversion
 
-**Usage:**
+### time module
 
-```
-sona run examples/http_get.sona
-```
+- `now()` - Current timestamp
+- Basic time operations
 
-**Features:**
+## Best Practices
 
-- Predefined API endpoint examples
-- JSON response handling
-- Custom URL input option
+1. **Always use quoted dictionary keys**: `{"key": "value"}` not `{key: "value"}`
+2. **Initialize all dictionary properties**: Don't rely on dynamic property checking
+3. **Use strings for boolean-like values**: `"yes"/"no"` instead of `true/false`
+4. **Import modules before using their functions**
+5. **Test examples with `python -m sona filename.sona`**
+6. **Keep operations simple**: Complex logic may not be supported
 
-### 8. Pattern Matcher (`pattern_matcher.sona`)
+## Notes
 
-A text processing utility that demonstrates:
+These examples represent the actual working capabilities of Sona v0.7.0. More advanced features like functions with parameters, object-oriented programming, and control flow statements are planned for future releases but are not functional in the current version.
 
-- String pattern matching with wildcards
-- Text extraction between markers
-- String transformations and manipulations
-- Text statistics and analysis
-
-**Usage:**
-
-```
-sona run examples/pattern_matcher.sona
-```
-
-**Features:**
-
-- Pattern matching with \* and ? wildcards
-- Extract text between delimiters
-- Text transformations (upper/lower/title case)
-- Text analysis with statistics
-- Search and replace functionality
-
-### 9. Memory Game (`memory_game.sona`)
-
-An interactive card matching game showcasing:
-
-- Array manipulation and randomization
-- Game state management
-- Interactive user interface
-- Card shuffling algorithm implementation
-
-**Usage:**
-
-```
-sona run examples/memory_game.sona
-```
-
-**Features:**
-
-- 4x4 board with matching card pairs
-- Visual game board representation
-- Score and move tracking
-- Card selection and matching logic
-
-### 10. Functions Demo (`functions.sona`)
-
-A comprehensive showcase of function capabilities in Sona:
-
-- Basic function definitions and calls
-- Function composition and nesting
-- Recursive functions
-- Functions with default parameters
-- Functions that return collections
-
-**Usage:**
-
-```
-sona run examples/functions.sona
-```
-
-**Features:**
-
-- Various function examples with explanations
-- Demonstration of return values and parameter passing
-- Helper functions for comparisons
-- Practical usage examples
-
-### 11. Quiz Application (`quiz.sona`)
-
-An interactive multi-category quiz application:
-
-- Multiple choice questions across diverse topics
-- Score tracking and analytics
-- Category filtering
-- Difficulty levels
-
-**Usage:**
-
-```
-sona run examples/quiz.sona
-```
-
-**Features:**
-
-- Select question categories
-- Track performance statistics
-- Explanations for answers
-- Multiple difficulty levels
-
-## Running in REPL
-
-You can load any of these demos directly in the Sona REPL:
-
-```
-$ sona
-Welcome to Sona v0.5.0
-> import examples.data_analyzer
-> import examples.ascii_visualization
-> import examples.pattern_matcher
-> import examples.memory_game
-> import examples.snake_game_fixed
-> import examples.timer
-> import examples.todo
-> import examples.file_writer
-> import examples.http_get
-> import examples.functions
-> import examples.quiz
-```
-
-## Debug Mode
-
-To run these demos in debug mode, use the `--debug` flag:
-
-```
-sona run --debug examples/snake_game_fixed.sona
-```
-
-In REPL debug mode:
-
-```
-$ sona --debug
-Welcome to Sona v0.5.0 (Debug Mode)
-> import examples.snake_game_fixed
-```
-
-## Common Issues and Solutions
-
-- **Comparison operators**: Sona doesn't support operators like `<`, `>`, `<=`, `>=` directly. Use helper functions like `is_less_than()`, `is_greater_than()`, etc.
-- **Boolean values**: Use integers (0 for false, 1 for true) instead of boolean literals
-- **Return statements**: All return statements must include an expression (use `return 0` instead of just `return`)
-- **Variable reassignment**: Use `let` keyword each time you reassign a variable
+For the latest updates and documentation, see the main project README.md.

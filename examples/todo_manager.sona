@@ -1,0 +1,5 @@
+// Sona Todo Manager
+// This is a placeholder - the actual app runs as an embedded GUI app
+print("=== Sona Todo Manager ===")
+print("This example demonstrates an embedded todo management application")
+print("Switch to 'Embedded App' mode to use the interactive todo manager")

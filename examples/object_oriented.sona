@@ -1,0 +1,208 @@
+// Object-Oriented Programming Example - Sona v0.7.0
+// This example demonstrates classes, inheritance, and OOP features
+
+print("=== Object-Oriented Programming Demo ===")
+
+// Base class definition
+class Animal {
+    func init(name, species) {
+        self.name = name
+        self.species = species
+        self.energy = 100
+    }
+    
+    func speak() {
+        return self.name + " makes a sound"
+    }
+    
+    func eat() {
+        self.energy = self.energy + 20
+        return self.name + " is eating. Energy: " + str(self.energy)
+    }
+    
+    func sleep() {
+        self.energy = self.energy + 50
+        return self.name + " is sleeping. Energy: " + str(self.energy)
+    }
+    
+    func get_info() {
+        return self.name + " is a " + self.species + " with " + str(self.energy) + " energy"
+    }
+}
+
+// Derived class with method overriding
+class Dog extends Animal {
+    func init(name, breed) {
+        super.init(name, "Dog")
+        self.breed = breed
+        self.loyalty = 100
+    }
+    
+    func speak() {
+        return self.name + " barks: Woof!"
+    }
+    
+    func fetch() {
+        self.energy = self.energy - 10
+        self.loyalty = self.loyalty + 5
+        return self.name + " fetches the ball! Loyalty: " + str(self.loyalty)
+    }
+    
+    func get_breed_info() {
+        return self.name + " is a " + self.breed + " dog"
+    }
+}
+
+// Another derived class
+class Cat extends Animal {
+    func init(name, color) {
+        super.init(name, "Cat")
+        self.color = color
+        self.independence = 80
+    }
+    
+    func speak() {
+        return self.name + " meows: Meow!"
+    }
+    
+    func climb() {
+        self.energy = self.energy - 15
+        return self.name + " climbs a tree gracefully"
+    }
+    
+    func purr() {
+        return self.name + " purrs contentedly"
+    }
+}
+
+print("\n=== Creating Animals ===")
+
+// Create instances
+let generic_animal = Animal("Max", "Unknown")
+let dog = Dog("Buddy", "Golden Retriever")
+let cat = Cat("Whiskers", "Orange")
+
+print(generic_animal.get_info())
+print(dog.get_info())
+print(cat.get_info())
+
+print("\n=== Animal Sounds ===")
+print(generic_animal.speak())
+print(dog.speak())
+print(cat.speak())
+
+print("\n=== Specific Behaviors ===")
+print(dog.get_breed_info())
+print(dog.fetch())
+print(cat.climb())
+print(cat.purr())
+
+print("\n=== Energy Management ===")
+print(dog.eat())
+print(cat.eat())
+print(dog.sleep())
+
+// Person class demonstrating more complex OOP
+class Person {
+    func init(name, age, occupation) {
+        self.name = name
+        self.age = age
+        self.occupation = occupation
+        self.pets = []
+        self.energy = 100
+    }
+    
+    func introduce() {
+        return "Hi, I'm " + self.name + ", " + str(self.age) + " years old, working as a " + self.occupation
+    }
+    
+    func adopt_pet(pet) {
+        self.pets.append(pet)
+        return self.name + " adopted " + pet.name
+    }
+    
+    func feed_pets() {
+        let result = self.name + " is feeding pets:"
+        for (let i = 0; i < len(self.pets); i += 1) {
+            let pet = self.pets[i]
+            result = result + "\n  - " + pet.eat()
+        }
+        return result
+    }
+    
+    func play_with_pets() {
+        let result = self.name + " is playing with pets:"
+        for (let i = 0; i < len(self.pets); i += 1) {
+            let pet = self.pets[i]
+            result = result + "\n  - " + pet.speak()
+        }
+        return result
+    }
+}
+
+print("\n=== Person and Pet Interaction ===")
+
+let person = Person("Alice", 28, "Software Developer")
+print(person.introduce())
+
+print(person.adopt_pet(dog))
+print(person.adopt_pet(cat))
+
+print("\n" + person.feed_pets())
+print("\n" + person.play_with_pets())
+
+// Demonstrating class with complex data structures
+class Library {
+    func init(name) {
+        self.name = name
+        self.books = {}
+        self.members = {}
+    }
+    
+    func add_book(title, author, isbn) {
+        self.books[isbn] = {
+            title: title,
+            author: author,
+            available: true
+        }
+        return "Added book: " + title + " by " + author
+    }
+    
+    func register_member(name, id) {
+        self.members[id] = {
+            name: name,
+            borrowed_books: []
+        }
+        return "Registered member: " + name
+    }
+    
+    func borrow_book(member_id, isbn) {
+        if (self.books[isbn].available) {
+            self.books[isbn].available = false
+            self.members[member_id].borrowed_books.append(isbn)
+            return self.members[member_id].name + " borrowed " + self.books[isbn].title
+        } else {
+            return "Book is not available"
+        }
+    }
+    
+    func get_library_status() {
+        let total_books = len(self.books)
+        let total_members = len(self.members)
+        return self.name + " Library - Books: " + str(total_books) + ", Members: " + str(total_members)
+    }
+}
+
+print("\n=== Library Management System ===")
+
+let library = Library("City Central")
+print(library.add_book("The Sona Guide", "Dev Team", "978-0123456789"))
+print(library.add_book("Programming Fundamentals", "Jane Smith", "978-0987654321"))
+
+print(library.register_member("Bob Wilson", "M001"))
+print(library.register_member("Carol Davis", "M002"))
+
+print(library.borrow_book("M001", "978-0123456789"))
+print(library.get_library_status())
+
+print("\n=== OOP Demo Complete ===")

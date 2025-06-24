@@ -1,15 +1,15 @@
 """
-Sona Programming Language v0.6.0
-AI-Assisted Language Development Milestone
+Sona Programming Language v0.7.0
+Dictionary and Module System Beta Release
 
 SonaCore AI Model: v1.0-production
 """
 
-__version__ = "0.6.0"
+__version__ = "0.7.0"
 __sona_core_version__ = "1.0-production"
-__description__ = "Sona Programming Language with AI Assistance"
+__description__ = "Sona Programming Language with OOP Support"
 
-from .interpreter import SonaInterpreter, run_code
-from .repl import run_repl
+from .interpreter import SonaInterpreter
+# from .repl import run_repl
 
-__all__ = ['SonaInterpreter', 'run_code', 'run_repl', '__version__']
+__all__ = ['SonaInterpreter', '__version__']

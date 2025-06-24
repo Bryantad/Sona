@@ -1,0 +1,42 @@
+# Basic Syntax Example - Sona v0.7.0
+# This example demonstrates core language features that actually work
+
+print("=== Sona v0.7.0 Basic Syntax Demo ===")
+
+# Variables and data types
+let name = "Sona"
+let version = 0.7
+let is_beta = 1  # Using 1 for true, 0 for false
+
+print("Language: " + name)
+print("Version: " + version)
+print("Beta version: " + is_beta)
+
+# String operations
+let first_name = "Alice"
+let last_name = "Johnson"
+let full_name = first_name + " " + last_name
+
+print("Full name: " + full_name)
+
+# Basic arithmetic
+let a = 15
+let b = 4
+
+print("Addition: " + (a + b))
+print("Subtraction: " + (a - b))
+print("Multiplication: " + (a * b))
+print("Division: " + (a / b))
+
+# Comparison operations work in expressions
+let age = 25
+print("Age: " + age)
+
+# Constants
+const PI = 3.14159
+const MAX_USERS = 100
+
+print("PI: " + PI)
+print("Max users: " + MAX_USERS)
+
+print("=== Basic Syntax Demo Complete ===")

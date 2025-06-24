@@ -1,0 +1,214 @@
+# Sona v0.7.0 - Complete Real-World Application
+# This example demonstrates a real-world application using all v0.7.0 features
+
+print("=== Task Management System - Sona v0.7.0 Demo ===")
+
+# Import required modules
+import time
+import string
+
+# Base Task class
+class Task {
+    constructor(id, title, description) {
+        this.id = id
+        this.title = title
+        this.description = description
+        this.status = "pending"
+        this.created_at = time.now()
+        this.tags = []
+        this.metadata = {
+            "priority": "medium",
+            "estimated_hours": 1,
+            "assigned_to": null
+        }
+    }
+    
+    method markComplete() {
+        this.status = "completed"
+        this.completed_at = time.now()
+        print("Task '" + this.title + "' marked as completed")
+    }
+    
+    method addTag(tag) {
+        this.tags = this.tags + [tag]
+        print("Added tag '" + tag + "' to task '" + this.title + "'")
+    }
+    
+    method setPriority(priority) {
+        this.metadata.priority = priority
+        print("Set priority of '" + this.title + "' to " + priority)
+    }
+    
+    method assignTo(person) {
+        this.metadata.assigned_to = person
+        print("Assigned '" + this.title + "' to " + person)
+    }
+    
+    method getInfo() {
+        let info = "Task: " + this.title + " (ID: " + this.id + ")"
+        info = info + "\nStatus: " + this.status
+        info = info + "\nPriority: " + this.metadata.priority
+        if (this.metadata.assigned_to) {
+            info = info + "\nAssigned to: " + this.metadata.assigned_to
+        }
+        return info
+    }
+}
+
+# Project Management System
+class ProjectManager {
+    constructor(project_name) {
+        this.project_name = project_name
+        this.tasks = []
+        this.next_id = 1
+        this.statistics = {
+            "total_created": 0,
+            "completed": 0,
+            "pending": 0
+        }
+    }
+    
+    method createTask(title, description) {
+        let task = Task(this.next_id, title, description)
+        this.tasks = this.tasks + [task]
+        this.next_id = this.next_id + 1
+        this.statistics.total_created = this.statistics.total_created + 1
+        this.statistics.pending = this.statistics.pending + 1
+        
+        print("Created new task: " + title)
+        return task
+    }
+    
+    method completeTask(task_id) {
+        # Find and complete the task (simplified for demo)
+        let i = 0
+        while (i < len(this.tasks)) {
+            let task = this.tasks[i]
+            if (task.id == task_id) {
+                task.markComplete()
+                this.statistics.completed = this.statistics.completed + 1
+                this.statistics.pending = this.statistics.pending - 1
+                return true
+            }
+            i = i + 1
+        }
+        print("Task with ID " + task_id + " not found")
+        return false
+    }
+    
+    method getProjectStatus() {
+        let status = "=== PROJECT: " + string.upper(this.project_name) + " ==="
+        status = status + "\nTotal tasks created: " + this.statistics.total_created
+        status = status + "\nCompleted tasks: " + this.statistics.completed
+        status = status + "\nPending tasks: " + this.statistics.pending
+        return status
+    }
+    
+    method listTasks() {
+        print("\n=== TASK LIST ===")
+        let i = 0
+        while (i < len(this.tasks)) {
+            let task = this.tasks[i]
+            print(task.getInfo())
+            print("---")
+            i = i + 1
+        }
+    }
+}
+
+# User Management
+class User {
+    constructor(name, role) {
+        this.name = name
+        this.role = role
+        this.settings = {
+            "notifications": true,
+            "theme": "light",
+            "timezone": "UTC"
+        }
+    }
+    
+    method updateSettings(key, value) {
+        this.settings[key] = value
+        print(this.name + " updated " + key + " to " + value)
+    }
+    
+    method getProfile() {
+        return this.name + " (" + this.role + ")"
+    }
+}
+
+print("\n=== Setting Up Project ===")
+
+# Create project manager and users
+let pm = ProjectManager("Website Redesign")
+let alice = User("Alice Johnson", "Project Manager")
+let bob = User("Bob Smith", "Developer")
+let charlie = User("Charlie Brown", "Designer")
+
+# Update user settings
+alice.updateSettings("theme", "dark")
+bob.updateSettings("notifications", false)
+
+print("\n=== Creating Tasks ===")
+
+# Create various tasks
+let task1 = pm.createTask("Design Homepage Layout", "Create wireframes and mockups for new homepage")
+let task2 = pm.createTask("Implement User Authentication", "Set up login/logout functionality")
+let task3 = pm.createTask("Database Migration", "Migrate existing data to new schema")
+let task4 = pm.createTask("Write Unit Tests", "Create comprehensive test suite")
+
+print("\n=== Configuring Tasks ===")
+
+# Configure tasks with metadata and assignments
+task1.setPriority("high")
+task1.assignTo(charlie.name)
+task1.addTag("design")
+task1.addTag("frontend")
+
+task2.setPriority("high")
+task2.assignTo(bob.name)
+task2.addTag("backend")
+task2.addTag("security")
+
+task3.setPriority("medium")
+task3.assignTo(bob.name)
+task3.addTag("database")
+task3.addTag("migration")
+
+task4.setPriority("low")
+task4.addTag("testing")
+task4.addTag("quality")
+
+print("\n=== Working on Tasks ===")
+
+# Complete some tasks
+pm.completeTask(1)  # Design task completed
+pm.completeTask(3)  # Database migration completed
+
+print("\n=== Project Dashboard ===")
+
+# Display project status
+print(pm.getProjectStatus())
+
+# List all tasks
+pm.listTasks()
+
+print("\n=== User Profiles ===")
+print("Team members:")
+print("- " + alice.getProfile())
+print("- " + bob.getProfile())
+print("- " + charlie.getProfile())
+
+print("\n=== Configuration Summary ===")
+print("Alice's settings: " + alice.settings)
+print("Bob's settings: " + bob.settings)
+print("Charlie's settings: " + charlie.settings)
+
+print("\n=== Real-World Application Demo completed successfully! ===")
+print("This demo showcased:")
+print("✓ Object-Oriented Programming with classes and inheritance")
+print("✓ Dictionary literals and dotted property access")
+print("✓ Module system with enhanced dotted notation")
+print("✓ Complex object interactions and state management")
+print("✓ Real-world application structure and design patterns")

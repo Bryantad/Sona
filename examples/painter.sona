@@ -1,0 +1,7 @@
+// Sona Digital Painter Application
+// This is a placeholder - the actual app runs as an embedded GUI app
+print("=== Sona Digital Painter ===")
+print("This example demonstrates an embedded digital painting application")
+print("Switch to 'Embedded App' mode to use the interactive painter")
+print("Choose colors from the palette, adjust brush size, and paint!")
+print("Use your mouse to draw on the canvas - create digital masterpieces!")

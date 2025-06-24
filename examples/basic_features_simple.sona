@@ -1,0 +1,157 @@
+// Basic Features Example - Sona v0.7.0
+// This example demonstrates core language features
+
+print("=== Sona v0.7.0 Basic Features Demo ===")
+
+print("=== Variables and Data Types ===")
+
+// Variable declarations
+let name = "Sona"
+let version = 0.7
+let is_ready = true
+let user_count = 1000
+
+print("Language: " + name)
+print("Version: " + str(version))
+print("Ready: " + str(is_ready))
+print("Users: " + str(user_count))
+
+// Constants
+const PI = 3.14159
+const MAX_CONNECTIONS = 100
+
+print("PI constant: " + str(PI))
+print("Max connections: " + str(MAX_CONNECTIONS))
+
+print("=== Basic Operations ===")
+
+// Arithmetic operations
+let a = 15
+let b = 4
+
+print("a = " + str(a) + ", b = " + str(b))
+print("Addition: " + str(a + b))
+print("Subtraction: " + str(a - b))
+print("Multiplication: " + str(a * b))
+print("Division: " + str(a / b))
+
+// Comparison operations
+print("a > b: " + str(a > b))
+print("a == b: " + str(a == b))
+print("a != b: " + str(a != b))
+
+// Logical operations
+let x = true
+let y = false
+print("x AND y: " + str(x && y))
+print("x OR y: " + str(x || y))
+print("NOT x: " + str(!x))
+
+print("=== String Operations ===")
+
+let first_name = "Alice"
+let last_name = "Johnson"
+let full_name = first_name + " " + last_name
+
+print("First name: " + first_name)
+print("Last name: " + last_name)
+print("Full name: " + full_name)
+
+// String with numbers
+let age = 25
+let message = "Hello, I'm " + full_name + " and I'm " + str(age) + " years old."
+print(message)
+
+print("=== Arrays ===")
+
+let numbers = [1, 2, 3, 4, 5]
+let fruits = ["apple", "banana", "orange", "grape"]
+let mixed = [1, "hello", true, 3.14]
+
+print("Numbers array created")
+print("Fruits array created") 
+print("Mixed array created")
+
+print("=== Control Flow - Conditionals ===")
+
+let score = 85
+
+if (score >= 90) {
+    print("Grade: A")
+} else {
+    if (score >= 80) {
+        print("Grade: B")
+    } else {
+        print("Grade: C or below")
+    }
+}
+
+// Nested conditionals
+let weather = "sunny"
+let temperature = 75
+
+if (weather == "sunny") {
+    if (temperature > 70) {
+        print("Perfect day for outdoor activities!")
+    } else {
+        print("Sunny but a bit cool")
+    }
+} else {
+    print("Maybe stay indoors today")
+}
+
+print("=== Functions ===")
+
+// Simple function
+func greet(name) {
+    return "Hello, " + name + "!"
+}
+
+print(greet("World"))
+print(greet("Sona Developer"))
+
+// Function with multiple parameters
+func calculate_area(length, width) {
+    return length * width
+}
+
+let room_area = calculate_area(12, 10)
+print("Room area: " + str(room_area) + " square feet")
+
+// Function with loops
+func power(base, exponent) {
+    let result = 1
+    let i = 0
+    while (i < exponent) {
+        result = result * base
+        i = i + 1
+    }
+    return result
+}
+
+print("2^3 = " + str(power(2, 3)))
+print("5^2 = " + str(power(5, 2)))
+
+// Recursive function
+func factorial(n) {
+    if (n <= 1) {
+        return 1
+    } else {
+        return n * factorial(n - 1)
+    }
+}
+
+print("5! = " + str(factorial(5)))
+
+print("=== Dictionary Operations ===")
+
+let config = {
+    app_name: "My App",
+    version: "1.0.0",
+    debug: true
+}
+
+print("Dictionary created successfully")
+
+print("=== Basic Features Demo Complete ===")
+print("Sona v0.7.0 - Ready for your next project!")

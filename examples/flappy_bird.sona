@@ -1,0 +1,6 @@
+// Sona Flappy Bird Game
+// This is a placeholder - the actual game runs as an embedded GUI app
+print("=== Sona Flappy Bird ===")
+print("This example demonstrates an embedded Flappy Bird style game")
+print("Switch to 'Embedded App' mode to play the interactive game")
+print("Press SPACE to flap and avoid obstacles")

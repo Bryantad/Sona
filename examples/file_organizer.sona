@@ -1,0 +1,5 @@
+// Sona File Organizer
+// This is a placeholder - the actual file organizer runs as an embedded GUI app
+print("=== Sona File Organizer ===")
+print("This example demonstrates an embedded file organization application")
+print("Switch to 'Embedded App' mode to use the interactive file organizer")

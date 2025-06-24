@@ -1,0 +1,5 @@
+// Sona 2D Arcade Shooter
+// This is a placeholder - the actual game runs as an embedded GUI app
+print("=== Sona Space Shooter ===")
+print("This example demonstrates an embedded 2D arcade shooter game")
+print("Switch to 'Embedded App' mode to play the interactive shooter")

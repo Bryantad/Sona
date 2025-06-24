@@ -1,0 +1,25 @@
+// Dictionary Operations Example - Sona v0.7.0
+print("=== Dictionary Operations Demo ===")
+
+// Basic dictionary creation
+let config = {"app_name": "SonaApp", "version": "2.1.0", "max_users": 1000}
+
+print("Dictionary created successfully")
+print("App: " + config.app_name + " v" + config.version)
+
+// Dynamic property addition using dotted notation
+config.environment = "production"
+config.startup_time = "2025-01-26"
+
+print("Environment: " + config.environment)
+print("Started: " + config.startup_time)
+
+// Working with user profiles using dictionaries
+let user_profile = {"name": "Alice Johnson", "email": "alice@example.com", "role": "developer"}
+
+print("=== User Profile ===")
+print("Name: " + user_profile.name)
+print("Email: " + user_profile.email)
+print("Role: " + user_profile.role)
+
+print("=== Dictionary Operations Complete ===")

@@ -1,0 +1,7 @@
+// Sona Bejeweled Match-3 Game
+// This is a placeholder - the actual game runs as an embedded GUI app
+print("=== Sona Bejeweled ===")
+print("This example demonstrates an embedded match-3 puzzle game")
+print("Switch to 'Embedded App' mode to play the interactive game")
+print("Click gems to select, then click adjacent gems to swap")
+print("Match 3 or more gems of the same type to score points!")

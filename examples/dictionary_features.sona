@@ -1,0 +1,97 @@
+# Sona v0.7.0 - Dictionary Literals and Dotted Notation
+# This example demonstrates enhanced dictionary support
+
+print("=== Dictionary Literals ===")
+
+# Creating dictionaries with literal syntax
+let config = {
+    "host": "localhost",
+    "port": 8080,
+    "debug": true,
+    "max_connections": 100
+}
+
+let user_data = {
+    "name": "John Doe",
+    "email": "john@example.com",
+    "age": 28,
+    "preferences": {
+        "theme": "dark",
+        "language": "english"
+    }
+}
+
+print("Config created: " + config)
+print("User data created: " + user_data)
+
+print("\n=== Dictionary Property Access ===")
+
+# Accessing properties with dotted notation
+print("Host: " + config.host)
+print("Port: " + config.port)
+print("Debug mode: " + config.debug)
+print("Max connections: " + config.max_connections)
+
+print("User name: " + user_data.name)
+print("User email: " + user_data.email)
+print("User age: " + user_data.age)
+
+# Nested property access
+print("Theme preference: " + user_data.preferences.theme)
+print("Language preference: " + user_data.preferences.language)
+
+print("\n=== Dictionary Property Assignment ===")
+
+# Modifying existing properties
+config.port = 9090
+config.debug = false
+user_data.age = 29
+
+print("Updated port: " + config.port)
+print("Updated debug: " + config.debug)
+print("Updated age: " + user_data.age)
+
+# Adding new properties
+config.timeout = 30
+config.ssl_enabled = true
+user_data.last_login = "2024-01-15"
+
+print("New timeout: " + config.timeout)
+print("SSL enabled: " + config.ssl_enabled)
+print("Last login: " + user_data.last_login)
+
+# Nested property modification
+user_data.preferences.theme = "light"
+user_data.preferences.notifications = true
+
+print("Updated theme: " + user_data.preferences.theme)
+print("Notifications: " + user_data.preferences.notifications)
+
+print("\n=== Complex Dictionary Operations ===")
+
+# Creating a more complex structure
+let application = {
+    "name": "MyApp",
+    "version": "1.0.0",
+    "config": config,
+    "users": [user_data],
+    "features": {
+        "authentication": true,
+        "logging": true,
+        "caching": false
+    }
+}
+
+print("Application name: " + application.name)
+print("Application version: " + application.version)
+print("App config host: " + application.config.host)
+print("Authentication enabled: " + application.features.authentication)
+
+# Modifying nested structures
+application.features.caching = true
+application.config.max_connections = 200
+
+print("Caching enabled: " + application.features.caching)
+print("Updated max connections: " + application.config.max_connections)
+
+print("\n=== Dictionary Literals Example completed successfully! ===")

@@ -1,0 +1,7 @@
+// Sona Bubble Shooter Game
+// This is a placeholder - the actual game runs as an embedded GUI app
+print("=== Sona Bubble Shooter ===")
+print("This example demonstrates an embedded bubble shooter puzzle game")
+print("Switch to 'Embedded App' mode to play the interactive game")
+print("Move your mouse to aim, click to shoot bubbles")
+print("Match 3 or more bubbles of the same color to pop them!")

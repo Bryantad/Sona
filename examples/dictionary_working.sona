@@ -1,0 +1,54 @@
+// Dictionary Operations Example - Sona v0.7.0
+print("=== Dictionary Operations Demo ===")
+
+// Basic dictionary creation
+let config = {"app_name": "SonaApp", "version": "2.1.0", "debug_mode": 1, "max_users": 1000}
+
+print("Dictionary created successfully")
+print("App: " + config.app_name + " v" + config.version)
+print("Debug mode: " + str(config.debug_mode))
+print("Max users: " + str(config.max_users))
+
+// Dynamic property addition using dotted notation
+config.environment = "production"
+config.startup_time = "2025-01-26"
+
+print("Environment: " + config.environment)
+print("Started: " + config.startup_time)
+
+// Nested dictionaries
+let user_settings = {"theme": {"primary_color": "#007ACC", "font_size": 14}, "features": {"auto_save": 1, "syntax_highlighting": 1}}
+
+print("=== Nested Dictionary Access ===")
+print("Primary color: " + user_settings.theme.primary_color)
+print("Font size: " + str(user_settings.theme.font_size))
+print("Auto-save: " + str(user_settings.features.auto_save))
+
+// Modifying nested properties
+user_settings.theme.font_size = 16
+user_settings.features.word_wrap = 1
+
+print("=== After Modifications ===")
+print("New font size: " + str(user_settings.theme.font_size))
+print("Word wrap: " + str(user_settings.features.word_wrap))
+
+// Function that works with dictionaries
+func display_user_profile(profile) {
+    print("=== User Profile ===")
+    print("Name: " + profile.name)
+    print("Email: " + profile.email)
+    print("Role: " + profile.role)
+    print("Active: " + str(profile.active))
+}
+
+let user_profile = {"name": "Alice Johnson", "email": "alice@example.com", "role": "developer", "active": 1}
+display_user_profile(user_profile)
+
+user_profile.permissions = {"read": 1, "write": 1, "admin": 0}
+
+print("=== Permissions ===")
+print("Can read: " + str(user_profile.permissions.read))
+print("Can write: " + str(user_profile.permissions.write))
+print("Is admin: " + str(user_profile.permissions.admin))
+
+print("=== Dictionary Operations Complete ===")

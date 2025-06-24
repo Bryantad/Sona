@@ -1,0 +1,5 @@
+// Sona Notes Manager
+// This is a placeholder - the actual notes app runs as an embedded GUI app
+print("=== Sona Notes Manager ===")
+print("This example demonstrates an embedded notes management application")
+print("Switch to 'Embedded App' mode to use the interactive notes manager")

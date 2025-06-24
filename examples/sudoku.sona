@@ -1,0 +1,7 @@
+// Sona Sudoku Puzzle Game
+// This is a placeholder - the actual game runs as an embedded GUI app
+print("=== Sona Sudoku ===")
+print("This example demonstrates an embedded Sudoku number puzzle")
+print("Switch to 'Embedded App' mode to play the interactive game")
+print("Click cells to select, then use number buttons to fill in values")
+print("Complete the 9x9 grid with numbers 1-9 in each row, column, and 3x3 box!")

@@ -1,0 +1,31 @@
+# Module System Example - Sona v0.7.0
+print("=== Module System Demo ===")
+
+import math
+
+let number = 25
+print("Number: " + number)
+
+let result = math.sqrt(number)
+print("Square root: " + result)
+
+let power = math.pow(2, 3)
+print("2^3 = " + power)
+
+import string
+
+let text = "hello world"
+print("Original: " + text)
+
+let upper = string.upper(text)
+print("Uppercase: " + upper)
+
+let title = string.title(text)
+print("Title case: " + title)
+
+import time
+
+let timestamp = time.now()
+print("Current time: " + timestamp)
+
+print("=== Module System Complete ===")

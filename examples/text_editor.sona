@@ -1,0 +1,5 @@
+// Sona Text Editor
+// This is a placeholder - the actual text editor runs as an embedded GUI app
+print("=== Sona Text Editor ===")
+print("This example demonstrates an embedded text editor application")
+print("Switch to 'Embedded App' mode to use the interactive text editor")
