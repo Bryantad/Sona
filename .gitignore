@@ -59,12 +59,13 @@ venv.bak/
 *~
 
 # Project-specific excludes
-# GUI components
-gui/
-launch_gui.py
-run_gui.py
-run_modern_launcher.py
+# Exclude only development/test GUI files, keep core GUI launcher
 launch_modern_gui.py
+run_modern_launcher.py
+gui/test_*.py
+gui/*_test.py
+gui/pyside6_installer.py
+gui/quick_pyside6_test.py
 
 # Testing and debugging files
 advanced_oop_test.py
@@ -98,6 +99,7 @@ working_execution_test.py
 !CODE_OF_CONDUCT.md
 !Contributing.md
 !SECURITY.md
+!GUI_README.md
 
 # OS
 .DS_Store
