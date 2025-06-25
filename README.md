@@ -61,14 +61,40 @@ sona --version
 
 ## 📚 Quick Start
 
-### Running Sona Programs
+### GUI Interface (Recommended for New Users)
 
 ```bash
-# Run a Sona file
-sona program.sona
+# Clone and run with graphical interface
+git clone https://github.com/Bryantad/Sona.git
+cd Sona
+python launcher.py
+```
+
+The GUI launcher provides:
+
+- 📁 **Example Browser** - Browse and run all Sona examples
+- 💻 **Interactive REPL** - Test code snippets in real-time
+- 🎮 **Embedded Apps** - Run games and demos directly in the interface
+- 📝 **Code Editor** - View and edit Sona files with syntax highlighting
+
+For the enhanced modern interface, install PySide6:
+
+```bash
+pip install PySide6
+python launcher.py
+```
+
+### Command Line Interface
+
+```bash
+# Run Sona files directly
+python -m sona examples/hello_world.sona
 
 # Start interactive REPL
-sona
+python -m sona
+
+# Get help
+python -m sona --help
 ```
 
 ### Basic Syntax Examples

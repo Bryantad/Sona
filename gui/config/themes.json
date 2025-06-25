@@ -1,0 +1,133 @@
+{
+    "themes": [
+        {
+            "id": "dark",
+            "name": "Dark Theme",
+            "description": "Modern dark theme with blue accents",
+            "isDefault": true,
+            "colors": {
+                "background": "#1e1e1e",
+                "sidebar": "#252526",
+                "sidebarHover": "#333333",
+                "sidebarSelected": "#0d47a1",
+                "content": "#282828",
+                "text": "#e0e0e0",
+                "textMuted": "#a0a0a0",
+                "accent": "#2979ff",
+                "accentHover": "#5393ff",
+                "success": "#4caf50",
+                "warning": "#ff9800",
+                "error": "#f44336",
+                "border": "#444444",
+                "console": {
+                    "background": "#1a1a1a",
+                    "text": "#f0f0f0",
+                    "input": "#303030",
+                    "prompt": "#4fc3f7",
+                    "output": "#e0e0e0",
+                    "error": "#ff5252"
+                }
+            },
+            "fonts": {
+                "main": {
+                    "family": "Segoe UI",
+                    "fallback": "Arial, sans-serif",
+                    "sizeNormal": 10,
+                    "sizeLarge": 12,
+                    "sizeSmall": 9
+                },
+                "code": {
+                    "family": "Consolas",
+                    "fallback": "Courier New, monospace",
+                    "sizeNormal": 10
+                }
+            }
+        },
+        {
+            "id": "light",
+            "name": "Light Theme",
+            "description": "Clean light theme with blue accents",
+            "isDefault": false,
+            "colors": {
+                "background": "#f5f5f5",
+                "sidebar": "#e0e0e0",
+                "sidebarHover": "#d0d0d0",
+                "sidebarSelected": "#bbdefb",
+                "content": "#ffffff",
+                "text": "#212121",
+                "textMuted": "#757575",
+                "accent": "#1976d2",
+                "accentHover": "#1565c0",
+                "success": "#43a047",
+                "warning": "#ef6c00",
+                "error": "#d32f2f",
+                "border": "#bdbdbd",
+                "console": {
+                    "background": "#f8f8f8",
+                    "text": "#212121",
+                    "input": "#e8e8e8",
+                    "prompt": "#0277bd",
+                    "output": "#424242",
+                    "error": "#c62828"
+                }
+            },
+            "fonts": {
+                "main": {
+                    "family": "Segoe UI",
+                    "fallback": "Arial, sans-serif",
+                    "sizeNormal": 10,
+                    "sizeLarge": 12,
+                    "sizeSmall": 9
+                },
+                "code": {
+                    "family": "Consolas",
+                    "fallback": "Courier New, monospace",
+                    "sizeNormal": 10
+                }
+            }
+        },
+        {
+            "id": "sona_dark",
+            "name": "Sona Dark",
+            "description": "Sona-specific dark theme with purple accents",
+            "isDefault": false,
+            "colors": {
+                "background": "#1a1a2e",
+                "sidebar": "#16213e",
+                "sidebarHover": "#1b2a4e",
+                "sidebarSelected": "#533483",
+                "content": "#1f1f3d",
+                "text": "#e0e0e0",
+                "textMuted": "#a0a0a0",
+                "accent": "#7b2cbf",
+                "accentHover": "#9d4edd",
+                "success": "#06d6a0",
+                "warning": "#ffd166",
+                "error": "#ef476f",
+                "border": "#30305a",
+                "console": {
+                    "background": "#151528",
+                    "text": "#f0f0f0",
+                    "input": "#282850",
+                    "prompt": "#c77dff",
+                    "output": "#e0e0e0",
+                    "error": "#ff5c8a"
+                }
+            },
+            "fonts": {
+                "main": {
+                    "family": "Segoe UI",
+                    "fallback": "Arial, sans-serif",
+                    "sizeNormal": 10,
+                    "sizeLarge": 12,
+                    "sizeSmall": 9
+                },
+                "code": {
+                    "family": "Consolas",
+                    "fallback": "Courier New, monospace",
+                    "sizeNormal": 10
+                }
+            }
+        }
+    ]
+}
