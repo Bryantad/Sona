@@ -371,7 +371,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🔗 Links
 
 -   **Documentation**: [docs/](docs/)
--   **Standalone Transpiler: (https://github.com/Bryantad/Sona-Transpiler.git)
+-   Standalone Transpiler: (https://github.com/Bryantad/Sona-Transpiler.git)
 -   **Examples**: [examples/](examples/)
 -   **Issues**: [GitHub Issues](https://github.com/Bryantad/Sona/issues)
 -   **Releases**: [GitHub Releases](https://github.com/Bryantad/Sona/releases)
