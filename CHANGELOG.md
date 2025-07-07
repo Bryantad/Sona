@@ -5,6 +5,21 @@ All notable changes to the Sona Programming Language project will be documented 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.2] - 2025-07-06
+
+### 🔧 Version Synchronization & Professional Updates
+
+- **✅ Version Consistency** - Synchronized all version references across the codebase
+- **✅ REPL Updates** - Updated REPL version display and `:version` command to v0.7.2
+- **✅ Code Quality** - Enabled proper imports and ensured all core functions are available
+- **✅ Professional Release** - Clean, professional v0.7.2 release with only essential language files
+
+### 🚀 Technical Improvements
+
+- **✅ Import Fixes** - Fixed `run_code` import in REPL for proper functionality
+- **✅ Build System** - Updated setup.py and VERSION file for consistent packaging
+- **✅ Documentation** - Updated README and changelog for v0.7.2
+
 ## [0.7.0] - 2025-01-26
 
 ### 🚀 Major Features
