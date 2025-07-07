@@ -1,4 +1,4 @@
-# Sona Programming Language v0.7.2## ⚡ Performance & New Features (v0.7.2)
+# Sona Programming Language v0.7.2 ⚡ Performance & New Features (v0.7.2)
 
 ### 🔧 Professional Release Updates (v0.7.2)
 
