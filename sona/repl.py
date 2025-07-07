@@ -6,7 +6,7 @@ import time
 import pprint
 from pathlib import Path
 from lark import UnexpectedInput, Lark, Tree, Token
-# from sona.interpreter import run_code
+from sona.interpreter import run_code
 from sona.interpreter import SonaInterpreter
 from sona.interpreter import debug_mode
 
@@ -20,7 +20,7 @@ debug_state = {
 
 def run_repl():
     """Run the Sona REPL (Read-Eval-Print Loop)"""
-    print("Sona REPL v0.6.1 - Type `:help` or `exit` to quit.")
+    print("Sona REPL v0.7.2 - Type `:help` or `exit` to quit.")
     
     # Environment setup
     env = {}
@@ -83,7 +83,7 @@ def run_repl():
                     
                     # Version command
                     elif cmd == "version":
-                        print("Sona v0.6.1")
+                        print("Sona v0.7.2")
                         continue
                     
                     # Clear screen command
