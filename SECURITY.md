@@ -14,7 +14,7 @@ currently being supported with security updates.
 | 0.6.1   | :white_check_mark: |
 | 0.6     | :white_check_mark: |
 | 0.5.1   | :white_check_mark: |
-| 0.5     | :white_check_mark: |
+| 0.5     | :x:                |
 | 0.4.3   | :x:                |
 | < 0.4   | :x:                |
 
