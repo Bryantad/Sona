@@ -7,10 +7,16 @@ currently being supported with security updates.
 
 | Version | Supported          |
 | ------- | ------------------ |
+| 0.8     | :white_check_mark: |
+| 0.7.2   | :white_check_mark: |
+| 0.7.1   | :white_check_mark: |
+| 0.7     | :white_check_mark: |
+| 0.6.1   | :white_check_mark: |
+| 0.6     | :white_check_mark: |
 | 0.5.1   | :white_check_mark: |
-| 0.5.0   | :white_check_mark: |
-| 0.4.3   | :white_check_mark: |
-| < 0.4.0 | :x:                |
+| 0.5     | :white_check_mark: |
+| 0.4.3   | :x:                |
+| < 0.4   | :x:                |
 
 ## Reporting a Vulnerability
 
