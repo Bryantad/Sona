@@ -20,7 +20,7 @@ debug_state = {
 
 def run_repl():
     """Run the Sona REPL (Read-Eval-Print Loop)"""
-    print("Sona REPL v0.7.2 - Type `:help` or `exit` to quit.")
+    print("Sona REPL v0.8.0 - Type `:help` or `exit` to quit.")
     
     # Environment setup
     env = {}
@@ -83,7 +83,7 @@ def run_repl():
                     
                     # Version command
                     elif cmd == "version":
-                        print("Sona v0.7.2")
+                        print("Sona v0.8.0 (Cognitive Accessibility Edition)")
                         continue
                     
                     # Clear screen command
