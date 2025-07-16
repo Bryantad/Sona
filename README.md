@@ -243,7 +243,7 @@ class DataProcessor {
 - 📖 **Documentation**: Comprehensive guides and references
 - 🐛 **Issues**: Report bugs on GitHub Issues
 - 💬 **Discussions**: Join our GitHub Discussions
-- 📧 **Email**: Contact us at info@waycore.com
+- 📧 **Email**: Contact us at inquire@waycore.com
 
 ### **Contributing**
 
