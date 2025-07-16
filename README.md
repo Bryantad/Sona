@@ -1,435 +1,373 @@
-# Sona Programming Language v0.7.2## ⚡ Performance & New Features (v0.7.2)
+# 🧠 Sona Programming Language v0.8.0
 
-### 🔧 Professional Release Updates (v0.7.2)
+## Neurodivergent-First Development Environment
 
-- **Version Synchronization**: All version references consistently updated to v0.7.2
-- **Code Quality**: Enhanced imports and function availability in REPL
-- **Professional Standards**: Clean, production-ready release with consistent versioning
-- **Build System**: Updated setup.py and packaging for reliable distribution
+[![Version](https://img.shields.io/badge/version-0.8.0-blue.svg)](https://github.com/Bryantad/Sona/releases/tag/v0.8.0)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://python.org)
+[![VS Code](https://img.shields.io/badge/VS%20Code-Extension-blue.svg)](https://marketplace.visualstudio.com/items?itemName=sona-lang.sona-language-support)
 
-### 🚀 Major Performance Improvements (v0.7.1)
+Sona is a revolutionary programming language designed with cognitive accessibility at its core, making programming more accessible and enjoyable for neurodivergent developers including those with ADHD, autism, dyslexia, and other cognitive differences.
 
-- **650x Performance Boost**: Critical interpreter bottleneck fixed
-- **Production-Ready Speed**: Average 5,282 operations per second
-- **Comprehensive Benchmarking**: Performance metrics and monitoring tools included
+## 🎯 **What Makes Sona Special**
 
-### 🧪 Experimental Type System (Preview)
+### **Neurodivergent-First Design**
 
-- **Type Inference**: Basic static type checking and inference (experimental)
-- **Type-Aware Interpreter**: Enhanced development experience with optional typing
-- **Future-Ready**: Foundation for advanced type system in v0.8.0(https://img.shields.io/badge/version-0.7.2-blue.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
-![Language](https://img.shields.io/badge/language-Python-yellow.svg)
-![Performance](https://img.shields.io/badge/performance-6.5K%20ops/sec-green.svg)
+- **Cognitive Keywords**: `think()`, `remember()`, `focus()` for natural expression
+- **Flow State Monitoring**: Automatic detection and protection of hyperfocus
+- **Accessibility Themes**: ADHD, autism, and dyslexia-friendly interfaces
+- **Gentle Error Messages**: Supportive, non-judgmental feedback
 
-Sona is a modern, high-performance interpreted programming language featuring object-oriented programming, advanced dictionary operations, and an intuitive module system. With major performance improvements in v0.7.1 and professional consistency updates in v0.7.2, Sona combines familiar syntax with powerful capabilities for production-ready applications.
+### **Professional Development Tools**
 
-## ✨ Key Features
+- **Complete CLI System**: 10+ professional commands for full development workflow
+- **Multi-Language Transpilation**: Convert to Python, JavaScript, TypeScript, Java, C#, Go, Rust
+- **VS Code Integration**: Full IDE support with 13 integrated commands
+- **Project Management**: Complete project lifecycle support
 
-### Object-Oriented Programming
+### **Cognitive Accessibility Features**
 
--   **Classes and Inheritance**: Full support for class definitions, method calls, and inheritance chains
--   **Property Access**: Clean dotted notation for accessing object properties and methods
--   **Method Calls**: Intuitive syntax for calling methods on objects
+- **Working Memory Support**: External memory aids and cognitive load monitoring
+- **Attention Pattern Adaptation**: System adapts to hyperfocus and burst patterns
+- **Executive Function Support**: Task chunking, prioritization, and organization
+- **Sensory Sensitivity Accommodation**: Reduced cognitive noise and distractions
 
-### Advanced Dictionary Support
+## 🚀 **Quick Start**
 
--   **Dictionary Literals**: Create dictionaries with `{key: value}` syntax
--   **Dotted Property Access**: Access dictionary values using dot notation (`dict.property`)
--   **Dynamic Properties**: Set and get properties dynamically at runtime
-
-### Enhanced Module System
-
--   **Dotted Imports**: Import modules with clean dotted notation
--   **Standard Library**: Rich collection of built-in modules for common operations
--   **Custom Modules**: Easy creation and sharing of custom module files
-
-### Developer-Friendly Features
-
--   **Interactive REPL**: Full-featured read-eval-print loop for rapid development
--   **Detailed Error Messages**: Comprehensive error reporting with line/column information
--   **Cross-Platform**: Runs on Windows, macOS, and Linux
-
-## 🔧 Version 0.7.2 Updates
-
-### 🚀 Professional Release & Synchronization
-
--   **Version Consistency**: Synchronized all version references across the codebase
--   **REPL Updates**: Updated REPL version display and `:version` command to v0.7.2
--   **Code Quality**: Enabled proper imports and ensured all core functions are available
--   **Professional Release**: Clean, professional v0.7.2 release with only essential language files
-
-### 🛠️ Technical Improvements
-
--   **Import Fixes**: Fixed `run_code` import in REPL for proper functionality
--   **Build System**: Updated setup.py and VERSION file for consistent packaging
--   **Documentation**: Updated README and changelog for v0.7.2
--   **GitHub Ready**: Professional deployment with clean git history
-
-### 📊 Previous Performance Improvements (v0.7.1)
-
--   Integer Arithmetic: **6,106 ops/sec**
--   String Operations: **9,847 ops/sec**
--   Function Calls: **1,981 ops/sec**
--   Variable Assignment: **4,139 ops/sec**
-
-> **Reliability**: v0.7.2 focuses on professional consistency and reliability improvements while maintaining all performance gains from v0.7.1.
-
-## 📚 Documentation & Wiki
-
-📖 **[Complete Sona Wiki](docs/Sona.wiki/)** - Comprehensive guides, tutorials, and references
-
--   [Getting Started Guide](docs/Sona.wiki/Home.md)
--   [Performance Optimization](docs/Sona.wiki/Chapter-13-Language-Internals-and-Advanced-Optimization.md)
--   [Advanced Language Features](docs/Sona.wiki/Chapter-10-Advanced-Language-Features.md)
--   [v0.7.1 Performance Guide](docs/Sona.wiki/Performance-Guide-v0.7.1.md) _(New)_
--   [Experimental Type System](docs/Sona.wiki/Type-System-Preview.md) _(New)_
-
-## 🚀 Installation
-
-### Prerequisites
-
--   Python 3.8 or higher
--   pip package manager
-
-### Install from PyPI
+### **Installation**
 
 ```bash
 pip install sona
 ```
 
-### Install from Source
+### **Create Your First Project**
 
 ```bash
-git clone https://github.com/Bryantad/Sona.git
-cd Sona
-pip install -e .
+sona init my-first-project
+cd my-first-project
+sona run main.sona
 ```
 
-> **Latest Release**: v0.7.2 is now available on GitHub with all version synchronization improvements and professional release standards.
-
-### Verify Installation
-
-```bash
-sona --version
-# Expected output: Sona v0.7.2
-```
-
-### Verify REPL Updates (v0.7.2)
-
-```bash
-# Start the REPL and check version consistency
-python -m sona
-
-# In the REPL, run:
-# :version
-# Expected: Sona v0.7.2
-```
-
-### Performance Maintained (from v0.7.1)
-
-```bash
-# Performance improvements from v0.7.1 are maintained in v0.7.2
-# Integer Arithmetic: 6,106 ops/sec
-# String Operations: 9,847 ops/sec
-# Function Calls: 1,981 ops/sec
-# Variable Assignment: 4,139 ops/sec
-# Average Performance: 5,282 ops/sec
-```
-
-## 📚 Quick Start
-
-### GUI Interface (Recommended for New Users)
-
-```bash
-# Clone and run with graphical interface
-git clone https://github.com/Bryantad/Sona.git
-cd Sona
-python launcher.py
-```
-
-The GUI launcher provides:
-
--   📁 **Example Browser** - Browse and run all Sona examples
--   💻 **Interactive REPL** - Test code snippets in real-time
--   🎮 **Embedded Apps** - Run games and demos directly in the interface
--   📝 **Code Editor** - View and edit Sona files with syntax highlighting
-
-For the enhanced modern interface, install PySide6:
-
-```bash
-pip install PySide6
-python launcher.py
-```
-
-### Command Line Interface
-
-```bash
-# Run Sona files directly
-python -m sona examples/hello_world.sona
-
-# Start interactive REPL
-python -m sona
-
-# Get help
-python -m sona --help
-```
-
-### Basic Syntax Examples
-
-#### Variables and Functions
+### **Your First Sona Program**
 
 ```sona
-// Variables and basic operations
-let name = "Sona"
-let version = 0.7.2
-
-func greet(user) {
-    return "Welcome to " + name + " v" + str(version) + ", " + user + "!"
+// hello.sona
+function greet(name) {
+    think("Creating a warm greeting for " + name);
+    return "Hello, " + name + "! Welcome to accessible programming!";
 }
 
-print(greet("Developer"))
+function main() {
+    remember("This is my first Sona program");
+    message = greet("World");
+    print(message);
+
+    focus("I'm learning neurodivergent-first programming");
+}
+
+main();
 ```
 
-#### Object-Oriented Programming
+### **Run Your Program**
+
+```bash
+sona run hello.sona
+```
+
+## 🔧 **Development Environment**
+
+### **CLI Commands**
+
+```bash
+sona init <project>           # Create new project
+sona run <file>               # Execute Sona or Python files
+sona repl                     # Interactive REPL
+sona transpile <file>         # Convert to other languages
+sona format <file>            # Format code
+sona check <file>             # Syntax validation
+sona info                     # Environment information
+sona clean                    # Clean generated files
+sona docs                     # Open documentation
+```
+
+### **VS Code Extension**
+
+Install the official VS Code extension for:
+
+- Syntax highlighting and IntelliSense
+- Right-click context menus
+- Professional keybindings
+- Cognitive accessibility themes
+- Integrated terminal commands
+
+## 🌈 **Cognitive Accessibility**
+
+### **ADHD Support**
+
+- **Hyperfocus Protection**: Automatic detection and gentle interruption
+- **Attention Restoration**: Structured break suggestions
+- **High Contrast Themes**: Reduced visual noise
+- **Task Chunking**: Break large tasks into manageable pieces
+
+### **Autism Support**
+
+- **Predictable Patterns**: Consistent interface and behavior
+- **Sensory Considerations**: Calming colors and reduced animations
+- **Clear Structure**: Logical, hierarchical organization
+- **Routine Support**: Familiar workflows and commands
+
+### **Dyslexia Support**
+
+- **Readable Fonts**: Dyslexia-friendly typography
+- **Color Coding**: Meaningful use of color for comprehension
+- **Clear Spacing**: Improved visual separation
+- **Audio Feedback**: Optional verbal confirmation
+
+## 🔄 **Multi-Language Support**
+
+Transpile your Sona code to:
+
+### **Web Development**
+
+```bash
+sona transpile app.sona --target javascript
+sona transpile app.sona --target typescript
+```
+
+### **Backend Development**
+
+```bash
+sona transpile server.sona --target python
+sona transpile server.sona --target java
+sona transpile server.sona --target csharp
+```
+
+### **Systems Programming**
+
+```bash
+sona transpile system.sona --target go
+sona transpile system.sona --target rust
+```
+
+## 📚 **Documentation**
+
+### **Getting Started**
+
+- [Installation Guide](docs/installation.md)
+- [Quick Start Tutorial](docs/quickstart.md)
+- [Language Reference](docs/language-reference.md)
+- [Cognitive Features Guide](docs/cognitive-features.md)
+
+### **Advanced Features**
+
+- [CLI Command Reference](docs/cli-reference.md)
+- [VS Code Extension Guide](docs/vscode-extension.md)
+- [Multi-Language Transpilation](docs/transpilation.md)
+- [Accessibility Features](docs/accessibility.md)
+
+### **Developer Resources**
+
+- [Contributing Guide](CONTRIBUTING.md)
+- [API Documentation](docs/api.md)
+- [Extension Development](docs/extension-dev.md)
+
+## 💡 **Examples**
+
+### **Cognitive Syntax**
 
 ```sona
-class Person {
-    func init(name, age) {
-        self.name = name
-        self.age = age
+// Natural language patterns
+when user_clicks_button {
+    think("User wants to submit the form");
+    remember("Validate input before processing");
+    focus("Form validation is critical");
+}
+
+// Working memory support
+working_memory {
+    current_task = "Processing user input";
+    next_steps = ["validate", "process", "respond"];
+    cognitive_load = "medium";
+}
+```
+
+### **Traditional Syntax**
+
+```sona
+// Familiar programming patterns
+function process_data(input) {
+    if (input.length > 0) {
+        return input.map(item => item * 2);
+    }
+    return [];
+}
+
+class DataProcessor {
+    constructor() {
+        this.data = [];
     }
 
-    func introduce() {
-        return "Hi, I'm " + self.name + " and I'm " + str(self.age) + " years old."
+    add(item) {
+        this.data.push(item);
     }
 }
-
-let person = Person("Alice", 30)
-print(person.introduce())
 ```
 
-### 🧪 Experimental Features (v0.7.2)
+## 🎯 **Who Is This For?**
 
-#### REPL Enhancements
+### **Neurodivergent Developers**
 
-```bash
-# Start the enhanced REPL with v0.7.2 features
-python -m sona
+- Experience programming designed for your cognitive style
+- Reduce cognitive load and mental fatigue
+- Access tools that adapt to your attention patterns
+- Join a community that understands your needs
 
-# Try the version command
-sona> :version
-# Output: Sona v0.7.2
+### **Educators & Students**
 
-# Use debug tools
-sona> :debug
-sona> :profile
-sona> :trace
-```
+- Teach programming with cognitive accessibility in mind
+- Provide inclusive learning environments
+- Access resources designed for diverse learning styles
+- Support students with different cognitive needs
 
-#### Type-Aware Interpreter (Optional)
+### **Professional Teams**
 
-```python
-# Access experimental type system features
-from sona.type_aware_interpreter import TypeAwareSonaInterpreter
+- Build inclusive development environments
+- Support neurodivergent team members
+- Access powerful multi-language development tools
+- Improve team productivity and satisfaction
 
-# Create type-aware interpreter
-interpreter = TypeAwareSonaInterpreter(
-    strict_typing=False,  # Gradual typing
-    enable_type_optimizations=True
-)
+## 🤝 **Community & Support**
 
-# Get performance statistics
-stats = interpreter.get_type_statistics()
-print(f"Type optimizations applied: {stats['type_optimizations_applied']}")
-```
+### **Getting Help**
 
-#### Performance Benchmarking
+- 📖 **Documentation**: Comprehensive guides and references
+- 🐛 **Issues**: Report bugs on GitHub Issues
+- 💬 **Discussions**: Join our GitHub Discussions
+- 📧 **Email**: Contact us at info@waycore.com
 
-```bash
-# Run comprehensive performance tests
-python -c "
-from sona.type_aware_interpreter import TypeAwareSonaInterpreter
-import time
+### **Contributing**
 
-interpreter = TypeAwareSonaInterpreter(enable_type_optimizations=True)
-start = time.time()
-# ... run your Sona code ...
-duration = time.time() - start
-print(f'Execution time: {duration:.4f} seconds')
-"
-```
+We welcome contributions from everyone! See our [Contributing Guide](CONTRIBUTING.md) for:
 
-#### Dictionary Operations
+- 🐛 Bug reports and fixes
+- 💡 Feature suggestions
+- 📖 Documentation improvements
+- 🌍 Translations and internationalization
+- 🎨 Accessibility theme development
 
-```sona
-// Dictionary literals with dotted access
-let config = {
-    app_name: "My App",
-    version: "1.0.0",
-    debug: true
-}
+## 📄 **License**
 
-print("Running " + config.app_name + " v" + config.version)
+Sona is open source software licensed under the [MIT License](LICENSE).
 
-// Dynamic property setting
-config.environment = "production"
-```
+## 🙏 **Acknowledgments**
 
-#### Module System
+Special thanks to:
 
-```sona
-import math
-import string
-
-let result = math.sqrt(25)
-print("Square root: " + str(result))
-
-let text = "hello world"
-print("Capitalized: " + string.capitalize(text))
-```
-
-## 📖 Language Guide
-
-### Control Flow
-
-```sona
-// Conditional statements
-if (condition) {
-    // code
-} else if (other_condition) {
-    // code
-} else {
-    // code
-}
-
-// Pattern matching
-match value {
-    case 1: print("One")
-    case 2: print("Two")
-    default: print("Other")
-}
-
-// Loops
-for (let i = 0; i < 10; i += 1) {
-    print(i)
-}
-
-while (condition) {
-    // code
-}
-```
-
-### Error Handling
-
-```sona
-try {
-    // risky code
-} catch (error) {
-    print("Error occurred: " + str(error))
-}
-```
-
-## 🧪 Examples
-
-Explore the `examples/` directory for comprehensive code samples:
-
--   `dictionary_operations.sona` - Advanced dictionary usage
--   `module_system.sona` - Module import and usage patterns
--   `object_oriented.sona` - Class definitions and inheritance
--   `basic_features.sona` - Core language functionality
-
-## 🎯 What's New in v0.7.2
-
-### Version Synchronization & Professional Updates
-
-✅ **Professional Release Standards** - All version references synchronized to v0.7.2
-✅ **Enhanced REPL** - Updated version display and improved command functionality
-✅ **Code Quality** - Fixed imports and ensured all core functions are accessible
-✅ **Build System** - Updated setup.py and packaging for reliable distribution
-✅ **Documentation** - Updated README and comprehensive changelog
-
-### Previous Major Improvements (v0.7.1)
-
-✅ **650x Performance Boost** - Critical interpreter bottleneck fixed
-✅ **Production-Ready Speed** - Average 5,282 operations per second
-✅ **Experimental Type System** - Preview of v0.8.0 type inference features
-✅ **Enhanced Development Tools** - Performance monitoring and benchmarking
-✅ **100% Backward Compatibility** - All existing code works unchanged
-
-### v0.7.2 Technical Improvements
-
-| Component           | v0.7.1 Status | v0.7.2 Status | Improvement          |
-| ------------------- | ------------- | ------------- | -------------------- |
-| REPL Version        | v0.6.1        | v0.7.2        | **Version Sync**     |
-| Setup.py Version    | 0.7.0         | 0.7.2         | **Package Sync**     |
-| VERSION File        | 0.7.1         | 0.7.2         | **File Sync**        |
-| Import Statements   | Commented     | Active        | **Functionality**    |
-| Documentation       | Partial       | Complete      | **Professional**     |
-
-### Experimental Features (from v0.7.1)
-
--   **Type Inference Engine**: Basic static type checking (optional)
--   **Type-Aware Interpreter**: Enhanced development experience  
--   **Performance Optimizations**: Type-guided code optimizations
--   **Future Foundation**: Infrastructure for v0.8.0 advanced type system
-
-> **Note**: Experimental features from v0.7.1 are completely optional and don't affect existing Sona code. v0.7.2 focuses on professional consistency and reliability improvements.
-
-## 🔧 Development
-
-### Setting Up Development Environment
-
-```bash
-git clone https://github.com/Bryantad/Sona.git
-cd Sona
-pip install -e .[dev]
-```
-
-### Running Tests
-
-```bash
-python -m pytest tests/
-```
-
-### Code Style
-
-We follow PEP 8 guidelines. Format code using:
-
-```bash
-black sona/
-```
-
-## 📋 Version 0.7.0 Highlights
-
--   **Enhanced OOP Support**: Improved class syntax and inheritance mechanisms
--   **Dictionary Enhancements**: Better performance and cleaner syntax for dictionary operations
--   **Module System Improvements**: More intuitive import syntax and better standard library organization
--   **Developer Experience**: Enhanced error messages and debugging capabilities
--   **Performance Optimizations**: Faster execution and reduced memory usage
-
-## 🤝 Contributing
-
-We welcome contributions from the community! Please read our [Contributing Guidelines](Contributing.md) for details on:
-
--   Code of conduct
--   Development workflow
--   Coding standards
--   Testing requirements
--   Pull request process
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🔗 Links
-
--   **Documentation**: [docs/](docs/)
--   Standalone Transpiler: (https://github.com/Bryantad/Sona-Transpiler.git)
--   **Examples**: [examples/](examples/)
--   **Issues**: [GitHub Issues](https://github.com/Bryantad/Sona/issues)
--   **Releases**: [GitHub Releases](https://github.com/Bryantad/Sona/releases)
+- **The Neurodivergent Community**: For guidance on accessibility features
+- **Cognitive Accessibility Researchers**: For evidence-based design principles
+- **Open Source Contributors**: For feedback and improvements
+- **VS Code Team**: For excellent extension APIs
+- **Python Community**: For the foundation this project builds upon
 
 ---
 
-**Happy coding with Sona! 🎵**
+**🎯 Ready to experience neurodivergent-first programming?**
+
+```bash
+pip install sona
+sona init my-accessible-project
+cd my-accessible-project
+sona run main.sona
+```
+
+**Join us in making programming accessible for everyone! 🚀**
+
+## What's New in 0.8.0
+
+### 🎉 Unified Syntax Support
+
+Version 0.8.0 introduces a unified syntax system that supports both traditional programming patterns and cognitive accessibility features:
+
+- **Traditional syntax**: Familiar programming patterns (`print`, `function`, `if`, `for`)
+- **Cognitive syntax**: Neurodivergent-friendly syntax (`think`, `show`, `when`, `repeat`)
+
+Both syntax styles can be used interchangeably, allowing users to choose the approach that works best for them.
+
+### Documentation
+
+- [Unified Syntax Guide](docs/unified_syntax_guide.md) - Comprehensive guide to using both syntax styles
+- [Cognitive Syntax Examples](tests/test_cognitive_syntax.sona) - Examples using cognitive syntax
+- [Traditional Syntax Examples](tests/test_traditional_syntax.sona) - Examples using traditional syntax
+
+## Getting Started
+
+```bash
+# Run a Sona program
+python sona/sona_unified_cli.py my_program.sona
+
+# Interactive mode
+python sona/sona_unified_cli.py
+
+# Run tests
+python test_unified_interpreter.py
+```
+
+## Cognitive Syntax Example
+
+```
+# Variable assignment
+name = "Sona"
+
+# Output
+think "Hello from " + name
+show "Welcome to " + name
+
+# Function definition
+when add_numbers(a, b) {
+    return a + b
+}
+
+# Conditional
+when x > 5 {
+    think "x is greater than 5"
+}
+
+# Loop
+repeat 3 times {
+    think "Looping..."
+}
+```
+
+## Traditional Syntax Example
+
+```
+# Variable assignment
+name = "Sona"
+
+# Output
+print("Hello from " + name)
+display("Welcome to " + name)
+
+# Function definition
+function add_numbers(a, b) {
+    return a + b
+}
+
+# Conditional
+if x > 5 {
+    print("x is greater than 5")
+}
+
+# Loop
+for i in range(3) {
+    print("Looping...")
+}
+```
+
+## Contributing
+
+Contributions are welcome! See [Contributing.md](Contributing.md) for details.
+
+## License
+
+Sona is open source software licensed under the MIT license.

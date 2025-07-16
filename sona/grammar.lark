@@ -1,16 +1,25 @@
+//
+// Sona Language Grammar v0.8.0
+// Unified Grammar supporting both classic syntax and documented cognitive syntax
+//
+
 start: statement+
 
 ?statement: expr
      | import_stmt
-     | assignment
+     | var_assignment
+     | bare_assignment
      | destructuring_assignment
      | print_stmt
+     | show_stmt
+     | think_stmt
+     | calculate_stmt
      | if_stmt
+     | when_stmt
      | match_stmt
      | while_stmt
-     | while_else_stmt
      | for_stmt
-     | loop_until_stmt
+     | repeat_stmt
      | func_def
      | class_def
      | try_stmt
@@ -18,160 +27,135 @@ start: statement+
      | break_stmt
      | continue_stmt
 
-?expr: term
-     | expr "+" term   -> add
-     | expr "-" term   -> sub
-     | expr "==" term  -> eq
-     | expr "!=" term  -> neq
-     | expr ">" term   -> gt
-     | expr "<" term   -> lt
-     | expr ">=" term  -> gte
-     | expr "<=" term  -> lte
-     | expr "&&" term  -> and
-     | expr "||" term  -> or
+// ======== Classic Assignment ========
+var_assignment: ("let" | "const") NAME "=" expr -> var_assign
 
-?term: factor
-     | term "*" factor  -> mul
-     | term "/" factor  -> div
+// ======== Cognitive Syntax ========
+// Bare assignment (documented style)
+bare_assignment: NAME "=" expr -> bare_assign
 
-// ======== Factor-level method and property calls ========
-?factor: "-" factor         -> neg
-       | "!" factor         -> not
-       | dotted_expr
+// Destructuring assignment (for arrays/objects)
+destructuring_assignment: "[" NAME ("," NAME)* "]" "=" expr -> destructure_assign
 
-// ======== Dotted expressions (method calls and property access) ========
-?dotted_expr: atom call_or_access*
+// Output statements
+print_stmt: "print" "(" expr ")" -> print_stmt
+show_stmt: "show" expr -> show_stmt
 
-call_or_access: "." NAME "(" [args] ")" -> method_call
-              | "." NAME "=" expr     -> property_assignment
-              | "." NAME              -> property_access
+// Cognitive comments
+think_stmt: "think" STRING -> think_stmt
 
-// ======== Atomic expressions ========
+// Cognitive assignment
+calculate_stmt: "calculate" NAME "=" expr -> calculate_assign
+
+// Cognitive conditionals
+when_stmt: "when" expr ":" _NEWLINE _INDENT statement+ _DEDENT ["else" ":" _NEWLINE _INDENT statement+ _DEDENT] -> when_stmt
+
+// Classic conditionals
+if_stmt: "if" expr "{" statement* "}" ["else" "{" statement* "}"] -> if_stmt
+match_stmt: "match" expr "{" match_case+ "}" -> match_stmt
+match_case: (expr | "_") "=>" (expr | "{" statement* "}") -> match_case
+
+// ======== Classic Loops ========
+while_stmt: "while" expr "{" statement* "}" -> while_stmt
+for_stmt: "for" NAME "in" expr "{" statement* "}" -> for_stmt
+
+// ======== Cognitive Loops ========
+// Basic repeat loop: repeat 5 times:
+repeat_stmt: "repeat" expr "times" ":" _NEWLINE _INDENT statement+ _DEDENT -> repeat_times
+           // List iteration: repeat for each item in items:
+           | "repeat" "for" "each" NAME "in" expr ":" _NEWLINE _INDENT statement+ _DEDENT -> repeat_for_each
+           // Range iteration: repeat for i from 1 to 10:
+           | "repeat" "for" NAME "from" expr "to" expr ":" _NEWLINE _INDENT statement+ _DEDENT -> repeat_for_range
+           // Range with step: repeat for i from 1 to 10 step 2:
+           | "repeat" "for" NAME "from" expr "to" expr "step" expr ":" _NEWLINE _INDENT statement+ _DEDENT -> repeat_for_range_step
+
+// ======== Function Definition ========
+func_def: "func" NAME "(" [param_list] ")" "{" statement* "}" -> func_def
+param_list: NAME ("," NAME)*
+
+// ======== Class Definition ========
+class_def: "class" NAME ["(" NAME ")"] "{" class_body "}" -> class_def
+class_body: (method_def | property_def)*
+method_def: "method" NAME "(" [param_list] ")" "{" statement* "}" -> method_def
+property_def: "property" NAME ["=" expr] -> property_def
+
+// ======== Other Statements ========
+return_stmt: "return" expr -> return_stmt
+break_stmt: "break" -> break_stmt
+continue_stmt: "continue" -> continue_stmt
+try_stmt: "try" "{" statement* "}" "catch" NAME "{" statement* "}" ["finally" "{" statement* "}"] -> try_stmt
+import_stmt: "import" NAME ["." NAME]* ["as" NAME] -> import_stmt
+
+// ======== Expressions ========
+?expr: or_expr
+
+?or_expr: and_expr
+        | or_expr "||" and_expr -> or_op
+
+?and_expr: comparison
+         | and_expr "&&" comparison -> and_op
+
+?comparison: sum
+           | comparison "==" sum -> eq
+           | comparison "!=" sum -> neq
+           | comparison ">" sum -> gt
+           | comparison "<" sum -> lt
+           | comparison ">=" sum -> gte
+           | comparison "<=" sum -> lte
+
+?sum: product
+    | sum "+" product -> add
+    | sum "-" product -> sub
+
+?product: unary
+        | product "*" unary -> mul
+        | product "/" unary -> div
+        | product "%" unary -> mod
+
+?unary: atom
+      | "-" unary -> neg
+      | "!" unary -> not
+
+// ======== Atom-level Expressions ========
+?atom: "(" expr ")"
+     | NUMBER         -> number
+     | STRING         -> string
+     | "true"         -> true_val
+     | "false"        -> false_val
+     | array_literal  -> array
+     | dict_literal   -> dict
+     | func_call
+     | method_call
+     | property_access
+     | index_access
+     | NAME           -> var
+
+// ======== Data Structures ========
 array_literal: "[" [expr ("," expr)*] "]"
 dict_literal: "{" [dict_item ("," dict_item)*] "}"
-dict_item: expr ":" expr
+dict_item: (STRING | NAME) ":" expr
 
-?atom: "(" expr ")"
-     | NUMBER             -> number
-     | STRING             -> string
-     | F_STRING           -> interpolated_string
-     | array_literal      -> array
-     | dict_literal       -> dict
-     | list_comprehension -> list_comp
-     | dict_comprehension -> dict_comp
-     | object_instantiation -> object_new
-     | func_call
-     | NAME               -> var  // single name only
-
-// ======== Function calls ========
+// ======== Object Access ========
 func_call: NAME "(" [args] ")" -> func_call
+method_call: expr "." NAME "(" [args] ")" -> method_call
+property_access: expr "." NAME -> property_access
+index_access: expr "[" expr "]" -> index_access
 
+// ======== Arguments ========
 args: expr ("," expr)*
-    | // empty alternative
 
-import_stmt: "import" NAME ("." NAME)* ["as" NAME] -> import_stmt
-assignment: ("let" | "const") NAME "=" expr -> var_assign
-print_stmt: "print" "(" expr ")"
-return_stmt: "return" expr
+// ======== Terminals ========
+STRING: /("(?:[^"\\]|\\.)*")|('(?:[^'\\]|\\.)*')/
+NUMBER: /[0-9]+(\.[0-9]+)?/
+NAME: /[a-zA-Z_][a-zA-Z0-9_]*/
 
-if_stmt: "if" expr block ["else" block]
-while_stmt: "while" expr block
-while_else_stmt: "while" expr block "else" block
-for_stmt: "for" NAME "in" expr block
-loop_until_stmt: "loop" block "until" expr [NAME]
-func_def: "func" NAME "(" [param_list] ")" block
-class_def: "class" NAME ["(" inheritance_list ")"] "{" class_body "}"
-param_list: NAME ("," NAME)*  -> param_list
-block: "{" (_NL | statement)* "}"
+// ======== Indentation Handling ========
+_NEWLINE: /\n/
+_INDENT: /  +/
+_DEDENT: /  -/
 
-// Control flow statements
-break_stmt: "break" [NAME]
-continue_stmt: "continue" [NAME]
-
-// Enhanced inheritance support
-inheritance_list: NAME ("," NAME)*
-
-// Class definition support
-class_body: class_member*
-class_member: method_def | property_def | constructor_def | static_method_def | class_method_def
-
-method_def: "method" NAME "(" [param_list] ")" block
-static_method_def: "static" "method" NAME "(" [param_list] ")" block
-class_method_def: "class" "method" NAME "(" [param_list] ")" block
-property_def: "property" NAME ["=" expr] ["{" property_accessors "}"]
-constructor_def: "constructor" "(" [param_list] ")" block
-
-// Property accessors (getters/setters)
-property_accessors: property_accessor+
-property_accessor: ("get" | "set") ["(" param_list ")"] block
-
-// Destructuring assignment (simplified)
-destructuring_assignment: "let" simple_pattern "=" expr
-simple_pattern: tuple_pattern | dict_pattern | simple_variable_pattern
-
-// Pattern types (simplified to avoid grammar conflicts)
-tuple_pattern: "(" simple_variable_pattern ("," simple_variable_pattern)* ")"
-dict_pattern: "{" dict_pattern_item ("," dict_pattern_item)* "}"
-dict_pattern_item: NAME ":" simple_variable_pattern
-list_pattern: "[" simple_variable_pattern ("," simple_variable_pattern)* ["|" simple_variable_pattern] "]"
-simple_variable_pattern: NAME
-wildcard_pattern: "_"
-
-// Comprehensions
-list_comprehension: "[" expr for_clause+ [if_clause] "]"
-dict_comprehension: "{" expr ":" expr for_clause+ [if_clause] "}"
-for_clause: "for" NAME "in" expr
-if_clause: "if" expr
-
-// New documentation comment
-doc_comment: "///" DOC_TEXT -> doc_comment
-DOC_TEXT: /[^\n\r]+/
-
-// Enhanced match statement with pattern matching
-match_stmt: "match" expr "{" match_case+ "}"
-match_case: "case" match_pattern ["if" expr] "=>" block
-match_pattern: literal_pattern | wildcard_pattern | tuple_pattern 
-             | dict_pattern | simple_type_pattern | range_pattern | list_pattern
-
-// Pattern types for matching (simplified to avoid conflicts)
-literal_pattern: NUMBER | STRING
-simple_type_pattern: "int" | "str" | "float" | "bool" | "list" | "dict"
-range_pattern: NUMBER ".." NUMBER ["exclusive"]
-
-// New try/catch statement 
-try_stmt: "try" block "catch" ["(" NAME ")"] block ["finally" block]
-
-// Enhanced struct support for RPG entities
-struct_def: "struct" NAME "{" struct_fields "}"
-struct_fields: struct_field ("," struct_field)*
-struct_field: NAME ":" expr
-
-// String interpolation for RPG text
-interpolated_string: "f" STRING
-template_string: "`" template_content "`"
-template_content: (template_text | template_expr)*  
-template_text: /[^{]+/
-template_expr: "{" expr "}"
-
-// Object-oriented programming expressions
-object_instantiation: "new" NAME "(" [args] ")"
-super_call: "super" "." NAME "(" [args] ")"
-
-COMMA: ","
-STRING: /"(?:[^"\\]|\\.)*"/ | /'(?:[^'\\]|\\.)*'/ | /"""(?:[^\\]|\\.)*"""/ | /'''(?:[^\\]|\\.)*'''/
-F_STRING: /f"(?:[^"\\]|\\.)*"/ | /f'(?:[^'\\]|\\.)*'/ | /f"""(?:[^\\]|\\.)*"""/ | /f'''(?:[^\\]|\\.)*'''/
-NUMBER: /[0-9]+(\.[0-9]*)?/
-
-%import common.CNAME -> NAME 
+// ======== Whitespace and Comments ========
+COMMENT: /\/\/[^\n]*/
 %import common.WS_INLINE
-%import common.NEWLINE -> _NL
-%import common.SH_COMMENT -> HASH_COMMENT
-
-_COMMENT: /\/\/.*?(?:\n|$)/
-_INLINE_COMMENT: /\/\/[^\n]*/
-
-%ignore _COMMENT
-%ignore _INLINE_COMMENT
-%ignore HASH_COMMENT
 %ignore WS_INLINE
-%ignore _NL
+%ignore COMMENT

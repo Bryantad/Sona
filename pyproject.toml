@@ -4,8 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "Sona"
-version = "0.7.0"
-description = "Sona Programming Language with Object-Oriented Programming Support"
+version = "0.8.0"
+description = "Sona Programming Language with Cognitive Accessibility and Neurodivergent-First Features"
 authors = [{name = "WayCore Inc.", email = "info@waycore.com"}]
 readme = "README.md"
 dependencies = ["lark-parser>=0.12.0"]
+
+[project.scripts]
+sona = "sona.sona_cli:main"
