@@ -1,8 +1,8 @@
-# 🧠 Sona Programming Language v0.8.0
+# 🧠 Sona Programming Language v0.8.1
 
 ## Neurodivergent-First Development Environment
 
-[![Version](https://img.shields.io/badge/version-0.8.0-blue.svg)](https://github.com/Bryantad/Sona/releases/tag/v0.8.0)
+[![Version](https://img.shields.io/badge/version-0.8.1-blue.svg)](https://github.com/Bryantad/Sona/releases/tag/v0.8.1)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://python.org)
 [![VS Code](https://img.shields.io/badge/VS%20Code-Extension-blue.svg)](https://marketplace.visualstudio.com/items?itemName=sona-lang.sona-language-support)
