@@ -227,7 +227,7 @@ class Processor {
 
 * [GitHub Issues](https://github.com/Bryantad/Sona/issues)
 * [Discussions](https://github.com/Bryantad/Sona/discussions)
-* [inquire@waycore.com](mailto:inquire@waycore.com)
+* [inquire@waycore.com](mailto:inquire@waycoreinc.com)
 
 ### Contribute
 
