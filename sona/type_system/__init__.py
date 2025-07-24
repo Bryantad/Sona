@@ -14,39 +14,67 @@ Version: 0.7.1 (Experimental)
 License: See LICENSE file
 """
 
-# Import core types
-from .types import (
-    Type, TypeKind, SourceLocation,
-    PrimitiveType, TypeVariable, FunctionType, GenericType,
-    TupleType, RecordType, TypeScheme, TypeEnvironment,
-    INT_TYPE, FLOAT_TYPE, STRING_TYPE, BOOL_TYPE, UNIT_TYPE
-)
-
 # Import inference engine
 from .inference import (
-    TypeInferenceError, UnificationError, Constraint, Substitution,
-    UnificationEngine, HindleyMilnerInference
+    Constraint,
+    HindleyMilnerInference,
+    Substitution,
+    TypeInferenceError,
+    UnificationEngine,
+    UnificationError,
 )
 
 # Import simple type checker for fallback
-from .simple import (
-    SimpleTypeChecker, check_type
+from .simple import SimpleTypeChecker, check_type
+
+# Import core types
+from .types import (
+    BOOL_TYPE,
+    FLOAT_TYPE,
+    INT_TYPE,
+    STRING_TYPE,
+    UNIT_TYPE,
+    FunctionType,
+    GenericType,
+    PrimitiveType,
+    RecordType,
+    SourceLocation,
+    TupleType,
+    Type,
+    TypeEnvironment,
+    TypeKind,
+    TypeScheme,
+    TypeVariable,
 )
 
-__version__ = "0.7.1"
+__version__ = "0.8.1"
 __all__ = [
     # Core types
-    'Type', 'TypeKind', 'SourceLocation',
-    'PrimitiveType', 'TypeVariable', 'FunctionType', 'GenericType',
-    'TupleType', 'RecordType', 'TypeScheme', 'TypeEnvironment',
-
+    "Type",
+    "TypeKind",
+    "SourceLocation",
+    "PrimitiveType",
+    "TypeVariable",
+    "FunctionType",
+    "GenericType",
+    "TupleType",
+    "RecordType",
+    "TypeScheme",
+    "TypeEnvironment",
     # Type constants
-    'INT_TYPE', 'FLOAT_TYPE', 'STRING_TYPE', 'BOOL_TYPE', 'UNIT_TYPE',
-
+    "INT_TYPE",
+    "FLOAT_TYPE",
+    "STRING_TYPE",
+    "BOOL_TYPE",
+    "UNIT_TYPE",
     # Inference engine
-    'TypeInferenceError', 'UnificationError', 'Constraint', 'Substitution',
-    'UnificationEngine', 'HindleyMilnerInference',
-
+    "TypeInferenceError",
+    "UnificationError",
+    "Constraint",
+    "Substitution",
+    "UnificationEngine",
+    "HindleyMilnerInference",
     # Simple type checking
-    'SimpleTypeChecker', 'check_type'
+    "SimpleTypeChecker",
+    "check_type",
 ]

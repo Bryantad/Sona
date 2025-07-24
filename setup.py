@@ -1,21 +1,15 @@
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 setup(
-    name='sona',
-    version='0.8.0',
+    name="sona",
+    version="0.8.1",
     packages=find_packages(),
     include_package_data=True,
-    install_requires=['lark-parser'],
+    install_requires=["lark-parser"],
     entry_points={
-        'console_scripts': [
-            'sona = sona.sona_cli:main',
+        "console_scripts": [
+            "sona = sona.sona_cli:main",
         ],
     },
-    package_data={
-        'sona': [
-            'grammar.lark',
-            'License.mdc',
-            'stdlib/*.py'
-        ]
-    }
+    package_data={"sona": ["grammar.lark", "License.mdc", "stdlib/*.py"]},
 )
