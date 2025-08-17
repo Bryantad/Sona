@@ -1,16 +1,26 @@
 """
-Sona Programming Language v0.8.1
-Cognitive Accessibility Edition
-
-SonaCore AI Model: v1.0-production
+Sona Programming Language
+A cognitive programming language with AI assistance
 """
 
-__version__ = "0.8.1"
-__sona_core_version__ = "1.0-production"
-__description__ = "Sona Programming Language with OOP Support"
+from .interpreter import (
+    SonaUnifiedInterpreter,
+    default_interpreter,
+    SonaFunction,
+    SonaMemoryManager,
+    SonaRuntimeError,
+    SonaInterpreter
+)
 
-from .interpreter import SonaUnifiedInterpreter as SonaInterpreter
+__version__ = "0.9.0"
+__author__ = "Sona Development Team"
 
-# from .repl import run_repl
-
-__all__ = ["SonaInterpreter", "__version__"]
+# Export main classes
+__all__ = [
+    'SonaUnifiedInterpreter',
+    'SonaFunction',
+    'SonaMemoryManager',
+    'SonaRuntimeError',
+    'default_interpreter',
+    'SonaInterpreter'
+]

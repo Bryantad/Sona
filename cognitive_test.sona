@@ -1,0 +1,4 @@
+﻿remember("project", "Test cognitive features", "high")
+focus_mode("Sona development", 25)
+cognitive_load()
+recall("project")

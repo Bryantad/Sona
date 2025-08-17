@@ -1,0 +1,4 @@
+﻿print("Hello from Sona!")
+let x = 42
+print("The answer is:")
+print(x)
