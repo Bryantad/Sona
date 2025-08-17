@@ -6,6 +6,7 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://python.org)
 [![AI-Native](https://img.shields.io/badge/AI--Native-Revolutionary-purple.svg)](docs/ai-features.md)
+[![VS Code Extension](https://img.shields.io/badge/VS%20Code-Extension%20Available-brightgreen.svg)](https://marketplace.visualstudio.com/items?itemName=Waycoreinc.sona-ai-native-programming)
 
 > **The world's first programming language with integrated AI collaboration, natural language programming, and cognitive accessibility features.**
 
