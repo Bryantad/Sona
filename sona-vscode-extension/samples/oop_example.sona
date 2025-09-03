@@ -1,0 +1,55 @@
+# Object-Oriented Programming in Sona
+# Demonstrates classes, inheritance, and methods
+
+class Person {
+    constructor(name, age) {
+        this.name = name;
+        this.age = age;
+        this.energy = 100;
+    }
+    
+    introduce() {
+        return f"Hi, I'm {this.name} and I'm {this.age} years old.";
+    }
+    
+    rest() {
+        this.energy = min(100, this.energy + 20);
+        return f"{this.name} is resting. Energy: {this.energy}";
+    }
+}
+
+class Developer extends Person {
+    constructor(name, age, language) {
+        super(name, age);
+        this.language = language;
+        this.projects = [];
+    }
+    
+    code() {
+        if (this.energy > 10) {
+            this.energy -= 10;
+            return f"{this.name} is coding in {this.language}! Energy: {this.energy}";
+        } else {
+            return f"{this.name} is too tired to code. Time to rest!";
+        }
+    }
+    
+    start_project(project_name) {
+        this.projects.append(project_name);
+        return f"Started new project: {project_name}";
+    }
+}
+
+# Create instances and test
+print("🧑‍💻 Object-Oriented Programming Demo")
+
+dev = Developer("Alex", 25, "Sona");
+print(dev.introduce());
+print(dev.start_project("AI Chat Bot"));
+print(dev.code());
+print(dev.code());
+print(dev.code());
+print(dev.rest());
+
+print(f"Projects: {dev.projects}");
+print("✅ OOP demo complete!")

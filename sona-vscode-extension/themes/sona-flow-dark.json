@@ -1,0 +1,95 @@
+{
+    "name": "Sona Flow Dark",
+    "type": "dark",
+    "colors": {
+        "editor.background": "#1e1e1e",
+        "editor.foreground": "#d4d4d4",
+        "activityBarBadge.background": "#007acc",
+        "sideBarTitle.foreground": "#bbbbbb",
+        "editor.selectionBackground": "#264f78",
+        "editor.lineHighlightBackground": "#2d2d30",
+        "editorCursor.foreground": "#aeafad",
+        "editorWhitespace.foreground": "#3c3c3c"
+    },
+    "tokenColors": [
+        {
+            "name": "Comment",
+            "scope": [
+                "comment",
+                "punctuation.definition.comment"
+            ],
+            "settings": {
+                "fontStyle": "italic",
+                "foreground": "#6A9955"
+            }
+        },
+        {
+            "name": "Keywords",
+            "scope": [
+                "keyword",
+                "storage.type",
+                "storage.modifier"
+            ],
+            "settings": {
+                "foreground": "#569CD6"
+            }
+        },
+        {
+            "name": "Cognitive Keywords",
+            "scope": [
+                "keyword.other.sona",
+                "entity.name.function.cognitive.sona"
+            ],
+            "settings": {
+                "foreground": "#C586C0",
+                "fontStyle": "bold"
+            }
+        },
+        {
+            "name": "AI Functions",
+            "scope": [
+                "entity.name.function.ai.sona"
+            ],
+            "settings": {
+                "foreground": "#DCDCAA",
+                "fontStyle": "italic"
+            }
+        },
+        {
+            "name": "String",
+            "scope": [
+                "string"
+            ],
+            "settings": {
+                "foreground": "#CE9178"
+            }
+        },
+        {
+            "name": "Number",
+            "scope": [
+                "constant.numeric"
+            ],
+            "settings": {
+                "foreground": "#B5CEA8"
+            }
+        },
+        {
+            "name": "Function",
+            "scope": [
+                "entity.name.function"
+            ],
+            "settings": {
+                "foreground": "#DCDCAA"
+            }
+        },
+        {
+            "name": "Variable",
+            "scope": [
+                "variable"
+            ],
+            "settings": {
+                "foreground": "#9CDCFE"
+            }
+        }
+    ]
+}

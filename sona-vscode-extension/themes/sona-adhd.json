@@ -1,0 +1,86 @@
+{
+    "name": "Sona ADHD Friendly",
+    "type": "dark",
+    "colors": {
+        "editor.background": "#1a1a1a",
+        "editor.foreground": "#e0e0e0",
+        "activityBarBadge.background": "#ff6b6b",
+        "sideBarTitle.foreground": "#ffffff",
+        "editor.selectionBackground": "#4a4a4a",
+        "editor.lineHighlightBackground": "#2a2a2a",
+        "editorCursor.foreground": "#ff6b6b",
+        "editorWhitespace.foreground": "#404040",
+        "editor.findMatchBackground": "#ff6b6b40",
+        "editor.findMatchHighlightBackground": "#ff6b6b20"
+    },
+    "tokenColors": [
+        {
+            "name": "Comment",
+            "scope": [
+                "comment"
+            ],
+            "settings": {
+                "fontStyle": "italic",
+                "foreground": "#888888"
+            }
+        },
+        {
+            "name": "Keywords",
+            "scope": [
+                "keyword"
+            ],
+            "settings": {
+                "foreground": "#ff6b6b",
+                "fontStyle": "bold"
+            }
+        },
+        {
+            "name": "Cognitive Keywords",
+            "scope": [
+                "keyword.other.sona",
+                "entity.name.function.cognitive.sona"
+            ],
+            "settings": {
+                "foreground": "#4ecdc4",
+                "fontStyle": "bold"
+            }
+        },
+        {
+            "name": "AI Functions",
+            "scope": [
+                "entity.name.function.ai.sona"
+            ],
+            "settings": {
+                "foreground": "#ffe66d",
+                "fontStyle": "italic"
+            }
+        },
+        {
+            "name": "String",
+            "scope": [
+                "string"
+            ],
+            "settings": {
+                "foreground": "#95e1d3"
+            }
+        },
+        {
+            "name": "Number",
+            "scope": [
+                "constant.numeric"
+            ],
+            "settings": {
+                "foreground": "#a8e6cf"
+            }
+        },
+        {
+            "name": "Function",
+            "scope": [
+                "entity.name.function"
+            ],
+            "settings": {
+                "foreground": "#fce38a"
+            }
+        }
+    ]
+}
