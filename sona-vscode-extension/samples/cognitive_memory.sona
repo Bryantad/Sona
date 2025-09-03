@@ -1,0 +1,29 @@
+# Cognitive Memory Demo
+# Demonstrates Sona's built-in memory functions
+
+print("🧠 Testing Sona's Cognitive Memory System...")
+
+# Store various types of data
+remember("user_name", "Alex")
+remember("session_count", 1)
+remember("preferences", {"theme": "dark", "font_size": 14})
+remember("todo_list", ["Learn Sona", "Build awesome apps", "Share with friends"])
+
+# Retrieve and use stored data
+name = recall("user_name")
+count = recall("session_count")
+prefs = recall("preferences")
+todos = recall("todo_list")
+
+print(f"Welcome back, {name}!")
+print(f"This is session #{count}")
+print(f"Your preferences: {prefs}")
+print("Your todo list:")
+
+for i, todo in enumerate(todos):
+    print(f"  {i+1}. {todo}")
+
+# Update session count
+remember("session_count", count + 1)
+
+print("✅ Memory demo complete!")

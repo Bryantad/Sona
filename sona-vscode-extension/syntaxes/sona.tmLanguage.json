@@ -1,0 +1,121 @@
+{
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "Sona",
+    "patterns": [
+        {
+            "include": "#keywords"
+        },
+        {
+            "include": "#strings"
+        },
+        {
+            "include": "#comments"
+        },
+        {
+            "include": "#numbers"
+        },
+        {
+            "include": "#cognitive"
+        },
+        {
+            "include": "#ai_functions"
+        },
+        {
+            "include": "#functions"
+        },
+        {
+            "include": "#variables"
+        }
+    ],
+    "repository": {
+        "keywords": {
+            "patterns": [
+                {
+                    "name": "keyword.control.sona",
+                    "match": "\\b(if|else|elif|while|for|in|break|continue|return|def|class|try|except|finally|with|import|from|as|pass|yield|async|await|and|or|not|is|lambda|global|nonlocal)\\b"
+                },
+                {
+                    "name": "keyword.other.sona",
+                    "match": "\\b(remember|recall|think|focus|flow|cognitive|neurodivergent|accessible)\\b"
+                },
+                {
+                    "name": "storage.type.sona",
+                    "match": "\\b(let|var|const|func|struct|enum|interface|type)\\b"
+                },
+                {
+                    "name": "constant.language.sona",
+                    "match": "\\b(true|false|null|undefined|None|True|False)\\b"
+                }
+            ]
+        },
+        "cognitive": {
+            "patterns": [
+                {
+                    "name": "entity.name.function.cognitive.sona",
+                    "match": "\\b(remember|recall|think|focus|flow|mindful|accessible|neurodivergent|cognitive_load|flow_state|focus_mode|adhd_friendly|autism_friendly|dyslexia_friendly)\\b"
+                },
+                {
+                    "name": "keyword.operator.cognitive.sona",
+                    "match": "\\b(mindfully|accessibly|cognitively|focus_on|think_about|remember_as|recall_from)\\b"
+                }
+            ]
+        },
+        "ai_functions": {
+            "patterns": [
+                {
+                    "name": "entity.name.function.ai.sona",
+                    "match": "\\b(ai_simplify|ai_break_down|ai_optimize|ai_complete|ai_debug|ai_explain|ai_suggest|ai_refactor|ai_analyze)\\b"
+                }
+            ]
+        },
+        "strings": {
+            "name": "string.quoted.double.sona",
+            "begin": "\"",
+            "end": "\"",
+            "patterns": [
+                {
+                    "name": "constant.character.escape.sona",
+                    "match": "\\\\."
+                }
+            ]
+        },
+        "comments": {
+            "patterns": [
+                {
+                    "name": "comment.line.double-slash.sona",
+                    "match": "//.*$"
+                },
+                {
+                    "name": "comment.block.sona",
+                    "begin": "/\\*",
+                    "end": "\\*/"
+                }
+            ]
+        },
+        "numbers": {
+            "patterns": [
+                {
+                    "name": "constant.numeric.sona",
+                    "match": "\\b\\d+(\\.\\d+)?([eE][+-]?\\d+)?\\b"
+                }
+            ]
+        },
+        "functions": {
+            "patterns": [
+                {
+                    "name": "entity.name.function.sona",
+                    "match": "\\b[a-zA-Z_][a-zA-Z0-9_]*(?=\\s*\\()"
+                }
+            ]
+        },
+        "variables": {
+            "patterns": [
+                {
+                    "name": "variable.other.sona",
+                    "match": "\\b[a-zA-Z_][a-zA-Z0-9_]*\\b"
+                }
+            ]
+        }
+    },
+    "scopeName": "source.sona"
+}

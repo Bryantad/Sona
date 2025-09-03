@@ -1,0 +1,379 @@
+{
+    "name": "sona-ai-native-programming",
+    "displayName": "Sona: AI-Native Programming with Cognitive Accessibility",
+    "description": "Revolutionary AI-powered Sona v0.9.2 programming language with cognitive accessibility features for neurodivergent developers",
+    "version": "0.9.2",
+    "publisher": "waycoreinc",
+    "license": "MIT",
+    "icon": "images/sona-logo.png",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Bryantad/Sona"
+    },
+    "bugs": {
+        "url": "https://github.com/Bryantad/Sona/issues"
+    },
+    "homepage": "https://github.com/Bryantad/Sona#readme",
+    "engines": {
+        "vscode": "^1.102.0"
+    },
+    "categories": [
+        "Programming Languages",
+        "Debuggers",
+        "Themes",
+        "Other"
+    ],
+    "keywords": [
+        "sona",
+        "neurodivergent",
+        "accessibility",
+        "ADHD",
+        "autism",
+        "dyslexia",
+        "programming language",
+        "transpilation",
+        "cognitive",
+        "flow-state",
+        "ai-native"
+    ],
+    "activationEvents": [
+        "onStartupFinished"
+    ],
+    "main": "./dist/extension.js",
+    "contributes": {
+        "languages": [
+            {
+                "id": "sona",
+                "aliases": [
+                    "Sona",
+                    "sona"
+                ],
+                "extensions": [
+                    ".sona"
+                ],
+                "configuration": "./language-configuration.json",
+                "icon": {
+                    "light": "./images/sona-icon-light.svg",
+                    "dark": "./images/sona-icon-dark.svg"
+                }
+            }
+        ],
+        "grammars": [
+            {
+                "language": "sona",
+                "scopeName": "source.sona",
+                "path": "./syntaxes/sona.tmLanguage.json"
+            }
+        ],
+        "themes": [
+            {
+                "label": "Sona Flow (Dark)",
+                "uiTheme": "vs-dark",
+                "path": "./themes/sona-flow-dark.json"
+            },
+            {
+                "label": "Sona Focus (Light)",
+                "uiTheme": "vs",
+                "path": "./themes/sona-focus-light.json"
+            },
+            {
+                "label": "Sona ADHD",
+                "uiTheme": "vs-dark",
+                "path": "./themes/sona-adhd.json"
+            },
+            {
+                "label": "Sona Dyslexia Friendly",
+                "uiTheme": "vs",
+                "path": "./themes/sona-dyslexia.json"
+            }
+        ],
+        "commands": [
+            {
+                "command": "sona.run",
+                "title": "Run Sona File",
+                "category": "Sona",
+                "icon": "$(play)"
+            },
+            {
+                "command": "sona.transpile",
+                "title": "Transpile to Other Languages",
+                "category": "Sona",
+                "icon": "$(arrow-right)"
+            },
+            {
+                "command": "sona.format",
+                "title": "Format Sona Code",
+                "category": "Sona",
+                "icon": "$(symbol-misc)"
+            },
+            {
+                "command": "sona.checkSyntax",
+                "title": "Check Syntax",
+                "category": "Sona",
+                "icon": "$(check)"
+            },
+            {
+                "command": "sona.info",
+                "title": "Sona Environment Info",
+                "category": "Sona",
+                "icon": "$(info)"
+            },
+            {
+                "command": "sona.setup",
+                "title": "Setup Sona Environment",
+                "category": "Sona",
+                "icon": "$(gear)"
+            },
+            {
+                "command": "sona.repl",
+                "title": "Start REPL",
+                "category": "Sona",
+                "icon": "$(terminal)"
+            },
+            {
+                "command": "sona.profile",
+                "title": "Profile Code Performance",
+                "category": "Sona",
+                "icon": "$(pulse)"
+            },
+            {
+                "command": "sona.benchmark",
+                "title": "Benchmark Performance",
+                "category": "Sona",
+                "icon": "$(dashboard)"
+            },
+            {
+                "command": "sona.explain",
+                "title": "AI Code Explanation",
+                "category": "Sona",
+                "icon": "$(lightbulb)"
+            },
+            {
+                "command": "sona.suggest",
+                "title": "AI Code Suggestions",
+                "category": "Sona",
+                "icon": "$(sparkle)"
+            },
+            {
+                "command": "sona.docs",
+                "title": "Open Documentation",
+                "category": "Sona",
+                "icon": "$(book)"
+            },
+            {
+                "command": "sona.cognitiveProfile",
+                "title": "Configure Cognitive Profile",
+                "category": "Sona",
+                "icon": "$(account)"
+            },
+            {
+                "command": "sona.toggleFocusMode",
+                "title": "Toggle Focus Mode",
+                "category": "Sona",
+                "icon": "$(eye)"
+            },
+            {
+                "command": "sona.accessibilitySettings",
+                "title": "Accessibility Settings",
+                "category": "Sona",
+                "icon": "$(accessibility)"
+            },
+            {
+                "command": "sona.whatsNew",
+                "title": "What's New in v1.0.0",
+                "category": "Sona",
+                "icon": "$(gift)"
+            },
+            {
+                "command": "sona.flowStateInfo",
+                "title": "Flow State Info",
+                "category": "Sona",
+                "icon": "$(pulse)"
+            },
+            {
+                "command": "sona.openSamples",
+                "title": "Open Sample Files",
+                "category": "Sona",
+                "icon": "$(folder-opened)"
+            }
+        ],
+        "menus": {
+            "editor/context": [
+                {
+                    "when": "resourceExtname == .sona",
+                    "command": "sona.run",
+                    "group": "sona@1"
+                },
+                {
+                    "when": "resourceExtname == .sona",
+                    "command": "sona.transpile",
+                    "group": "sona@2"
+                },
+                {
+                    "when": "resourceExtname == .sona",
+                    "command": "sona.format",
+                    "group": "sona@3"
+                },
+                {
+                    "when": "resourceExtname == .sona",
+                    "command": "sona.checkSyntax",
+                    "group": "sona@4"
+                }
+            ],
+            "editor/title": [
+                {
+                    "when": "resourceExtname == .sona",
+                    "command": "sona.run",
+                    "group": "navigation@1"
+                },
+                {
+                    "when": "resourceExtname == .sona",
+                    "command": "sona.transpile",
+                    "group": "navigation@2"
+                }
+            ],
+            "commandPalette": [
+                {
+                    "command": "sona.run",
+                    "when": "resourceExtname == .sona || editorLangId == sona"
+                },
+                {
+                    "command": "sona.transpile",
+                    "when": "resourceExtname == .sona || editorLangId == sona"
+                },
+                {
+                    "command": "sona.format",
+                    "when": "resourceExtname == .sona || editorLangId == sona"
+                },
+                {
+                    "command": "sona.checkSyntax",
+                    "when": "resourceExtname == .sona || editorLangId == sona"
+                }
+            ]
+        },
+        "keybindings": [
+            {
+                "command": "sona.run",
+                "key": "ctrl+f5",
+                "when": "resourceExtname == .sona"
+            },
+            {
+                "command": "sona.transpile",
+                "key": "ctrl+shift+t",
+                "when": "resourceExtname == .sona"
+            },
+            {
+                "command": "sona.format",
+                "key": "ctrl+shift+f",
+                "when": "resourceExtname == .sona"
+            },
+            {
+                "command": "sona.toggleFocusMode",
+                "key": "ctrl+shift+alt+f"
+            }
+        ],
+        "snippets": [
+            {
+                "language": "sona",
+                "path": "./snippets/sona.json"
+            }
+        ],
+        "configuration": {
+            "title": "Sona Language Support",
+            "properties": {
+                "sona.pythonPath": {
+                    "type": "string",
+                    "default": "python",
+                    "description": "Path to Python executable for Sona CLI"
+                },
+                "sona.cognitiveProfile": {
+                    "type": "string",
+                    "enum": [
+                        "Auto",
+                        "ADHD",
+                        "Autism",
+                        "Dyslexia",
+                        "Neurotypical"
+                    ],
+                    "default": "Auto",
+                    "description": "Cognitive profile for personalized assistance"
+                },
+                "sona.focusMode.enabled": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable focus mode features"
+                },
+                "sona.accessibilityLevel": {
+                    "type": "string",
+                    "enum": [
+                        "Standard",
+                        "Enhanced",
+                        "Maximum"
+                    ],
+                    "default": "Enhanced",
+                    "description": "Accessibility enhancement level"
+                },
+                "sona.autoTranspile": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Automatically transpile on save"
+                },
+                "sona.defaultTranspileTarget": {
+                    "type": "string",
+                    "enum": [
+                        "python",
+                        "javascript",
+                        "rust",
+                        "go",
+                        "cpp"
+                    ],
+                    "default": "python",
+                    "description": "Default transpilation target language"
+                },
+                "sona.aiFeatures.enabled": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable AI-powered features (requires setup)"
+                },
+                "sona.flowState.monitoring": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Monitor and optimize for flow state"
+                },
+                "sona.theme.adaptiveColors": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Use adaptive colors based on cognitive profile"
+                }
+            }
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run package",
+        "compile": "npm run check-types && npm run lint && node esbuild.js",
+        "watch": "npm-run-all -p watch:*",
+        "watch:esbuild": "node esbuild.js --watch",
+        "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+        "package": "npm run check-types && npm run lint && node esbuild.js --production",
+        "compile-tests": "tsc -p . --outDir out",
+        "watch-tests": "tsc -p . -w --outDir out",
+        "pretest": "npm run compile-tests && npm run compile && npm run lint",
+        "check-types": "tsc --noEmit",
+        "lint": "eslint src --ext ts",
+        "test": "vscode-test"
+    },
+    "devDependencies": {
+        "@types/vscode": "^1.102.0",
+        "@types/mocha": "^10.0.8",
+        "@types/node": "20.x",
+        "@typescript-eslint/eslint-plugin": "^8.7.0",
+        "@typescript-eslint/parser": "^8.7.0",
+        "@vscode/test-cli": "^0.0.10",
+        "@vscode/test-electron": "^2.4.1",
+        "eslint": "^9.11.1",
+        "npm-run-all": "^4.1.5",
+        "typescript": "^5.6.2",
+        "esbuild": "^0.21.5"
+    },
+    "dependencies": {}
+}
