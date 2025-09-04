@@ -5,7 +5,7 @@ This module integrates the type system with the Sona interpreter,
 providing type checking for Sona language constructs.
 
 Author: Sona Development Team
-Version: 0.8.0 (Phase 2)
+Version: 0.9.0 (Phase 2)
 License: See LICENSE file
 """
 

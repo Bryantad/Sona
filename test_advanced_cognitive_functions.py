@@ -17,64 +17,19 @@ if str(current_dir) not in sys.path:
     sys.path.append(str(current_dir))
 
 from complete_v090_cognitive_constructs import EnhancedSonaInterpreter
+from safe_cognitive_functions import register_safe_cognitive_functions
 
 
 class AdvancedSonaInterpreter(EnhancedSonaInterpreter):
-    """Enhanced interpreter with advanced function call parsing"""
+    """Enhanced interpreter with advanced function call parsing and safe cognitive functions"""
     
     def __init__(self):
         super().__init__()
         print("🔧 Advanced function call parsing enabled")
-    
-    def interpret(self, code: str, filename: str = "<string>") -> any:
-        """Enhanced interpret with proper multi-statement handling"""
-        try:
-            # Clean BOM characters
-            if code.startswith('\ufeff'):
-                code = code[1:]
-            
-            # Split into individual statements for proper Sona execution
-            statements = self._split_into_statements(code)
-            
-            result = None
-            for statement in statements:
-                statement = statement.strip()
-                if not statement or statement.startswith('#'):
-                    continue  # Skip empty lines and comments
-                
-                print(f"🔍 Executing: {statement}")
-                
-                # Handle AI function calls
-                if self._is_ai_function_call(statement):
-                    result = self._execute_ai_function(statement)
-                # Handle simple statements
-                elif self._is_simple_statement(statement):
-                    result = self._execute_simple_statement(statement)
-                else:
-                    # Try the parent parser for complex syntax
-                    result = super().interpret(statement, filename)
-                    
-                print(f"✅ Result: {result}")
-            
-            return result
-            
-        except Exception as e:
-            print(f"❌ Interpretation error: {e}")
-            return None
-    
-    def _split_into_statements(self, code: str) -> List[str]:
-        """Split code into individual statements"""
-        # Simple line-based splitting for now
-        # In future, we could use the actual Sona parser for this
-        lines = code.split('\n')
-        statements = []
         
-        for line in lines:
-            line = line.strip()
-            if line and not line.startswith('#'):
-                statements.append(line)
-        
-        return statements
+        # Register safe cognitive functions to prevent recursion
+        register_safe_cognitive_functions(self)
+        print("🛡️ Safe cognitive functions enabled")
     
     def _is_simple_statement(self, code: str) -> bool:
         """Enhanced simple statement detection"""
@@ -246,6 +201,133 @@ class AdvancedSonaInterpreter(EnhancedSonaInterpreter):
         
         # Return as string if all else fails
         return arg
+
+    def _handle_print_call(self, code: str) -> any:
+        """Handle print() function calls"""
+        try:
+            # Extract content between parentheses
+            start = code.find('(') + 1
+            end = code.rfind(')')
+            
+            if start > 0 and end > start:
+                content = code[start:end].strip()
+                
+                # Evaluate the content
+                value = self._evaluate_expression(content)
+                
+                # Print it
+                print(value)
+                return None
+                
+        except Exception as e:
+            print(f"❌ Print call error: {e}")
+            return None
+    
+    def _evaluate_expression(self, expr: str) -> any:
+        """Evaluate expressions with variable substitution and function calls"""
+        expr = expr.strip()
+        
+        # Handle string literals
+        if (expr.startswith('"') and expr.endswith('"')) or (expr.startswith("'") and expr.endswith("'")):
+            return expr[1:-1]  # Remove quotes
+        
+        # Handle numbers
+        try:
+            if '.' in expr:
+                return float(expr)
+            return int(expr)
+        except ValueError:
+            pass
+        
+        # Handle function calls
+        if '(' in expr and expr.endswith(')'):
+            return self._evaluate_function_call(expr)
+        
+        # Handle simple arithmetic and string concatenation
+        if '+' in expr:
+            parts = expr.split('+', 1)  # Split only on first +
+            if len(parts) == 2:
+                left = self._evaluate_expression(parts[0].strip())
+                right = self._evaluate_expression(parts[1].strip())
+                return str(left) + str(right) if isinstance(left, str) or isinstance(right, str) else left + right
+        
+        # Handle variables - use has_variable and get_variable methods
+        if self.memory.has_variable(expr):
+            return self.memory.get_variable(expr)
+        
+        # Handle boolean literals
+        if expr == 'true':
+            return True
+        elif expr == 'false':
+            return False
+        elif expr == 'null':
+            return None
+        
+        # Return as-is if we can't evaluate
+        return expr
+    
+    def _evaluate_function_call(self, expr: str) -> any:
+        """Evaluate a function call expression"""
+        try:
+            # Extract function name and arguments
+            match = re.match(r'(\w+)\((.*)\)', expr)
+            if not match:
+                return expr  # Not a valid function call
+            
+            func_name = match.group(1)
+            args_str = match.group(2)
+            
+            # Check if function exists
+            if not self.memory.has_variable(func_name):
+                return expr  # Function not found, return as-is
+            
+            func = self.memory.get_variable(func_name)
+            if not callable(func):
+                return expr  # Not callable, return as-is
+            
+            # Parse arguments
+            args = self._parse_function_arguments(args_str)
+            
+            # Call the function
+            if args is None or len(args) == 0:
+                return func()
+            elif len(args) == 1:
+                return func(args[0])
+            elif len(args) == 2:
+                return func(args[0], args[1])
+            elif len(args) == 3:
+                return func(args[0], args[1], args[2])
+            else:
+                return func(*args)
+                
+        except Exception as e:
+            print(f"❌ Function evaluation error: {e}")
+            return expr  # Return original on error
+
+    def _handle_let_assignment(self, code: str) -> any:
+        """Handle let variable assignments with function evaluation"""
+        try:
+            # Parse: let variable = value
+            parts = code[4:].split('=', 1)  # Remove 'let ' and split on first =
+            if len(parts) != 2:
+                print(f"❌ Invalid let syntax: {code}")
+                return None
+            
+            var_name = parts[0].strip()
+            value_expr = parts[1].strip()
+            
+            # Evaluate the expression (could be a function call)
+            value = self._evaluate_expression(value_expr)
+            
+            # Store in memory
+            self.memory.set_variable(var_name, value)
+            
+            print(f"✅ Set {var_name} = {value}")
+            return value
+            
+        except Exception as e:
+            print(f"❌ Let assignment error: {e}")
+            return None
 
 
 def test_advanced_cognitive_functions():

@@ -1,2 +1,17 @@
-lark-parser==0.12.0
-pytest
+# Sona v0.9.0 - AI-Native Programming Language Dependencies
+
+# Core parsing and language processing
+lark>=1.1.0
+
+# AI API integration (for revolutionary AI features)
+openai>=1.0.0
+anthropic>=0.9.0
+
+# Environment and configuration
+python-dotenv>=0.19.0
+
+# HTTP requests for API calls
+requests>=2.25.0
+
+# Testing framework
+pytest>=6.0.0

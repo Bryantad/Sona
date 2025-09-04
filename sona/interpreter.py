@@ -1,5 +1,5 @@
 """
-Sona v0.9.0 - Enhanced Interpreter (Phase 2 Priority 1)
+Sona v0.9.2 - Enhanced Interpreter (Phase 2 Priority 1)
 ======================================================
 
 Rebuilt enhanced interpreter for methodical development.
@@ -294,7 +294,7 @@ class SonaUnifiedInterpreter:
                                  global_scope=True)
         
         # Built-in variables
-        self.memory.set_variable('__version__', '0.9.0', global_scope=True)
+        self.memory.set_variable('__version__', '0.9.2', global_scope=True)
         self.memory.set_variable('__sona__', True, global_scope=True)
         self.memory.set_variable('True', True, global_scope=True)
         self.memory.set_variable('False', False, global_scope=True)

@@ -6,7 +6,7 @@ throughout the Sona type system, including primitive types, compound types,
 and type variables for the Hindley-Milner inference engine.
 
 Author: Sona Development Team
-Version: 0.8.0 (Phase 2)
+Version: 0.9.0 (Phase 2)
 License: See LICENSE file
 """
 

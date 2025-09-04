@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-🚀 SONA v0.9.0 COMPLETION: ENHANCED COGNITIVE CONSTRUCTS
+🚀 SONA v1.0.0 COMPLETION: ENHANCED COGNITIVE CONSTRUCTS
 ========================================================
 
-Complete Sona v0.9.0 with enhanced cognitive constructs, working memory,
+Complete Sona v1.0.0 with enhanced cognitive constructs, working memory,
 focus modes, and advanced AI integration.
 
 This builds on our working foundation:
@@ -287,22 +287,18 @@ class EnhancedSonaInterpreter(ProductionSonaInterpreter):
         """AI-powered simplification"""
         try:
             if self.ai_provider:
-                simplified = asyncio.run(self.ai_provider.ai_complete(
-                    f"Simplify this for better understanding: {text}"
-                ))
+                simplified = self.ai_provider.ai_simplify(text)
                 print("🤖 AI simplified the concept")
                 return simplified
             return f"Simplified: {text} (AI not available)"
         except Exception as e:
-            return f"Simplification error: {e}"
+            return f"❌ Simplification error: a coroutine was expected, got '{e}'"
     
     def _ai_break_down_function(self, task: str) -> List[str]:
         """AI-powered task breakdown"""
         try:
             if self.ai_provider:
-                breakdown = asyncio.run(self.ai_provider.ai_complete(
-                    f"Break this task into 3-5 smaller, manageable steps: {task}"
-                ))
+                breakdown = self.ai_provider.ai_break_down(task)
                 steps = breakdown.split('\n')[:5]  # Limit to 5 steps
                 print(f"🤖 AI broke down task into {len(steps)} steps")
                 return steps
@@ -314,9 +310,7 @@ class EnhancedSonaInterpreter(ProductionSonaInterpreter):
         """AI-powered cognitive optimization"""
         try:
             if self.ai_provider:
-                optimized = asyncio.run(self.ai_provider.ai_complete(
-                    f"Rewrite this code to be more readable and cognitively accessible: {code}"
-                ))
+                optimized = self.ai_provider.ai_optimize(code)
                 print("🤖 AI optimized code for cognitive accessibility")
                 return optimized
             return f"Cognitive optimization: {code} (AI not available)"
@@ -335,7 +329,7 @@ class EnhancedSonaInterpreter(ProductionSonaInterpreter):
 
 def demo_enhanced_cognitive_constructs():
     """Comprehensive demo of enhanced cognitive constructs"""
-    print("🧠 SONA v0.9.0: ENHANCED COGNITIVE CONSTRUCTS DEMO")
+    print("🧠 SONA v1.0.0: ENHANCED COGNITIVE CONSTRUCTS DEMO")
     print("=" * 70)
     print("Demonstrating working memory, focus modes, and advanced AI integration\n")
     
@@ -383,15 +377,15 @@ def demo_enhanced_cognitive_constructs():
     print(f"   Cognitive Load: {interpreter.working_memory.cognitive_load:.2f}")
     print(f"   Focus Sessions: {len(interpreter.working_memory.focus_stack)}")
     print(f"   Session Duration: {(time.time() - interpreter.working_memory.session_start)/60:.1f} minutes")
-    
+
     if success_count >= len(cognitive_demo) * 0.8:
-        print("\n🎉 SONA v0.9.0 COGNITIVE CONSTRUCTS COMPLETE!")
+        print("\n🎉 SONA v1.0.0 COGNITIVE CONSTRUCTS COMPLETE!")
         print("✅ Working memory system functional")
         print("✅ Focus mode implementation working")
         print("✅ Cognitive load monitoring active")
         print("✅ AI-powered cognitive assistance available")
-        print("✅ Ready for v0.9.1 development!")
-    
+        print("✅ Ready for v1.0.0 release!")
+
     return interpreter
 
 

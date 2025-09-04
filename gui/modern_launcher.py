@@ -7,18 +7,32 @@ Built with PySide6 for professional UI/UX and scalable architecture.
 """
 
 import sys
-import os
-import json
 import subprocess
 import threading
 from pathlib import Path
-from typing import Dict, List, Optional, Any
-from datetime import datetime
+from typing import Dict, List, Any
 
 try:
-    from PySide6.QtWidgets import *
-    from PySide6.QtCore import *
-    from PySide6.QtGui import *
+    from PySide6.QtWidgets import (
+        QApplication,
+        QMainWindow,
+        QWidget,
+        QVBoxLayout,
+        QHBoxLayout,
+        QDockWidget,
+        QTreeWidget,
+        QTreeWidgetItem,
+        QPlainTextEdit,
+        QLabel,
+        QLineEdit,
+        QComboBox,
+        QPushButton,
+        QStackedWidget,
+        QFileDialog,
+        QMessageBox,
+    )
+    from PySide6.QtCore import QObject, Qt, Signal
+    from PySide6.QtGui import QFont, QColor, QTextCharFormat
     PYSIDE6_AVAILABLE = True
 except ImportError:
     print("="*60)
@@ -44,24 +58,30 @@ except ImportError:
             sys.exit(1)
     except ImportError:
         def show_error_and_exit():
-            print("PySide6 is required. Please install it using: pip install PySide6")
+            print("PySide6 is required.")
+            print("Please install it using: pip install PySide6")
             sys.exit(1)
+
+# UI / Release constants (studio vs language)
+STUDIO_NAME = "Sona Studio 1.0 Beta"
+STUDIO_DISPLAY_VERSION = "1.0.0-beta"
+LANGUAGE_VERSION = "0.9.1"  # Sona language runtime remains at 0.9.1
 
 
 class SonaTheme:
     """Modern dark theme configuration"""
     
     # Main color palette
-    BACKGROUND_PRIMARY = "#1e1e2e"
-    BACKGROUND_SECONDARY = "#181825"
-    BACKGROUND_TERTIARY = "#11111b"
-    
-    # Accent colors
-    ACCENT_PRIMARY = "#89b4fa"
-    ACCENT_SECONDARY = "#74c7ec"
-    ACCENT_SUCCESS = "#a6e3a1"
-    ACCENT_WARNING = "#f9e2af"
-    ACCENT_ERROR = "#f38ba8"
+    BACKGROUND_PRIMARY = "#0f1115"
+    BACKGROUND_SECONDARY = "#151823"
+    BACKGROUND_TERTIARY = "#111318"
+
+    # Accent colors (neon-ish)
+    ACCENT_PRIMARY = "#7c3aed"
+    ACCENT_SECONDARY = "#22d3ee"
+    ACCENT_SUCCESS = "#10b981"
+    ACCENT_WARNING = "#f59e0b"
+    ACCENT_ERROR = "#ef4444"
     
     # Text colors
     TEXT_PRIMARY = "#cdd6f4"
@@ -77,6 +97,7 @@ class SonaTheme:
     @classmethod
     def get_stylesheet(cls) -> str:
         """Generate complete QSS stylesheet"""
+        # Keep stylesheet concise; colors come from the theme constants.
         return f"""
         /* Main Application Styling */
         QMainWindow {{
@@ -131,17 +152,7 @@ class SonaTheme:
             color: {cls.BACKGROUND_PRIMARY};
         }}
         
-        QTreeWidget::branch:has-children:!has-siblings:closed,
-        QTreeWidget::branch:closed:has-children:has-siblings {{
-            border-image: none;
-            image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTYgNEwxMCA4TDYgMTJaIiBmaWxsPSIjNmM3MDg2Ii8+Cjwvc3ZnPgo=);
-        }}
-        
-        QTreeWidget::branch:open:has-children:!has-siblings,
-        QTreeWidget::branch:open:has-children:has-siblings {{
-            border-image: none;
-            image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQgNkw4IDEwTDEyIDZaIiBmaWxsPSIjNmM3MDg2Ii8+Cjwvc3ZnPgo=);
-        }}
+    /* Default branch icons will be used; custom images removed for brevity */
         
         /* Buttons */
         QPushButton {{
@@ -208,7 +219,8 @@ class SonaTheme:
         }}
         
         QComboBox::down-arrow {{
-            image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQgNkw4IDEwTDEyIDZaIiBmaWxsPSIjY2RkNmY0Ii8+Cjwvc3ZnPgo=);
+            width: 0px;
+            height: 0px;
         }}
         
         QComboBox QAbstractItemView {{
@@ -691,7 +703,7 @@ class AppDisplay(QStackedWidget):
         layout.setAlignment(Qt.AlignCenter)
         
         # Welcome content
-        title = QLabel("Welcome to Sona v0.7.0")
+        title = QLabel(f"Welcome to {STUDIO_NAME}")
         title.setObjectName("titleLabel")
         title.setAlignment(Qt.AlignCenter)
         
@@ -810,20 +822,19 @@ class MainWindow(QMainWindow):
     
     def __init__(self):
         super().__init__()
-        
         # Initialize components
         self.execution_controller = ExecutionController()
         self.current_file = None
-        
+
         # Setup UI
         self.setup_ui()
         self.setup_connections()
-        
+
         # Apply theme
         self.setStyleSheet(SonaTheme.get_stylesheet())
-        
+
         # Window properties
-        self.setWindowTitle("Sona v0.7.0 - Modern Development Platform")
+        self.setWindowTitle(f"{STUDIO_NAME} - Modern Development Platform")
         self.setMinimumSize(1200, 800)
         self.resize(1400, 900)
         
@@ -856,49 +867,79 @@ class MainWindow(QMainWindow):
         top_bar = QWidget()
         top_bar.setObjectName("topBar")
         top_bar.setFixedHeight(60)
-        
+
         layout = QHBoxLayout(top_bar)
-        layout.setContentsMargins(16, 8, 16, 8)
-        
-        # Left side - Title
-        title_label = QLabel("Sona v0.7.0")
-        title_label.setObjectName("titleLabel")
-        layout.addWidget(title_label)
-        
-        # Spacer
+        layout.setContentsMargins(12, 6, 12, 6)
+
+        # Left: window control dots + breadcrumbs
+        left = QWidget()
+        left_layout = QHBoxLayout(left)
+        left_layout.setContentsMargins(0, 0, 0, 0)
+        left_layout.setSpacing(8)
+
+        for color in ("#ff5f57", "#febc2e", "#28c840"):
+            dot = QLabel()
+            dot.setFixedSize(12, 12)
+            dot.setStyleSheet(f"background:{color};border-radius:6px;")
+            left_layout.addWidget(dot)
+
+        crumbs = QLabel(f"<b>{STUDIO_NAME}</b> &nbsp; › &nbsp; apps &nbsp; › &nbsp; ide &nbsp; › &nbsp; renderer.tsx")
+        crumbs.setStyleSheet(f"color: {SonaTheme.TEXT_SECONDARY};")
+        left_layout.addWidget(crumbs)
+        left_layout.addStretch()
+        layout.addWidget(left, 1)
+
+        # Middle spacer
         layout.addStretch()
-        
-        # Right side controls
-        # Execution mode dropdown
+
+        # Right controls: mode, console, run, theme/actions
         mode_label = QLabel("Mode:")
         layout.addWidget(mode_label)
-        
+
         self.mode_combo = QComboBox()
         self.mode_combo.addItems([ExecutionMode.SANDBOX, ExecutionMode.NATIVE, ExecutionMode.REMOTE])
         self.mode_combo.setCurrentText(ExecutionMode.SANDBOX)
         layout.addWidget(self.mode_combo)
-        
-        layout.addSpacing(20)
-        
-        # Console toggle
+
+        layout.addSpacing(12)
+
         self.console_button = QPushButton("</> Console")
         self.console_button.setObjectName("consoleButton")
         self.console_button.setCheckable(True)
         layout.addWidget(self.console_button)
-        
-        layout.addSpacing(10)
-        
-        # Run button
+
+        layout.addSpacing(6)
+
         self.run_button = QPushButton("🔵 Run")
         self.run_button.setObjectName("runButton")
         self.run_button.setEnabled(False)
         layout.addWidget(self.run_button)
-        
+
+        # Theme/action buttons
+        self.toggle_welcome_btn = QPushButton("Welcome Hub")
+        self.toggle_welcome_btn.setObjectName("toggleWelcome")
+        layout.addWidget(self.toggle_welcome_btn)
+
+        self.theme_base_btn = QPushButton("Glass")
+        self.theme_base_btn.setObjectName("themeBase")
+        layout.addWidget(self.theme_base_btn)
+
+        self.theme_neon_btn = QPushButton("Neon")
+        self.theme_neon_btn.setObjectName("themeNeon")
+        layout.addWidget(self.theme_neon_btn)
+
+        self.theme_zen_btn = QPushButton("Zen")
+        self.theme_zen_btn.setObjectName("themeZen")
+        layout.addWidget(self.theme_zen_btn)
+
         # Add to main window as toolbar
         toolbar = self.addToolBar("Main")
         toolbar.setMovable(False)
         toolbar.setFloatable(False)
         toolbar.addWidget(top_bar)
+
+        # Create welcome overlay
+        self.create_welcome_overlay()
         
     def create_menu_bar(self):
         """Create the menu bar"""
@@ -943,7 +984,7 @@ class MainWindow(QMainWindow):
         status_bar.addPermanentWidget(self.memory_status)
         
         # Version info
-        status_bar.addPermanentWidget(QLabel("  |  Sona Platform v0.7.0"))
+        status_bar.addPermanentWidget(QLabel(f"  |  Language v{LANGUAGE_VERSION} | {STUDIO_DISPLAY_VERSION}"))
         
     def setup_connections(self):
         """Setup signal/slot connections"""
@@ -958,6 +999,15 @@ class MainWindow(QMainWindow):
         self.run_button.clicked.connect(self.run_current)
         self.console_button.toggled.connect(self.toggle_console)
         self.mode_combo.currentTextChanged.connect(self.execution_controller.set_execution_mode)
+        # Theme / welcome handlers (connected only if buttons exist)
+        if hasattr(self, 'toggle_welcome_btn'):
+            self.toggle_welcome_btn.clicked.connect(self.toggle_welcome)
+        if hasattr(self, 'theme_base_btn'):
+            self.theme_base_btn.clicked.connect(self.apply_theme_base)
+        if hasattr(self, 'theme_neon_btn'):
+            self.theme_neon_btn.clicked.connect(self.apply_theme_neon)
+        if hasattr(self, 'theme_zen_btn'):
+            self.theme_zen_btn.clicked.connect(self.apply_theme_zen)
         
     def on_app_selected(self, app_name: str, app_path: str):
         """Handle application selection"""
@@ -1043,22 +1093,56 @@ class MainWindow(QMainWindow):
             self.file_status.setText(f"Selected: {Path(file_path).name}")
             self.run_button.setEnabled(True)
             self.app_display.show_code(file_path)
+
+    # --- Welcome overlay and theme helpers (UI-only) ---
+    def create_welcome_overlay(self):
+        """Create a welcome overlay widget that can be toggled"""
+        self.welcome_wrap = QWidget(self)
+        self.welcome_wrap.setObjectName('welcomeWrap')
+        self.welcome_wrap.setStyleSheet('background: transparent;')
+        self.welcome_wrap.setVisible(False)
+
+        # Simple centered label/card
+        welcome = QLabel("Welcome to " + STUDIO_NAME, self.welcome_wrap)
+        welcome.setAlignment(Qt.AlignCenter)
+        welcome.setStyleSheet(f"color: {SonaTheme.TEXT_PRIMARY}; background: rgba(12,14,21,.85); padding: 24px; border-radius: 16px; border: 1px solid {SonaTheme.BORDER_COLOR};")
+        welcome.setFixedSize(800, 420)
+        welcome.move((self.width() - welcome.width())//2, (self.height() - welcome.height())//2)
+
+    def toggle_welcome(self):
+        if hasattr(self, 'welcome_wrap'):
+            self.welcome_wrap.setVisible(not self.welcome_wrap.isVisible())
+
+    def apply_theme_base(self):
+        # keep default theme
+        self.setStyleSheet(SonaTheme.get_stylesheet())
+
+    def apply_theme_neon(self):
+        # apply neon variant by tweaking palette — simple example
+        neon_styles = SonaTheme.get_stylesheet() + "\nQMainWindow { background: linear-gradient(180deg,#07070a,#0f1115); }"
+        self.setStyleSheet(neon_styles)
+
+    def apply_theme_zen(self):
+        zen_styles = SonaTheme.get_stylesheet() + "\nQMainWindow { background: linear-gradient(180deg,#0b0d10,#0b0d10); }"
+        self.setStyleSheet(zen_styles)
     
     def show_about(self):
         """Show about dialog"""
-        QMessageBox.about(self, "About Sona", """
-        <h3>Sona v0.7.0 - Modern Development Platform</h3>
-        <p>A professional, modern application launcher built with PySide6.</p>
-        <p><b>Features:</b></p>
-        <ul>
-        <li>Interactive application browser</li>
-        <li>Real-time code execution</li>
-        <li>Embedded game and tool support</li>
-        <li>Modern, responsive UI</li>
-        <li>Multiple execution modes</li>
-        </ul>
-        <p>Built for the Sona Programming Language</p>
-        """)
+        about_html = (
+            f"<h3>{STUDIO_NAME} - Modern Development Platform</h3>"
+            f"<p>A professional, modern application launcher built with PySide6.</p>"
+            "<p><b>Features:</b></p>"
+            "<ul>"
+            "<li>Interactive application browser</li>"
+            "<li>Real-time code execution</li>"
+            "<li>Embedded game and tool support</li>"
+            "<li>Modern, responsive UI</li>"
+            "<li>Multiple execution modes</li>"
+            "</ul>"
+            f"<p>Built for Sona Language v{LANGUAGE_VERSION}</p>"
+        )
+
+        QMessageBox.about(self, "About Sona", about_html)
     
     def show_docs(self):
         """Show documentation (placeholder)"""
@@ -1075,8 +1159,8 @@ def main():
     app = QApplication(sys.argv)
     
     # Set application properties
-    app.setApplicationName("Sona Modern Launcher")
-    app.setApplicationVersion("0.7.0")
+    app.setApplicationName(STUDIO_NAME)
+    app.setApplicationVersion(STUDIO_DISPLAY_VERSION)
     app.setOrganizationName("Sona Platform")
     
     # Create and show main window

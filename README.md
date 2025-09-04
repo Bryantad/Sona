@@ -2,7 +2,7 @@
 
 **Revolutionary AI-Powered Development with Cognitive Accessibility**
 
-[![Version](https://img.shields.io/badge/version-0.9.0-blue.svg)](https://github.com/Bryantad/Sona/releases/tag/v0.9.0)
+[![Version](https://img.shields.io/badge/version-0.9.2-blue.svg)](https://github.com/Bryantad/Sona/releases/tag/v0.9.2)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://python.org)
 [![AI-Native](https://img.shields.io/badge/AI--Native-Revolutionary-purple.svg)](docs/ai-features.md)
@@ -10,7 +10,7 @@
 
 > **The world's first programming language with integrated AI collaboration, natural language programming, and cognitive accessibility features.**
 
-Sona v0.9.0 represents a paradigm shift in programming. Write code that thinks with you, explains itself, and adapts to your cognitive needs. Experience true human-AI collaboration in software development.
+Sona v0.9.2 represents a paradigm shift in programming. Write code that thinks with you, explains itself, and adapts to your cognitive needs. Experience true human-AI collaboration in software development.
 
 ## ✨ Revolutionary Features
 
@@ -88,7 +88,7 @@ focus_mode("learning Sona", "20min")
 ai_explain("function authenticate(user) { return jwt.sign(user); }", "beginner")
 ```
 
-## 🌟 Why Sona v0.9.0 is Revolutionary
+## 🌟 Why Sona v0.9.2 is Revolutionary
 
 ### Paradigm-Shifting Innovations
 
