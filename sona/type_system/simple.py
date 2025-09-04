@@ -4,7 +4,7 @@ Sona Language Type System - Basic Type Definitions (Simplified)
 This module provides a simplified type system for initial Phase 2 implementation.
 
 Author: Sona Development Team
-Version: 0.8.0 (Phase 2)
+Version: 0.9.0 (Phase 2)
 License: See LICENSE file
 """
 

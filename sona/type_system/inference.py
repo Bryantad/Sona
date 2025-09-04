@@ -6,7 +6,7 @@ with constraint generation, unification, and type scheme generalization.
 It provides principal type inference for the Sona language.
 
 Author: Sona Development Team
-Version: 0.8.0 (Phase 2)
+Version: 0.9.0 (Phase 2)
 License: See LICENSE file
 """
 

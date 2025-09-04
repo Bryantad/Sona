@@ -1,5 +1,5 @@
 """
-Professional Sona Transpiler v0.8.1 - Multi-Language Code Generator
+Professional Sona Transpiler v0.9.2 - Multi-Language Code Generator
 
 Advanced AI-Assisted Code Remediation Protocol Implementation
 Complete cognitive-aware transpiler with accessibility excellence
@@ -234,31 +234,58 @@ class SonaTranspiler:
     
     def _transpile_to_python(self, code: str, options: TranspileOptions) -> str:
         """Transpile Sona code to professional Python with cognitive awareness."""
-        lines = code.split('\n')
+        src_lines = code.split('\n')
         python_lines = []
-        
-        for line in lines:
-            line = line.strip()
-            if not line or line.startswith('#'):
-                python_lines.append(line)
+        indent_level = 0
+
+        for raw in src_lines:
+            line = raw.strip()
+            # Skip empty lines and comments, preserve as-is
+            if not line:
+                python_lines.append('')
                 continue
-            
-            # Function definitions
+            if line.startswith('#'):
+                python_lines.append('' * (indent_level * 4) + line)
+                continue
+
+            # Handle block starts and ends using '{' and '}'
+            # If a line ends with '{', treat it as block start
+            is_block_start = line.endswith('{')
+            if is_block_start:
+                line = line[:-1].strip()
+
+            # Handle explicit block end '}'
+            if line == '}' or line == '};' or line == '}':
+                indent_level = max(0, indent_level - 1)
+                continue
+
+            # Transform function definitions
             if line.startswith('func '):
                 line = re.sub(r'func\s+(\w+)\s*\(([^)]*)\)', r'def \1(\2):', line)
-            
+
             # Variable declarations
             line = re.sub(r'let\s+(\w+)\s*=', r'\1 =', line)
             line = re.sub(r'var\s+(\w+)\s*=', r'\1 =', line)
-            
+
             # Boolean and null literals
             line = re.sub(r'\btrue\b', 'True', line)
             line = re.sub(r'\bfalse\b', 'False', line)
             line = re.sub(r'\bnull\b', 'None', line)
-            
-            python_lines.append(line)
-        
-        return '\n'.join(python_lines)
+
+            # Remove any trailing semicolons
+            if line.endswith(';'):
+                line = line[:-1].rstrip()
+
+            # Prepend indentation
+            indented = (' ' * (indent_level * 4)) + line
+            python_lines.append(indented)
+
+            # If this was a block start, increase indent for following lines
+            if is_block_start:
+                indent_level += 1
+
+        # Ensure final output ends with a newline
+        return '\n'.join(python_lines) + '\n'
     
     def _transpile_to_javascript(self, code: str, options: TranspileOptions) -> str:
         """Transpile to professional JavaScript with accessibility features."""

@@ -2,7 +2,7 @@
 Sona Language Type System (EXPERIMENTAL v0.7.1)
 
 This package implements an experimental type system for the Sona programming
-language. This is a preview of advanced features planned for v0.8.0.
+language. This is a preview of advanced features planned for v0.9.0.
 
 EXPERIMENTAL Components (v0.7.1):
 - types.py: Core type definitions and type representations
@@ -47,7 +47,7 @@ from .types import (
     TypeVariable,
 )
 
-__version__ = "0.8.1"
+__version__ = "0.9.2"
 __all__ = [
     # Core types
     "Type",

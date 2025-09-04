@@ -1,5 +1,31 @@
 # CHANGELOG - Sona Programming Language
 
+## [0.9.2] - 2025-09-03
+
+### 🚀 **Version Update Release**
+
+#### 🔧 **Core Language Updates**
+
+- **✅ Version Synchronization** - Updated all core components to v0.9.2
+- **✅ Interpreter Updates** - Enhanced interpreter with v0.9.2 compatibility
+- **✅ Transpiler Updates** - Updated transpiler to v0.9.2 with improved stability
+- **✅ CLI Updates** - Command-line interface updated to v0.9.2
+- **✅ Type System Updates** - Type system components updated to v0.9.2
+
+#### 🐛 **Bug Fixes**
+
+- **✅ Version Consistency** - Resolved version inconsistencies across modules
+- **✅ Package Metadata** - Updated setup.py and pyproject.toml with correct version
+- **✅ Documentation Updates** - Updated README and documentation with v0.9.2 references
+
+#### 📦 **Infrastructure Updates**
+
+- **✅ Build System** - Updated build configuration for v0.9.2
+- **✅ Cognitive Core** - Updated cognitive accessibility features to v0.9.2
+- **✅ Type System** - Enhanced type system stability and version alignment
+
+---
+
 ## [0.9.0] - 2025-08-07
 
 All notable changes to the Sona Programming Language project will be documented in this file.

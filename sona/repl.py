@@ -1,5 +1,5 @@
 """
-Professional Sona REPL v0.8.1 - Interactive Cognitive Programming Environment
+Professional Sona REPL v0.9.0 - Interactive Cognitive Programming Environment
 
 Advanced AI-Assisted Code Remediation Protocol Implementation
 Complete REPL with cognitive accessibility features and multi-line editing
@@ -139,7 +139,7 @@ class CognitiveREPL:
         """Print the welcome message with cognitive features."""
         welcome_text = """
 ╔══════════════════════════════════════════════════════════════╗
-║                    Sona REPL v0.8.1                         ║
+║                    Sona REPL v0.9.0                         ║
 ║              Cognitive Programming Environment               ║
 ║                                                              ║
 ║  Advanced AI-Assisted Code Remediation Protocol Active      ║
