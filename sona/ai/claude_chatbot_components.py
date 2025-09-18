@@ -2,11 +2,10 @@
 Supporting components for Claude-like chatbot implementation
 """
 
-import time
 import re
-from typing import Dict, List, Any
+import time
 from collections import deque
-from datetime import datetime
+from typing import Dict, List
 
 from .claude_like_chatbot import ConversationTopic, UserContext
 
@@ -14,7 +13,7 @@ from .claude_like_chatbot import ConversationTopic, UserContext
 class ResponseQualityScorer:
     """Scores response quality based on Claude-like criteria"""
     
-    def score_response(self, response: str, context: Dict) -> float:
+    def score_response(self, response: str, context: dict) -> float:
         """Score response quality on scale of 0-10"""
         scores = []
         
@@ -109,7 +108,7 @@ class ResponseQualityScorer:
             
         return min(score, 1.0)
         
-    def _score_accuracy(self, response: str, context: Dict) -> float:
+    def _score_accuracy(self, response: str, context: dict) -> float:
         """Basic accuracy heuristics (placeholder for more sophisticated checking)"""
         # For now, return base score - in production, this would check facts
         return 0.7
@@ -231,7 +230,7 @@ class TopicTracker:
             
         return ConversationTopic.GENERAL
         
-    def update(self, turn: Dict):
+    def update(self, turn: dict):
         """Update topic tracking with new turn"""
         topic = self.identify_topic(turn['user_input'])
         self.current_topic = topic
@@ -249,7 +248,7 @@ class ConversationMemory:
         self.user_preferences = {}
         self.recurring_topics = {}
         
-    def store_important_fact(self, fact: str, context: Dict):
+    def store_important_fact(self, fact: str, context: dict):
         """Store important information for future reference"""
         self.important_facts.append({
             'fact': fact,
@@ -257,7 +256,7 @@ class ConversationMemory:
             'context': context
         })
         
-    def get_relevant_memories(self, query: str) -> List[str]:
+    def get_relevant_memories(self, query: str) -> list[str]:
         """Retrieve relevant stored memories"""
         # Simple keyword matching - in production, use semantic similarity
         relevant = []
@@ -281,7 +280,7 @@ class ConversationSafetyFilter:
             r'hate\s+speech'
         ]
         
-    def check_safety(self, response: str) -> List[str]:
+    def check_safety(self, response: str) -> list[str]:
         """Check response for safety issues"""
         flags = []
         

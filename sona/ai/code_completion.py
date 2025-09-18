@@ -5,8 +5,8 @@ AI-powered code completion using GPT-2 for cognitive programming.
 Provides intelligent suggestions based on context and coding patterns.
 """
 
-import re
-from typing import List, Dict, Optional, Tuple
+from typing import Dict, List
+
 from .gpt2_integration import get_gpt2_instance
 
 
@@ -24,7 +24,7 @@ class CodeCompletion:
             'working_memory': 'temporary storage and processing'
         }
     
-    def get_completion(self, code_context: str, cursor_position: int = -1) -> List[str]:
+    def get_completion(self, code_context: str, cursor_position: int = -1) -> list[str]:
         """Get AI-powered code completions
         
         Args:
@@ -64,7 +64,7 @@ class CodeCompletion:
         completions = list(dict.fromkeys(completions))  # Remove duplicates
         return self._rank_completions(completions, context_analysis)[:5]
     
-    def _analyze_context(self, code: str) -> Dict:
+    def _analyze_context(self, code: str) -> dict:
         """Analyze code context for intelligent completion"""
         analysis = {
             'language': 'sona',
@@ -106,7 +106,7 @@ class CodeCompletion:
         
         return analysis
     
-    def _get_cognitive_completion(self, context: str) -> List[str]:
+    def _get_cognitive_completion(self, context: str) -> list[str]:
         """Get completions for cognitive programming patterns"""
         completions = []
         current_line = context.split('\n')[-1].strip()
@@ -147,7 +147,7 @@ class CodeCompletion:
         
         return completions
     
-    def _get_ai_completions(self, context: str, analysis: Dict) -> List[str]:
+    def _get_ai_completions(self, context: str, analysis: dict) -> list[str]:
         """Get AI-generated completions using GPT-2"""
         try:
             # Prepare context for AI
@@ -166,7 +166,7 @@ class CodeCompletion:
         
         return []
     
-    def _prepare_ai_context(self, context: str, analysis: Dict) -> str:
+    def _prepare_ai_context(self, context: str, analysis: dict) -> str:
         """Prepare context for AI completion"""
         # Add cognitive programming context
         if analysis['cognitive_context']:
@@ -178,7 +178,7 @@ class CodeCompletion:
         
         return context
     
-    def _clean_ai_suggestions(self, suggestion: str) -> List[str]:
+    def _clean_ai_suggestions(self, suggestion: str) -> list[str]:
         """Clean and format AI suggestions"""
         if not suggestion:
             return []
@@ -194,7 +194,7 @@ class CodeCompletion:
         
         return cleaned
     
-    def _get_pattern_completions(self, context: str) -> List[str]:
+    def _get_pattern_completions(self, context: str) -> list[str]:
         """Get pattern-based completions"""
         completions = []
         current_line = context.split('\n')[-1].strip()
@@ -229,7 +229,7 @@ class CodeCompletion:
         
         return completions
     
-    def _rank_completions(self, completions: List[str], analysis: Dict) -> List[str]:
+    def _rank_completions(self, completions: list[str], analysis: dict) -> list[str]:
         """Rank completions by relevance"""
         if not completions:
             return []
@@ -249,7 +249,7 @@ class CodeCompletion:
         
         return ranked
     
-    def get_cognitive_suggestions(self, context: str) -> List[str]:
+    def get_cognitive_suggestions(self, context: str) -> list[str]:
         """Get cognitive programming suggestions"""
         suggestions = []
         

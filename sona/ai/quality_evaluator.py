@@ -7,10 +7,9 @@ for Claude-like conversational AI responses.
 """
 
 import re
-import time
-from typing import Dict, List, Tuple
 from dataclasses import dataclass
 from enum import Enum
+from typing import Dict, List
 
 
 class ResponseCategory(Enum):
@@ -32,8 +31,8 @@ class QualityMetrics:
     empathy: float
     accuracy: float
     engagement: float
-    detailed_feedback: List[str]
-    improvement_suggestions: List[str]
+    detailed_feedback: list[str]
+    improvement_suggestions: list[str]
 
 
 class QualityEvaluator:
@@ -53,7 +52,7 @@ class QualityEvaluator:
             'engagement': 0.05     # 5% - Follow-up potential
         }
     
-    def _load_quality_patterns(self) -> Dict:
+    def _load_quality_patterns(self) -> dict:
         """Load patterns that indicate quality responses"""
         return {
             'helpfulness_indicators': [
@@ -84,7 +83,7 @@ class QualityEvaluator:
         }
     
     def evaluate_response(self, response: str, user_input: str, 
-                         context: Dict = None) -> QualityMetrics:
+                         context: dict = None) -> QualityMetrics:
         """
         Comprehensive response quality evaluation
         
@@ -316,7 +315,7 @@ class QualityEvaluator:
     
     def _generate_detailed_feedback(self, helpfulness: float, clarity: float, 
                                   thoughtfulness: float, empathy: float, 
-                                  accuracy: float, engagement: float) -> List[str]:
+                                  accuracy: float, engagement: float) -> list[str]:
         """Generate detailed feedback based on scores"""
         feedback = []
         
@@ -344,7 +343,7 @@ class QualityEvaluator:
     def _generate_improvement_suggestions(self, response: str, helpfulness: float, 
                                         clarity: float, thoughtfulness: float, 
                                         empathy: float, accuracy: float, 
-                                        engagement: float) -> List[str]:
+                                        engagement: float) -> list[str]:
         """Generate specific improvement suggestions"""
         suggestions = []
         

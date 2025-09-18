@@ -1,0 +1,183 @@
+//
+// Sona Language Grammar v1.0.0 - CRITICAL PARSER FIXES
+// Fixed multi-parameter support, string escaping, and expression handling
+//
+
+start: statement_list
+
+statement_list: statement (";" statement)* [";"]
+
+?statement: expr
+     | import_stmt
+     | export_stmt
+     | var_assignment
+     | bare_assignment
+     | destructuring_assignment
+     | print_stmt
+     | show_stmt
+     | think_stmt
+     | calculate_stmt
+     | enhanced_if_stmt
+     | when_stmt
+     | match_stmt
+     | enhanced_while_stmt
+     | enhanced_for_stmt
+     | repeat_stmt
+     | func_def
+     | class_def
+     | enhanced_try_stmt
+     | return_stmt
+     | break_stmt
+     | continue_stmt
+     | cognitive_stmt
+
+// ======== Enhanced Control Flow (v1.0.0) ========
+
+// Enhanced if/else/elif with complete support
+enhanced_if_stmt: "if" expr "{" statement* "}" elif_clause* else_clause? -> enhanced_if_stmt
+elif_clause: "else" "if" expr "{" statement* "}" -> elif_clause
+else_clause: "else" "{" statement* "}" -> else_clause
+
+// Enhanced loops with break/continue support
+enhanced_for_stmt: "for" NAME "in" expr "{" statement_list? "}" -> enhanced_for_stmt
+enhanced_while_stmt: "while" expr "{" statement_list? "}" -> enhanced_while_stmt
+
+// Enhanced try/catch/finally with exception type matching
+enhanced_try_stmt: "try" "{" statement* "}" catch_clause+ finally_clause? -> enhanced_try_stmt
+catch_clause: "catch" exception_type ["as" NAME] "{" statement* "}" -> catch_clause
+finally_clause: "finally" "{" statement* "}" -> finally_clause
+exception_type: NAME | STRING
+
+// Return, break, continue
+return_stmt: "return" [expr] -> return_stmt
+break_stmt: "break" -> break_stmt
+continue_stmt: "continue" -> continue_stmt
+
+// REMOVED: AI functions now use regular function_call syntax instead of special statements
+// This allows proper runtime parameter validation instead of parse-time errors
+
+// Cognitive programming statements - FIXED to support function call syntax  
+cognitive_stmt: cognitive_check_stmt
+              | focus_mode_stmt
+              | working_memory_stmt
+
+// FIXED: Use proper function call syntax instead of block syntax
+cognitive_check_stmt: "cognitive_check" "(" [arguments] ")" -> cognitive_check_stmt
+focus_mode_stmt: "focus_mode" "(" [arguments] ")" -> focus_mode_stmt
+working_memory_stmt: "working_memory" "(" [arguments] ")" -> working_memory_stmt
+
+// ======== Variable Assignments ========
+var_assignment: ("let" | "const") NAME "=" expr -> var_assignment
+bare_assignment: NAME "=" expr -> bare_assignment
+
+// FIXED: Support destructuring with proper expression handling
+destructuring_assignment: ("let" | "const") destructuring_pattern "=" expr -> destructuring_assignment
+destructuring_pattern: "{" destructuring_list "}"
+                      | "[" destructuring_list "]"
+destructuring_list: NAME ("," NAME)*
+
+// ======== Enhanced Expressions (v1.0.0) ========
+// FIXED: Proper operator precedence and complex expression support
+
+?expr: or_expr
+
+?or_expr: and_expr ("||" and_expr)*
+?and_expr: equality_expr ("&&" equality_expr)*
+?equality_expr: comparison_expr (("==" | "!=") comparison_expr)*
+?comparison_expr: additive_expr (("<=" | ">=" | "<" | ">") additive_expr)*
+?additive_expr: multiplicative_expr (("+" | "-") multiplicative_expr)*
+?multiplicative_expr: power_expr (("*" | "/" | "%") power_expr)*
+?power_expr: unary_expr ("**" unary_expr)*
+?unary_expr: ("!" | "not" | "-" | "+") unary_expr | postfix_expr
+?postfix_expr: atom_expr (call_suffix | index_suffix | prop_suffix)*
+
+call_suffix: "(" [arguments] ")"
+index_suffix: "[" expr "]"
+prop_suffix: "." NAME
+
+// FIXED: Enhanced atom expressions with proper function call support
+?atom_expr: atom
+
+?atom: NUMBER
+     | STRING
+     | TEMPLATE_STRING
+     | "true" -> true
+     | "True" -> true
+     | "false" -> false
+     | "False" -> false
+     | "null" -> null
+     | "None" -> null
+     | NAME -> variable
+     | "(" expr ")"
+     | list_literal
+     | dict_literal
+     | function_call
+     | method_call
+
+// ======== Function and Method Calls (FIXED) ========
+function_call: NAME "(" [arguments] ")" -> func_call
+method_call: atom "." NAME "(" [arguments] ")" -> method_call
+property_access: atom "." NAME -> prop_access
+
+// REMOVED: AI functions now use regular function_call syntax
+
+// FIXED: Robust argument handling
+arguments: expr ("," expr)* -> arg_list
+
+// ======== Collections ========
+list_literal: "[" [list_elements] "]" -> list_literal
+list_elements: expr ("," expr)*
+
+dict_literal: "{" [dict_elements] "]" -> dict_literal
+dict_elements: dict_pair ("," dict_pair)*
+dict_pair: (NAME | STRING) ":" expr
+
+// ======== Other Statements ========
+import_stmt: "import" import_path ["as" NAME] -> import_stmt
+export_stmt: "export" (func_def | class_def | var_assignment) -> export_stmt
+import_path: NAME ("." NAME)*
+
+print_stmt: "print" "(" [arguments] ")" -> print_stmt
+show_stmt: "show" "(" [arguments] ")" -> show_stmt
+think_stmt: "think" "(" [arguments] ")" -> think_stmt
+calculate_stmt: "calculate" "(" [arguments] ")" -> calculate_stmt
+
+// When and match statements
+when_stmt: "when" expr "{" when_cases "}" -> when_stmt
+when_cases: when_case+
+when_case: expr "=>" statement_list -> when_case
+
+match_stmt: "match" expr "{" match_cases "}" -> match_stmt
+match_cases: match_case+
+match_case: pattern "=>" statement_list -> match_case
+pattern: expr | NAME
+
+repeat_stmt: "repeat" NUMBER "{" statement_list "}" -> repeat_stmt
+
+// ======== Function and Class Definitions ========
+func_def: "func" NAME "(" [func_params] ")" "{" statement_list "}" -> func_def
+     | "def" NAME "(" [func_params] ")" "{" statement_list "}" -> func_def
+
+func_params: func_param ("," func_param)*
+func_param: NAME ["=" expr] -> func_param
+
+class_def: "class" NAME ["(" NAME ")"] "{" class_body "}" -> class_def
+class_body: class_member*
+class_member: func_def | var_assignment
+
+// ======== FIXED Terminals (v1.0.0) ========
+NAME: /[a-zA-Z_][a-zA-Z0-9_]*/
+NUMBER: /\d+(\.\d+)?/
+
+// FIXED: Enhanced string support with proper escaping - HIGHEST PRIORITY
+STRING.10: /"(\\.|[^"\\])*"/ | /'(\\.|[^'\\])*'/
+TEMPLATE_STRING.10: /`(\\.|[^`\\])*`/
+
+// ======== Whitespace and Comments (FIXED) ========
+%import common.WS
+%import common.NEWLINE
+%ignore WS
+
+// FIXED: Proper comment support
+COMMENT: "//" /[^\r\n]*/
+%ignore COMMENT

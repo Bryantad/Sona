@@ -6,7 +6,8 @@ Provides executive function support, attention management, and cognitive load mo
 """
 
 import time
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
+
 from .gpt2_integration import get_gpt2_instance
 
 
@@ -27,7 +28,7 @@ class CognitiveAssistant:
             'preferred_break_type': 'gentle'
         }
     
-    def analyze_working_memory(self, current_task: str, context: str) -> Dict[str, Any]:
+    def analyze_working_memory(self, current_task: str, context: str) -> dict[str, Any]:
         """Analyze working memory load and provide suggestions"""
         analysis = {
             'cognitive_load': 'medium',
@@ -81,7 +82,7 @@ class CognitiveAssistant:
         
         return analysis
     
-    def detect_hyperfocus(self, typing_data: List[Dict]) -> Dict[str, Any]:
+    def detect_hyperfocus(self, typing_data: list[dict]) -> dict[str, Any]:
         """Detect hyperfocus patterns and provide gentle interventions"""
         self.typing_patterns.extend(typing_data)
         
@@ -120,7 +121,7 @@ class CognitiveAssistant:
             'intervention': intervention
         }
     
-    def suggest_break_activity(self, cognitive_state: str = 'medium') -> Dict[str, Any]:
+    def suggest_break_activity(self, cognitive_state: str = 'medium') -> dict[str, Any]:
         """Suggest appropriate break activities based on cognitive state"""
         break_activities = {
             'low': [
@@ -166,7 +167,7 @@ class CognitiveAssistant:
             'break_type': self.cognitive_profile['preferred_break_type']
         }
     
-    def analyze_executive_function(self, task_description: str) -> Dict[str, Any]:
+    def analyze_executive_function(self, task_description: str) -> dict[str, Any]:
         """Analyze task for executive function support"""
         analysis = {
             'task_breakdown': [],
@@ -210,7 +211,7 @@ class CognitiveAssistant:
         
         return max_nesting
     
-    def _generate_cognitive_suggestions(self, load: str, factors: Dict, task: str) -> List[str]:
+    def _generate_cognitive_suggestions(self, load: str, factors: dict, task: str) -> list[str]:
         """Generate cognitive load management suggestions"""
         suggestions = []
         
@@ -276,7 +277,7 @@ class CognitiveAssistant:
         # Normalize to 0-1 scale (5 events/sec = 1.0)
         return min(events_per_second / 5.0, 1.0)
     
-    def _generate_hyperfocus_intervention(self, session_minutes: float) -> Dict[str, str]:
+    def _generate_hyperfocus_intervention(self, session_minutes: float) -> dict[str, str]:
         """Generate gentle hyperfocus intervention"""
         if session_minutes > 180:  # 3 hours
             urgency = 'high'
@@ -303,7 +304,7 @@ class CognitiveAssistant:
         }
         return actions.get(urgency, actions['medium'])
     
-    def _get_ai_break_suggestion(self, cognitive_state: str) -> Optional[str]:
+    def _get_ai_break_suggestion(self, cognitive_state: str) -> str | None:
         """Get AI-powered break suggestion"""
         prompt = f"Suggest a {cognitive_state} cognitive load break activity for a programmer:"
         suggestions = self.gpt2.generate_completion(prompt, max_new_tokens=20, temperature=0.7)
@@ -322,7 +323,7 @@ class CognitiveAssistant:
         }
         return durations.get(cognitive_state, 5)
     
-    def _get_ai_task_breakdown(self, task: str) -> List[str]:
+    def _get_ai_task_breakdown(self, task: str) -> list[str]:
         """Use AI to break down complex tasks"""
         prompt = f"Break down this programming task into subtasks:\n{task}\nSubtasks:"
         
@@ -349,7 +350,7 @@ class CognitiveAssistant:
         
         return []
     
-    def _pattern_task_breakdown(self, task: str) -> List[str]:
+    def _pattern_task_breakdown(self, task: str) -> list[str]:
         """Pattern-based task breakdown as fallback"""
         generic_breakdown = [
             "Plan the approach",
@@ -360,7 +361,7 @@ class CognitiveAssistant:
         ]
         return generic_breakdown
     
-    def _analyze_cognitive_demands(self, task: str) -> Dict[str, float]:
+    def _analyze_cognitive_demands(self, task: str) -> dict[str, float]:
         """Analyze cognitive demands of a task"""
         demands = {
             'working_memory': 0.5,
@@ -390,7 +391,7 @@ class CognitiveAssistant:
         
         return demands
     
-    def _generate_executive_strategies(self, demands: Dict[str, float]) -> List[str]:
+    def _generate_executive_strategies(self, demands: dict[str, float]) -> list[str]:
         """Generate executive function support strategies"""
         strategies = []
         
