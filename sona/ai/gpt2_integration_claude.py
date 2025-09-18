@@ -7,13 +7,15 @@ to deliver high-performance conversational AI with Claude-like response patterns
 """
 
 import asyncio
-import time
-import logging
-import torch
-from typing import Dict, List, Optional, Tuple
-from transformers import GPT2LMHeadModel, GPT2Tokenizer
-import psutil
 import gc
+import logging
+import time
+from typing import Dict, List, Tuple
+
+import psutil
+import torch
+from transformers import GPT2LMHeadModel, GPT2Tokenizer
+
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +81,7 @@ class GPT2Integration:
                           prompt: str, 
                           max_tokens: int = 150,
                           temperature: float = 0.7,
-                          top_p: float = 0.9) -> Tuple[str, Dict]:
+                          top_p: float = 0.9) -> tuple[str, dict]:
         """
         Generate text using CUDA-optimized GPT-2
         Returns: (generated_text, metrics)
@@ -157,7 +159,7 @@ class GPT2Integration:
         except Exception as e:
             logger.warning(f"Could not apply all optimizations: {str(e)}")
     
-    def _calculate_generation_metrics(self, generation_time: float, text_length: int) -> Dict:
+    def _calculate_generation_metrics(self, generation_time: float, text_length: int) -> dict:
         """Calculate detailed generation metrics"""
         tokens_per_second = (text_length / 4) / generation_time  # Rough token estimate
         
@@ -186,7 +188,7 @@ class GPT2Integration:
         process = psutil.Process()
         return process.memory_info().rss / 1024 / 1024
     
-    def _get_cuda_memory_usage(self) -> Dict:
+    def _get_cuda_memory_usage(self) -> dict:
         """Get CUDA memory usage information"""
         if not torch.cuda.is_available():
             return {'allocated': 0, 'cached': 0}
@@ -196,7 +198,7 @@ class GPT2Integration:
             'cached': torch.cuda.memory_reserved() / 1024 / 1024       # MB
         }
     
-    def get_performance_metrics(self) -> Dict:
+    def get_performance_metrics(self) -> dict:
         """Return current performance metrics"""
         return {
             **self.performance_metrics,
@@ -227,7 +229,7 @@ class GPT2Integration:
         gc.collect()
         logger.debug("Memory cleanup completed")
     
-    def batch_generate(self, prompts: List[str], **kwargs) -> List[Tuple[str, Dict]]:
+    def batch_generate(self, prompts: list[str], **kwargs) -> list[tuple[str, dict]]:
         """Generate responses for multiple prompts efficiently"""
         results = []
         

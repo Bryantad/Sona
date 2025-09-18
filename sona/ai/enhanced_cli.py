@@ -6,16 +6,17 @@ suggest, and explain with cognitive assistance features.
 """
 
 import time
-import psutil
-import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List
+
+import psutil
+
 
 # Import AI modules
 try:
-    from sona.ai.gpt2_integration import get_gpt2_instance
-    from sona.ai.cognitive_assistant import CognitiveAssistant
     from sona.ai.code_completion import CodeCompletion
+    from sona.ai.cognitive_assistant import CognitiveAssistant
+    from sona.ai.gpt2_integration import get_gpt2_instance
     from sona.ai.natural_language import NaturalLanguageProcessor
     AI_AVAILABLE = True
 except ImportError:
@@ -23,7 +24,7 @@ except ImportError:
     print("⚠️ AI features not available. Install transformers and torch.")
 
 
-def profile_command(args: List[str]) -> None:
+def profile_command(args: list[str]) -> None:
     """Sona profile command - AI-powered execution profiling"""
     if not args:
         print("Usage: sona profile <file.sona> [--ai-insights]")
@@ -45,7 +46,7 @@ def profile_command(args: List[str]) -> None:
     
     try:
         # Read and analyze the code
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             code_content = f.read()
         
         # Basic code analysis
@@ -75,7 +76,7 @@ def profile_command(args: List[str]) -> None:
         print(f"❌ Profiling failed: {e}")
 
 
-def benchmark_command(args: List[str]) -> None:
+def benchmark_command(args: list[str]) -> None:
     """Sona benchmark command - Performance testing with AI recommendations"""
     if not args:
         print("Usage: sona benchmark <file.sona> [--compare-versions] [--ai-recommendations]")
@@ -93,7 +94,7 @@ def benchmark_command(args: List[str]) -> None:
     print("=" * 50)
     
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             code_content = f.read()
         
         # Run multiple benchmark iterations
@@ -114,7 +115,7 @@ def benchmark_command(args: List[str]) -> None:
         print(f"❌ Benchmarking failed: {e}")
 
 
-def suggest_command(args: List[str]) -> None:
+def suggest_command(args: list[str]) -> None:
     """Sona suggest command - AI-powered code suggestions"""
     if not args:
         print("Usage: sona suggest <file.sona> [--cognitive] [--performance] [--accessibility]")
@@ -137,7 +138,7 @@ def suggest_command(args: List[str]) -> None:
     print("=" * 50)
     
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             code_content = f.read()
         
         # Initialize AI components
@@ -170,7 +171,7 @@ def suggest_command(args: List[str]) -> None:
         print(f"❌ Suggestion generation failed: {e}")
 
 
-def explain_command(args: List[str]) -> None:
+def explain_command(args: list[str]) -> None:
     """Sona explain command - AI code explanation"""
     if not args:
         print("Usage: sona explain <file.sona> [--style simple|detailed|cognitive]")
@@ -198,7 +199,7 @@ def explain_command(args: List[str]) -> None:
     print("=" * 50)
     
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             code_content = f.read()
         
         # Initialize NLP processor
@@ -214,7 +215,7 @@ def explain_command(args: List[str]) -> None:
             cognitive_assistant = CognitiveAssistant()
             analysis = cognitive_assistant.analyze_working_memory("explaining code", code_content)
             
-            print(f"\n🧠 Cognitive Analysis:")
+            print("\n🧠 Cognitive Analysis:")
             print(f"   Complexity: {analysis['cognitive_load']}")
             print(f"   Suggestions: {', '.join(analysis['suggestions'][:2])}")
         
@@ -224,7 +225,7 @@ def explain_command(args: List[str]) -> None:
 
 # Helper functions
 
-def analyze_code_structure(code: str) -> Dict[str, Any]:
+def analyze_code_structure(code: str) -> dict[str, Any]:
     """Analyze basic code structure"""
     lines = code.split('\n')
     non_empty_lines = [line for line in lines if line.strip()]
@@ -252,16 +253,16 @@ def simulate_execution(code: str) -> float:
     return complexity
 
 
-def display_profile_results(results: Dict[str, Any]) -> None:
+def display_profile_results(results: dict[str, Any]) -> None:
     """Display profiling results"""
-    print(f"📊 Profiling Results")
+    print("📊 Profiling Results")
     print(f"   File: {results['file']}")
     print(f"   Execution Time: {results['execution_time']:.4f}s")
     print(f"   Total Time: {results['total_time']:.4f}s")
     print(f"   Memory Used: {results['memory_used']:.2f} MB")
     
     analysis = results['code_analysis']
-    print(f"\n📈 Code Analysis:")
+    print("\n📈 Code Analysis:")
     print(f"   Lines of Code: {analysis['code_lines']}")
     print(f"   Functions: {analysis['functions']}")
     print(f"   Classes: {analysis['classes']}")
@@ -270,12 +271,12 @@ def display_profile_results(results: Dict[str, Any]) -> None:
     print(f"   Cognitive Keywords: {analysis['cognitive_keywords']}")
 
 
-def generate_ai_insights(code: str, analysis: Dict[str, Any]) -> None:
+def generate_ai_insights(code: str, analysis: dict[str, Any]) -> None:
     """Generate AI-powered insights"""
     try:
         gpt2 = get_gpt2_instance()
         
-        print(f"\n🤖 AI Insights:")
+        print("\n🤖 AI Insights:")
         
         # Generate performance suggestions
         suggestions = gpt2.suggest_improvements(code)
@@ -292,7 +293,7 @@ def generate_ai_insights(code: str, analysis: Dict[str, Any]) -> None:
         print(f"   ⚠️ AI insights unavailable: {e}")
 
 
-def run_benchmark_iterations(code: str, iterations: int = 5) -> Dict[str, Any]:
+def run_benchmark_iterations(code: str, iterations: int = 5) -> dict[str, Any]:
     """Run multiple benchmark iterations"""
     times = []
     
@@ -311,7 +312,7 @@ def run_benchmark_iterations(code: str, iterations: int = 5) -> Dict[str, Any]:
     }
 
 
-def display_benchmark_results(results: Dict[str, Any]) -> None:
+def display_benchmark_results(results: dict[str, Any]) -> None:
     """Display benchmark results"""
     print(f"⚡ Benchmark Results ({results['iterations']} iterations):")
     print(f"   Average Time: {results['average']:.4f}s")
@@ -320,21 +321,21 @@ def display_benchmark_results(results: Dict[str, Any]) -> None:
     print(f"   Consistency: {((1 - (results['max'] - results['min']) / results['average']) * 100):.1f}%")
 
 
-def compare_with_previous_versions(results: Dict[str, Any]) -> None:
+def compare_with_previous_versions(results: dict[str, Any]) -> None:
     """Compare with previous version performance"""
-    print(f"\n📊 Version Comparison:")
+    print("\n📊 Version Comparison:")
     print("   v0.8.1: Current results")
     print("   v0.8.0: ~15% slower (simulated)")
     print("   v0.7.2: ~30% slower (simulated)")
 
 
-def generate_performance_recommendations(code: str, results: Dict[str, Any]) -> None:
+def generate_performance_recommendations(code: str, results: dict[str, Any]) -> None:
     """Generate AI performance recommendations"""
     try:
         gpt2 = get_gpt2_instance()
         recommendations = gpt2.suggest_improvements(code)
         
-        print(f"\n🚀 Performance Recommendations:")
+        print("\n🚀 Performance Recommendations:")
         if recommendations:
             print(f"   {recommendations}")
         else:
@@ -344,13 +345,13 @@ def generate_performance_recommendations(code: str, results: Dict[str, Any]) -> 
         print(f"   ⚠️ AI recommendations unavailable: {e}")
 
 
-def generate_cognitive_suggestions(code: str, cognitive_assistant: CognitiveAssistant) -> List[str]:
+def generate_cognitive_suggestions(code: str, cognitive_assistant: CognitiveAssistant) -> list[str]:
     """Generate cognitive programming suggestions"""
     analysis = cognitive_assistant.analyze_working_memory("code review", code)
     return analysis['suggestions']
 
 
-def generate_performance_suggestions(code: str, gpt2) -> List[str]:
+def generate_performance_suggestions(code: str, gpt2) -> list[str]:
     """Generate performance suggestions"""
     try:
         suggestions = gpt2.suggest_improvements(code)
@@ -359,12 +360,12 @@ def generate_performance_suggestions(code: str, gpt2) -> List[str]:
         return ["Performance analysis unavailable"]
 
 
-def generate_accessibility_suggestions(code: str, code_completion: CodeCompletion) -> List[str]:
+def generate_accessibility_suggestions(code: str, code_completion: CodeCompletion) -> list[str]:
     """Generate accessibility suggestions"""
     return code_completion.get_cognitive_suggestions(code)
 
 
-def display_suggestions(suggestions: Dict[str, List[str]]) -> None:
+def display_suggestions(suggestions: dict[str, list[str]]) -> None:
     """Display all suggestions"""
     for category, suggestion_list in suggestions.items():
         if suggestion_list:

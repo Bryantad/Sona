@@ -5,9 +5,11 @@ This module integrates the fine-tuned Sona GPT-2 model into the Sona AI system,
 replacing the base GPT-2 with our Sona-trained version.
 """
 
-import torch
 from pathlib import Path
-from typing import Optional, List, Dict, Any
+from typing import List
+
+import torch
+
 
 try:
     from transformers import GPT2LMHeadModel, GPT2Tokenizer
@@ -132,7 +134,7 @@ class SonaSpecializedGPT2:
         
         return explanation
     
-    def suggest_sona_improvements(self, code: str) -> List[str]:
+    def suggest_sona_improvements(self, code: str) -> list[str]:
         """Suggest improvements for Sona code"""
         prompt = f"Suggest improvements for this Sona code:\n{code}\nSuggestions:\n1."
         
@@ -177,7 +179,7 @@ class SonaSpecializedGPT2:
         
         return completion
     
-    def get_sona_examples(self, topic: str) -> List[str]:
+    def get_sona_examples(self, topic: str) -> list[str]:
         """Get Sona code examples for a specific topic"""
         prompt = f"Show Sona code examples for {topic}:\n\nExample 1:\n"
         

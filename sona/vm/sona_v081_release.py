@@ -12,11 +12,11 @@ INTEGRATION SUMMARY:
 TARGET: Release production-ready Sona v0.8.1 with all Phase 1 features
 """
 
-import time
 import json
-import os
-from typing import Any, Dict, List
+import time
 from pathlib import Path
+from typing import Any, Dict, List
+
 
 # Import all Phase 1 components
 try:
@@ -25,9 +25,7 @@ try:
     from .day4_exception_handling import ExceptionHandlingVM, ExceptionType
     from .day5_module_system import ModularVM, ModuleInfo
 except ImportError:
-    from day2_final_test import CompactVM
-    from day3_advanced_features import AdvancedVM
-    from day4_exception_handling import ExceptionHandlingVM, ExceptionType
+    from day4_exception_handling import ExceptionType
     from day5_module_system import ModularVM, ModuleInfo
 
 
@@ -126,7 +124,7 @@ class SonaVM_v081(ModularVM):
             )
             self.stdlib_modules[name] = module_info
     
-    def get_version_info(self) -> Dict[str, Any]:
+    def get_version_info(self) -> dict[str, Any]:
         """Get comprehensive version information."""
         return {
             **self.version_info,
@@ -139,7 +137,7 @@ class SonaVM_v081(ModularVM):
             }
         }
     
-    def run_v081(self, program_data: List[Any], mode: str = 'production') -> Any:
+    def run_v081(self, program_data: list[Any], mode: str = 'production') -> Any:
         """
         Execute program with full v0.8.1 feature set.
         
@@ -166,7 +164,7 @@ class SonaVM_v081(ModularVM):
             # Development/debug mode with full error details
             return self.run_modular(program_data)
     
-    def benchmark_integrated_performance(self, iterations: int = 100000) -> Dict[str, Any]:
+    def benchmark_integrated_performance(self, iterations: int = 100000) -> dict[str, Any]:
         """Comprehensive performance benchmark of integrated system."""
         # Test program with all feature types
         test_program = [
@@ -297,7 +295,7 @@ def comprehensive_v081_test():
     print("\\nTest 3: Integrated Performance Benchmark")
     benchmark_results = vm.benchmark_integrated_performance(50000)
     
-    print(f"Performance Results:")
+    print("Performance Results:")
     print(f"  Iterations: {benchmark_results['iterations']:,}")
     print(f"  Total time: {benchmark_results['total_time']:.4f} seconds")
     print(f"  Ops/second: {benchmark_results['ops_per_second']:,.0f}")

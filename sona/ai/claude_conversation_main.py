@@ -10,22 +10,24 @@ achieve Claude-like conversation quality with 8.5/10 target performance.
 """
 
 import asyncio
-import time
 import logging
-from typing import Dict, List, Optional
+import time
 from datetime import datetime
+from typing import Dict, List
+
 
 # Import Sona's existing components
 try:
-    from .gpt2_integration import GPT2Integration
     from .cognitive_assistant import CognitiveAssistant
+    from .gpt2_integration import GPT2Integration
 except ImportError:
     # Use our new Claude-optimized GPT-2 integration
-    from .gpt2_integration_claude import GPT2Integration
     from .cognitive_assistant import CognitiveAssistant
+    from .gpt2_integration_claude import GPT2Integration
 
 # Import our Claude-like components
-from .quality_evaluator import QualityEvaluator, QualityMetrics
+from .quality_evaluator import QualityEvaluator
+
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +38,7 @@ class ConversationResponse:
     def __init__(self, content: str, quality_score: float = 0.0, 
                  confidence_score: float = 0.0, generation_time: float = 0.0,
                  context_tokens_used: int = 0, safety_score: float = 10.0,
-                 reasoning_trace: List[str] = None, engagement_level: float = 0.0):
+                 reasoning_trace: list[str] = None, engagement_level: float = 0.0):
         self.content = content
         self.quality_score = quality_score
         self.confidence_score = confidence_score
@@ -50,7 +52,7 @@ class ConversationResponse:
 class ConversationContext:
     """Manages conversation context and history"""
     
-    def __init__(self, user_id: str, conversation_history: List[Dict] = None):
+    def __init__(self, user_id: str, conversation_history: list[dict] = None):
         self.user_id = user_id
         self.conversation_history = conversation_history or []
         self.session_start = datetime.now()
@@ -99,7 +101,7 @@ class ClaudeLikeConversationEngine:
         
         logger.info("Claude-like Conversation Engine initialized")
     
-    def _initialize_claude_prompts(self) -> Dict:
+    def _initialize_claude_prompts(self) -> dict:
         """Initialize Claude-style prompt templates"""
         return {
             'system_prompt': """You are Claude, a helpful and thoughtful AI assistant. You are known for:
@@ -137,7 +139,7 @@ When responding, think carefully about what would be most helpful to the user.""
     async def generate_response(self, 
                               user_input: str, 
                               user_id: str = "default_user",
-                              conversation_history: List[Dict] = None) -> ConversationResponse:
+                              conversation_history: list[dict] = None) -> ConversationResponse:
         """
         Main response generation method
         
@@ -344,7 +346,7 @@ When responding, think carefully about what would be most helpful to the user.""
         return response
     
     def _calculate_confidence_score(self, quality_score: float, 
-                                  generation_metrics: Dict) -> float:
+                                  generation_metrics: dict) -> float:
         """Calculate confidence score based on quality and generation metrics"""
         base_confidence = quality_score / 10.0
         
@@ -380,7 +382,7 @@ When responding, think carefully about what would be most helpful to the user.""
             reasoning_trace=[f"Error: {error_message}"]
         )
     
-    def get_performance_report(self) -> Dict:
+    def get_performance_report(self) -> dict:
         """Get comprehensive performance report"""
         metrics = self.performance_metrics
         

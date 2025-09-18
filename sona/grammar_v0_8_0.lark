@@ -1,0 +1,368 @@
+// Sona Language Grammar v0.9.0-dev
+// Cognitive-First Programming Language with Accessibility Features
+
+start: statement+
+
+?statement: expr
+     | import_stmt
+     | assignment
+     | destructuring_assignment
+     | print_stmt
+     | if_stmt
+     | when_stmt                    // NEW: Natural language conditionals
+     | match_stmt
+     | while_stmt
+     | while_else_stmt
+     | for_stmt
+     | loop_until_stmt
+     | thinking_block              // NEW: Cognitive planning constructs
+     | concept_definition          // NEW: Multi-modal concept definitions
+     | pattern_recognition         // NEW: Pattern matching and completion
+     | flow_state_directive        // NEW: Flow state management
+     | gentle_error_handling       // NEW: Supportive error messages
+     | thought_capture             // NEW: Fleeting thought capture
+     | cognitive_checkpoint        // NEW: Progress validation
+     | energy_level_check          // NEW: Cognitive energy monitoring
+     | focus_session               // NEW: Structured focus sessions
+     | func_def
+     | class_def
+     | try_stmt
+     | return_stmt
+     | break_stmt
+     | continue_stmt
+
+?expr: term
+     | expr "+" term   -> add
+     | expr "-" term   -> sub
+     | expr "==" term  -> eq
+     | expr "!=" term  -> neq
+     | expr ">" term   -> gt
+     | expr "<" term   -> lt
+     | expr ">=" term  -> gte
+     | expr "<=" term  -> lte
+     | expr "&&" term  -> and
+     | expr "||" term  -> or
+
+?term: factor
+     | term "*" factor  -> mul
+     | term "/" factor  -> div
+
+// ======== Factor-level method and property calls ========
+?factor: "-" factor         -> neg
+       | "!" factor         -> not
+       | dotted_expr
+
+// ======== Dotted expressions (method calls and property access) ========
+?dotted_expr: atom call_or_access*
+
+call_or_access: "." NAME "(" [args] ")" -> method_call
+              | "." NAME "=" expr     -> property_assignment
+              | "." NAME              -> property_access
+
+// ======== Atomic expressions ========
+array_literal: "[" [expr ("," expr)*] "]"
+dict_literal: "{" [dict_item ("," dict_item)*] "}"
+dict_item: expr ":" expr
+
+?atom: "(" expr ")"
+     | NUMBER             -> number
+     | STRING             -> string
+     | F_STRING           -> interpolated_string
+     | array_literal      -> array
+     | dict_literal       -> dict
+     | list_comprehension -> list_comp
+     | dict_comprehension -> dict_comp
+     | object_instantiation -> object_new
+     | func_call
+     | NAME               -> var  // single name only
+
+// ======== Function calls ========
+func_call: NAME "(" [args] ")" -> func_call
+
+args: expr ("," expr)*
+    | // empty alternative
+
+// ======== COGNITIVE-FIRST SYNTAX CONSTRUCTS ========
+
+// Thinking blocks for cognitive planning
+thinking_block: "thinking" STRING "{" thinking_content "}"
+thinking_content: thinking_type_specifier? thinking_body
+thinking_type_specifier: "type:" thinking_type
+thinking_type: "exploration" | "planning" | "problem_solving" | "reflection" | "brainstorming" | "debugging"
+thinking_body: (statement | thought_item)*
+
+thought_item: "when" expr "{" statement* "}"
+            | "if" expr "->" statement
+            | "encompasses:" array_literal
+            | "visual_metaphor:" STRING
+            | "complexity_level:" NUMBER
+
+// Natural language conditionals
+when_stmt: "when" natural_condition "{" statement* "}"
+natural_condition: natural_expr
+                 | natural_expr "and" natural_expr
+                 | natural_expr "or" natural_expr
+
+natural_expr: NAME "wants" NAME         -> wants_condition
+            | NAME "has" NAME           -> has_condition
+            | NAME "is" NAME            -> is_condition
+            | NAME "can" NAME           -> can_condition
+            | expr                      -> standard_condition
+
+// Concept definitions with multi-modal learning
+concept_definition: "concept" NAME "{" concept_body "}"
+concept_body: concept_attribute*
+
+concept_attribute: "encompasses:" array_literal
+                 | "mental_model" "{" mental_model_body "}"
+                 | "visual_metaphor:" STRING
+                 | "analogies:" array_literal
+                 | "examples:" array_literal
+                 | "difficulty_level:" NUMBER
+                 | "learning_modes:" dict_literal
+
+mental_model_body: mental_model_item*
+mental_model_item: STRING                    // Description
+                 | "visual_metaphor:" STRING
+                 | "complexity_level:" adjustable_range
+
+adjustable_range: "adjustable(" NUMBER ".." NUMBER ")"
+
+// Pattern recognition and completion
+pattern_recognition: "pattern" NAME "{" pattern_body "}"
+pattern_body: pattern_attribute*
+
+pattern_attribute: "recognize:" pattern_elements
+                 | "template:" STRING
+                 | "when_detected" "{" pattern_actions "}"
+                 | "auto_complete:" pattern_completion
+
+pattern_elements: NAME ("," NAME)*
+pattern_actions: pattern_action*
+pattern_action: "highlight_relationships:" visual_mode
+              | "suggest_optimizations:" auto_mode
+              | "provide_examples:" context_mode
+
+visual_mode: "visual" | "text" | "interactive"
+auto_mode: "automatic" | "on_request" | "contextual"
+context_mode: "contextual" | "comprehensive" | "examples_only"
+
+pattern_completion: "standard" | "advanced" | "custom"
+
+// Flow state management
+flow_state_directive: "flow_state" "{" flow_state_body "}"
+flow_state_body: flow_state_item*
+
+flow_state_item: "protection_level:" protection_level
+                | "interruption_handling:" interruption_mode
+                | "context_preservation:" preservation_mode
+                | "break_reminders:" break_frequency
+
+protection_level: "minimal" | "moderate" | "maximum"
+interruption_mode: "block_all" | "filter_critical" | "allow_all"
+preservation_mode: "automatic" | "manual" | "smart"
+break_frequency: NUMBER "minutes"
+
+// Gentle error handling
+gentle_error_handling: "gentle_error" "(" STRING ")"
+                     | "supportive_message" "(" STRING ")"
+                     | "learning_opportunity" "(" STRING ")"
+
+// Thought capture system
+thought_capture: "thought_bubble" STRING "{" thought_attributes "}"
+thought_attributes: thought_attribute*
+
+thought_attribute: "context:" expr
+                 | "priority:" priority_level
+                 | "remind_when:" reminder_condition
+                 | "ai_suggestion:" STRING
+                 | "category:" thought_category
+
+priority_level: "low" | "medium" | "high" | "urgent"
+reminder_condition: "function_complete" | "task_done" | "next_session" | "immediate"
+thought_category: "bug" | "feature" | "optimization" | "learning" | "general"
+
+// Cognitive checkpoints
+cognitive_checkpoint: "checkpoint" "{" checkpoint_body "}"
+checkpoint_body: checkpoint_item*
+
+checkpoint_item: "progress:" NUMBER "%"
+               | "energy_check:" energy_level
+               | "understanding_validation:" validation_question
+               | "next_steps:" STRING
+               | "celebration:" STRING
+
+energy_level: "high" | "medium" | "low" | "depleted"
+validation_question: STRING
+
+// Energy level monitoring
+energy_level_check: "energy_level" "(" ")"
+                   | "cognitive_capacity" "(" ")"
+                   | "mental_state" "(" ")"
+
+// Focus sessions
+focus_session: "focus_session" "{" focus_session_body "}"
+focus_session_body: focus_session_item*
+
+focus_session_item: "duration:" NUMBER "minutes"
+                  | "break_frequency:" NUMBER "minutes"
+                  | "task:" STRING
+                  | "complexity:" complexity_level
+                  | "cognitive_load:" NUMBER
+
+complexity_level: "simple" | "moderate" | "complex" | "very_complex"
+
+// ======== ENHANCED ACCESSIBILITY FEATURES ========
+
+// Visual and sensory accommodations
+accessibility_setting: "accessibility" "{" accessibility_body "}"
+accessibility_body: accessibility_item*
+
+accessibility_item: "visual_mode:" visual_accommodation
+                  | "motion_sensitivity:" motion_setting
+                  | "contrast_preference:" contrast_setting
+                  | "font_size:" font_size_setting
+                  | "color_scheme:" color_scheme_setting
+
+visual_accommodation: "high_contrast" | "large_text" | "reduced_motion" | "simplified_ui"
+motion_setting: "none" | "reduced" | "standard"
+contrast_setting: "low" | "medium" | "high" | "maximum"
+font_size_setting: "small" | "medium" | "large" | "extra_large"
+color_scheme_setting: "light" | "dark" | "auto" | "custom"
+
+// Multi-modal code representation
+code_representation: "represent_as" "{" representation_modes "}"
+representation_modes: representation_mode*
+
+representation_mode: "visual_diagram" | "narrative_explanation" | "step_by_step" | "flowchart" | "mindmap"
+
+// Cognitive load management
+cognitive_load_management: "cognitive_load" "{" load_management_body "}"
+load_management_body: load_management_item*
+
+load_management_item: "current_capacity:" NUMBER
+                    | "task_complexity:" complexity_level
+                    | "auto_adjust:" auto_adjust_setting
+                    | "simplification_level:" simplification_level
+
+auto_adjust_setting: "on" | "off" | "adaptive"
+simplification_level: "minimal" | "moderate" | "maximum"
+
+// ======== STANDARD LANGUAGE CONSTRUCTS ========
+
+import_stmt: "import" NAME ("." NAME)* ["as" NAME] -> import_stmt
+assignment: ("let" | "const") NAME "=" expr -> var_assign
+print_stmt: "print" "(" expr ")"
+return_stmt: "return" expr
+
+if_stmt: "if" expr block ["else" block]
+while_stmt: "while" expr block
+while_else_stmt: "while" expr block "else" block
+for_stmt: "for" NAME "in" expr block
+loop_until_stmt: "loop" block "until" expr [NAME]
+func_def: "func" NAME "(" [param_list] ")" block
+class_def: "class" NAME ["(" inheritance_list ")"] "{" class_body "}"
+param_list: NAME ("," NAME)*  -> param_list
+block: "{" (_NL | statement)* "}"
+
+// Control flow statements
+break_stmt: "break" [NAME]
+continue_stmt: "continue" [NAME]
+
+// Enhanced inheritance support
+inheritance_list: NAME ("," NAME)*
+
+// Class definition support
+class_body: class_member*
+class_member: method_def | property_def | constructor_def | static_method_def | class_method_def
+
+method_def: "method" NAME "(" [param_list] ")" block
+static_method_def: "static" "method" NAME "(" [param_list] ")" block
+class_method_def: "class" "method" NAME "(" [param_list] ")" block
+property_def: "property" NAME ["=" expr] ["{" property_accessors "}"]
+constructor_def: "constructor" "(" [param_list] ")" block
+
+// Property accessors (getters/setters)
+property_accessors: property_accessor+
+property_accessor: ("get" | "set") ["(" param_list ")"] block
+
+// Destructuring assignment (simplified)
+destructuring_assignment: "let" simple_pattern "=" expr
+simple_pattern: tuple_pattern | dict_pattern | simple_variable_pattern
+
+// Pattern types (simplified to avoid grammar conflicts)
+tuple_pattern: "(" simple_variable_pattern ("," simple_variable_pattern)* ")"
+dict_pattern: "{" dict_pattern_item ("," dict_pattern_item)* "}"
+dict_pattern_item: NAME ":" simple_variable_pattern
+list_pattern: "[" simple_variable_pattern ("," simple_variable_pattern)* ["|" simple_variable_pattern] "]"
+simple_variable_pattern: NAME
+wildcard_pattern: "_"
+
+// Comprehensions
+list_comprehension: "[" expr for_clause+ [if_clause] "]"
+dict_comprehension: "{" expr ":" expr for_clause+ [if_clause] "}"
+for_clause: "for" NAME "in" expr
+if_clause: "if" expr
+
+// Enhanced match statement with pattern matching
+match_stmt: "match" expr "{" match_case+ "}"
+match_case: "case" match_pattern ["if" expr] "=>" block
+match_pattern: literal_pattern | wildcard_pattern | tuple_pattern 
+             | dict_pattern | simple_type_pattern | range_pattern | list_pattern
+
+// Pattern types for matching (simplified to avoid conflicts)
+literal_pattern: NUMBER | STRING
+simple_type_pattern: "int" | "str" | "float" | "bool" | "list" | "dict"
+range_pattern: NUMBER ".." NUMBER ["exclusive"]
+
+// Enhanced try/catch statement 
+try_stmt: "try" block "catch" ["(" NAME ")"] block ["finally" block]
+
+// Enhanced struct support
+struct_def: "struct" NAME "{" struct_fields "}"
+struct_fields: struct_field ("," struct_field)*
+struct_field: NAME ":" expr
+
+// String interpolation
+interpolated_string: "f" STRING
+template_string: "`" template_content "`"
+template_content: (template_text | template_expr)*  
+template_text: /[^{]+/
+template_expr: "{" expr "}"
+
+// Object-oriented programming expressions
+object_instantiation: "new" NAME "(" [args] ")"
+super_call: "super" "." NAME "(" [args] ")"
+
+// Documentation and comments
+doc_comment: "///" DOC_TEXT -> doc_comment
+inline_thought: "// thought:" THOUGHT_TEXT -> inline_thought
+cognitive_comment: "/* cognitive:" COGNITIVE_TEXT "*/" -> cognitive_comment
+
+DOC_TEXT: /[^\n\r]+/
+THOUGHT_TEXT: /[^\n\r]+/
+COGNITIVE_TEXT: /[^*]*(?:\*(?!\/)[^*]*)*/
+
+// ======== TERMINALS ========
+
+COMMA: ","
+STRING: /"(?:[^"\\]|\\.)*"/ | /'(?:[^'\\]|\\.)*'/ | /"""(?:[^\\]|\\.)*"""/ | /'''(?:[^\\]|\\.)*'''/
+F_STRING: /f"(?:[^"\\]|\\.)*"/ | /f'(?:[^'\\]|\\.)*'/ | /f"""(?:[^\\]|\\.)*"""/ | /f'''(?:[^\\]|\\.)*'''/
+NUMBER: /[0-9]+(\.[0-9]*)?/
+
+%import common.CNAME -> NAME 
+%import common.WS_INLINE
+%import common.NEWLINE -> _NL
+%import common.SH_COMMENT -> HASH_COMMENT
+
+// Enhanced comment handling
+_COMMENT: /\/\/.*?(?:\n|$)/
+_INLINE_COMMENT: /\/\/[^\n]*/
+_MULTILINE_COMMENT: /\/\*(?:[^*]|\*(?!\/))*\*\//
+
+%ignore _COMMENT
+%ignore _INLINE_COMMENT
+%ignore _MULTILINE_COMMENT
+%ignore HASH_COMMENT
+%ignore WS_INLINE
+%ignore _NL

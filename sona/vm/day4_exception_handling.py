@@ -13,16 +13,16 @@ Target: Robust error handling for production-ready v0.8.1
 """
 
 import time
-import traceback
-from typing import Any, Dict, List, Optional
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Dict, List, Optional
+
 
 # Import our advanced VM foundation
 try:
-    from .day3_advanced_features import AdvancedVM, AdvancedOpCode
+    from .day3_advanced_features import AdvancedOpCode, AdvancedVM
 except ImportError:
-    from day3_advanced_features import AdvancedVM, AdvancedOpCode
+    from day3_advanced_features import AdvancedVM
 
 
 class ExceptionType(Enum):
@@ -42,9 +42,9 @@ class SonaException:
     """Exception object for Sona VM."""
     type: ExceptionType
     message: str
-    stack_trace: List[str]
+    stack_trace: list[str]
     cognitive_impact: float = 1.0
-    accessibility_info: Optional[str] = None
+    accessibility_info: str | None = None
     
     def __str__(self) -> str:
         return f"{self.type.value}: {self.message}"
@@ -56,8 +56,8 @@ class ExceptionHandler:
     start_address: int
     end_address: int
     handler_address: int
-    exception_types: List[ExceptionType]
-    finally_address: Optional[int] = None
+    exception_types: list[ExceptionType]
+    finally_address: int | None = None
 
 
 class ExceptionHandlingVM(AdvancedVM):
@@ -111,14 +111,14 @@ class ExceptionHandlingVM(AdvancedVM):
         
         return exception
     
-    def _build_stack_trace(self) -> List[str]:
+    def _build_stack_trace(self) -> list[str]:
         """Build stack trace for debugging."""
         trace = []
         for frame in self.call_stack:
             if 'function_name' in frame:
                 trace.append(f"  in {frame['function_name']}()")
             else:
-                trace.append(f"  in <unknown>")
+                trace.append("  in <unknown>")
         return trace
     
     def _generate_accessibility_info(self, exc_type: ExceptionType, 
@@ -136,7 +136,7 @@ class ExceptionHandlingVM(AdvancedVM):
         base_info = accessibility_messages.get(exc_type, "An error occurred during execution.")
         return f"{base_info} Details: {message}"
     
-    def handle_exception(self, current_address: int) -> Optional[int]:
+    def handle_exception(self, current_address: int) -> int | None:
         """Handle current exception and return jump address."""
         if not self.current_exception:
             return None
@@ -162,7 +162,7 @@ class ExceptionHandlingVM(AdvancedVM):
         self.error_stats['unhandled_exceptions'] += 1
         return None
     
-    def run_with_exceptions(self, program_data: List[Any]) -> Any:
+    def run_with_exceptions(self, program_data: list[Any]) -> Any:
         """
         Enhanced execution loop with exception handling.
         """
@@ -228,7 +228,7 @@ class ExceptionHandlingVM(AdvancedVM):
                         a = stack.pop()
                         result = a + b
                         stack.append(result)
-                    except TypeError as e:
+                    except TypeError:
                         self.raise_exception(ExceptionType.TYPE_ERROR, 
                                            f"Cannot add {type(a).__name__} and {type(b).__name__}")
                         continue
@@ -363,7 +363,7 @@ class ExceptionHandlingVM(AdvancedVM):
         
         return stack[-1] if stack else None
     
-    def get_error_report(self) -> Dict[str, Any]:
+    def get_error_report(self) -> dict[str, Any]:
         """Generate comprehensive error report."""
         return {
             'error_statistics': self.error_stats.copy(),
@@ -470,7 +470,7 @@ def test_exception_handling():
     total_time = end_time - start_time
     ops_per_second = iterations / total_time
     
-    print(f"Exception-enabled VM Performance:")
+    print("Exception-enabled VM Performance:")
     print(f"Iterations: {iterations:,}")
     print(f"Time: {total_time:.4f} seconds")
     print(f"Ops/second: {ops_per_second:,.0f}")
@@ -479,7 +479,7 @@ def test_exception_handling():
     day3_baseline = 374158  # From Day 3 test
     performance_ratio = ops_per_second / day3_baseline
     
-    print(f"\\nPerformance Analysis:")
+    print("\\nPerformance Analysis:")
     print(f"Day 3 baseline: {day3_baseline:,} ops/sec")
     print(f"Exception handling: {ops_per_second:,.0f} ops/sec")
     print(f"Performance retention: {performance_ratio:.2f}x")
@@ -512,7 +512,7 @@ def test_exception_handling():
     completed_features = sum(1 for _, implemented in day4_features if implemented)
     total_features = len(day4_features)
     
-    print(f"\\nDay 4 Feature Completion:")
+    print("\\nDay 4 Feature Completion:")
     for feature, implemented in day4_features:
         status = "✅" if implemented else "⚪"
         print(f"{status} {feature}")

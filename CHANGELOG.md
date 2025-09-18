@@ -1,5 +1,55 @@
 # CHANGELOG - Sona Programming Language
 
+## [0.9.3] - 2025-09-14
+
+### ♻️ Resilience & Infrastructure (No Breaking Changes)
+
+**Added**
+
+- Feature flag system documented (all new infra OFF by default)
+- LRU + TTL in-memory cache (gated)
+- Circuit breaker with error-rate threshold & half-open retry
+- Micro-batching queue (time + size flush)
+- Policy engine (JSON rules, deny patterns, provider allow-list)
+- Performance logging (daily rotated JSONL, env dir override)
+- Deterministic `ai-plan` / `ai-review` capability stubs
+- CLI commands: `ai-plan`, `ai-review`, `build-info`, `doctor`, `probe`
+- Default security policy template & probe diagnostics
+- Optional AI extras group (`[ai]`) for heavy dependencies
+- Developer extras group (`[dev]`) for tooling
+- Python version raised to 3.11+ (match syntax / typing usage)
+
+**Changed**
+
+- Entry point now `sona.cli:main` (legacy `sona_cli` retained but not default)
+- README updated (What’s New 0.9.3, badges, extras install)
+- Ruff config modernized (removed deprecated top-level selects)
+
+**Security**
+
+- Default `.sona-policy.json` baseline with conservative operations
+- Probe command surfaces potential risks / misconfiguration
+
+**Docs**
+
+- Added tutorial + teacher guide
+- Feature flags documentation (environment variable matrix)
+
+**Internal**
+
+- Lazy import strategy for diagnostic commands (torch not required)
+- Graceful degrade path when AI extras not installed
+
+**No Breaking Changes**: Existing 0.9.2 user workflows continue to function unchanged with new features dormant until enabled.
+
+**Rollback & Verification**:
+
+- Roll back with `pip install Sona==0.9.2` (no migrations introduced).
+- After install/upgrade run `sona build-info` to verify version + feature flags.
+- Run `python -m pytest -q` locally; should be green to match CI matrix (3.11/3.12).
+
+---
+
 ## [0.9.2] - 2025-09-03
 
 ### 🚀 **Version Update Release**

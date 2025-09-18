@@ -22,6 +22,7 @@ from .classes import (
     super_call,
 )
 
+
 __all__ = [
     "SonaClass",
     "SonaObject",

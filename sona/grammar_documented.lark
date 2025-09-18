@@ -1,0 +1,122 @@
+// Sona 0.9.0 Grammar - Documentation-Aligned
+// This grammar matches the syntax shown in the wiki documentation
+
+start: statement+
+
+?statement: expr
+     | import_stmt
+     | assignment
+     | think_stmt
+     | show_stmt
+     | calculate_stmt
+     | if_stmt
+     | when_stmt
+     | while_stmt
+     | repeat_stmt
+     | for_stmt
+     | func_def
+     | class_def
+     | return_stmt
+     | break_stmt
+     | continue_stmt
+
+// ======== Cognitive Accessibility Statements ========
+think_stmt: "think" STRING
+show_stmt: "show" expr
+calculate_stmt: "calculate" NAME "=" expr -> calculate_assign
+
+// ======== Loop Statements (Documentation Syntax) ========
+repeat_stmt: "repeat" NUMBER "times" ":" block -> repeat_times
+           | "repeat" "for" "each" NAME "in" expr ":" block -> repeat_for_each
+           | "repeat" "for" NAME "from" expr "to" expr ":" block -> repeat_for_range
+           | "repeat" "for" NAME "from" expr "to" expr "step" expr ":" block -> repeat_for_range_step
+
+// ======== Conditional Statements ========
+when_stmt: "when" expr ":" block ["else" ":" block] -> when_stmt
+if_stmt: "if" expr "{" statement* "}" ["else" "{" statement* "}"] -> if_stmt
+
+// ======== Traditional Statements ========
+while_stmt: "while" expr "{" statement* "}" -> while_stmt
+for_stmt: "for" NAME "in" expr "{" statement* "}" -> for_stmt
+
+// ======== Function Definition ========
+func_def: "func" NAME "(" [param_list] ")" "{" statement* "}" -> func_def
+param_list: NAME ("," NAME)*
+
+// ======== Class Definition ========
+class_def: "class" NAME ["(" NAME ")"] "{" class_body "}" -> class_def
+class_body: (method_def | property_def)*
+method_def: "method" NAME "(" [param_list] ")" "{" statement* "}" -> method_def
+property_def: "property" NAME ["=" expr] -> property_def
+
+// ======== Block Definition ========
+block: statement+
+
+// ======== Expressions ========
+?expr: term
+     | expr "+" term   -> add
+     | expr "-" term   -> sub
+     | expr "==" term  -> eq
+     | expr "!=" term  -> neq
+     | expr ">" term   -> gt
+     | expr "<" term   -> lt
+     | expr ">=" term  -> gte
+     | expr "<=" term  -> lte
+     | expr "&&" term  -> and
+     | expr "||" term  -> or
+
+?term: factor
+     | term "*" factor  -> mul
+     | term "/" factor  -> div
+
+?factor: "-" factor         -> neg
+       | "!" factor         -> not
+       | dotted_expr
+
+// ======== Dotted expressions (method calls and property access) ========
+?dotted_expr: atom call_or_access*
+
+call_or_access: "." NAME "(" [args] ")" -> method_call
+              | "." NAME "=" expr     -> property_assignment
+              | "." NAME              -> property_access
+              | "[" expr "]"          -> index_access
+
+// ======== Atomic expressions ========
+?atom: "(" expr ")"
+     | NUMBER             -> number
+     | STRING             -> string
+     | "true"             -> true
+     | "false"            -> false
+     | array_literal      -> array
+     | dict_literal       -> dict
+     | func_call
+     | NAME               -> var
+
+// ======== Data Structures ========
+array_literal: "[" [expr ("," expr)*] "]"
+dict_literal: "{" [dict_item ("," dict_item)*] "}"
+dict_item: STRING ":" expr | NAME ":" expr
+
+// ======== Function calls ========
+func_call: NAME "(" [args] ")" -> func_call
+args: expr ("," expr)*
+
+// ======== Other Statements ========
+import_stmt: "import" NAME -> import_stmt
+assignment: NAME "=" expr -> var_assign
+return_stmt: "return" expr -> return_stmt
+break_stmt: "break" -> break_stmt
+continue_stmt: "continue" -> continue_stmt
+
+// ======== Tokens ========
+STRING: /"(?:[^"\\]|\\.)*"/
+NUMBER: /[0-9]+(\.[0-9]*)?/
+
+%import common.CNAME -> NAME
+%import common.WS_INLINE
+%import common.NEWLINE -> _NL
+
+_COMMENT: /\/\/.*?(?:\n|$)/
+%ignore _COMMENT
+%ignore WS_INLINE
+%ignore _NL
