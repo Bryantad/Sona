@@ -5,11 +5,12 @@ Provides core GPT-2 model interface for AI-powered cognitive programming feature
 Handles model loading, inference, and text generation for code completion and assistance.
 """
 
-import os
-import torch
 from pathlib import Path
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional
+
+import torch
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
+
 
 # Import Sona language adapter
 try:
@@ -22,7 +23,7 @@ except ImportError:
 class GPT2Integration:
     """Core GPT-2 integration for Sona AI features"""
     
-    def __init__(self, model_path: Optional[str] = None):
+    def __init__(self, model_path: str | None = None):
         """Initialize GPT-2 integration
         
         Args:
@@ -70,7 +71,7 @@ class GPT2Integration:
                           max_new_tokens: int = 50,
                           temperature: float = 0.7,
                           do_sample: bool = True,
-                          num_return_sequences: int = 1) -> List[str]:
+                          num_return_sequences: int = 1) -> list[str]:
         """Generate text completion using GPT-2
         
         Args:
@@ -264,7 +265,7 @@ class GPT2Integration:
         
         return f"# Unable to generate {language} code for: {description}"
     
-    def get_model_info(self) -> Dict[str, Any]:
+    def get_model_info(self) -> dict[str, Any]:
         """Get information about the loaded model
         
         Returns:
@@ -308,7 +309,7 @@ def get_gpt2_instance() -> GPT2Integration:
     return _gpt2_instance
 
 
-def initialize_gpt2(model_path: Optional[str] = None) -> bool:
+def initialize_gpt2(model_path: str | None = None) -> bool:
     """Initialize GPT-2 with optional custom model path"""
     global _gpt2_instance
     _gpt2_instance = GPT2Integration(model_path)

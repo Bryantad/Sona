@@ -4,16 +4,17 @@ Professional Sona REPL v0.9.0 - Interactive Cognitive Programming Environment
 Advanced AI-Assisted Code Remediation Protocol Implementation
 Complete REPL with cognitive accessibility features and multi-line editing
 
-An interactive Read-Eval-Print-Loop for the Sona programming language that provides
-cognitive-aware execution with accessibility excellence, enhanced editing features,
-and PhD-level user experience optimization.
+An interactive Read-Eval-Print-Loop for the Sona programming language
+that provides cognitive-aware execution with accessibility excellence,
+enhanced editing features, and PhD-level user experience optimization.
 """
 
 import os
 import sys
 import traceback
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 
 # Try to import optional dependencies
 try:
@@ -63,7 +64,7 @@ class CognitiveREPL:
         # Command aliases for accessibility
         self.command_aliases = {
             "h": "help",
-            "?": "help", 
+            "?": "help",
             "q": "quit",
             "x": "exit",
             "c": "clear",
@@ -95,15 +96,19 @@ class CognitiveREPL:
             
             # Save history on exit
             import atexit
-            atexit.register(lambda: readline.write_history_file(str(history_file)))
+            atexit.register(
+                lambda: readline.write_history_file(str(history_file))
+            )
 
-    def _completer(self, text: str, state: int) -> Optional[str]:
+    def _completer(self, text: str, state: int) -> str | None:
         """Provide command and variable completion."""
         options = []
         
         # Add command completions
-        commands = ["help", "quit", "exit", "clear", "history", "variables", 
-                   "functions", "cognitive_state", "calculator", "run_demo"]
+        commands = [
+            "help", "quit", "exit", "clear", "history", "variables",
+            "functions", "cognitive_state", "calculator", "run_demo"
+        ]
         options.extend([cmd for cmd in commands if cmd.startswith(text)])
         
         # Add variable completions
@@ -152,18 +157,23 @@ class CognitiveREPL:
         print(welcome_text)
         
         if self.cognitive_enabled:
-            print("🧠 Cognitive features active - Enhanced accessibility enabled")
-        
+            print(
+                "🧠 Cognitive features active - Enhanced accessibility enabled"
+            )
+
         if not self.interpreter:
-            print("⚠️  Warning: Interpreter not available - Limited functionality")
+            print(
+                "⚠️  Interpreter not available - limited functionality"
+            )
 
     def _repl_loop(self) -> None:
         """Main REPL loop with cognitive awareness."""
-        # Handle multiline input
-        if self.multiline_buffer:
-            prompt = self.config["multiline_prompt"]
-        else:
-            prompt = self.config["prompt"]
+        # Handle multiline input (SIM108 ternary simplification)
+        prompt = (
+            self.config["multiline_prompt"]
+            if self.multiline_buffer
+            else self.config["prompt"]
+        )
         
         try:
             user_input = input(prompt).strip()
@@ -228,9 +238,14 @@ class CognitiveREPL:
                     print(f"→ {result}")
                     
                 # Show cognitive state if enabled
-                if self.cognitive_enabled and hasattr(self.interpreter, 'get_cognitive_state'):
+                if (
+                    self.cognitive_enabled
+                    and hasattr(self.interpreter, 'get_cognitive_state')
+                ):
                     state = self.interpreter.get_cognitive_state()
-                    if any(state.values()):  # Only show if there's cognitive activity
+                    if any(
+                        state.values()
+                    ):  # Show only if there's cognitive activity
                         self._show_cognitive_hints(state)
                         
             except Exception as e:
@@ -275,14 +290,27 @@ class CognitiveREPL:
             print(f"Debug mode: {'ON' if self.debug_mode else 'OFF'}")
         elif command == "cognitive":
             self.cognitive_enabled = not self.cognitive_enabled
-            print(f"Cognitive features: {'ON' if self.cognitive_enabled else 'OFF'}")
+            features_status = 'ON' if self.cognitive_enabled else 'OFF'
+            print(f"Cognitive features: {features_status}")
         else:
-            print(f"Unknown command: {command}. Type 'help' for available commands.")
+            print(
+                "Unknown command: "
+                f"{command}. Type 'help' for available commands."
+            )
 
     def _is_cognitive_command(self, input_str: str) -> bool:
         """Check if input is a cognitive command."""
-        cognitive_keywords = ["thinking ", "remember ", "focus_mode", "@break", "@attention"]
-        return any(input_str.strip().startswith(keyword) for keyword in cognitive_keywords)
+        cognitive_keywords = [
+            "thinking ",
+            "remember ",
+            "focus_mode",
+            "@break",
+            "@attention",
+        ]
+        return any(
+            input_str.strip().startswith(keyword)
+            for keyword in cognitive_keywords
+        )
 
     def _handle_cognitive_command(self, input_str: str) -> None:
         """Handle cognitive commands with accessibility features."""
@@ -355,7 +383,8 @@ Editing Features:
             return
         
         for name, value in self.interpreter.variables.items():
-            value_str = str(value)[:50] + "..." if len(str(value)) > 50 else str(value)
+            raw = str(value)
+            value_str = raw[:50] + "..." if len(raw) > 50 else raw
             print(f"  {name} = {value_str} ({type(value).__name__})")
 
     def _show_functions(self) -> None:
@@ -373,7 +402,10 @@ Editing Features:
     def _show_cognitive_state(self) -> None:
         """Show cognitive accessibility state."""
         print("\n🧠 Cognitive Accessibility State:")
-        if not self.interpreter or not hasattr(self.interpreter, 'get_cognitive_state'):
+        if (
+            not self.interpreter
+            or not hasattr(self.interpreter, 'get_cognitive_state')
+        ):
             print("  (cognitive features unavailable)")
             return
         
@@ -381,7 +413,7 @@ Editing Features:
         for key, value in state.items():
             print(f"  {key.replace('_', ' ').title()}: {value}")
 
-    def _show_cognitive_hints(self, state: Dict[str, Any]) -> None:
+    def _show_cognitive_hints(self, state: dict[str, Any]) -> None:
         """Show subtle cognitive hints during execution."""
         hints = []
         if state.get("thinking_blocks", 0) > 0:
@@ -419,7 +451,9 @@ Editing Features:
                         
                         # Store in cognitive memory
                         if self.interpreter and self.cognitive_enabled:
-                            self.interpreter.cognitive_state.store_memory("last_calculation", result)
+                            self.interpreter.cognitive_state.store_memory(
+                                "last_calculation", result
+                            )
                     else:
                         print("Error: Only basic math operations allowed")
                         

@@ -1,15 +1,14 @@
-"""Debug utilities for suppressing debug output"""
+"""Quarantined placeholder for `sona.utils.suppress`.
 
-import io
-import os
-import sys
-from contextlib import contextmanager
+Original corrupted version archived at `legacy/utils_suppress_archived.py`.
+Access now raises to prevent reliance until repaired.
+"""
 
+from __future__ import annotations
 
-@contextmanager
-def suppress_debug_output(): """Context manager to temporarily suppress stdout"""
-    if os.environ.get("SONA_DEBUG") != "1": original_stdout = sys.stdout
-        sys.stdout = io.StringIO()  # Redirect stdout to string buffer
-        try: yield
-        finally: sys.stdout = original_stdout  # Restore original stdout
-    else: yield  # Do nothing in debug mode
+def __getattr__(name: str):  # pragma: no cover
+    raise RuntimeError(
+        "'sona.utils.suppress' has been quarantined. See legacy archive and 0.9.4 "
+        "repair ticket for planned restoration."
+    )
+

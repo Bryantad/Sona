@@ -11,21 +11,17 @@ Version: 1.0.0
 Performance Target: 8.5/10 quality (up from 6.7/10)
 """
 
-import asyncio
-import time
-import re
-import json
-import uuid
-from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import dataclass, field
-from collections import deque
-from datetime import datetime, timedelta
 import logging
+import re
+import time
+from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
+from typing import Any, Dict, List
+
 
 # Import your existing Sona AI components
-from .gpt2_integration import GPT2Integration
-from .cognitive_assistant import CognitiveAssistant
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -58,10 +54,10 @@ class ConversationResponse:
     """Enhanced response structure for Claude-like interactions"""
     content: str
     confidence_score: float
-    reasoning_trace: List[str]
-    context_used: Dict[str, Any]
+    reasoning_trace: list[str]
+    context_used: dict[str, Any]
     generation_time: float
-    safety_flags: List[str]
+    safety_flags: list[str]
     quality_score: float = 0.0
     engagement_level: float = 0.0
 
@@ -69,12 +65,12 @@ class ConversationResponse:
 class UserContext:
     """Comprehensive user context tracking"""
     user_id: str
-    conversation_history: List[Dict] = field(default_factory=list)
-    preferences: Dict[str, Any] = field(default_factory=dict)
+    conversation_history: list[dict] = field(default_factory=list)
+    preferences: dict[str, Any] = field(default_factory=dict)
     cognitive_state: CognitiveState = CognitiveState.NORMAL
     current_session_duration: float = 0.0
     last_activity: datetime = field(default_factory=datetime.now)
-    topic_interests: Dict[str, float] = field(default_factory=dict)
+    topic_interests: dict[str, float] = field(default_factory=dict)
 
 @dataclass
 class ConversationTurn:
@@ -254,7 +250,7 @@ class ClaudeResponseRefinery:
     def __init__(self):
         self.quality_scorer = ResponseQualityScorer()
         
-    async def refine_response(self, raw_gpt2_output: str, query_context: Dict) -> ConversationResponse:
+    async def refine_response(self, raw_gpt2_output: str, query_context: dict) -> ConversationResponse:
         """Transform GPT-2 output into Claude-style responses"""
         
         start_time = time.time()
@@ -303,7 +299,7 @@ class ClaudeResponseRefinery:
             
         return response
         
-    def _needs_reasoning(self, context: Dict) -> bool:
+    def _needs_reasoning(self, context: dict) -> bool:
         """Determine if response needs explicit reasoning structure"""
         query = context.get('user_input', '').lower()
         reasoning_triggers = ['how', 'why', 'explain', 'what', 'analyze', 'solve', 'help me understand']
@@ -331,7 +327,7 @@ class ClaudeResponseRefinery:
             
         return '\n'.join(structured_lines)
         
-    def _add_claude_markers(self, response: str, context: Dict) -> str:
+    def _add_claude_markers(self, response: str, context: dict) -> str:
         """Add Claude's characteristic conversational markers"""
         topic = context.get('topic', ConversationTopic.GENERAL)
         
@@ -342,7 +338,7 @@ class ClaudeResponseRefinery:
             
         return response
         
-    def _add_follow_up_engagement(self, response: str, context: Dict) -> str:
+    def _add_follow_up_engagement(self, response: str, context: dict) -> str:
         """Add helpful follow-up questions or suggestions"""
         topic = context.get('topic', ConversationTopic.GENERAL)
         
@@ -359,7 +355,7 @@ class ClaudeResponseRefinery:
             
         return response
         
-    def _extract_reasoning_trace(self, response: str) -> List[str]:
+    def _extract_reasoning_trace(self, response: str) -> list[str]:
         """Extract reasoning steps from response"""
         reasoning_steps = []
         
@@ -371,7 +367,7 @@ class ClaudeResponseRefinery:
                 
         return reasoning_steps if reasoning_steps else ["Generated response with Claude-like patterns"]
         
-    def _calculate_confidence(self, response: str, context: Dict) -> float:
+    def _calculate_confidence(self, response: str, context: dict) -> float:
         """Calculate confidence score for response"""
         confidence = 0.5  # Base confidence
         
@@ -389,7 +385,7 @@ class ClaudeResponseRefinery:
             
         return min(confidence, 1.0)
         
-    def _check_safety(self, response: str) -> List[str]:
+    def _check_safety(self, response: str) -> list[str]:
         """Check response for safety issues"""
         flags = []
         

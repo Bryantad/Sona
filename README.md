@@ -2,15 +2,64 @@
 
 **Revolutionary AI-Powered Development with Cognitive Accessibility**
 
-[![Version](https://img.shields.io/badge/version-0.9.2-blue.svg)](https://github.com/Bryantad/Sona/releases/tag/v0.9.2)
+[![Version](https://img.shields.io/badge/version-0.9.3-blue.svg)](https://github.com/Bryantad/Sona/releases/tag/v0.9.3)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://python.org)
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://python.org)
+[![Coverage](https://img.shields.io/badge/coverage-pending-lightgrey.svg)](#)
 [![AI-Native](https://img.shields.io/badge/AI--Native-Revolutionary-purple.svg)](docs/ai-features.md)
 [![VS Code Extension](https://img.shields.io/badge/VS%20Code-Extension%20Available-brightgreen.svg)](https://marketplace.visualstudio.com/items?itemName=Waycoreinc.sona-ai-native-programming)
 
 > **The world's first programming language with integrated AI collaboration, natural language programming, and cognitive accessibility features.**
 
-Sona v0.9.2 represents a paradigm shift in programming. Write code that thinks with you, explains itself, and adapts to your cognitive needs. Experience true human-AI collaboration in software development.
+Sona v0.9.3 represents a paradigm shift in programming. Write code that thinks with you, explains itself, and adapts to your cognitive needs. Experience true human-AI collaboration in software development.
+
+## 🔄 What's New in 0.9.3
+
+Focused resilience & infrastructure release (no breaking changes):
+
+| Area            | Enhancement                                                     |
+| --------------- | --------------------------------------------------------------- |
+| Feature Flags   | Centralized, documented, all new features default OFF           |
+| Caching         | LRU + TTL cache (gated)                                         |
+| Circuit Breaker | Error-rate with half-open probing (gated)                       |
+| Micro-Batching  | Time-window aggregation (gated)                                 |
+| Policy Engine   | JSON-based deny patterns & provider scoping                     |
+| Perf Logging    | Rotating JSONL logs (gated) + directory override                |
+| AI Capabilities | Deterministic ai-plan / ai-review (graceful degrade w/o extras) |
+| CLI             | New commands: ai-plan, ai-review, build-info, doctor, probe     |
+| Security        | Default policy template + probe diagnostics                     |
+| Docs            | Tutorial + Teacher's Guide + Feature Flags reference            |
+
+Install with optional AI extras:
+
+```bash
+pip install "sona-lang[ai]"
+```
+
+Or minimal core only:
+
+```bash
+pip install sona-lang
+```
+
+Feature flags reference: see [FEATURE_FLAGS.md](FEATURE_FLAGS.md) for all environment variables and rollout guidance.
+
+### Performance Logging (Optional)
+
+Enable lightweight JSONL performance event logging:
+
+```bash
+export SONA_PERF_LOGS=1            # turn on logging
+export SONA_PERF_DIR=.sona/.perf   # (optional) custom directory (auto-created)
+```
+
+Each event line (rotated daily) contains: `{"ts": <epoch>, "event": "name", ...custom fields}`. Safe to enable in development; I/O errors are swallowed.
+
+### Security Policy & Governance
+
+Baseline policy file `.sona-policy.json` included (deny high‑risk operations by default). Extend by editing and pointing `SONA_POLICY_PATH` to a reviewed version. See `SECURITY.md` for reporting process.
+
+See `FEATURE_FLAGS.md` for enabling infrastructure features safely.
 
 ## ✨ Revolutionary Features
 
@@ -88,7 +137,7 @@ focus_mode("learning Sona", "20min")
 ai_explain("function authenticate(user) { return jwt.sign(user); }", "beginner")
 ```
 
-## 🌟 Why Sona v0.9.2 is Revolutionary
+## 🌟 Why Sona v0.9.3 is Revolutionary
 
 ### Paradigm-Shifting Innovations
 
@@ -181,6 +230,23 @@ git clone https://github.com/Bryantad/Sona.git
 cd Sona
 pip install -e .
 ```
+
+## 🔁 Rollback & Verification
+
+If you encounter issues with 0.9.3 you can rollback safely (no schema/state migrations were introduced):
+
+```bash
+pip install --upgrade 'Sona==0.9.2'
+```
+
+Post‑install verification steps:
+
+```bash
+sona build-info
+python -m pytest -q
+```
+
+Confirm the reported version and a green test run to match CI expectations.
 
 ## Quick Start
 
