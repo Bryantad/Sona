@@ -7,9 +7,8 @@ to make GPT-2 more effective at Sona code generation.
 """
 
 import json
-import re
 from pathlib import Path
-from typing import List, Dict, Optional, Tuple
+from typing import Dict, List
 
 
 class SonaLanguageAdapter:
@@ -21,7 +20,7 @@ class SonaLanguageAdapter:
         self.cognitive_templates = self.load_cognitive_templates()
         self.completion_cache = {}
         
-    def load_sona_patterns(self) -> Dict[str, List[str]]:
+    def load_sona_patterns(self) -> dict[str, list[str]]:
         """Load Sona syntax patterns from training data"""
         patterns = {
             'thinking_patterns': [
@@ -58,7 +57,7 @@ class SonaLanguageAdapter:
         try:
             dataset_path = Path("sona_training_dataset.json")
             if dataset_path.exists():
-                with open(dataset_path, 'r', encoding='utf-8') as f:
+                with open(dataset_path, encoding='utf-8') as f:
                     dataset = json.load(f)
                 
                 # Extract patterns from real data
@@ -72,7 +71,7 @@ class SonaLanguageAdapter:
         
         return patterns
     
-    def load_cognitive_templates(self) -> Dict[str, str]:
+    def load_cognitive_templates(self) -> dict[str, str]:
         """Load cognitive programming templates"""
         return {
             'planning': '''thinking("Planning phase", "{description}") {{
@@ -292,7 +291,7 @@ Generate Sona code that follows these patterns:"""
         else:
             return f"Executes: {line}"
     
-    def suggest_sona_improvements(self, code: str) -> List[str]:
+    def suggest_sona_improvements(self, code: str) -> list[str]:
         """Suggest Sona-specific improvements"""
         suggestions = []
         

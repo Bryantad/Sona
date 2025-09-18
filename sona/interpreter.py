@@ -13,12 +13,13 @@ Features:
 - Lark Tree integration
 """
 
-import sys
-import traceback
-import time
-from pathlib import Path
-from typing import Any, List, Dict
 import ast
+import sys
+import time
+import traceback
+from pathlib import Path
+from typing import Any  # Ruff UP035: will migrate away from Dict/List
+
 
 # Add current directory to path for imports
 if str(Path(__file__).parent) not in sys.path:
@@ -38,17 +39,17 @@ except ImportError:
 try:
     from .ast_nodes_v090 import (
         AICompleteStatement,
-        AIExplainStatement,
         AIDebugStatement,
-        AIOptimizeStatement
+        AIExplainStatement,
+        AIOptimizeStatement,
     )
 except ImportError:
     try:
         from ast_nodes_v090 import (
             AICompleteStatement,
-            AIExplainStatement,
             AIDebugStatement,
-            AIOptimizeStatement
+            AIExplainStatement,
+            AIOptimizeStatement,
         )
     except ImportError:
         print("⚠️  AST nodes not available, using placeholder mode")
@@ -78,10 +79,13 @@ except ImportError:
         class CognitiveAssistant:
             def __init__(self):
                 pass
+            
             def analyze_working_memory(self, *args, **kwargs):
                 return {'cognitive_load': 'medium', 'suggestions': []}
+            
             def detect_hyperfocus(self, *args, **kwargs):
                 return {'hyperfocus_detected': False}
+            
             def analyze_executive_function(self, *args, **kwargs):
                 return {'task_breakdown': [], 'support_strategies': []}
 
@@ -163,7 +167,7 @@ class SonaFunction:
     def __init__(
         self,
         name: str,
-        parameters: List[str],
+        parameters: list[str],
         body: Any,
         interpreter
     ):
@@ -174,7 +178,7 @@ class SonaFunction:
     
     def call(
         self,
-        arguments: List[Any]
+        arguments: list[Any]
     ) -> Any:
         """Call the function with given arguments"""
         if len(arguments) != len(self.parameters):
@@ -188,7 +192,7 @@ class SonaFunction:
         
         try:
             # Set parameters as local variables
-            for param, arg in zip(self.parameters, arguments):
+            for param, arg in zip(self.parameters, arguments, strict=False):
                 self.interpreter.memory.set_variable(param, arg)
             
             # Execute function body
@@ -225,19 +229,20 @@ class SonaUnifiedInterpreter:
     def _setup_builtins(self):
         """Setup built-in functions and variables"""
         # Built-in functions
-        self.memory.set_variable('print', self._builtin_print, global_scope=True)
-        self.memory.set_variable('len', self._builtin_len, global_scope=True)
-        self.memory.set_variable('type', self._builtin_type, global_scope=True)
-        self.memory.set_variable('str', self._builtin_str, global_scope=True)
-        self.memory.set_variable('int', self._builtin_int, global_scope=True)
-        self.memory.set_variable('float', self._builtin_float, global_scope=True)
-        self.memory.set_variable('bool', self._builtin_bool, global_scope=True)
-        self.memory.set_variable('list', self._builtin_list, global_scope=True)
-        self.memory.set_variable('dict', self._builtin_dict, global_scope=True)
-        self.memory.set_variable('range', self._builtin_range, global_scope=True)
-        self.memory.set_variable('sum', self._builtin_sum, global_scope=True)
-        self.memory.set_variable('max', self._builtin_max, global_scope=True)
-        self.memory.set_variable('min', self._builtin_min, global_scope=True)
+        gv = self.memory.set_variable
+        gv('print', self._builtin_print, global_scope=True)
+        gv('len', self._builtin_len, global_scope=True)
+        gv('type', self._builtin_type, global_scope=True)
+        gv('str', self._builtin_str, global_scope=True)
+        gv('int', self._builtin_int, global_scope=True)
+        gv('float', self._builtin_float, global_scope=True)
+        gv('bool', self._builtin_bool, global_scope=True)
+        gv('list', self._builtin_list, global_scope=True)
+        gv('dict', self._builtin_dict, global_scope=True)
+        gv('range', self._builtin_range, global_scope=True)
+        gv('sum', self._builtin_sum, global_scope=True)
+        gv('max', self._builtin_max, global_scope=True)
+        gv('min', self._builtin_min, global_scope=True)
         
         # Cognitive AI built-in functions
         self.memory.set_variable('think', self._cognitive_think,
@@ -254,7 +259,33 @@ class SonaUnifiedInterpreter:
                                  global_scope=True)
         self.memory.set_variable('ai_explain', self._real_ai_explain,
                                  global_scope=True)
+        self.memory.set_variable('ai_simplify', self._real_ai_simplify,
+                                 global_scope=True)
         self.memory.set_variable('ai_debug', self._real_ai_debug,
+                                 global_scope=True)
+        # Week 2: Advanced AI Programming Constructs
+        self.memory.set_variable('ai_reason', self._real_ai_reason,
+                                 global_scope=True)
+        self.memory.set_variable('ai_refactor', self._real_ai_refactor,
+                                 global_scope=True)
+        self.memory.set_variable('ai_test', self._real_ai_test,
+                                 global_scope=True)
+        self.memory.set_variable('ai_analyze', self._real_ai_analyze,
+                                 global_scope=True)
+        self.memory.set_variable('ai_generate', self._real_ai_generate,
+                                 global_scope=True)
+        # Week 3: AI-Enhanced Development Environment Integration
+        self.memory.set_variable('ai_context', self._real_ai_context,
+                                 global_scope=True)
+        self.memory.set_variable('ai_suggest', self._real_ai_suggest,
+                                 global_scope=True)
+        self.memory.set_variable('ai_document', self._real_ai_document,
+                                 global_scope=True)
+        self.memory.set_variable('ai_optimize', self._real_ai_optimize,
+                                 global_scope=True)
+        self.memory.set_variable('ai_security', self._real_ai_security,
+                                 global_scope=True)
+        self.memory.set_variable('ai_mentor', self._real_ai_mentor,
                                  global_scope=True)
         self.memory.set_variable('generate_code', self._real_ai_generate_code,
                                  global_scope=True)
@@ -382,7 +413,7 @@ class SonaUnifiedInterpreter:
         except Exception as e:
             if self.debug_mode:
                 traceback.print_exc()
-            raise SonaRuntimeError(f"Interpretation error: {e}")
+            raise SonaRuntimeError(f"Interpretation error: {e}") from e
 
     def _is_sona_syntax(self, code: str) -> bool:
         """Detect if code contains Sona-specific syntax"""
@@ -423,9 +454,7 @@ class SonaUnifiedInterpreter:
             'const ', # Constant declarations
         ]
         
-        for pattern in sona_patterns:
-            if pattern in code:
-                return True
+        return any(pattern in code for pattern in sona_patterns)
                 
         return False
 
@@ -480,7 +509,7 @@ class SonaUnifiedInterpreter:
             tree = ast.parse(code, filename=filename)
             return self.execute_ast_node(tree)
         except SyntaxError as e:
-            raise SonaRuntimeError(f"Syntax error in {filename}: {e}")
+            raise SonaRuntimeError(f"Syntax error in {filename}: {e}") from e
     
     def execute(
         self,
@@ -505,7 +534,7 @@ class SonaUnifiedInterpreter:
         except Exception as e:
             if self.debug_mode:
                 traceback.print_exc()
-            raise SonaRuntimeError(f"Execution error: {e}")
+            raise SonaRuntimeError(f"Execution error: {e}") from e
     
     def execute_ast_node(
         self,
@@ -555,7 +584,7 @@ class SonaUnifiedInterpreter:
         elif isinstance(node, ast.Compare):
             left = self.execute_ast_node(node.left)
             result = left
-            for op, comparator in zip(node.ops, node.comparators):
+            for op, comparator in zip(node.ops, node.comparators, strict=False):
                 right = self.execute_ast_node(comparator)
                 result = self._execute_compare_op(op, result, right)
                 if not result:
@@ -573,7 +602,7 @@ class SonaUnifiedInterpreter:
         
         elif isinstance(node, ast.Dict):
             result = {}
-            for key, value in zip(node.keys, node.values):
+            for key, value in zip(node.keys, node.values, strict=False):
                 key_val = self.execute_ast_node(key)
                 value_val = self.execute_ast_node(value)
                 result[key_val] = value_val
@@ -712,7 +741,7 @@ class SonaUnifiedInterpreter:
         else:
             raise SonaRuntimeError(f"Unsupported AST node type: {type(node)}")
     
-    def execute_block(self, statements: List[ast.AST]) -> Any:
+    def execute_block(self, statements: list[ast.AST]) -> Any:
         """Execute a block of statements"""
         result = None
         for stmt in statements:
@@ -786,7 +815,7 @@ class SonaUnifiedInterpreter:
             tree = ast.parse(expression, mode='eval')
             return self.execute_ast_node(tree.body)
         except Exception as e:
-            raise SonaRuntimeError(f"Evaluation error: {e}")
+            raise SonaRuntimeError(f"Evaluation error: {e}") from e
     
     def execute_statement(self, statement: str) -> Any:
         """
@@ -815,11 +844,11 @@ class SonaUnifiedInterpreter:
             raise SonaRuntimeError(f"File not found: {filepath}")
         
         try:
-            with open(filepath, 'r', encoding='utf-8') as f:
+            with open(filepath, encoding='utf-8') as f:
                 code = f.read()
             return self.interpret(code, filename=filepath)
         except Exception as e:
-            raise SonaRuntimeError(f"Error executing file {filepath}: {e}")
+            raise SonaRuntimeError(f"Error executing file {filepath}: {e}") from e
     
     def set_variable(self, name: str, value: Any, global_scope: bool = False):
         """Set a variable in the interpreter"""
@@ -853,7 +882,7 @@ class SonaUnifiedInterpreter:
         """Reset the interpreter state"""
         self.__init__()
     
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         """Get the current interpreter state"""
         return {
             'variables': dict(self.memory.global_scope),
@@ -865,7 +894,7 @@ class SonaUnifiedInterpreter:
     
     # Cognitive AI Built-in Functions
     
-    def _cognitive_think(self, prompt: str) -> Dict[str, Any]:
+    def _cognitive_think(self, prompt: str) -> dict[str, Any]:
         """Built-in cognitive thinking function"""
         self.current_context = prompt
         session_time = time.time() - self.session_start_time
@@ -912,7 +941,7 @@ class SonaUnifiedInterpreter:
                     'message': f"No memory found for key '{key}'"
                 }
     
-    def _cognitive_focus(self, task_description: str) -> Dict[str, Any]:
+    def _cognitive_focus(self, task_description: str) -> dict[str, Any]:
         """Built-in cognitive focus function"""
         session_time = time.time() - self.session_start_time
         
@@ -941,7 +970,7 @@ class SonaUnifiedInterpreter:
             'session_duration': session_time
         }
     
-    def _cognitive_analyze_load(self) -> Dict[str, Any]:
+    def _cognitive_analyze_load(self) -> dict[str, Any]:
         """Built-in cognitive load analysis function"""
         session_time = time.time() - self.session_start_time
         
@@ -974,14 +1003,30 @@ class SonaUnifiedInterpreter:
     
     # REAL AI IMPLEMENTATION METHODS - NO MOCKS
     def _setup_real_ai_provider(self):
-        """Initialize REAL AI provider - NO MOCKS"""
+        """Initialize REAL AI provider using MultiAIProvider - NO MOCKS"""
         try:
-            from .ai.real_ai_provider import REAL_AI_PROVIDER
-            self.real_ai = REAL_AI_PROVIDER
-            print("✅ REAL AI provider initialized")
-        except ImportError:
-            print("❌ Failed to import REAL AI provider")
-            self.real_ai = None
+            # Use our MultiAIProvider with external credentials
+            import sys
+            from pathlib import Path
+            
+            # Add current directory to path for imports
+            sona_root = Path(__file__).parent.parent
+            if str(sona_root) not in sys.path:
+                sys.path.append(str(sona_root))
+            
+            from multi_ai_provider import MultiAIProvider
+            self.real_ai = MultiAIProvider()
+            print("✅ REAL AI provider initialized with MultiAIProvider")
+        except ImportError as e:
+            print(f"❌ Failed to import MultiAIProvider: {e}")
+            # Fallback to original real AI provider
+            try:
+                from .ai.real_ai_provider import REAL_AI_PROVIDER
+                self.real_ai = REAL_AI_PROVIDER
+                print("✅ REAL AI provider initialized (fallback)")
+            except ImportError:
+                print("❌ Failed to import fallback AI provider")
+                self.real_ai = None
     
     def _real_ai_complete(self, code_context: str) -> str:
         """REAL AI code completion - NO MOCKS"""
@@ -991,13 +1036,20 @@ class SonaUnifiedInterpreter:
         if self.real_ai:
             try:
                 response = self.real_ai.ai_complete(code_context)
-                return response.content
+                # MultiAIProvider returns string directly, not object with .content
+                if isinstance(response, str):
+                    return response
+                elif hasattr(response, 'content'):
+                    return response.content
+                else:
+                    return str(response)
             except Exception as e:
                 return f"# AI completion failed: {e}"
         else:
             return "# Real AI not available - check configuration"
     
-    def _real_ai_explain(self, code_snippet: str, level: str = "intermediate") -> str:
+    def _real_ai_explain(self, code_snippet: str, 
+                         level: str = "intermediate") -> str:
         """REAL AI code explanation - NO MOCKS"""
         if not hasattr(self, 'real_ai'):
             self._setup_real_ai_provider()
@@ -1005,7 +1057,13 @@ class SonaUnifiedInterpreter:
         if self.real_ai:
             try:
                 response = self.real_ai.ai_explain(code_snippet, level)
-                return response.content
+                # MultiAIProvider returns string directly, not object with .content
+                if isinstance(response, str):
+                    return response
+                elif hasattr(response, 'content'):
+                    return response.content
+                else:
+                    return str(response)
             except Exception as e:
                 return f"AI explanation failed: {e}"
         else:
@@ -1025,7 +1083,7 @@ class SonaUnifiedInterpreter:
         else:
             return "Real AI not available - check configuration"
     
-    def _real_ai_generate_code(self, description: str) -> Dict[str, Any]:
+    def _real_ai_generate_code(self, description: str) -> dict[str, Any]:
         """REAL AI code generation - NO MOCKS"""
         if not hasattr(self, 'real_ai'):
             self._setup_real_ai_provider()
@@ -1061,7 +1119,7 @@ class SonaUnifiedInterpreter:
                 'ready_to_execute': False
             }
     
-    def _real_ai_complete_function(self, signature: str, description: str = "") -> Dict[str, Any]:
+    def _real_ai_complete_function(self, signature: str, description: str = "") -> dict[str, Any]:
         """REAL AI function completion - NO MOCKS"""
         if not hasattr(self, 'real_ai'):
             self._setup_real_ai_provider()
@@ -1097,7 +1155,7 @@ class SonaUnifiedInterpreter:
                 'timestamp': time.time()
             }
     
-    def _real_ai_explain_code(self, code: str, level: str = "intermediate") -> Dict[str, Any]:
+    def _real_ai_explain_code(self, code: str, level: str = "intermediate") -> dict[str, Any]:
         """REAL AI code explanation - NO MOCKS"""
         if not hasattr(self, 'real_ai'):
             self._setup_real_ai_provider()
@@ -1132,7 +1190,7 @@ class SonaUnifiedInterpreter:
                 'timestamp': time.time()
             }
     
-    def _real_ai_suggest_improvements(self, code: str) -> Dict[str, Any]:
+    def _real_ai_suggest_improvements(self, code: str) -> dict[str, Any]:
         """REAL AI code improvement suggestions - NO MOCKS"""
         if not hasattr(self, 'real_ai'):
             self._setup_real_ai_provider()
@@ -1164,6 +1222,177 @@ class SonaUnifiedInterpreter:
                 'source': 'error',
                 'timestamp': time.time()
             }
+
+    # Week 2: Advanced AI Programming Constructs
+    def _real_ai_reason(self, problem: str, steps: int = 3) -> str:
+        """REAL AI multi-step reasoning - NO MOCKS"""
+        if not hasattr(self, 'real_ai'):
+            self._setup_real_ai_provider()
+        
+        if self.real_ai:
+            try:
+                response = self.real_ai.ai_reason(problem, steps)
+                return str(response)
+            except Exception as e:
+                return f"AI reasoning failed: {e}"
+        else:
+            return "Real AI not available - check configuration"
+
+    def _real_ai_refactor(self, code: str, goal: str = "optimize") -> str:
+        """REAL AI code refactoring - NO MOCKS"""
+        if not hasattr(self, 'real_ai'):
+            self._setup_real_ai_provider()
+        
+        if self.real_ai:
+            try:
+                response = self.real_ai.ai_refactor(code, goal)
+                return str(response)
+            except Exception as e:
+                return f"AI refactoring failed: {e}"
+        else:
+            return "Real AI not available - check configuration"
+
+    def _real_ai_test(self, function: str, test_type: str = "unit") -> str:
+        """REAL AI test generation - NO MOCKS"""
+        if not hasattr(self, 'real_ai'):
+            self._setup_real_ai_provider()
+        
+        if self.real_ai:
+            try:
+                response = self.real_ai.ai_test(function, test_type)
+                return str(response)
+            except Exception as e:
+                return f"AI test generation failed: {e}"
+        else:
+            return "Real AI not available - check configuration"
+
+    def _real_ai_analyze(self, code: str, focus: str = "quality") -> str:
+        """REAL AI code analysis - NO MOCKS"""
+        if not hasattr(self, 'real_ai'):
+            self._setup_real_ai_provider()
+        
+        if self.real_ai:
+            try:
+                response = self.real_ai.ai_analyze(code, focus)
+                return str(response)
+            except Exception as e:
+                return f"AI analysis failed: {e}"
+        else:
+            return "Real AI not available - check configuration"
+
+    def _real_ai_generate(self, specification: str, 
+                          language: str = "python") -> str:
+        """REAL AI spec-to-code generation - NO MOCKS"""
+        if not hasattr(self, 'real_ai'):
+            self._setup_real_ai_provider()
+        
+        if self.real_ai:
+            try:
+                response = self.real_ai.ai_generate(specification, language)
+                return str(response)
+            except Exception as e:
+                return f"AI generation failed: {e}"
+        else:
+            return "Real AI not available - check configuration"
+
+    def _real_ai_simplify(self, text: str) -> str:
+        """REAL AI text simplification - NO MOCKS"""
+        if not hasattr(self, 'real_ai'):
+            self._setup_real_ai_provider()
+        
+        if self.real_ai:
+            try:
+                response = self.real_ai.ai_simplify(text)
+                return str(response)
+            except Exception as e:
+                return f"AI simplification failed: {e}"
+        else:
+            return "Real AI not available - check configuration"
+
+    # Week 3: AI-Enhanced Development Environment Integration
+    def _real_ai_context(self, code: str, file_path: str = "") -> str:
+        """REAL AI code context understanding - NO MOCKS"""
+        if not hasattr(self, 'real_ai'):
+            self._setup_real_ai_provider()
+        
+        if self.real_ai:
+            try:
+                response = self.real_ai.ai_context(code, file_path)
+                return str(response)
+            except Exception as e:
+                return f"AI context analysis failed: {e}"
+        else:
+            return "Real AI not available - check configuration"
+
+    def _real_ai_suggest(self, code: str, cursor_position: int = 0) -> str:
+        """REAL AI code suggestions - NO MOCKS"""
+        if not hasattr(self, 'real_ai'):
+            self._setup_real_ai_provider()
+        
+        if self.real_ai:
+            try:
+                response = self.real_ai.ai_suggest(code, cursor_position)
+                return str(response)
+            except Exception as e:
+                return f"AI suggestions failed: {e}"
+        else:
+            return "Real AI not available - check configuration"
+
+    def _real_ai_document(self, code: str, style: str = "google") -> str:
+        """REAL AI documentation generation - NO MOCKS"""
+        if not hasattr(self, 'real_ai'):
+            self._setup_real_ai_provider()
+        
+        if self.real_ai:
+            try:
+                response = self.real_ai.ai_document(code, style)
+                return str(response)
+            except Exception as e:
+                return f"AI documentation failed: {e}"
+        else:
+            return "Real AI not available - check configuration"
+
+    def _real_ai_optimize(self, code: str, focus: str = "performance") -> str:
+        """REAL AI optimization recommendations - NO MOCKS"""
+        if not hasattr(self, 'real_ai'):
+            self._setup_real_ai_provider()
+        
+        if self.real_ai:
+            try:
+                response = self.real_ai.ai_optimize(code, focus)
+                return str(response)
+            except Exception as e:
+                return f"AI optimization failed: {e}"
+        else:
+            return "Real AI not available - check configuration"
+
+    def _real_ai_security(self, code: str, framework: str = "general") -> str:
+        """REAL AI security analysis - NO MOCKS"""
+        if not hasattr(self, 'real_ai'):
+            self._setup_real_ai_provider()
+        
+        if self.real_ai:
+            try:
+                response = self.real_ai.ai_security(code, framework)
+                return str(response)
+            except Exception as e:
+                return f"AI security analysis failed: {e}"
+        else:
+            return "Real AI not available - check configuration"
+
+    def _real_ai_mentor(self, question: str, level: str = "beginner") -> str:
+        """REAL AI mentoring assistance - NO MOCKS"""
+        if not hasattr(self, 'real_ai'):
+            self._setup_real_ai_provider()
+        
+        if self.real_ai:
+            try:
+                response = self.real_ai.ai_mentor(question, level)
+                return str(response)
+            except Exception as e:
+                return f"AI mentoring failed: {e}"
+        else:
+            return "Real AI not available - check configuration"
 
     # EXISTING MOCK METHODS (TO BE REPLACED COMPLETELY)
         """AI-powered code generation from natural language description"""
@@ -1219,7 +1448,7 @@ class SonaUnifiedInterpreter:
             }
     
     def _ai_complete_function(self, signature: str,
-                              description: str = "") -> Dict[str, Any]:
+                              description: str = "") -> dict[str, Any]:
         """AI-powered function completion"""
         try:
             if hasattr(self.cognitive_assistant, 'gpt2') and \
@@ -1271,7 +1500,7 @@ class SonaUnifiedInterpreter:
                 'timestamp': time.time()
             }
     
-    def _ai_explain_code(self, code: str) -> Dict[str, Any]:
+    def _ai_explain_code(self, code: str) -> dict[str, Any]:
         """AI-powered code explanation in natural language"""
         try:
             if hasattr(self.cognitive_assistant, 'gpt2') and \
@@ -1331,7 +1560,7 @@ class SonaUnifiedInterpreter:
                 'clarity_level': 'unknown'
             }
     
-    def _ai_suggest_improvements(self, code: str) -> Dict[str, Any]:
+    def _ai_suggest_improvements(self, code: str) -> dict[str, Any]:
         """AI-powered code improvement suggestions"""
         try:
             suggestions = []
@@ -1392,7 +1621,7 @@ class SonaUnifiedInterpreter:
     
     # Cognitive Programming Constructs (Day 3B)
     
-    def _cognitive_when_confused(self, explanation: str) -> Dict[str, Any]:
+    def _cognitive_when_confused(self, explanation: str) -> dict[str, Any]:
         """Cognitive clarity assistance when confused"""
         try:
             clarity_response = {
@@ -1440,7 +1669,7 @@ class SonaUnifiedInterpreter:
                 'error': str(e)
             }
     
-    def _cognitive_break_if_overwhelmed(self) -> Dict[str, Any]:
+    def _cognitive_break_if_overwhelmed(self) -> dict[str, Any]:
         """Automatic cognitive load management and break suggestion"""
         try:
             # Analyze current cognitive load
@@ -1497,7 +1726,7 @@ class SonaUnifiedInterpreter:
             }
     
     def _cognitive_simplify_task(self,
-                                 complex_operation: str) -> Dict[str, Any]:
+                                 complex_operation: str) -> dict[str, Any]:
         """AI-powered task decomposition and simplification"""
         try:
             simplified_response = {
@@ -1564,7 +1793,7 @@ class SonaUnifiedInterpreter:
                 'error': str(e)
             }
     
-    def _cognitive_review_progress(self) -> Dict[str, Any]:
+    def _cognitive_review_progress(self) -> dict[str, Any]:
         """Review session progress and provide insights"""
         try:
             session_duration = time.time() - self.session_start_time
@@ -1575,10 +1804,10 @@ class SonaUnifiedInterpreter:
                 'variables_created': len(self.memory.global_scope),
                 'functions_defined': len(self.functions),
                 'current_scope_depth': len(self.memory.local_scopes),
-                'cognitive_memories': len([k for k in self.memory.global_scope.keys()
-                                         if k.startswith('_cognitive_memory_')]),
-                'confusion_instances': len([k for k in self.memory.global_scope.keys()
-                                          if k.startswith('_confusion_')])
+                'cognitive_memories': len([k for k in self.memory.global_scope
+                                            if k.startswith('_cognitive_memory_')]),
+                'confusion_instances': len([k for k in self.memory.global_scope
+                                             if k.startswith('_confusion_')])
             }
             
             # Generate insights
@@ -1632,7 +1861,7 @@ class SonaUnifiedInterpreter:
             }
 
     # Day 3C: Advanced AI Constructs
-    def _ai_adaptive_learning(self, feedback: str) -> Dict[str, Any]:
+    def _ai_adaptive_learning(self, feedback: str) -> dict[str, Any]:
         """AI-powered adaptive learning from user feedback"""
         try:
             from advanced_ai.adaptive_learning import AdaptiveLearning
@@ -1646,7 +1875,7 @@ class SonaUnifiedInterpreter:
             }
 
     def _ai_meta_cognition(self, 
-                           task_description: str = "current_task") -> Dict[str, Any]:
+                           task_description: str = "current_task") -> dict[str, Any]:
         """AI-powered meta-cognitive self-assessment"""
         try:
             from advanced_ai.meta_cognition import MetaCognition
@@ -1659,10 +1888,12 @@ class SonaUnifiedInterpreter:
                 'fallback_assessment': 'self_reflection_needed'
             }
 
-    def _ai_dynamic_context_switching(self, new_context: str) -> Dict[str, Any]:
+    def _ai_dynamic_context_switching(self, new_context: str) -> dict[str, Any]:
         """AI-powered dynamic context switching"""
         try:
-            from advanced_ai.dynamic_context_switching import DynamicContextSwitching
+            from advanced_ai.dynamic_context_switching import (
+                DynamicContextSwitching,
+            )
             context_switcher = DynamicContextSwitching(self.cognitive_assistant)
             old_context = self.current_context
             result = context_switcher.switch_context(old_context, new_context)
@@ -1676,7 +1907,7 @@ class SonaUnifiedInterpreter:
                 'current_context': self.current_context
             }
 
-    def _ai_multi_step_reasoning(self, problem_description: str) -> Dict[str, Any]:
+    def _ai_multi_step_reasoning(self, problem_description: str) -> dict[str, Any]:
         """AI-powered multi-step problem reasoning"""
         try:
             from advanced_ai.multi_step_reasoning import MultiStepReasoning

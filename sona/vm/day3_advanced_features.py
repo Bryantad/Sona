@@ -13,17 +13,18 @@ Target: Complete advanced language constructs for v0.8.1 release
 """
 
 import time
-from typing import Any, Dict, List, Optional, Union
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Dict, List
+
 
 # Import our optimized VM foundation
 try:
+    from .bytecode import BytecodeGenerator, Instruction, OpCode
     from .day2_final_test import CompactVM
-    from .bytecode import OpCode, Instruction, BytecodeGenerator
 except ImportError:
+    from bytecode import BytecodeGenerator
     from day2_final_test import CompactVM
-    from bytecode import OpCode, Instruction, BytecodeGenerator
 
 
 class AdvancedOpCode(Enum):
@@ -68,9 +69,9 @@ class AdvancedOpCode(Enum):
 class Function:
     """Function definition for advanced VM."""
     name: str
-    parameters: List[str]
-    bytecode: List[int]
-    local_vars: List[str]
+    parameters: list[str]
+    bytecode: list[int]
+    local_vars: list[str]
     cognitive_weight: float = 1.0
 
 
@@ -78,8 +79,8 @@ class Function:
 class SonaClass:
     """Class definition for OOP features."""
     name: str
-    methods: Dict[str, Function]
-    attributes: Dict[str, Any]
+    methods: dict[str, Function]
+    attributes: dict[str, Any]
     cognitive_accessibility: float = 1.0
 
 
@@ -116,7 +117,7 @@ class AdvancedVM(CompactVM):
         self.classes[cls.name] = cls
         self.advanced_features_used['classes'] += 1
     
-    def run_advanced(self, program_data: List[Any]) -> Any:
+    def run_advanced(self, program_data: list[Any]) -> Any:
         """
         Enhanced execution loop supporting advanced language features.
         Maintains performance while adding functionality.
@@ -193,7 +194,7 @@ class AdvancedVM(CompactVM):
                     # Simple function call - push args to local scope
                     call_frame = {
                         'return_address': i + 1,
-                        'locals': dict(zip(func.parameters, args))
+                        'locals': dict(zip(func.parameters, args, strict=False))
                     }
                     call_stack.append(call_frame)
                     
@@ -273,7 +274,7 @@ class AdvancedVM(CompactVM):
         
         return stack[-1] if stack else None
     
-    def _execute_function(self, func: Function, local_vars: Dict[str, Any]) -> Any:
+    def _execute_function(self, func: Function, local_vars: dict[str, Any]) -> Any:
         """Execute a function's bytecode with local scope."""
         # For now, simple execution - would be more complex in full implementation
         # This is a placeholder that demonstrates the concept
@@ -310,7 +311,7 @@ class AdvancedBytecodeGenerator(BytecodeGenerator):
         self.labels = {}
         self.jump_targets = []
     
-    def emit_function_def(self, name: str, parameters: List[str], body_instructions: List[int]):
+    def emit_function_def(self, name: str, parameters: list[str], body_instructions: list[int]):
         """Emit a function definition."""
         func = Function(
             name=name,
@@ -327,8 +328,8 @@ class AdvancedBytecodeGenerator(BytecodeGenerator):
         self.emit_raw(func_name)
         self.emit_raw(arg_count)
     
-    def emit_if_statement(self, condition_code: List[int], then_code: List[int], 
-                         else_code: List[int] = None):
+    def emit_if_statement(self, condition_code: list[int], then_code: list[int], 
+                         else_code: list[int] = None):
         """Emit an if statement with optional else clause."""
         result = []
         
@@ -439,7 +440,7 @@ def test_advanced_features():
     total_time = end_time - start_time
     ops_per_second = iterations / total_time
     
-    print(f"Advanced VM Performance:")
+    print("Advanced VM Performance:")
     print(f"Iterations: {iterations:,}")
     print(f"Time: {total_time:.4f} seconds")
     print(f"Ops/second: {ops_per_second:,.0f}")
@@ -448,7 +449,7 @@ def test_advanced_features():
     day2_baseline = 622660
     performance_ratio = ops_per_second / day2_baseline
     
-    print(f"\\nPerformance Analysis:")
+    print("\\nPerformance Analysis:")
     print(f"Day 2 baseline: {day2_baseline:,} ops/sec")
     print(f"Advanced features: {ops_per_second:,.0f} ops/sec")
     print(f"Performance retention: {performance_ratio:.2f}x")
@@ -463,7 +464,7 @@ def test_advanced_features():
     print(f"Status: {perf_status}")
     
     # Feature usage summary
-    print(f"\\nAdvanced Features Usage:")
+    print("\\nAdvanced Features Usage:")
     for feature, count in vm.advanced_features_used.items():
         if count > 0:
             print(f"✅ {feature}: {count} uses")
@@ -482,7 +483,7 @@ def test_advanced_features():
     completed_features = sum(1 for _, implemented in day3_features if implemented)
     total_features = len(day3_features)
     
-    print(f"\\nDay 3 Feature Completion:")
+    print("\\nDay 3 Feature Completion:")
     for feature, implemented in day3_features:
         status = "✅" if implemented else "⚪"
         print(f"{status} {feature}")

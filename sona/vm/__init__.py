@@ -6,9 +6,10 @@ This module implements the core VM infrastructure for Sona language
 performance optimization, targeting 10-50x improvement over interpreter.
 """
 
-from .bytecode import Instruction, OpCode, BytecodeGenerator
-from .vm import SonaVM
+from .bytecode import BytecodeGenerator, Instruction, OpCode
 from .stack import VMStack
+from .vm import SonaVM
+
 
 __all__ = [
     'Instruction',

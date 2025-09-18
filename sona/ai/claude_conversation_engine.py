@@ -7,21 +7,28 @@ GPT-2 CUDA infrastructure while providing Claude-like conversation patterns.
 """
 
 import asyncio
-import time
 import logging
-from typing import Dict, List
+import time
 from datetime import datetime
+from typing import Dict, List
 
-from .gpt2_integration import GPT2Integration
-from .cognitive_assistant import CognitiveAssistant
-from .claude_like_chatbot import (
-    ClaudeStylePromptEngine, ClaudeResponseRefinery,
-    ConversationTopic, CognitiveState, UserContext, ConversationResponse
-)
 from .claude_chatbot_components import (
-    AdvancedContextManager, ConversationSafetyFilter, 
-    SonaCognitiveIntegration, TopicTracker
+    AdvancedContextManager,
+    ConversationSafetyFilter,
+    SonaCognitiveIntegration,
+    TopicTracker,
 )
+from .claude_like_chatbot import (
+    ClaudeResponseRefinery,
+    ClaudeStylePromptEngine,
+    CognitiveState,
+    ConversationResponse,
+    ConversationTopic,
+    UserContext,
+)
+from .cognitive_assistant import CognitiveAssistant
+from .gpt2_integration import GPT2Integration
+
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +64,7 @@ class ClaudeLikeConversationEngine:
     async def generate_response(self, 
                               user_input: str, 
                               user_id: str = "default_user",
-                              conversation_history: List[Dict] = None) -> ConversationResponse:
+                              conversation_history: list[dict] = None) -> ConversationResponse:
         """
         Primary conversation pipeline:
         1. Analyze intent and determine reasoning approach
@@ -120,7 +127,7 @@ class ClaudeLikeConversationEngine:
             logger.error(f"Error generating response: {str(e)}")
             return self._create_error_response(str(e), time.time() - start_time)
             
-    async def _prepare_user_context(self, user_id: str, user_input: str, history: List[Dict]) -> UserContext:
+    async def _prepare_user_context(self, user_id: str, user_input: str, history: list[dict]) -> UserContext:
         """Prepare comprehensive user context"""
         return UserContext(
             user_id=user_id,
@@ -151,7 +158,7 @@ class ClaudeLikeConversationEngine:
             logger.error(f"GPT-2 generation error: {str(e)}")
             return "I apologize, but I'm having trouble generating a response right now. Could you please try again?"
             
-    def _calculate_session_duration(self, history: List[Dict]) -> float:
+    def _calculate_session_duration(self, history: list[dict]) -> float:
         """Calculate current session duration"""
         if not history:
             return 0.0
@@ -159,7 +166,7 @@ class ClaudeLikeConversationEngine:
         first_timestamp = history[0].get('timestamp', time.time())
         return time.time() - first_timestamp
         
-    def _analyze_cognitive_state(self, user_input: str, history: List[Dict]) -> CognitiveState:
+    def _analyze_cognitive_state(self, user_input: str, history: list[dict]) -> CognitiveState:
         """Analyze user's cognitive state from input patterns"""
         input_lower = user_input.lower()
         
@@ -225,7 +232,7 @@ class ClaudeLikeConversationEngine:
             engagement_level=0.3
         )
         
-    def get_performance_report(self) -> Dict:
+    def get_performance_report(self) -> dict:
         """Get current performance metrics"""
         return {
             'total_conversations': self.conversation_metrics['total_conversations'],

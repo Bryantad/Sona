@@ -12,13 +12,14 @@ Building upon Day 4's exception handling, implementing:
 Target: Complete modular architecture for v0.8.1 release
 """
 
+import hashlib
+import json
 import os
 import time
-import json
-import hashlib
-from typing import Any, Dict, List, Optional, Set
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from pathlib import Path
+from typing import Any, Dict, List, Optional
+
 
 # Import our exception-handling VM foundation
 try:
@@ -33,17 +34,17 @@ class ModuleInfo:
     name: str
     version: str
     file_path: str
-    dependencies: List[str]
-    exports: List[str]
-    compiled_bytecode: Optional[List[int]] = None
+    dependencies: list[str]
+    exports: list[str]
+    compiled_bytecode: list[int] | None = None
     cognitive_complexity: float = 1.0
     accessibility_level: int = 1  # 1=beginner, 2=intermediate, 3=advanced
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
     
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'ModuleInfo':
+    def from_dict(cls, data: dict[str, Any]) -> 'ModuleInfo':
         return cls(**data)
 
 
@@ -52,12 +53,12 @@ class Package:
     """Package definition with modules."""
     name: str
     version: str
-    modules: Dict[str, ModuleInfo]
+    modules: dict[str, ModuleInfo]
     description: str = ""
     author: str = ""
     license: str = "MIT"
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             'name': self.name,
             'version': self.version,
@@ -88,7 +89,7 @@ class ModuleCache:
         content = f"{module_path}:{stat.st_mtime}:{stat.st_size}"
         return hashlib.md5(content.encode()).hexdigest()
     
-    def get(self, module_path: str) -> Optional[ModuleInfo]:
+    def get(self, module_path: str) -> ModuleInfo | None:
         """Get module from cache."""
         cache_key = self.get_cache_key(module_path)
         
@@ -101,7 +102,7 @@ class ModuleCache:
         cache_file = self.cache_dir / f"{cache_key}.json"
         if cache_file.exists():
             try:
-                with open(cache_file, 'r') as f:
+                with open(cache_file) as f:
                     data = json.load(f)
                 module_info = ModuleInfo.from_dict(data)
                 self.memory_cache[cache_key] = module_info
@@ -149,7 +150,7 @@ class ModuleLoader:
             'compilation_time': 0.0
         }
     
-    def find_module(self, module_name: str) -> Optional[str]:
+    def find_module(self, module_name: str) -> str | None:
         """Find module file in search paths."""
         for search_path in self.module_paths:
             # Try .sona extension
@@ -171,7 +172,7 @@ class ModuleLoader:
         start_time = time.perf_counter()
         
         # For now, simulate compilation by parsing a simple module format
-        with open(module_path, 'r', encoding='utf-8') as f:
+        with open(module_path, encoding='utf-8') as f:
             content = f.read()
         
         # Parse module header (simplified)
@@ -215,7 +216,7 @@ class ModuleLoader:
         
         return module_info
     
-    def _generate_module_bytecode(self, content: str) -> List[int]:
+    def _generate_module_bytecode(self, content: str) -> list[int]:
         """Generate bytecode for module content."""
         # Simplified bytecode generation
         bytecode = [1, f"Module loaded: {len(content)} characters", 7, 0]  # Print and halt
@@ -240,7 +241,7 @@ class ModuleLoader:
         else:
             return 1
     
-    def load_module(self, module_name: str) -> Optional[ModuleInfo]:
+    def load_module(self, module_name: str) -> ModuleInfo | None:
         """Load a module with dependency resolution."""
         # Check if already loaded
         if module_name in self.loaded_modules:
@@ -363,7 +364,7 @@ class ModularVM(ExceptionHandlingVM):
             )
             return False
     
-    def run_modular(self, program_data: List[Any]) -> Any:
+    def run_modular(self, program_data: list[Any]) -> Any:
         """Execute program with module import support."""
         i = 0
         data_len = len(program_data)
@@ -505,7 +506,7 @@ def test_module_system():
     total_time = end_time - start_time
     ops_per_second = iterations / total_time
     
-    print(f"Modular VM Performance:")
+    print("Modular VM Performance:")
     print(f"Iterations: {iterations:,}")
     print(f"Time: {total_time:.4f} seconds")
     print(f"Ops/second: {ops_per_second:,.0f}")
@@ -514,7 +515,7 @@ def test_module_system():
     day4_baseline = 829692  # From Day 4 test
     performance_ratio = ops_per_second / day4_baseline
     
-    print(f"\\nPerformance Analysis:")
+    print("\\nPerformance Analysis:")
     print(f"Day 4 baseline: {day4_baseline:,} ops/sec")
     print(f"Module system: {ops_per_second:,.0f} ops/sec")
     print(f"Performance retention: {performance_ratio:.2f}x")
@@ -550,7 +551,7 @@ def test_module_system():
     completed_features = sum(1 for _, implemented in day5_features if implemented)
     total_features = len(day5_features)
     
-    print(f"\\nDay 5 Feature Completion:")
+    print("\\nDay 5 Feature Completion:")
     for feature, implemented in day5_features:
         status = "✅" if implemented else "⚪"
         print(f"{status} {feature}")

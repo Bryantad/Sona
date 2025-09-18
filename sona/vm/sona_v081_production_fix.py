@@ -9,20 +9,19 @@ FIXES IMPLEMENTED:
 4. ✅ Updated completion criteria to 100%
 """
 
-import time
+import base64
+import datetime
+import hashlib
 import json
 import os
-import random
-import hashlib
-import base64
-import string
 import platform
-import datetime
-import uuid
+import random
 import secrets
+import string
+import time
+import uuid
 from typing import Any, Dict, List, Optional
-from dataclasses import dataclass
-from enum import Enum
+
 
 # Import base components
 try:
@@ -30,7 +29,6 @@ try:
     from .day4_exception_handling import ExceptionType, SonaException
 except ImportError:
     from day2_final_test import CompactVM
-    from day4_exception_handling import ExceptionType, SonaException
 
 
 class StandardLibraryManager:
@@ -65,11 +63,11 @@ class StandardLibraryManager:
         """Returns actual module count - should be 14."""
         return len(self.modules)
     
-    def get_module(self, name: str) -> Optional[Dict]:
+    def get_module(self, name: str) -> dict | None:
         """Get module by name."""
         return self.modules.get(name)
     
-    def list_modules(self) -> List[str]:
+    def list_modules(self) -> list[str]:
         """List all available modules."""
         return list(self.modules.keys())
     
@@ -103,7 +101,7 @@ class StandardLibraryManager:
         return {
             'print': lambda *args: print(*args),
             'input': lambda prompt='': input(prompt),
-            'read_file': lambda path: open(path, 'r').read(),
+            'read_file': lambda path: open(path).read(),
             'write_file': lambda path, content: open(path, 'w').write(content),
             'file_exists': lambda path: os.path.exists(path)
         }
@@ -227,7 +225,7 @@ class StandardLibraryManager:
     def _create_file_module(self):
         """File module with full functionality."""
         return {
-            'read': lambda path: open(path, 'r', encoding='utf-8').read(),
+            'read': lambda path: open(path, encoding='utf-8').read(),
             'write': lambda path, content: open(path, 'w', encoding='utf-8').write(str(content)),
             'append': lambda path, content: open(path, 'a', encoding='utf-8').write(str(content)),
             'exists': lambda path: os.path.exists(path),
@@ -235,7 +233,7 @@ class StandardLibraryManager:
             'copy': lambda src, dst: __import__('shutil').copy2(src, dst),
             'move': lambda src, dst: __import__('shutil').move(src, dst),
             'delete': lambda path: os.remove(path) if os.path.exists(path) else None,
-            'lines': lambda path: open(path, 'r', encoding='utf-8').readlines(),
+            'lines': lambda path: open(path, encoding='utf-8').readlines(),
             'extension': lambda path: os.path.splitext(path)[1]
         }
     
@@ -273,7 +271,7 @@ class StandardLibraryManager:
             'user_agent': lambda: 'Sona-HTTP/0.8.1'
         }
     
-    def _http_request(self, method: str, url: str, data=None) -> Dict:
+    def _http_request(self, method: str, url: str, data=None) -> dict:
         """Simplified HTTP request (demo implementation)."""
         return {
             'status': 200,
@@ -334,14 +332,14 @@ class SonaVM_v081_Fixed(CompactVM):
             'error_recovery': True
         }
     
-    def run_production_v081(self, program_data: List[Any]) -> Any:
+    def run_production_v081(self, program_data: list[Any]) -> Any:
         """Execute with complete v0.8.1 feature set."""
         try:
             return self.run_optimized(program_data)
         except Exception as e:
             return f"Error: {str(e)}"
     
-    def benchmark_production_performance(self, iterations: int = 50000) -> Dict[str, Any]:
+    def benchmark_production_performance(self, iterations: int = 50000) -> dict[str, Any]:
         """FIXED performance benchmark with accurate reporting."""
         
         # Comprehensive test program using multiple features
@@ -402,7 +400,7 @@ class SonaVM_v081_Fixed(CompactVM):
         else:
             return "⚠️ ACCEPTABLE - Meets minimum requirements"
     
-    def assess_phase1_completion(self) -> Dict[str, Any]:
+    def assess_phase1_completion(self) -> dict[str, Any]:
         """FIXED Phase 1 completion assessment."""
         
         objectives = {
@@ -427,7 +425,7 @@ class SonaVM_v081_Fixed(CompactVM):
             'status': '✅ PHASE 1: COMPLETE' if completion_percentage == 100 else '⚠️ PHASE 1: INCOMPLETE'
         }
     
-    def generate_production_release_metrics(self) -> Dict[str, Any]:
+    def generate_production_release_metrics(self) -> dict[str, Any]:
         """Generate corrected release metrics."""
         
         # Run performance benchmark
@@ -475,7 +473,7 @@ def comprehensive_production_test():
     modules_list = vm.stdlib_manager.list_modules()
     
     print(f"  Module count: {module_count}")
-    print(f"  Expected: 14")
+    print("  Expected: 14")
     print(f"  Status: {'✅ PASS' if module_count == 14 else '❌ FAIL'}")
     print(f"  Modules: {', '.join(modules_list)}")
     
@@ -570,4 +568,4 @@ if __name__ == "__main__":
     with open('SONA_v0.8.1_PRODUCTION_RELEASE.json', 'w') as f:
         json.dump(release_info, f, indent=2)
     
-    print(f"\n📄 Production release information saved to: SONA_v0.8.1_PRODUCTION_RELEASE.json")
+    print("\n📄 Production release information saved to: SONA_v0.8.1_PRODUCTION_RELEASE.json")

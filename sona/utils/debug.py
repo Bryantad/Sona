@@ -1,19 +1,14 @@
-"""Debug utilities for Sona"""
+"""Quarantined placeholder for `sona.utils.debug`.
 
-import os
+Original corrupted version archived at `legacy/utils_debug_archived.py`.
+Any access raises to prevent silent reliance during the 0.9.3 quality sweep.
+"""
 
+from __future__ import annotations
 
-def debug(msg): """Print debug messages when SONA_DEBUG = 1"""
-    if os.environ.get("SONA_DEBUG") == "1": print(f"[DEBUG] {msg}")
+def __getattr__(name: str):  # pragma: no cover - guard
+    raise RuntimeError(
+        "'sona.utils.debug' has been quarantined. See legacy archive and 0.9.4 "
+        "repair ticket for reimplementation."
+    )
 
-
-def trace(msg): """Print trace messages when SONA_DEBUG = 1"""
-    if os.environ.get("SONA_DEBUG") == "1": print(f"[TRACE] {msg}")
-
-
-def warn(msg): """Print warning messages (always shown)"""
-    print(f"[WARN] {msg}")
-
-
-def error(msg): """Print error messages (always shown)"""
-    print(f"[ERROR] {msg}")

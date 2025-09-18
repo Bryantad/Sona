@@ -6,7 +6,8 @@ AI-powered explanations and documentation generation.
 """
 
 import re
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List
+
 from .gpt2_integration import get_gpt2_instance
 
 
@@ -25,7 +26,7 @@ class NaturalLanguageProcessor:
             'store_data': r'save|store|keep.*data'
         }
         
-    def text_to_code(self, description: str, target_language: str = 'sona') -> Dict[str, str]:
+    def text_to_code(self, description: str, target_language: str = 'sona') -> dict[str, str]:
         """Convert natural language description to code
         
         Args:
@@ -96,7 +97,7 @@ class NaturalLanguageProcessor:
         else:
             return self._generate_module_docs(code)
     
-    def suggest_improvements(self, description: str, current_code: str) -> List[str]:
+    def suggest_improvements(self, description: str, current_code: str) -> list[str]:
         """Suggest improvements based on natural language description
         
         Args:
@@ -146,7 +147,7 @@ class NaturalLanguageProcessor:
         
         return cleaned.strip()
     
-    def _analyze_intent(self, description: str) -> Dict[str, any]:
+    def _analyze_intent(self, description: str) -> dict[str, any]:
         """Analyze intent from natural language description"""
         intent = {
             'type': 'general',
@@ -196,7 +197,7 @@ class NaturalLanguageProcessor:
         
         return intent
     
-    def _generate_function_code(self, description: str, intent: Dict) -> str:
+    def _generate_function_code(self, description: str, intent: dict) -> str:
         """Generate function code based on description"""
         # Extract function name from description
         function_name = self._extract_function_name(description)
@@ -227,7 +228,7 @@ class NaturalLanguageProcessor:
         
         return code
     
-    def _generate_data_processing_code(self, description: str, intent: Dict) -> str:
+    def _generate_data_processing_code(self, description: str, intent: dict) -> str:
         """Generate data processing code"""
         code = "// Data processing function\n"
         
@@ -250,7 +251,7 @@ class NaturalLanguageProcessor:
         
         return code
     
-    def _generate_control_flow_code(self, description: str, intent: Dict) -> str:
+    def _generate_control_flow_code(self, description: str, intent: dict) -> str:
         """Generate control flow code"""
         code = ""
         
@@ -293,7 +294,7 @@ class NaturalLanguageProcessor:
         cognitive_keywords = ['accessible', 'cognitive', 'adhd', 'autism', 'neurodivergent']
         return any(keyword in description.lower() for keyword in cognitive_keywords)
     
-    def _add_cognitive_elements(self, code: str, intent: Dict) -> str:
+    def _add_cognitive_elements(self, code: str, intent: dict) -> str:
         """Add cognitive programming elements to code"""
         if 'think(' not in code and intent['complexity'] != 'simple':
             # Add thinking at the beginning
@@ -320,7 +321,7 @@ class NaturalLanguageProcessor:
         # Default function name
         return "processData"
     
-    def _calculate_confidence(self, intent: Dict) -> float:
+    def _calculate_confidence(self, intent: dict) -> float:
         """Calculate confidence score for code generation"""
         confidence = 0.5  # Base confidence
         
@@ -381,7 +382,7 @@ class NaturalLanguageProcessor:
         
         # Add structural analysis
         lines = code.split('\n')
-        explanation += f"\n\nCode structure:\n"
+        explanation += "\n\nCode structure:\n"
         explanation += f"• {len(lines)} lines of code\n"
         explanation += f"• {code.count('function')} function(s)\n"
         explanation += f"• {code.count('if')} conditional(s)\n"
@@ -412,7 +413,7 @@ class NaturalLanguageProcessor:
         """Generate module documentation"""
         return '"""\nModule documentation\n\nDescription of module purpose and API.\n"""'
     
-    def _analyze_code_completeness(self, code: str, intent: Dict) -> Dict[str, bool]:
+    def _analyze_code_completeness(self, code: str, intent: dict) -> dict[str, bool]:
         """Analyze code completeness"""
         return {
             'has_error_handling': 'try' in code or 'catch' in code or 'if' in code,

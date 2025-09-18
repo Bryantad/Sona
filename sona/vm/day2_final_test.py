@@ -23,7 +23,7 @@ class CompactVM:
         self.stack = []
         self.globals = {}
         
-    def run_optimized(self, program_data: List[Any]) -> Any:
+    def run_optimized(self, program_data: list[Any]) -> Any:
         """
         Optimized execution with pre-compiled program data.
         Program data format: [opcode1, operand1, opcode2, operand2, ...]
@@ -109,7 +109,7 @@ def benchmark_day2_final():
     ]
     
     print(f"Program size: {len(program)} elements")
-    print(f"Running performance test...")
+    print("Running performance test...")
     
     # High-iteration test
     iterations = 3000000  # 3 million iterations
@@ -124,7 +124,7 @@ def benchmark_day2_final():
     total_time = end_time - start_time
     ops_per_second = iterations / total_time
     
-    print(f"\\nCompact VM Performance:")
+    print("\\nCompact VM Performance:")
     print(f"Iterations: {iterations:,}")
     print(f"Total time: {total_time:.4f} seconds")
     print(f"Operations/second: {ops_per_second:,.0f}")
@@ -134,7 +134,7 @@ def benchmark_day2_final():
     day1_vm = 383035
     optimized_vm = 434571
     
-    print(f"\\n" + "=" * 60)
+    print("\\n" + "=" * 60)
     print("PHASE 1, DAY 2 PERFORMANCE SUMMARY")
     print("=" * 60)
     print(f"Interpreter baseline:     {interpreter_baseline:,} ops/sec")
@@ -146,7 +146,7 @@ def benchmark_day2_final():
     vs_day1 = ops_per_second / day1_vm
     vs_interpreter = ops_per_second / interpreter_baseline
     
-    print(f"\\nImprovement Analysis:")
+    print("\\nImprovement Analysis:")
     print(f"vs Day 1 VM:      {vs_day1:.2f}x")
     print(f"vs Interpreter:   {vs_interpreter:.2f}x")
     
@@ -176,7 +176,7 @@ def benchmark_day2_final():
     print(f"{day2_result}")
     
     # Validate correctness
-    print(f"\\nValidation:")
+    print("\\nValidation:")
     print(f"Final state: {vm.globals}")
     if vm.globals.get('c') == 30:
         print("✅ Program executed correctly")
@@ -184,7 +184,7 @@ def benchmark_day2_final():
         print("❌ Program execution error")
     
     # Day 2 completion summary
-    print(f"\\n" + "=" * 60)
+    print("\\n" + "=" * 60)
     print("PHASE 1, DAY 2 COMPLETION SUMMARY")
     print("=" * 60)
     print("Objectives achieved:")
