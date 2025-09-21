@@ -1,0 +1,70 @@
+{
+    "metadata": {
+        "version": "0.9.4",
+        "last_updated": "2025-09-20T12:10:00Z",
+        "tracking_started": "2025-01-18T00:00:00Z",
+        "total_files_tracked": 5,
+        "checksum_algorithm": "sha256"
+    },
+    "files": {
+        "_readme": "This file tracks all changes made during v0.9.4 development. Each file entry includes the file path, last modified timestamp, and SHA256 checksum for integrity verification.",
+        "sona.ps1": {
+            "path": "F:\\Sona\\sona.ps1",
+            "sha256": "6466CFF128DDA3125D293CC531CEEA5E5A8DC299293AA8DB70C9EC58F5A03507",
+            "last_modified_utc": "2025-09-20T12:45:00Z",
+            "reason": "Add PowerShell shim to support 'sona -m' reliably"
+        },
+        "sona.bat": {
+            "path": "F:\\Sona\\sona.bat",
+            "sha256": "CC346B95F4590FCEC6DB51FE909F6D563DD29B4F1C77B38BFD8D4032F31BF898",
+            "last_modified_utc": "2025-09-20T12:40:00Z",
+            "reason": "Clean cmd shim; maintain -m forwarding and default CLI"
+        },
+        "Github_release/0.9.4/SPECS/cli_forwarding_spec.md": {
+            "path": "F:\\Sona\\Github_release\\0.9.4\\SPECS\\cli_forwarding_spec.md",
+            "sha256": "A96F75163332A393755ADF7708EEDE937591FF713F9D50DCC6BC8D9C140810D6",
+            "last_modified_utc": "2025-09-20T12:40:00Z",
+            "reason": "Document CLI forwarding behavior for Windows shells"
+        },
+        "sona/type_system/runtime_checker.py": {
+            "path": "F:\\Sona\\sona\\type_system\\runtime_checker.py",
+            "sha256": "2cf69d41c0e5223a2e3995ee3e7e1f68d1b46ef504cbc88da756aa98d3ce3411",
+            "last_modified_utc": "2025-09-20T04:46:38Z",
+            "reason": "Add runtime type checker with @check_types decorator"
+        },
+        "tests/test_type_system_runtime.py": {
+            "path": "F:\\Sona\\tests\\test_type_system_runtime.py",
+            "sha256": "6d91b143a190684c90f26640dc39e0d7ff5b2c11b9450ae3499a945e200cdc28",
+            "last_modified_utc": "2025-09-20T04:46:38Z",
+            "reason": "Add pytest coverage for runtime type checker"
+        }
+    },
+    "daily_summaries": {
+        "2025-01-18": {
+            "files_modified": 5,
+            "lines_added": 250,
+            "lines_deleted": 20,
+            "tests_added": 1,
+            "features_completed": [
+                "runtime_type_checker",
+                "windows_cli_forwarding"
+            ],
+            "issues_fixed": [
+                "powershell_-m_forwarding"
+            ]
+        }
+    },
+    "feature_file_mapping": {
+        "type_system": [
+            "sona/type_system/runtime_checker.py",
+            "tests/test_type_system_runtime.py"
+        ],
+        "dual_syntax": [],
+        "focus_mode": [],
+        "release_ci": [],
+        "debugger": [],
+        "ai_plan_review": [],
+        "adaptive_policy": [],
+        "self_heal": []
+    }
+}
