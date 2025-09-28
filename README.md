@@ -1,6 +1,3 @@
-Here’s a clean, developer-style README you can drop into the repo root. No emojis, no fluff—just the facts for v0.9.4.1.
-
-````md
 # Sona — AI-Native Programming
 
 Human × AI collaboration with cognitive accessibility at the core.
