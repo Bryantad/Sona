@@ -1,6 +1,6 @@
-# Sona — AI-Native Programming
+# 🚀 Sona — The World’s First **AI-Native** Programming Language
 
-Human × AI collaboration with cognitive accessibility at the core.
+**Human × AI collaboration with cognitive accessibility at the core.**
 
 [![Version](https://img.shields.io/badge/version-0.9.4.1-blue.svg)](https://github.com/Bryantad/Sona/releases/tag/v0.9.4.1)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -8,6 +8,8 @@ Human × AI collaboration with cognitive accessibility at the core.
 [![Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/Waycoreinc.sona-ai-native-programming?label=VS%20Code%20Installs)](https://marketplace.visualstudio.com/items?itemName=Waycoreinc.sona-ai-native-programming)
 [![Marketplace Rating](https://img.shields.io/visual-studio-marketplace/r/Waycoreinc.sona-ai-native-programming?label=VS%20Code%20Rating)](https://marketplace.visualstudio.com/items?itemName=Waycoreinc.sona-ai-native-programming)
 [![GitHub Stars](https://img.shields.io/github/stars/Bryantad/Sona?style=social)](https://github.com/Bryantad/Sona/stargazers)
+[![YouTube](https://img.shields.io/youtube/channel/subscribers/UCFWuiQHiQPrJSAeAVi5raZA?style=social)](https://www.youtube.com/channel/UCFWuiQHiQPrJSAeAVi5raZA)
+[![X (Twitter) Follow](https://img.shields.io/twitter/follow/sona_org?style=social)](https://x.com/sona_org)
 
 ---
 
