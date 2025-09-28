@@ -1,4 +1,4 @@
-# 🚀 Sona — The World’s First **AI-Native** Programming Language
+# 🚀 Sona — **AI-Native** Programming Language
 
 **Human × AI collaboration with cognitive accessibility at the core.**
 
