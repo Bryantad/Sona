@@ -1,127 +1,146 @@
-# 🚀 Sona — The World’s First **AI-Native** Programming Language
+Here’s a clean, developer-style README you can drop into the repo root. No emojis, no fluff—just the facts for v0.9.4.1.
 
-**Human × AI collaboration with cognitive accessibility at the core.**
+````md
+# Sona — AI-Native Programming
 
-[![Version](https://img.shields.io/badge/version-0.9.3-blue.svg)](https://github.com/Bryantad/Sona/releases/tag/v0.9.3)
+Human × AI collaboration with cognitive accessibility at the core.
+
+[![Version](https://img.shields.io/badge/version-0.9.4.1-blue.svg)](https://github.com/Bryantad/Sona/releases/tag/v0.9.4.1)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://python.org)
+[![Python](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://python.org)
 [![Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/Waycoreinc.sona-ai-native-programming?label=VS%20Code%20Installs)](https://marketplace.visualstudio.com/items?itemName=Waycoreinc.sona-ai-native-programming)
 [![Marketplace Rating](https://img.shields.io/visual-studio-marketplace/r/Waycoreinc.sona-ai-native-programming?label=VS%20Code%20Rating)](https://marketplace.visualstudio.com/items?itemName=Waycoreinc.sona-ai-native-programming)
 [![GitHub Stars](https://img.shields.io/github/stars/Bryantad/Sona?style=social)](https://github.com/Bryantad/Sona/stargazers)
-[![YouTube](https://img.shields.io/youtube/channel/subscribers/UCFWuiQHiQPrJSAeAVi5raZA?style=social)](https://www.youtube.com/channel/UCFWuiQHiQPrJSAeAVi5raZA)
-[![X (Twitter) Follow](https://img.shields.io/twitter/follow/sona_org?style=social)](https://x.com/sona_org)
-
-> Sona lets you **think in code** and **code in plain language**—with accessibility features that respect how different brains work.
 
 ---
 
-## TL;DR
+## Overview
 
-- **AI-Native from first principles.** Sona speaks *with* you as you build—explain, review, plan, optimize.
-- **Cognitive accessibility, seriously.** Focus Mode, working memory patterns, and design choices meant for real humans, not idealized robots.
-- **Pragmatic interop.** Transpile to JS/TS/Python/C#/Go/Rust when you need to meet teams where they are.
+Sona is an AI-native language and toolchain built with cognitive accessibility in mind. The project prioritizes a reliable, deterministic standard library before provider integrations. AI providers will ship via a separate `sona-ai` package so the core remains stable, testable, and network-free.
 
-If you like where this is going, **⭐️ star this repo**. Stars signal demand and help us prioritize features you’ll actually use.
+This repository includes:
 
----
-
-## ✨ What’s New in v0.9.3 (Foundation Release)
-
-This release is about **infrastructure and reliability**—so cognitive features can land on solid ground.
-
-- **CLI & Diagnostics:** `doctor`, `build-info`, `ai-plan`, `ai-review`, `probe`
-- **Resilience:** circuit breaker, micro-batching queue, LRU+TTL cache (flagged)
-- **Observability:** JSONL performance logs (daily-rotated)
-- **Policy Engine:** `.sona-policy.json` with allow/deny rules + `probe` checks
-- **Feature Flags:** new infra is **off by default** until you opt in
-- **VS Code:** Focus Mode toggle + settings framework (early)
-
-> You’re not looking for hype; you’re looking for a backbone. v0.9.3 is structural steel.
+- A pragmatic, network-free standard library with disciplined tests.
+- A VS Code extension that surfaces Sona in the editor.
+- Documentation and a roadmap for future AI provider support.
 
 ---
 
-## 🧠 AI-Native Programming (First-Class)
+## Status (v0.9.4.1)
 
-```sona
-// AI-powered collaboration
-ai_complete("create a secure login function")
-ai_explain(complex_code, "beginner")
-ai_debug("null pointer", "authentication context")
-ai_optimize("slow database queries")
-ai_review(code_context)
-```
+- Platform used for verification: Windows, Python 3.12
+- Debug signal: `SONA_DEBUG=1` during test runs
+- Tests: PASS (stdlib-only suite)
+- Coverage: ~86% (gate ≥85%), branch coverage enabled
+- Deterministic: no network dependencies in core tests
+- Packaging: stdlib wiring corrected and locked with `sona/stdlib/MANIFEST.json`
+- VS Code Marketplace: Overview, icon, banner, screenshots, keywords, Q&A present
 
-## 🧭 Cognitive Programming (Accessibility Pioneer)
+### Maintainer note
 
-```sona
-// Reduce cognitive load, on purpose
-working_memory("user authentication flow", "load")
-focus_mode("debugging session", "25min")
-cognitive_check("high complexity")
-simplify("OAuth implementation", "intermediate")
-break_down("complex user interface")
-```
-
-## 💬 Natural Language Programming
-
-```sona
-// Conversational thinking to executable steps
-explain("This function validates user input and handles edge cases")
-think("What's the best way to optimize this algorithm?")
-intend("create a secure, scalable user management system")
-```
+The public 0.9.4 package missed proper stdlib wiring and shipped without a Marketplace Overview/icon. 0.9.4.1 corrects the packaging, adds the Overview and visuals, and locks the stdlib set so this does not regress.
 
 ---
 
-## 🚀 Quick Start
+## What’s solid today
 
-### Install (Python 3.11+)
+### Standard library
+
+- **JSON**
+  - RFC 7396 Merge Patch: `merge_patch(target, patch)` (documented, tested)
+  - JSON Pointer helpers (with “pointer gotchas” documented)
+  - `deep_update(target, patch, *, list_strategy="replace"|"append"|"extend_unique", make_copy=True)`
+    - Dicts recurse; lists replace by default; type conflicts resolve to `patch`
+    - Back-compat shim: legacy `copy=` is still accepted and emits `DeprecationWarning`
+- **Collections**
+  - `chunk`, `unique_by`, `group_by` (order-preserving)
+- **Regex**
+  - Reusable handles, explicit timeout semantics, safe failure modes
+
+### Extension (VS Code)
+
+- Identifier: `Waycoreinc.sona-ai-native-programming`
+- Overview: present
+- Icon/Banner/Screenshots: present
+- Categories/Keywords/Q&A: set for discoverability
+
+---
+
+## Installation
+
+### Python toolchain
+
+Requires Python 3.12+
 
 ```bash
-pip install sona==0.9.3
-# or with extras
-pip install "sona[ai]==0.9.3"     # AI-related deps
-pip install "sona[dev]==0.9.3"    # tooling for devs
-```
+pip install sona==0.9.4.1
+# optional extras
+pip install "sona[ai]==0.9.4.1"     # provider package placeholder (separate)
+pip install "sona[dev]==0.9.4.1"    # development tooling
+````
 
-### Verify Your Environment
+Verify environment:
 
 ```bash
 sona build-info
 sona doctor
 ```
 
-### First Run
+### VS Code extension
+
+Install from Marketplace:
+[https://marketplace.visualstudio.com/items?itemName=Waycoreinc.sona-ai-native-programming](https://marketplace.visualstudio.com/items?itemName=Waycoreinc.sona-ai-native-programming)
+
+---
+
+## Quickstart
+
+REPL:
 
 ```bash
-# REPL
 sona repl
 ```
 
+Inside the REPL:
+
 ```sona
-// inside REPL
-explain("Learning the world's first AI-native language!")
-ai_complete("function to process user data securely")
-working_memory("data processing concept", "load")
-focus_mode("learning Sona", "20min")
+explain("Learning Sona")
+```
+
+Standard library examples:
+
+```python
+# json.merge_patch
+from sona.stdlib import json as sjson
+
+target = {"title": "Good", "meta": {"a": 1, "b": 2}}
+patch = {"meta": {"b": None, "c": 3}}
+assert sjson.merge_patch(target, patch) == {"title": "Good", "meta": {"a": 1, "c": 3}}
+
+# json.deep_update
+base = {"a": {"x": 1}, "list": [1, 2]}
+upd  = {"a": {"y": 2}, "list": [9]}
+out  = sjson.deep_update(base, upd)  # default replaces lists
+assert out == {"a": {"x": 1, "y": 2}, "list": [9]}
+
+# collections
+from sona.stdlib import collection as col
+assert col.chunk([1,2,3,4,5], 2, last="keep") == [[1,2],[3,4],[5]]
+assert col.unique_by(["aa","ab","ba"], key=lambda s: s[0]) == ["aa","ba"]
+assert col.group_by(["aa","ab","ba"], key=lambda s: s[0]) == {"a":["aa","ab"], "b":["ba"]}
+
+# regex
+from sona.stdlib import regex
+h = regex.compile(r"^[a-z]+$", {"case_insensitive": True})
+assert regex.match(h, "Alpha")["matched"] is True
 ```
 
 ---
 
-## 🧩 VS Code Integration
-
-- Install the extension: **Sona — AI-Native Programming**
-- Try **Focus Mode** (early) and command palette actions
-- Marketplace: https://marketplace.visualstudio.com/items?itemName=Waycoreinc.sona-ai-native-programming
-
-> The extension brings Sona’s cognitive patterns into your daily workflow without fighting your editor muscle memory.
-
----
-
-## 🔧 CLI (0.9.3)
+## CLI reference (snapshot)
 
 ```bash
-sona init <project>           # Create new project
+sona init <project>           # Create a new project
 sona run <file>               # Execute Sona files
 sona repl                     # Interactive REPL
 sona transpile <file>         # Convert to other languages
@@ -129,108 +148,94 @@ sona format <file>            # Format code
 sona check <file>             # Syntax validation
 sona info                     # Environment information
 sona build-info               # Build metadata + feature flags
-sona doctor                   # System diagnostics (0.9.3+)
-sona ai-plan <ctx>            # Deterministic planning stub (0.9.3+)
-sona ai-review <file>         # Deterministic review stub (0.9.3+)
-sona probe                    # Policy/permissions probe (0.9.3+)
-sona clean                    # Clean generated files
-sona docs                     # Open documentation
+sona doctor                   # Diagnostics
 ```
 
 ---
 
-## 🔀 Multi-Language Transpilation
+## Configuration
+
+* `SONA_DEBUG=1` enables verbose stdlib/runtime diagnostics during development and CI.
+
+---
+
+## Testing and coverage
+
+The CI focuses on the standard library to keep signals clean and actionable.
+
+* Scope: `sona/stdlib/*` (excludes utils/ai/native\_\*, smod helpers)
+* Commands:
 
 ```bash
-sona transpile app.sona --target javascript
-sona transpile app.sona --target typescript
-sona transpile app.sona --target python
-sona transpile app.sona --target csharp
-sona transpile app.sona --target go
-sona transpile app.sona --target rust
+# Windows PowerShell
+$env:SONA_DEBUG = "1"
+
+pytest -q
+coverage run -m pytest
+coverage report                # expect ≥85%
 ```
 
-> Use Sona to think clearly; emit to the stack your team ships.
+* Smoke test gate (excerpt): ensures ≥22 stdlib modules, imports succeed, public API or namespace children exist, and basic JSON/collections/regex probes pass.
+* Deterministic: no network calls in core tests.
 
 ---
 
-## 🧪 Cognitive Example (Short)
+## Packaging integrity
 
-```sona
-working_memory {
-  current_task = "Data processing";
-  cognitive_load = "medium";
-  next_steps = ["validate", "process", "save"];
-}
+A manifest is generated and version-controlled to prevent drift:
 
-when data_arrives {
-  think("New data needs processing");
-  focus("Data validation");
-  result = validate_input(data);
+* `sona/stdlib/MANIFEST.json` lists the intended stdlib modules.
+* A smoke test asserts the packaged modules match the manifest and that the count meets the minimum threshold.
 
-  if (result.valid) {
-    process_data(result.data);
-  } else {
-    handle_error(result.errors);
-  }
-}
+Before packaging the VSIX:
+
+```bash
+python scripts/generate_stdlib_manifest.py
+pytest -q && coverage run -m pytest && coverage report
+npx vsce ls
+npx vsce package
+python scripts/check_vsix.py sona-ai-native-programming-0.9.4.1.vsix
 ```
 
-Output:
-```
-[THINK] New data needs processing
-[FOCUS] Data validation
-Processing complete: 42 records
-```
+The asset check fails if `extension/README.md`, `extension/media/icon.png`, or `extension/package.json` are missing.
 
 ---
 
-## Who Uses Sona Today?
+## Roadmap (near term)
 
-- **Neurodivergent devs** who want tools that respect focus, pacing, and cognitive load.  
-- **Educators & students** who want explanations *as they code*.  
-- **Professional teams** shipping in multiple languages that want **one thinking surface** and **many targets**.
+* Language Server Protocol (diagnostics, semantic tokens, quick fixes)
+* Transpilation fidelity for a focused subset of constructs
+* Package manager (publish/consume with lockfile and integrity checks)
+* AI provider integrations via `sona-ai` (provider-agnostic, safe by default, tested offline with fakes)
 
-If that resonates, **⭐️ star now** and watch the roadmap land.
-
----
-
-## Docs & Resources
-
-- **Wiki:** https://github.com/Bryantad/Sona/wiki  
-- Getting Started: `docs/installation.md`, `docs/quickstart.md`  
-- Language Reference: `docs/language-reference.md`  
-- Cognitive Features: `docs/cognitive-features.md`  
-- CLI Reference: `docs/cli-reference.md`  
-- Transpilation: `docs/transpilation.md`  
-- VS Code Guide: `docs/vscode-extension.md`  
-
-**0.9.3 Docs Add-ons**
-- `FEATURE_FLAGS.md` — toggles & safe defaults  
-- `SECURITY.md` — `.sona-policy.json` + `probe`  
-- `RESEARCH_AUDIT.md` — what’s built vs. what’s aspirational
+These will not compromise stdlib stability.
 
 ---
 
-## Roadmap (to 1.0)
+## Release notes
 
-- ✅ 0.9.3: Infra, flags, diagnostics, policy engine  
-- 🔜 Cognitive metrics + profiles grounding (ADHD, dyslexia)  
-- 🔜 AI policy routing + adaptive prompts (from runtime signals)  
-- 🔜 First-class module system for cognitive primitives  
-- 🔜 Expanded transpilation fidelity + static analysis
+* 0.9.4 — foundation and stdlib improvements (merge\_patch, deep\_update, collections)
+* 0.9.4.1 — hotfix for packaging credibility (stdlib wiring, Marketplace Overview/icon/screenshots, keywords, Q\&A), README alignment, and a back-compat shim for `deep_update(copy=...)`
 
-> Stars help prioritize. If you want these faster, hit ⭐️ and open a discussion.
+See releases: [https://github.com/Bryantad/Sona/releases](https://github.com/Bryantad/Sona/releases)
+
+---
+
+## Contributing
+
+Contributions are welcome. Please:
+
+1. Open an issue to discuss scope and approach.
+2. Keep changes deterministic and testable.
+3. Maintain the stdlib coverage gate (≥85%) and pass smoke tests.
+4. Avoid introducing network dependencies into core tests.
 
 ---
 
 ## Community
 
-- **Issues:** https://github.com/Bryantad/Sona/issues  
-- **Discussions:** https://github.com/Bryantad/Sona/discussions  
-- **Contributing:** See [CONTRIBUTING.md](CONTRIBUTING.md)  
-
-If you build something cool with Sona, we’ll showcase it.
+* Issues: [https://github.com/Bryantad/Sona/issues](https://github.com/Bryantad/Sona/issues)
+* Discussions: [https://github.com/Bryantad/Sona/discussions](https://github.com/Bryantad/Sona/discussions)
 
 ---
 
@@ -238,8 +243,5 @@ If you build something cool with Sona, we’ll showcase it.
 
 MIT — see [LICENSE](LICENSE).
 
----
-
-## Acknowledgments
-
-To the neurodivergent community and accessibility researchers who keep us honest, and to open-source contributors who want developer tools that meet people where they are.
+```
+ 
