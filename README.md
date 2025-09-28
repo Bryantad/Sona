@@ -239,6 +239,3 @@ Contributions are welcome. Please:
 ## License
 
 MIT — see [LICENSE](LICENSE).
-
-```
- 
