@@ -133,3 +133,63 @@ logs/
 # Local configuration
 local_config.py
 config_local.py
+
+# AI Credentials (SECURITY - Keep local and never commit)
+.credentials
+.credentials.json
+azure_credentials.py
+openai_credentials.py
+anthropic_credentials.py
+google_credentials.py
+.sona-credentials/
+.sona-secure/
+*.pem
+*.key
+*.crt
+*.pfx
+*.p12
+*.der
+# Additional .env variants
+.env.local
+.env.development
+.env.production
+.env.test
+*.env
+# Secret scan baselines
+.secrets.baseline
+# Migration backups (auto-generated)
+.sona-migration-backups/
+
+# --- Sona 0.9.4.1 repo prep (denylist) ---
+
+# Python
+**pycache**/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.venv/
+venv/
+.coverage*
+coverage.xml
+
+# Node/VS Code
+node_modules/
+out/
+dist/
+*.tsbuildinfo
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# VSIX
+*.vsix
+
+# Local/IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# Generated at package-time (do not commit)
+vscode-extension/sona-ai-native-programming/runtime/

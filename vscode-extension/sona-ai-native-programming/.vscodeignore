@@ -1,0 +1,8 @@
+# Keep images, docs, assets, and runtime in the VSIX
+**/.git*
+**/.github/*
+node_modules/**
+src/**
+tests/**
+*.log
+*.tsbuildinfo
