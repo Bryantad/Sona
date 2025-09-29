@@ -1,18 +1,30 @@
 """
-Sona Language Type System (EXPERIMENTAL v0.7.1)
+Sona Language Type System (v0.9.4)
 
-This package implements an experimental type system for the Sona programming
-language. This is a preview of advanced features planned for v0.9.0.
+This package implements the type system for the Sona programming language.
 
-EXPERIMENTAL Components (v0.7.1):
+v0.9.4 Components:
+- runtime_checker.py: Runtime type validation for function parameters/returns
 - types.py: Core type definitions and type representations
-- inference.py: Basic Hindley-Milner type inference (experimental)
+- inference.py: Hindley-Milner type inference (experimental)
 - simple.py: Simplified type system for initial implementation
+- checker.py: Integration with Sona interpreter
 
 Author: Sona Development Team
-Version: 0.7.1 (Experimental)
+Version: 0.9.4
 License: See LICENSE file
 """
+
+# Import runtime type checking (NEW in v0.9.4)
+from .runtime_checker import (
+    TypeValidationError,
+    ReturnTypeValidationError,
+    TypeChecker,
+    check_types,
+    typed_function,
+    TypeCheckingConfig,
+    optimized_check_types
+)
 
 # Import inference engine
 from .inference import (
@@ -47,8 +59,50 @@ from .types import (
     TypeVariable,
 )
 
+# Export all public APIs
+__all__ = [
+    # Runtime type checking (v0.9.4)
+    'TypeValidationError',
+    'ReturnTypeValidationError',
+    'TypeChecker',
+    'check_types',
+    'typed_function',
+    'TypeCheckingConfig',
+    'optimized_check_types',
+    
+    # Type inference
+    'Constraint',
+    'HindleyMilnerInference',
+    'Substitution',
+    'TypeInferenceError',
+    'UnificationEngine',
+    'UnificationError',
+    
+    # Simple type checker
+    'SimpleTypeChecker',
+    'check_type',
+    
+    # Core types
+    'BOOL_TYPE',
+    'FLOAT_TYPE',
+    'INT_TYPE',
+    'STRING_TYPE',
+    'UNIT_TYPE',
+    'FunctionType',
+    'GenericType',
+    'PrimitiveType',
+    'RecordType',
+    'SourceLocation',
+    'TupleType',
+    'Type',
+    'TypeEnvironment',
+    'TypeKind',
+    'TypeScheme',
+    'TypeVariable',
+]
 
-__version__ = "0.9.2"
+
+__version__ = "0.9.4"
 __all__ = [
     # Core types
     "Type",

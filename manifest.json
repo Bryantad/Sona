@@ -1,0 +1,63 @@
+{
+  "version": "0.9.4",
+  "release_type": "production",
+  "timestamp": "2025-09-25T01:37:24.546199",
+  "git": {
+    "commit": "132b37889245f4e813d22d331227cd2a851d02d8",
+    "branch": "copilot/vscode1758388927270",
+    "tag": null
+  },
+  "build": {
+    "deterministic_packaging": true,
+    "lockfile_version": 1,
+    "cli_enhanced": true,
+    "vscode_extension_publisher": "Waycoreinc"
+  },
+  "artifacts": [
+    {
+      "path": "sona.lock.json",
+      "size": 971,
+      "sha256": "c1dbce991d6d814c247e53a09166e3993558c1a3a91fa21c8425d9bd487ad25a",
+      "modified": "2025-09-25T01:25:54"
+    },
+    {
+      "path": "pyproject.toml",
+      "size": 2582,
+      "sha256": "1710202c1c5577a2089a32ef1028abd03d544dccec69271642827e39e8ae1aa2",
+      "modified": "2025-09-25T01:22:52"
+    },
+    {
+      "path": "sona.toml",
+      "size": 1254,
+      "sha256": "dca2348181c620849ef27c5f7e7b931c0286be46b2b01d5c00ebcda1f531b46b",
+      "modified": "2025-09-25T01:22:52"
+    },
+    {
+      "path": "sona\\lockfile_manager.py",
+      "size": 5754,
+      "sha256": "41598f6d147a4f0d5fffae474e02a04c41b93e8b1231e5b740ef64584e986f4c",
+      "modified": "2025-09-25T01:32:52"
+    },
+    {
+      "path": "sona-ai-native-programming-0.9.4\\sona-ai-native-programming-0.9.4.vsix",
+      "size": 352989,
+      "sha256": "1e3aec6a9bcf52b852e8855ac602d0a9c4b54193358288ce56a0e2fb5d433f0a",
+      "modified": "2025-09-25T01:36:22"
+    }
+  ],
+  "checksums": {
+    "sona.lock.json": "c1dbce991d6d814c247e53a09166e3993558c1a3a91fa21c8425d9bd487ad25a",
+    "pyproject.toml": "1710202c1c5577a2089a32ef1028abd03d544dccec69271642827e39e8ae1aa2",
+    "sona.toml": "dca2348181c620849ef27c5f7e7b931c0286be46b2b01d5c00ebcda1f531b46b",
+    "sona/lockfile_manager.py": "41598f6d147a4f0d5fffae474e02a04c41b93e8b1231e5b740ef64584e986f4c",
+    "sona-ai-native-programming-0.9.4/sona-ai-native-programming-0.9.4.vsix": "1e3aec6a9bcf52b852e8855ac602d0a9c4b54193358288ce56a0e2fb5d433f0a"
+  },
+  "features": {
+    "lockfile_system": "implemented",
+    "type_system_cli": "enhanced",
+    "configuration_hierarchy": "sona.toml",
+    "vscode_extension": "marketplace-ready",
+    "exit_code_semantics": "ON=2, WARN=0, exceptions=1"
+  },
+  "next_release": "v0.9.4.1 (reserved for hotfix)"
+}

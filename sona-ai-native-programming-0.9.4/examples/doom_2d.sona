@@ -1,0 +1,7 @@
+// Sona Doom 2D Shooter Game
+// This is a placeholder - the actual game runs as an embedded GUI app
+print("=== Sona Doom 2D Shooter ===")
+print("This example demonstrates an embedded 2D Doom-style shooter")
+print("Switch to 'Embedded App' mode to play the interactive game")
+print("Use WASD keys to move, mouse to look around, and Space/Click to shoot")
+print("Navigate through the maze and eliminate all enemies to win!")

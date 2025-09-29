@@ -1,0 +1,7 @@
+// Sona Tetris Puzzle Game
+// This is a placeholder - the actual game runs as an embedded GUI app
+print("=== Sona Tetris ===")
+print("This example demonstrates an embedded Tetris puzzle game")
+print("Switch to 'Embedded App' mode to play the interactive game")
+print("Use A/D keys to move pieces, W to rotate, S to drop faster")
+print("Clear horizontal lines to score points and increase your level!")

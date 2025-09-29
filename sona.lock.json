@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "created_at": "F:\\Sona",
+  "commit": "132b37889245f4e813d22d331227cd2a851d02d8",
+  "entries": [
+    {
+      "module": "sona/__init__.py",
+      "rev": "workspace",
+      "sha256": "d63c0c895b758c258f401e51f010ef41e3e22e172bbfd0b3be20e6aad91d921d"
+    },
+    {
+      "module": "sona/interpreter.py",
+      "rev": "workspace",
+      "sha256": "c8e9b5688e47ad961b9af319d2b51e30b2c63fe7e174d5ea438e8a905bd7977e"
+    },
+    {
+      "module": "sona/cli.py",
+      "rev": "workspace",
+      "sha256": "b407280fdfbf962faf7d8d431807913b7bf9faeadccf7097b9212ef633d6fb1c"
+    },
+    {
+      "module": "sona/type_system/__init__.py",
+      "rev": "workspace",
+      "sha256": "08a7921820bee23e1aefb6d92bb9bd36edab2d455589390452d2f2cb48396bd7"
+    },
+    {
+      "module": "sona/type_system/runtime_checker.py",
+      "rev": "workspace",
+      "sha256": "3cea9f48f0968599afbddf0c33e74e15cc0dfd265edf8924d19089f24d7b7af5"
+    }
+  ]
+}

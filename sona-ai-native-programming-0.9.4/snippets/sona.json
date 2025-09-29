@@ -1,0 +1,60 @@
+{
+    "Function": {
+        "prefix": "func",
+        "body": [
+            "function ${1:functionName}(${2:parameters}) {",
+            "    ${3:// function body}",
+            "}"
+        ],
+        "description": "Create a function"
+    },
+    "Cognitive Function": {
+        "prefix": "cognitive",
+        "body": [
+            "cognitive function ${1:functionName}(${2:parameters}) {",
+            "    ${3:// cognitive implementation}",
+            "}"
+        ],
+        "description": "Create a cognitive function"
+    },
+    "AI Assistant": {
+        "prefix": "ai",
+        "body": [
+            "ai {",
+            "    role: \"${1:assistant}\",",
+            "    context: \"${2:context}\",",
+            "    task: \"${3:task}\"",
+            "}"
+        ],
+        "description": "Create an AI assistant block"
+    },
+    "If Statement": {
+        "prefix": "if",
+        "body": [
+            "if (${1:condition}) {",
+            "    ${2:// code}",
+            "}"
+        ],
+        "description": "Create an if statement"
+    },
+    "For Loop": {
+        "prefix": "for",
+        "body": [
+            "for (${1:let i = 0}; ${2:i < length}; ${3:i++}) {",
+            "    ${4:// loop body}",
+            "}"
+        ],
+        "description": "Create a for loop"
+    },
+    "Class": {
+        "prefix": "class",
+        "body": [
+            "class ${1:ClassName} {",
+            "    constructor(${2:parameters}) {",
+            "        ${3:// constructor body}",
+            "    }",
+            "}"
+        ],
+        "description": "Create a class"
+    }
+}

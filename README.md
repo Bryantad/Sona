@@ -1,3 +1,93 @@
+# 🚀 Sona — The World’s First **AI-Native** Programming Language
+
+**Human × AI collaboration with cognitive accessibility at the core.**
+
+[![Version](https://img.shields.io/badge/version-0.9.4.1-blue.svg)](https://github.com/Bryantad/Sona/releases/tag/v0.9.4.1)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://python.org)
+[![Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/Waycoreinc.sona-ai-native-programming?label=VS%20Code%20Installs)](https://marketplace.visualstudio.com/items?itemName=Waycoreinc.sona-ai-native-programming)
+[![Marketplace Rating](https://img.shields.io/visual-studio-marketplace/r/Waycoreinc.sona-ai-native-programming?label=VS%20Code%20Rating)](https://marketplace.visualstudio.com/items?itemName=Waycoreinc.sona-ai-native-programming)
+[![GitHub Stars](https://img.shields.io/github/stars/Bryantad/Sona?style=social)](https://github.com/Bryantad/Sona/stargazers)
+[![YouTube](https://img.shields.io/youtube/channel/subscribers/UCFWuiQHiQPrJSAeAVi5raZA?style=social)](https://www.youtube.com/channel/UCFWuiQHiQPrJSAeAVi5raZA)
+[![X (Twitter) Follow](https://img.shields.io/twitter/follow/sona_org?style=social)](https://x.com/sona_org)
+
+> Sona lets you think in code and code in plain language—with accessibility choices that respect how different brains work.
+
+## ✨ What’s solid right now (v0.9.4 baseline)
+
+- JSON
+  - RFC 7396 Merge Patch: `merge_patch(target, patch)` (documented & tested)
+  - JSON Pointer helpers (with “pointer gotchas” documented)
+  - deep_update: `deep_update(target, patch, *, list_strategy="replace", make_copy=True)`
+    - Dicts recurse; lists replace by default (`append` / `extend_unique` available)
+    - Back-compat shim accepts legacy `copy=` (emits `DeprecationWarning`)
+- Collections: `chunk`, `unique_by`, `group_by` (exported & tested)
+- Quality (Windows, Python 3.12, `SONA_DEBUG=1`)
+  - Tests: PASS
+  - Coverage: 87.09% (gate ≥85% met)
+  - Deterministic: no network deps in tests
+- Architecture & docs
+  - ADR-0001: keep AI out of stdlib; future `sona-ai` package with fake transport & clear error taxonomy
+  - `STDLIB_GAPS_ROADMAP.md`, `AI_PROVIDER_TEST_PLAN.md`
+
+> Hotfix v0.9.4.1 (this release) corrects public packaging (wires the modules) and adds this Overview to the VS Code listing.
+
+## 🚀 Quick Start
+
+> Requires Python 3.12+.
+
+```bash
+pip install sona==0.9.4.1
+# Optional extras
+pip install "sona[ai]==0.9.4.1"
+pip install "sona[dev]==0.9.4.1"
+```
+
+Verify:
+
+```bash
+sona build-info
+sona doctor
+```
+
+REPL:
+
+```bash
+sona repl
+```
+
+## Run from source (core runtime only)
+
+If you want to run and smoke-test the Sona core runtime from this repository without
+installing the VS Code extension or using the packaged VSIX, use the lightweight
+bootstrap `sonactl.py` included at the repo root. This mirrors the verify/REPL
+helper used inside the extension runtime.
+
+Windows (PowerShell):
+
+```powershell
+# from the repo root
+python -m venv .venv; .\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt    # optional, only if you need extra deps
+python sonactl.py --verify          # smoke-test core stdlib imports
+python sonactl.py                   # start interactive REPL with sona on PYTHONPATH
+```
+
+This repo contains the core runtime modules under `sona/stdlib/` and the
+lightweight bootstrap at `sonactl.py`. The VS Code extension bundles the same
+core files into its runtime for a turn-key experience; this section explains
+how to run the core independently (no VSIX required).
+
+## Docs & Resources
+
+- Wiki: https://github.com/Bryantad/Sona/wiki
+- Language Reference & Guides: see `/docs/*`
+- VS Code Guide: `docs/vscode-extension.md`
+
+## License
+
+MIT — see LICENSE.
+
 # 🚀 Sona - The World's First AI-Native Programming Language
 
 **Revolutionary AI-Powered Development with Cognitive Accessibility**

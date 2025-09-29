@@ -1,0 +1,6 @@
+// Sona Snake Game
+// This is a placeholder - the actual game runs as an embedded GUI app
+print("=== Sona Snake Game ===") 
+print("This example demonstrates an embedded snake game")
+print("Switch to 'Embedded App' mode to play the interactive game")
+print("Use WASD or arrow keys to control the snake")

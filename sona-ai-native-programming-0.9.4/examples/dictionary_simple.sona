@@ -1,0 +1,51 @@
+// Dictionary Operations Example - Sona v0.7.0
+// This example demonstrates dictionary features
+
+print("=== Dictionary Operations Demo ===")
+
+// Basic dictionary creation
+let config = {
+    "app_name": "SonaApp",
+    "version": "2.1.0", 
+    "debug": true,
+    "max_users": 1000
+}
+
+print("Dictionary created successfully")
+print("Configuration loaded")
+
+// Function that works with dictionaries
+func display_config(cfg) {
+    print("=== Configuration ===")
+    print("Application loaded")
+    return "Configuration displayed"
+}
+
+let result = display_config(config)
+print(result)
+
+// Nested dictionaries
+let user_settings = {
+    "theme": {
+        "primary_color": "#007ACC",
+        "font_size": 14
+    },
+    "features": {
+        "auto_save": true,
+        "syntax_highlighting": true
+    }
+}
+
+print("Nested dictionary created")
+
+func analyze_settings(settings) {
+    print("=== Settings Analysis ===")
+    print("Theme settings found")
+    print("Feature settings found")
+    return "Analysis complete"
+}
+
+let analysis_result = analyze_settings(user_settings)
+print(analysis_result)
+
+print("=== Dictionary Operations Complete ===")

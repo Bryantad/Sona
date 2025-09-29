@@ -1,0 +1,9 @@
+# Sona v0.9.4 Release Checksums (SHA256)
+# Generated: 2025-09-25T01:37:24.550201
+# Git commit: 132b37889245f4e813d22d331227cd2a851d02d8
+
+c1dbce991d6d814c247e53a09166e3993558c1a3a91fa21c8425d9bd487ad25a  sona.lock.json
+1710202c1c5577a2089a32ef1028abd03d544dccec69271642827e39e8ae1aa2  pyproject.toml
+dca2348181c620849ef27c5f7e7b931c0286be46b2b01d5c00ebcda1f531b46b  sona.toml
+41598f6d147a4f0d5fffae474e02a04c41b93e8b1231e5b740ef64584e986f4c  sona/lockfile_manager.py
+1e3aec6a9bcf52b852e8855ac602d0a9c4b54193358288ce56a0e2fb5d433f0a  sona-ai-native-programming-0.9.4/sona-ai-native-programming-0.9.4.vsix

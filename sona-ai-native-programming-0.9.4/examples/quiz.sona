@@ -1,0 +1,96 @@
+// Enhanced Quiz Application for Sona language - Fixed for v0.5.1
+import native_stdin
+import utils.string.smod as string
+import utils.math.smod as math
+import utils.array.smod as array
+
+// Store quiz data
+let answers = array.new()
+let correct_count = 0
+let question_count = 0
+let current_category = "All"
+
+// Helper function: check if a string is equal to another (case insensitive)
+func str_eq_ignore_case(str1, str2) {
+    let upper1 = string.upper(str1)
+    let upper2 = string.upper(str2)
+    return math.eq(upper1, upper2)
+}
+
+// Helper function: check if a number is negative
+func is_negative(num) {
+    let num_str = math.to_str(num)
+    let first_char = string.substr(num_str, 0, 1)
+    return math.eq(first_char, "-")
+}
+
+// Simple quiz data
+let quiz_questions = array.new()
+let quiz_answers = array.new()
+
+// Add questions
+func init_questions() {
+    array.push(quiz_questions, "What programming language is this quiz written in?")
+    array.push(quiz_answers, "sona")
+    
+    array.push(quiz_questions, "What is the value of Pi to 2 decimal places?")
+    array.push(quiz_answers, "3.14")
+    
+    array.push(quiz_questions, "What year was Python first released?")
+    array.push(quiz_answers, "1991")
+    
+    array.push(quiz_questions, "What symbol is used for variable declaration in Sona?")
+    array.push(quiz_answers, "let")
+}
+
+// Main quiz function
+func run_quiz() {
+    print("Welcome to the Sona Quiz!\n")
+    
+    // Initialize questions
+    init_questions()
+    
+    // Track score
+    let score = 0
+    let total = array.length(quiz_questions)
+    
+    // Ask each question
+    let i = 0
+    while math.lt(i, total) {
+        let question = array.get(quiz_questions, i)
+        let correct_answer = array.get(quiz_answers, i)
+        
+        print("\nQuestion " + math.to_str(math.add(i, 1)) + ": " + question)
+        let answer = native_stdin.input("Your answer: ")
+        
+        // Check answer (case insensitive)
+        if str_eq_ignore_case(answer, correct_answer) {
+            print("Correct!")
+            let score = math.add(score, 1)
+        } else {
+            print("Incorrect. The answer is: " + correct_answer)
+        }
+        
+        let i = math.add(i, 1)
+    }
+    
+    // Show final score
+    print("\nQuiz complete!")
+    print("Your score: " + math.to_str(score) + "/" + math.to_str(total))
+    
+    // Give feedback based on score
+    let percentage = math.multiply(math.divide(score, total), 100)
+    print("Percentage: " + math.to_str(percentage) + "%")
+      if math.gte(percentage, 80) {
+        print("Excellent job!")
+    } else {
+        if math.gte(percentage, 60) {
+            print("Good work!")
+        } else {
+            print("Keep practicing!")
+        }
+    }
+}
+
+// Start the quiz
+run_quiz()

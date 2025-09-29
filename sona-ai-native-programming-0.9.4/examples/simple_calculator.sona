@@ -1,0 +1,65 @@
+// Simple Calculator - Sona 0.8.0
+// This file demonstrates a basic calculator with menu loops
+
+print("=== Simple Calculator ===")
+
+// Calculator operations
+func add(a, b) {
+    return a + b
+}
+
+func subtract(a, b) {
+    return a - b
+}
+
+func multiply(a, b) {
+    return a * b
+}
+
+func divide(a, b) {
+    if b == 0 {
+        return "Error: Division by zero"
+    }
+    return a / b
+}
+
+// Sample calculations (simulating user input)
+let calculations = [
+    {"operation": "add", "a": 10, "b": 5},
+    {"operation": "subtract", "a": 20, "b": 8},
+    {"operation": "multiply", "a": 6, "b": 7},
+    {"operation": "divide", "a": 100, "b": 4},
+    {"operation": "divide", "a": 15, "b": 0}
+]
+
+print("Welcome to the Sona Calculator!")
+print("Performing sample calculations...\n")
+
+// Process each calculation
+for calc in calculations {
+    let operation = calc["operation"]
+    let a = calc["a"]
+    let b = calc["b"]
+    
+    print(f"Calculating: {a} {operation} {b}")
+    
+    if operation == "add" {
+        let result = add(a, b)
+        print(f"Result: {a} + {b} = {result}")
+    } else if operation == "subtract" {
+        let result = subtract(a, b)
+        print(f"Result: {a} - {b} = {result}")
+    } else if operation == "multiply" {
+        let result = multiply(a, b)
+        print(f"Result: {a} × {b} = {result}")
+    } else if operation == "divide" {
+        let result = divide(a, b)
+        print(f"Result: {a} ÷ {b} = {result}")
+    } else {
+        print("Unknown operation!")
+    }
+    
+    print("")
+}
+
+print("=== Calculator Complete ===")

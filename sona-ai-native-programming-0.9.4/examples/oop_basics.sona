@@ -1,0 +1,52 @@
+# Sona v0.7.0 - Object-Oriented Programming Basics
+# This example demonstrates basic OOP features in Sona
+
+print("=== Basic Class Definition ===")
+
+class Person {
+    constructor(name, age) {
+        this.name = name
+        this.age = age
+        this.friends = []
+    }
+    
+    method greet() {
+        print("Hello, I'm " + this.name + " and I'm " + this.age + " years old")
+    }
+    
+    method addFriend(friend) {
+        this.friends = this.friends + [friend]
+        print(this.name + " is now friends with " + friend)
+    }
+    
+    method getFriends() {
+        return this.friends
+    }
+}
+
+# Creating objects
+print("\n=== Creating Objects ===")
+let alice = Person("Alice", 25)
+let bob = Person("Bob", 30)
+
+alice.greet()
+bob.greet()
+
+# Property access
+print("\n=== Property Access ===")
+print("Alice's name: " + alice.name)
+print("Bob's age: " + bob.age)
+
+# Method calls
+print("\n=== Method Calls ===")
+alice.addFriend("Charlie")
+alice.addFriend("Diana")
+print("Alice's friends: " + alice.getFriends())
+
+# Property modification
+print("\n=== Property Modification ===")
+alice.age = 26
+print("Alice's new age: " + alice.age)
+alice.greet()
+
+print("\n=== Example completed successfully! ===")

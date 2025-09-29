@@ -10,29 +10,16 @@ import os
 import sys
 from pathlib import Path
 
+# Import type configuration
+from .type_config import configure_types, get_type_logger
 
-# Win UTF-8 guard (idempotent; never closes stdio)
+
+# Win UTF-8 guard - safer version that doesn't interfere with I/O operations
 if sys.platform == "win32":  # pragma: no cover - platform specific
     try:
-        import io  # type: ignore
         import ctypes  # type: ignore
+        # Just set the console code page, don't rewrap stdout/stderr
         ctypes.windll.kernel32.SetConsoleOutputCP(65001)
-        if (
-            not hasattr(sys.stdout, "_original")
-            and hasattr(sys.stdout, "buffer")
-        ):
-            sys.stdout._original = sys.stdout  # type: ignore[attr-defined]
-            sys.stdout = io.TextIOWrapper(  # type: ignore[assignment]
-                sys.stdout.buffer, encoding="utf-8", errors="replace"
-            )
-        if (
-            not hasattr(sys.stderr, "_original")
-            and hasattr(sys.stderr, "buffer")
-        ):
-            sys.stderr._original = sys.stderr  # type: ignore[attr-defined]
-            sys.stderr = io.TextIOWrapper(  # type: ignore[assignment]
-                sys.stderr.buffer, encoding="utf-8", errors="replace"
-            )
     except Exception:
         pass
 
@@ -77,7 +64,11 @@ def read_text_safe(path: str) -> str:
     return p.read_text(encoding="utf-8", errors="replace")
 
 
-def execute_sona(code: str, safe_mode: bool = False) -> any:
+def execute_sona(
+    code: str,
+    safe_mode: bool = False,
+    file_path: str | None = None,
+) -> any:
     """Execute Sona code using the default interpreter"""
     global default_interpreter
     if default_interpreter is None:
@@ -89,20 +80,151 @@ def execute_sona(code: str, safe_mode: bool = False) -> any:
         except Exception as e:  # pragma: no cover - defensive
             raise RuntimeError(f"Interpreter unavailable: {e}")
     interpreter = default_interpreter
+    
+    # Support embedded Python functions with @check_types decorator.
+    # Enhanced Python block extraction with multi-decorator support
+    from sona.type_system.runtime_checker import check_types
+    
+    python_blocks, remaining_lines = _extract_python_blocks(code)
+    
+    # Execute collected python blocks if any
+    from sona.type_config import get_type_config
+    exec_globals = {'check_types': check_types}
+    
+    # Track current file for exclusion logic
+    try:
+        get_type_config().set_current_file(file_path)
+    except Exception:
+        pass
+        
+    for python_block in python_blocks:
+        try:
+            compiled = compile(python_block, file_path or '<embedded>', 'exec')
+            exec(compiled, exec_globals, exec_globals)
+        except Exception as e:
+            print(f"❌ Python block execution error: {e}")
 
-    # Execute line by line
-    lines = code.strip().split('\n')
+    # Now execute remaining (Sona) lines
+    if remaining_lines:
+        lines = '\n'.join(remaining_lines).strip().split('\n')
+    else:
+        lines = []
     result = None
-
-    for line in lines:
-        line = line.strip()
-        if line and not line.startswith('#'):  # Skip empty lines and comments
+    
+    # Detect assignments or calls referencing defined python functions
+    from sona.type_system.runtime_checker import TypeCheckAbort
+    
+    for raw_line in lines:
+        line = raw_line.strip()
+        if not line or line.startswith('#'):
+            continue
+            
+        # Simple detection: contains '(' and a known function name
+        is_python = False
+        for name, obj in exec_globals.items():
+            if callable(obj) and name in line and '(' in line:
+                is_python = True
+                break
+                
+        if is_python:
+            try:
+                exec(line, exec_globals, exec_globals)
+            except TypeCheckAbort:
+                # Type error in ON mode - re-raise to CLI handler
+                raise
+            except Exception as e:
+                print(f"❌ Python exec error: {e}")
+            continue
+            
+        # Fallback to Sona interpreter
+        try:
             result = interpreter.interpret(line)
-            # Ensure AI results are always clean strings
             if result is not None:
                 result = _to_str_safe(result)
-
+        except Exception as e:
+            print(f"❌ Interpretation error: {e}")
+            
     return result
+
+
+def _extract_python_blocks(code: str):
+    """Enhanced Python block extraction with multi-decorator support"""
+    lines = code.split('\n')
+    python_blocks = []
+    remaining_lines = []
+    i = 0
+    
+    while i < len(lines):
+        line = lines[i].rstrip('\n')
+        stripped = line.strip()
+        
+        # Look for @check_types decorator
+        if stripped.startswith('@check_types'):
+            # Start collecting a function block
+            block_lines = []
+            decorators_end = i
+            
+            # Collect all decorators (including @check_types)
+            while decorators_end < len(lines):
+                dec_line = lines[decorators_end].strip()
+                if dec_line.startswith('@'):
+                    block_lines.append(lines[decorators_end])
+                    decorators_end += 1
+                elif dec_line == '':
+                    # Empty line between decorators and function
+                    block_lines.append(lines[decorators_end])
+                    decorators_end += 1
+                else:
+                    break
+            
+            # Find the function definition
+            func_start = decorators_end
+            if (func_start < len(lines) and
+                    lines[func_start].strip().startswith('def ')):
+                block_lines.append(lines[func_start])
+                
+                # Collect function body with proper indentation detection
+                func_line = lines[func_start]
+                func_indent = len(func_line) - len(func_line.lstrip())
+                body_end = func_start + 1
+                
+                # Find end of function body
+                while body_end < len(lines):
+                    body_line = lines[body_end]
+                    body_stripped = body_line.strip()
+                    
+                    if body_stripped == '':
+                        # Empty line - include and continue
+                        block_lines.append(body_line)
+                        body_end += 1
+                        continue
+                        
+                    body_indent = len(body_line) - len(body_line.lstrip())
+                    
+                    # If indented more than function def, it's function body
+                    if body_indent > func_indent:
+                        block_lines.append(body_line)
+                        body_end += 1
+                        continue
+                    
+                    # If same or less indentation, function body is complete
+                    # Unless it's another @check_types (multi-function block)
+                    if body_stripped.startswith('@check_types'):
+                        # Continue with next decorated function in same block
+                        break
+                    else:
+                        # End of Python block
+                        break
+                
+                python_blocks.append('\n'.join(block_lines))
+                i = body_end
+                continue
+        
+        # Not a Python block line - add to remaining
+        remaining_lines.append(line)
+        i += 1
+    
+    return python_blocks, remaining_lines
 
 
 ENHANCED_COMMANDS = None  # lazy-loaded mapping
@@ -137,6 +259,12 @@ def create_argument_parser() -> argparse.ArgumentParser:
         version=f'Sona {SONA_VERSION} (AI Features {AI_FEATURES_VERSION})'
     )
 
+    parser.add_argument(
+        '--types-status',
+        action='store_true',
+        help='Show effective type checking configuration and exit',
+    )
+
     # Main command subparsers
     subparsers = parser.add_subparsers(
         dest='command',
@@ -155,6 +283,17 @@ def create_argument_parser() -> argparse.ArgumentParser:
         '--debug',
         action='store_true',
         help='Enable debug output',
+    )
+    run_parser.add_argument(
+        '--types',
+        choices=['off', 'warn', 'on'],
+        help='Type checking mode (off|warn|on). Overrides SONA_TYPES env var',
+    )
+    run_parser.add_argument(
+        '--types-log',
+        choices=['all', 'errors', 'silent'],
+        default='all',
+        help='Control type checking log verbosity (all|errors|silent)',
     )
 
     # Profile command
@@ -300,6 +439,23 @@ def create_argument_parser() -> argparse.ArgumentParser:
         help='Show AI feature status',
     )
 
+    # Lock command (deterministic builds)
+    lock_parser = subparsers.add_parser(
+        'lock',
+        help='Generate sona.lock.json for deterministic builds'
+    )
+    lock_parser.add_argument(
+        '--verify',
+        action='store_true',
+        help='Verify existing lockfile instead of generating new one'
+    )
+
+    # Verify command (lockfile validation)
+    verify_parser = subparsers.add_parser(
+        'verify',
+        help='Verify sona.lock.json integrity and workspace state'
+    )
+
     # Keys management command group
     keys_parser = subparsers.add_parser(
         'keys',
@@ -414,33 +570,131 @@ def create_argument_parser() -> argparse.ArgumentParser:
 
 
 def handle_run_command(args) -> int:
-    """Handle the run command"""
+    """Handle the run command with centralized exit code logic"""
+    
+    # Import here to avoid circular imports
+    from sona.type_system.runtime_checker import TypeCheckAbort
+    
     if not Path(args.file).exists():
         print(f"❌ Error: File '{args.file}' not found.")
         return 1
 
+    exit_code = 0
+    logger = None
+    
     try:
+        # Configure type checking based on CLI argument
+        if hasattr(args, 'types'):
+            configure_types(cli_mode=args.types)
+            logger = get_type_logger()
+
         code = read_text_safe(args.file)
 
         if args.debug:
             print(f"🔍 Executing: {args.file}")
             print(f"Safe mode: {'enabled' if args.safe else 'disabled'}")
+            if hasattr(args, 'types'):
+                print(f"Type checking: {args.types}")
             print("=" * 50)
 
         # Execute the code
-        result = execute_sona(code, safe_mode=args.safe)
+        result = execute_sona(
+            code,
+            safe_mode=args.safe,
+            file_path=args.file,
+        )
 
         if args.debug:
             print("=" * 50)
             print(f"✅ Execution completed. Result: {result}")
 
-        return 0
-
+    except TypeCheckAbort:
+        # Type checking failure in ON mode - exit code handled below
+        pass
     except Exception as e:
         print(f"❌ Execution error: {e}")
         if args.debug:
             import traceback
             traceback.print_exc()
+        exit_code = 1
+    finally:
+        # Emit summary and determine exit code based on --types-log
+        if logger and hasattr(args, 'types') and args.types != 'off':
+            types_log = getattr(args, 'types_log', 'all')
+            
+            # Determine if we should show output based on verbosity setting
+            should_show_summary = True
+            if types_log == 'silent':
+                should_show_summary = False
+            elif types_log == 'errors':
+                # Only show if there are actual errors or warnings
+                has_errors = logger._stats.get('errors', 0) > 0
+                has_warnings = logger._stats.get('warnings', 0) > 0
+                should_show_summary = has_errors or has_warnings
+            # 'all' mode always shows summary
+            
+            if should_show_summary:
+                summary = logger.get_summary()
+                print(summary, file=sys.stderr)
+            
+            # Override exit code based on type checking results
+            if logger.should_exit_with_error():
+                exit_code = 2
+
+    return exit_code
+
+
+def handle_types_status(args) -> int:
+    """Handle --types-status command with proper exit code semantics"""
+    try:
+        from .type_config import get_type_config
+        
+        # Configure with CLI argument if provided
+        if hasattr(args, 'types') and args.types:
+            configure_types(cli_mode=args.types)
+        else:
+            configure_types()
+        
+        config = get_type_config()
+        effective_mode = config.get_effective_mode()
+        
+        print("=== Sona Type Checking Configuration ===")
+        print(f"Effective mode: {effective_mode.value}")
+        
+        # Determine source of configuration
+        if hasattr(config, 'cli_mode') and config.cli_mode is not None:
+            cli_val = config.cli_mode.value
+            print(f"Source: CLI argument (--types={cli_val})")
+        elif hasattr(config, 'env_mode') and config.env_mode is not None:
+            env_val = config.env_mode.value
+            print(f"Source: Environment variable (SONA_TYPES={env_val})")
+        elif hasattr(config, 'config_mode') and config.config_mode is not None:
+            cfg_val = config.config_mode.value
+            print(f"Source: Configuration file (mode={cfg_val})")
+        else:
+            print("Source: Default (OFF)")
+        
+        # Show available settings
+        print(f"Type checking enabled: {config.should_check_types()}")
+        if hasattr(config, 'should_exit_with_error'):
+            print(f"Exit on errors: {config.should_exit_with_error()}")
+        
+        # Show log level
+        if hasattr(config, 'log_level'):
+            print(f"Log level: {config.log_level}")
+        
+        # Show log sink
+        print("Log sink: stderr (JSONL)")
+        
+        # Exit code semantics as per directive:
+        # ON -> 2, WARN -> 0, OFF -> 0 (implied), exceptions -> 1
+        if effective_mode.value.lower() == 'on':
+            return 2
+        else:  # warn or off
+            return 0
+        
+    except Exception as e:
+        print(f"[ERROR] Error checking type configuration: {e}")
         return 1
 
 
@@ -964,13 +1218,82 @@ def handle_perf_log_command(args) -> int:
         return 1
 
 
+def handle_lock_command(args) -> int:
+    """Handle 'sona lock' command - generate or verify lockfile"""
+    from pathlib import Path
+    
+    try:
+        # Import lockfile management functions
+        from .lockfile_manager import generate_lockfile, verify_lockfile
+        
+        # Determine workspace directory (current directory)
+        workspace_dir = Path.cwd()
+        
+        if getattr(args, 'verify', False):
+            # Verify existing lockfile
+            print("[LOCK] Verifying sona.lock.json...")
+            success = verify_lockfile(workspace_dir)
+            if success:
+                print("[SUCCESS] Lockfile verification successful - workspace matches")
+                return 0
+            else:
+                print("[FAILED] Lockfile verification failed - workspace differs")
+                return 1
+        else:
+            # Generate new lockfile
+            print("[LOCK] Generating sona.lock.json...")
+            success = generate_lockfile(workspace_dir)
+            if success:
+                print("[SUCCESS] Generated sona.lock.json with module checksums")
+                return 0
+            else:
+                print("[FAILED] Failed to generate lockfile")
+                return 1
+                
+    except Exception as e:
+        print(f"[ERROR] Lock command error: {e}")
+        return 1
+
+
+def handle_verify_command(args) -> int:
+    """Handle 'sona verify' command - verify lockfile integrity"""
+    from pathlib import Path
+    
+    try:
+        # Import lockfile management functions
+        from .lockfile_manager import verify_lockfile
+        
+        # Determine workspace directory (current directory)
+        workspace_dir = Path.cwd()
+        
+        print("[VERIFY] Verifying sona.lock.json...")
+        success = verify_lockfile(workspace_dir)
+        if success:
+            print("[SUCCESS] Lockfile verification successful - workspace matches")
+            return 0
+        else:
+            print("[FAILED] Lockfile verification failed - workspace differs")
+            return 1
+                
+    except Exception as e:
+        print(f"[ERROR] Verify command error: {e}")
+        return 1
+
+
 def main() -> int:
     """Main CLI entry point"""
     parser = create_argument_parser()
 
+    # Parse arguments first to check for global options
+    args = parser.parse_args()
+
+    # Handle global --types-status first (before any command processing)
+    if hasattr(args, 'types_status') and args.types_status:
+        return handle_types_status(args)
+
     # Handle case where no arguments are provided
     if len(sys.argv) == 1:
-        print("🚀 Sona Cognitive Programming Language v0.9.2")
+        print("🚀 Sona Cognitive Programming Language v0.9.4")
         print("\nUsage: sona <command> [options]")
         print("\nCommands:")
         print("  run <file>       Execute a Sona file")
@@ -978,6 +1301,8 @@ def main() -> int:
         print("  benchmark <file> Benchmark performance")
         print("  suggest <file>   Get AI suggestions")
         print("  explain <file>   Get AI explanations")
+        print("  lock             Generate sona.lock.json")
+        print("  verify           Verify sona.lock.json")
         print("  info             Show system info")
         print("\nUse 'sona <command> --help' for more information.")
         return 0
@@ -989,7 +1314,8 @@ def main() -> int:
         and sys.argv[1] not in [
             'run', 'profile', 'benchmark', 'suggest', 'explain', 'info',
             'ai-plan', 'ai-review', 'probe', 'doctor', 'build-info',
-            'help', 'version', 'repl', 'check', 'format', 'transpile', 'keys'
+            'help', 'version', 'repl', 'check', 'format', 'transpile', 'keys',
+            'lock', 'verify'
         ]
     ):
         # Treat as direct file execution
@@ -1000,12 +1326,15 @@ def main() -> int:
 
         return handle_run_command(DirectArgs())
 
-    # Parse arguments
-    args = parser.parse_args()
-
     # Handle commands
     if args.command == 'run' or args.command is None:
         return handle_run_command(args)
+
+    elif args.command == 'lock':
+        return handle_lock_command(args)
+
+    elif args.command == 'verify':
+        return handle_verify_command(args)
 
     elif args.command == 'info':
         return handle_info_command(args)

@@ -1,0 +1,39 @@
+// Test Documented Syntax - Sona 0.8.0
+// This tests the syntax from the wiki documentation
+
+think "Starting documented syntax test"
+
+show "=== Documented Syntax Test ==="
+
+// Basic variable assignment
+name = "Alice"
+show "Name: " + name
+
+// Think statement for cognitive clarity
+think "Now testing counting loop"
+
+// Repeat N times
+repeat 3 times:
+    show "Repeated message"
+
+// Array iteration
+friends = ["Bob", "Charlie", "Diana"]
+repeat for each friend in friends:
+    show "Hello, " + friend + "!"
+
+// Counting loop
+repeat for i from 1 to 5:
+    show "Count: " + i
+
+// Conditional with when
+age = 25
+when age >= 18:
+    show "You are an adult"
+else:
+    show "You are a minor"
+
+// Calculate statement for cognitive clarity
+calculate total = 10 + 20 + 30
+show "Total: " + total
+
+show "=== Test Complete ==="

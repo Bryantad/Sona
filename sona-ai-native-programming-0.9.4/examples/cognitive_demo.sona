@@ -1,0 +1,43 @@
+# Cognitive Features Demo
+# Demonstrates Sona's accessibility and cognitive features
+
+# Simple conversational interface
+print("=== Sona Cognitive Features Demo ===")
+print("This example shows accessibility-focused programming")
+
+# Clear, readable code with descriptive names
+user_name = "Developer"
+welcome_message = "Welcome to Sona, " + user_name + "!"
+print(welcome_message)
+
+# Step-by-step problem solving
+print("\n=== Problem: Calculate Circle Area ===")
+
+# Define the problem clearly
+radius = 5.0
+pi = 3.14159
+
+# Break down the solution
+print("Given: radius = " + str(radius))
+print("Formula: area = π × radius²")
+
+# Calculate step by step
+radius_squared = radius * radius
+area = pi * radius_squared
+
+print("Step 1: " + str(radius) + "² = " + str(radius_squared))
+print("Step 2: π × " + str(radius_squared) + " = " + str(area))
+print("Result: Circle area = " + str(area) + " square units")
+
+print("\nCognitive features demo completed!")
+print("Sona promotes clear, accessible programming for everyone!")
+print("\n📝 Supportive Programming:");
+let count = 0;
+for i in 1 to 3 {
+    count = count + 1;
+    print("Step:", count);
+    cognitive_check();
+}
+
+print("\n✨ Cognitive programming complete!");
+print("🌟 Sona makes programming accessible to all minds!");

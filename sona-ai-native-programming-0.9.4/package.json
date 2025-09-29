@@ -1,0 +1,86 @@
+{
+  "name": "sona-ai-native-programming",
+  "displayName": "Sona AI-Native Programming Language",
+  "description": "Support for the Sona AI-native programming language with IntelliSense, type checking, and code completion",
+  "version": "0.9.4",
+  "publisher": "Waycoreinc",
+  "engines": {
+    "vscode": "^1.60.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets"
+  ],
+  "keywords": [
+    "sona",
+    "ai-native",
+    "programming",
+    "language",
+    "cognitive",
+    "type-checking"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Bryantad/Sona.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Bryantad/Sona/issues"
+  },
+  "homepage": "https://github.com/Bryantad/Sona#readme",
+  "license": "MIT",
+  "main": "./extension.js",
+  "activationEvents": [
+    "onLanguage:sona"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "sona",
+        "aliases": [
+          "Sona",
+          "sona"
+        ],
+        "extensions": [
+          ".sona"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "sona",
+        "scopeName": "source.sona",
+        "path": "./syntaxes/sona.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "sona",
+        "path": "./snippets/sona.json"
+      }
+    ],
+    "configuration": {
+      "title": "Sona",
+      "properties": {
+        "sona.typeChecking": {
+          "type": "string",
+          "default": "off",
+          "enum": [
+            "off",
+            "warn",
+            "on"
+          ],
+          "description": "Type checking mode for Sona files"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "echo 'Extension ready for packaging'",
+    "compile": "echo 'No compilation needed for JavaScript extension'",
+    "watch": "echo 'No watch needed for JavaScript extension'"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.60.0"
+  }
+}

@@ -1,0 +1,19 @@
+# Hello World - Basic Sona Example
+# This demonstrates the simplest Sona program
+
+print("Hello, World!")
+print("Welcome to Sona programming language!")
+
+# Variables and basic operations
+name = "Sona"
+version = "0.9.4"
+
+print("Language: " + name)
+print("Version: " + version)
+
+# Simple arithmetic
+x = 10
+y = 20
+sum = x + y
+
+print("10 + 20 = " + str(sum))

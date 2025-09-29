@@ -1,0 +1,11 @@
+// Minimal Loop Test - Sona 0.8.0
+// This tests the most basic loop functionality
+
+print("Testing basic for loop:")
+
+let items = [1, 2, 3]
+for item in items {
+    print(item)
+}
+
+print("Loop test complete")

@@ -1,0 +1,141 @@
+// Quiz Game - Sona 0.8.0
+// This file demonstrates an interactive quiz game with loops
+
+print("=== Sona Programming Quiz Game ===")
+
+// Quiz questions and answers
+let questions = [
+    "What keyword is used to declare a variable in Sona?",
+    "What syntax is used for string interpolation in Sona?",
+    "Which loop structure is used to iterate through arrays?",
+    "What is the cognitive accessibility feature of Sona?",
+    "How do you print output in Sona?"
+]
+
+let options = [
+    ["var", "let", "define", "create"],
+    ["${}", "f\"\"", "{}", "``"],
+    ["for", "repeat", "loop", "iterate"],
+    ["AI assistance", "Gentle errors", "Visual support", "All of the above"],
+    ["show", "print", "display", "output"]
+]
+
+let correct_answers = [1, 1, 0, 3, 1]  // Index of correct answer for each question
+let explanations = [
+    "Correct! 'let' is used to declare variables in Sona.",
+    "Correct! f\"\" syntax is used for string interpolation.",
+    "Correct! 'for' loops are used to iterate through arrays.",
+    "Correct! Sona includes AI assistance, gentle errors, and visual support.",
+    "Correct! 'print' is used to display output in Sona."
+]
+
+let score = 0
+let total_questions = 5
+
+print("Welcome to the Sona Programming Quiz!")
+print("Answer each question by selecting the correct option.")
+print("Let's test your knowledge!\n")
+
+// Process each question
+let question_index = 0
+for question in questions {
+    print(f"Question {question_index + 1}: {question}")
+    
+    // Display options
+    let current_options = options[question_index]
+    let option_index = 0
+    for option in current_options {
+        print(f"{option_index + 1}. {option}")
+        let option_index = option_index + 1
+    }
+    
+    // Simulate user answer (in real implementation, you'd get input)
+    // For demo, we'll use a pattern that gets some right and some wrong
+    let user_answer = 0
+    if question_index == 0 {
+        let user_answer = 1  // Correct (let)
+    } else if question_index == 1 {
+        let user_answer = 0  // Wrong (should be 1)
+    } else if question_index == 2 {
+        let user_answer = 0  // Correct (for)
+    } else if question_index == 3 {
+        let user_answer = 3  // Correct (All of the above)
+    } else {
+        let user_answer = 1  // Correct (print)
+    }
+    
+    let correct_index = correct_answers[question_index]
+    
+    print(f"Your answer: {user_answer + 1}")
+    
+    // Check if correct
+    if user_answer == correct_index {
+        print("✅ Correct!")
+        print(explanations[question_index])
+        let score = score + 1
+    } else {
+        let correct_option = current_options[correct_index]
+        print("❌ Incorrect!")
+        print(f"The correct answer is: {correct_index + 1}. {correct_option}")
+        print(explanations[question_index])
+    }
+    
+    print("-" * 50)
+    let question_index = question_index + 1
+}
+
+// Calculate final score
+let percentage = (score / total_questions) * 100
+
+print("=== Quiz Results ===")
+print(f"Questions answered correctly: {score}/{total_questions}")
+print(f"Score: {percentage}%")
+
+// Provide feedback based on score
+if percentage >= 90 {
+    print("🎉 Excellent! You're a Sona expert!")
+} else if percentage >= 70 {
+    print("👍 Good job! You have a solid understanding of Sona.")
+} else if percentage >= 50 {
+    print("📚 Not bad! Keep studying to improve your Sona knowledge.")
+} else {
+    print("💪 Keep learning! Review the Sona documentation and try again.")
+}
+
+// Show areas for improvement
+print("\n=== Areas to Review ===")
+let question_index = 0
+for question in questions {
+    let correct_index = correct_answers[question_index]
+    
+    // Simulate checking wrong answers
+    let user_answer = 0
+    if question_index == 0 {
+        let user_answer = 1
+    } else if question_index == 1 {
+        let user_answer = 0  // This was wrong
+    } else if question_index == 2 {
+        let user_answer = 0
+    } else if question_index == 3 {
+        let user_answer = 3
+    } else {
+        let user_answer = 1
+    }
+    
+    if user_answer != correct_index {
+        print(f"- Review: {question}")
+    }
+    
+    let question_index = question_index + 1
+}
+
+// Study recommendations
+print("\n=== Study Recommendations ===")
+if percentage < 70 {
+    print("📖 Read the Sona documentation")
+    print("💻 Practice with example programs")
+    print("🎯 Focus on basic syntax and concepts")
+}
+
+print("🔄 Take the quiz again to track your progress!")
+print("\n=== Quiz Complete ===")

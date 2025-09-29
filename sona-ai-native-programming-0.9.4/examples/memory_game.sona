@@ -1,0 +1,302 @@
+// Memory Card Game for Sona language
+// This game demonstrates array operations, random shuffling, and game state management
+import native_stdin
+import utils.math.smod as math
+import utils.array.smod as array
+import utils.string.smod as string
+
+// Game state
+let board = []
+let board_size = 4  // 4x4 board
+let visible_board = []
+let revealed = []
+let matched = []
+let symbols = ["A", "B", "C", "D", "E", "F", "G", "H"]
+let running = 1
+let moves = 0
+let matches = 0
+let first_card = -1
+let second_card = -1
+
+// Helper function: check if a number is negative
+func is_negative(num) {
+    let num_str = math.to_str(num)
+    let first_char = string.substr(num_str, 0, 1)
+    return math.eq(first_char, "-")
+}
+
+// Helper function: check if a < b
+func is_less_than(a, b) {
+    let diff = math.subtract(a, b)
+    return is_negative(diff)
+}
+
+// Helper function: check if a > b
+func is_greater_than(a, b) {
+    return is_less_than(b, a)
+}
+
+// Helper function: check if a number is even
+func is_even(num) {
+    let remainder = math.mod(num, 2)
+    return math.eq(remainder, 0)
+}
+
+// Helper function: generate a random number between min and max
+func random(min, max) {
+    // Simple random number generation
+    // Not cryptographically secure, but good enough for a game
+    let range = max - min + 1
+    let random_value = math.random() * range
+    let result = min + math.floor(random_value)
+    return result
+}
+
+// Initialize the game board
+func initialize_board() {
+    // Create a new empty board
+    let board = []
+    let visible_board = []
+    let revealed = []
+    let matched = []
+    
+    // We need pairs of each symbol
+    let card_pairs = []
+    
+    // Add each symbol twice
+    let i = 0
+    while is_less_than(i, array.length(symbols)) {
+        let symbol = array.get(symbols, i)
+        array.push(card_pairs, symbol)
+        array.push(card_pairs, symbol)
+        let i = i + 1
+    }
+    
+    // Shuffle the cards using Fisher-Yates algorithm
+    let j = array.length(card_pairs) - 1
+    
+    while is_greater_than(j, 0) {
+        // Generate a random index from 0 to j
+        let random_index = random(0, j)
+        
+        // Swap elements at j and random_index
+        let temp = array.get(card_pairs, j)
+        array.set(card_pairs, j, array.get(card_pairs, random_index))
+        array.set(card_pairs, random_index, temp)
+        
+        let j = j - 1
+    }
+    
+    // Place cards on the board
+    let k = 0
+    while is_less_than(k, board_size * board_size) {
+        // Place card if we have enough pairs
+        if is_less_than(k, array.length(card_pairs)) {
+            array.push(board, array.get(card_pairs, k))
+        } else {
+            // Fill remaining spots with placeholders
+            array.push(board, "X")
+        }
+        
+        // Initialize visibility trackers
+        array.push(visible_board, "?")
+        array.push(revealed, 0)
+        array.push(matched, 0)
+        
+        let k = k + 1
+    }
+    
+    return 0
+}
+
+// Print the current game board
+func print_board() {
+    print("\n  Memory Card Game")
+    print("  ==============\n")
+      // Print column headers (indices)
+    let header = "    "
+    let col = 0
+    while is_less_than(col, board_size) {
+        let header = header + math.to_str(col + 1) + " "
+        let col = col + 1
+    }
+    print(header)
+      // Print separator line
+    let separator = "   "
+    let s = 0
+    while is_less_than(s, board_size * 2 + 1) {
+        let separator = separator + "-"
+        let s = s + 1
+    }
+    print(separator)
+      // Print rows
+    let row = 0
+    while is_less_than(row, board_size) {
+        // Build the row string
+        let row_str = math.to_str(row + 1) + " | "
+        
+        // Add cells in this row
+        let col = 0
+        while is_less_than(col, board_size) {
+            let index = row * board_size + col
+            let card = array.get(visible_board, index)
+            let row_str = row_str + card + " "
+            let col = col + 1
+        }
+        
+        print(row_str)
+        let row = row + 1
+    }
+    
+    // Print game stats
+    print("\nMoves: " + math.to_str(moves) + "  Matches: " + math.to_str(matches))
+    
+    return 0
+}
+
+// Check if two cards match
+func check_match(card1_index, card2_index) {
+    let card1 = array.get(board, card1_index)
+    let card2 = array.get(board, card2_index)
+    
+    if math.eq(card1, card2) {
+        // Cards match!
+        array.set(matched, card1_index, 1)
+        array.set(matched, card2_index, 1)
+        
+        // Update visible board to show matched cards with their symbol
+        array.set(visible_board, card1_index, card1)
+        array.set(visible_board, card2_index, card2)
+        
+        // Increment matches counter
+        let matches = matches + 1
+        
+        print("\nMatch found! " + card1 + " and " + card2)
+    } else {
+        // No match, hide cards again
+        print("\nNo match. Try again.")
+        
+        array.set(revealed, card1_index, 0)
+        array.set(revealed, card2_index, 0)
+        
+        // Reset visible board for these positions
+        array.set(visible_board, card1_index, "?")
+        array.set(visible_board, card2_index, "?")
+    }
+    
+    // Reset selection
+    let first_card = -1
+    let second_card = -1
+    
+    return 0
+}
+
+// Handle card selection
+func select_card(position) {
+    let index = position - 1  // Convert to 0-based index
+    
+    // Validate position
+    if math.or(is_less_than(index, 0), is_greater_than(index, board_size * board_size - 1)) {
+        print("Invalid position. Please enter a number from 1 to " + math.to_str(board_size * board_size))
+        return 0
+    }
+    
+    // Check if card is already matched
+    if math.eq(array.get(matched, index), 1) {
+        print("That card is already matched. Choose another one.")
+        return 0
+    }
+    
+    // Check if card is already revealed
+    if math.eq(array.get(revealed, index), 1) {
+        print("That card is already revealed. Choose another one.")
+        return 0
+    }
+    
+    // Reveal the selected card
+    array.set(revealed, index, 1)
+    array.set(visible_board, index, array.get(board, index))
+    
+    // Update first or second card selection
+    if math.eq(first_card, -1) {
+        let first_card = index
+    } else {
+        let second_card = index
+        let moves = moves + 1
+        
+        // Print the board with both cards revealed
+        print_board()
+        
+        // After a short delay, check for matches
+        print("\nChecking for a match...")
+        
+        check_match(first_card, second_card)
+    }
+    
+    return 0
+}
+
+// Check if the game is over (all pairs found)
+func check_game_over() {
+    let total_pairs = board_size * board_size / 2
+    
+    if math.eq(matches, total_pairs) {
+        print("\nCongratulations! You've found all " + math.to_str(matches) + " pairs in " + math.to_str(moves) + " moves!")
+        let running = 0
+    }
+    
+    return 0
+}
+
+// Main game loop
+func game_loop() {
+    while math.eq(running, 1) {
+        // Display the board
+        print_board()
+        
+        // Get user input
+        print("\nEnter a position (1-" + math.to_str(board_size * board_size) + ") or 'q' to quit:")
+        let input = native_stdin.readline()
+        
+        // Check for quit command
+        if math.or(math.eq(input, "q"), math.eq(input, "quit"), math.eq(input, "exit")) {
+            print("Thanks for playing!")
+            let running = 0
+            return 0
+        }
+        
+        // Try to convert input to number
+        let position = math.to_number(input)
+        
+        // Select the card
+        select_card(position)
+        
+        // Check if game is over
+        check_game_over()
+    }
+    
+    return 0
+}
+
+// Display game instructions
+func show_instructions() {
+    print("Memory Card Game")
+    print("===============")
+    print("\nFind all matching pairs of cards by remembering their positions.")
+    print("\nHow to play:")
+    print("1. Enter a position number to reveal a card")
+    print("2. Enter a second position to reveal another card")
+    print("3. If the cards match, they stay revealed")
+    print("4. If not, they're hidden again")
+    print("5. Find all pairs in as few moves as possible")
+    print("\nType 'q' at any time to quit the game\n")
+    
+    return 0
+}
+
+// Start the game
+show_instructions()
+initialize_board()
+game_loop()
+
+print("Game Over!")
