@@ -1,0 +1,71 @@
+// Error Handling Example - Sona v0.7.0
+print("=== Error Handling Demo ===")
+
+// Note: Advanced exception handling with try/catch is not available in v0.7.0
+// This example demonstrates basic error prevention strategies
+
+// 1. Safe dictionary access patterns
+let config = {"app_name": "SonaApp", "version": "2.1.0"}
+
+print("Safe property access:")
+print("App name: " + config.app_name)
+print("Version: " + config.version)
+
+// 2. Proper data initialization
+let user_data = {"username": "alice", "age": 25, "email": "alice@example.com"}
+
+print("User data:")
+print("Username: " + user_data.username)
+print("Age: " + user_data.age)
+print("Email: " + user_data.email)
+
+// 3. Default value patterns - initialize all needed properties
+let settings = {"theme": "dark", "notifications": "enabled", "language": "english", "auto_save": "on"}
+
+print("Settings configuration:")
+print("Theme: " + settings.theme)
+print("Language: " + settings.language)
+print("Auto-save: " + settings.auto_save)
+
+// 4. Safe mathematical operations
+import math
+
+let numbers = {"a": 25, "b": 16, "c": 1}
+
+print("Safe math operations:")
+print("Square root of " + numbers.a + " is " + math.sqrt(numbers.a))
+print("Square root of " + numbers.b + " is " + math.sqrt(numbers.b))
+print("Division result: " + (numbers.a / numbers.c))
+
+// 5. Proper data structure setup
+let employee = {"name": "John Doe", "department": "Engineering", "salary": 75000, "active": "yes"}
+
+print("Employee record:")
+print("Name: " + employee.name)
+print("Department: " + employee.department)
+print("Salary: " + employee.salary)
+print("Status: " + employee.active)
+
+// 6. Working with module imports safely
+import string
+import time
+
+let text_data = {"message": "hello world", "processed": "no"}
+text_data.capitalized = string.capitalize(text_data.message)
+text_data.processed = "yes"
+
+print("Text processing:")
+print("Original: " + text_data.message)
+print("Capitalized: " + text_data.capitalized)
+print("Processed: " + text_data.processed)
+
+print("Current time: " + time.now())
+
+print("=== Error Prevention Tips ===")
+print("1. Initialize all dictionary properties")
+print("2. Use proper data types")
+print("3. Test with valid inputs")
+print("4. Import modules before use")
+print("5. Use consistent property names")
+
+print("=== Error Handling Demo Complete ===")

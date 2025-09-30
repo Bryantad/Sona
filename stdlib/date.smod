@@ -1,0 +1,113 @@
+# date.smod
+# Purpose: Date manipulation helpers for working with ISO dates, ranges, and calendar boundaries.
+# Inputs: ISO date or datetime strings, optional timezone identifiers, integer offsets.
+# Outputs: Normalised ISO date strings, parsed metadata maps, numeric differences.
+# Errors: Invalid inputs fall back to sane defaults; future revisions will convert these into Result errors.
+
+func __default(value, fallback) {
+	if value == nil {
+		return fallback
+	}
+	return value
+}
+
+func today(tz) {
+	return __native__.date_today(__default(tz, nil))
+}
+
+func yesterday(tz) {
+	return __native__.date_yesterday(__default(tz, nil))
+}
+
+func tomorrow(tz) {
+	return __native__.date_tomorrow(__default(tz, nil))
+}
+
+func from_timestamp(value, tz) {
+	return __native__.date_from_timestamp(value, __default(tz, nil))
+}
+
+func parse(value, tz) {
+	return __native__.date_parse(value, __default(tz, nil))
+}
+
+func format_iso(value, tz) {
+	return __native__.date_format_iso(value, __default(tz, nil))
+}
+
+func format(value, pattern, tz) {
+	return __native__.date_format_pattern(
+		value,
+		pattern,
+		__default(tz, nil)
+	)
+}
+
+func diff(start, end, unit, absolute, tz) {
+	if absolute == nil {
+		absolute = true
+	}
+	return __native__.date_diff(
+		start,
+		end,
+		__default(unit, "days"),
+		absolute,
+		__default(tz, nil)
+	)
+}
+
+func shift(value, options) {
+	if options == nil {
+		options = {}
+	}
+	return __native__.date_shift(value, options)
+}
+
+func start_of_week(value, week_start, tz) {
+	return __native__.date_start_of_week(
+		value,
+		__default(week_start, nil),
+		__default(tz, nil)
+	)
+}
+
+func end_of_week(value, week_start, tz) {
+	return __native__.date_end_of_week(
+		value,
+		__default(week_start, nil),
+		__default(tz, nil)
+	)
+}
+
+func start_of_month(value, tz) {
+	return __native__.date_start_of_month(value, __default(tz, nil))
+}
+
+func end_of_month(value, tz) {
+	return __native__.date_end_of_month(value, __default(tz, nil))
+}
+
+func range(start, end, step, inclusive, tz) {
+	if inclusive == nil {
+		inclusive = false
+	}
+	return __native__.date_range(
+		start,
+		end,
+		__default(step, 1),
+		inclusive,
+		__default(tz, nil)
+	)
+}
+
+func closest(candidates, target, tz) {
+	return __native__.date_closest(
+		candidates,
+		target,
+		__default(tz, nil)
+	)
+}
+
+func sleep(seconds) {
+	__native__.date_sleep(seconds)
+}

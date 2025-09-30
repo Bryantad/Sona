@@ -1,0 +1,127 @@
+// Text Analysis Tool - Sona 0.8.0
+// This file demonstrates text processing with loops
+
+print("=== Text Analysis Tool ===")
+
+// Sample text to analyze
+let text = "Sona is a programming language designed for cognitive accessibility. It helps neurodivergent developers write code with confidence. The language features gentle syntax, AI assistance, and visual programming support."
+
+// Split text into words (simplified - using array of words)
+let words = ["Sona", "is", "a", "programming", "language", "designed", "for", "cognitive", "accessibility", "It", "helps", "neurodivergent", "developers", "write", "code", "with", "confidence", "The", "language", "features", "gentle", "syntax", "AI", "assistance", "and", "visual", "programming", "support"]
+
+print("Original text:")
+print(text)
+print("")
+
+// Basic statistics
+let word_count = 0
+let char_count = 0
+let long_words = 0
+
+for word in words {
+    let word_count = word_count + 1
+    let char_count = char_count + len(word)
+    
+    if len(word) > 6 {
+        let long_words = long_words + 1
+    }
+}
+
+print("=== Basic Statistics ===")
+print(f"Word count: {word_count}")
+print(f"Character count: {char_count}")
+print(f"Average word length: {char_count / word_count}")
+print(f"Long words (>6 chars): {long_words}")
+
+// Find longest and shortest words
+let longest_word = ""
+let shortest_word = words[0]
+
+for word in words {
+    if len(word) > len(longest_word) {
+        let longest_word = word
+    }
+    if len(word) < len(shortest_word) {
+        let shortest_word = word
+    }
+}
+
+print(f"Longest word: {longest_word} ({len(longest_word)} characters)")
+print(f"Shortest word: {shortest_word} ({len(shortest_word)} characters)")
+
+// Count specific words
+let target_words = ["programming", "language", "cognitive", "accessibility"]
+print(f"\n=== Word Frequency ===")
+
+for target in target_words {
+    let count = 0
+    for word in words {
+        if word == target {
+            let count = count + 1
+        }
+    }
+    print(f"'{target}': {count} occurrences")
+}
+
+// Find words starting with specific letters
+let vowel_words = 0
+let consonant_words = 0
+
+for word in words {
+    let first_letter = word[0]
+    if first_letter in ["a", "e", "i", "o", "u", "A", "E", "I", "O", "U"] {
+        let vowel_words = vowel_words + 1
+    } else {
+        let consonant_words = consonant_words + 1
+    }
+}
+
+print(f"\nWords starting with vowels: {vowel_words}")
+print(f"Words starting with consonants: {consonant_words}")
+
+// Create word length distribution
+let length_distribution = {}
+for word in words {
+    let length = len(word)
+    if length in length_distribution {
+        let length_distribution[length] = length_distribution[length] + 1
+    } else {
+        let length_distribution[length] = 1
+    }
+}
+
+print(f"\n=== Word Length Distribution ===")
+for length in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] {
+    if length in length_distribution {
+        let count = length_distribution[length]
+        print(f"{length} characters: {count} words")
+    }
+}
+
+// Readability assessment
+let simple_words = 0
+let complex_words = 0
+
+for word in words {
+    if len(word) <= 4 {
+        let simple_words = simple_words + 1
+    } else {
+        let complex_words = complex_words + 1
+    }
+}
+
+let readability_score = (simple_words / word_count) * 100
+print(f"\n=== Readability Assessment ===")
+print(f"Simple words (≤4 chars): {simple_words}")
+print(f"Complex words (>4 chars): {complex_words}")
+print(f"Readability score: {readability_score}%")
+
+if readability_score >= 70 {
+    print("✅ Easy to read")
+} else if readability_score >= 50 {
+    print("⚠️ Moderately complex")
+} else {
+    print("❌ Difficult to read")
+}
+
+print("\n=== Text Analysis Complete ===")

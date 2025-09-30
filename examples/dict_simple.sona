@@ -1,0 +1,61 @@
+# Dictionary Operations Example - Sona v0.7.0
+# Demonstrates dictionary literals and property access
+
+print("=== Dictionary Operations Demo ===")
+
+# Basic dictionary creation with quoted keys
+let user = {"name": "Alice", "age": 28, "role": "developer"}
+
+print("User name: " + user.name)
+print("User age: " + user.age)
+print("User role: " + user.role)
+
+# Dynamic property addition using dotted notation
+user.email = "alice@example.com"
+user.active = 1
+user.join_date = "2025-01-15"
+
+print("Email: " + user.email)
+print("Active: " + user.active)
+print("Join date: " + user.join_date)
+
+# Configuration dictionary
+let config = {
+    "app_name": "SonaApp",
+    "version": "1.2.0",
+    "debug_mode": 0,
+    "max_connections": 50
+}
+
+print("App: " + config.app_name + " v" + config.version)
+print("Debug mode: " + config.debug_mode)
+print("Max connections: " + config.max_connections)
+
+# Updating configuration
+config.environment = "production"
+config.timeout = 30
+config.ssl_enabled = 1
+
+print("Environment: " + config.environment)
+print("Timeout: " + config.timeout + " seconds")  
+print("SSL enabled: " + config.ssl_enabled)
+
+# Nested dictionaries
+let settings = {
+    "theme": {"color": "blue", "size": 14},
+    "notifications": {"email": 1, "push": 0}
+}
+
+print("Theme color: " + settings.theme.color)
+print("Theme size: " + settings.theme.size)
+print("Email notifications: " + settings.notifications.email)
+print("Push notifications: " + settings.notifications.push)
+
+# Adding to nested structures
+settings.theme.font = "Arial"
+settings.notifications.sms = 1
+
+print("Font: " + settings.theme.font)
+print("SMS notifications: " + settings.notifications.sms)
+
+print("=== Dictionary Operations Complete ===")

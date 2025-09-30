@@ -1,0 +1,381 @@
+// Basic Features Example - Sona v0.7.0
+// This example demonstrates core language features
+
+print("=== Sona v0.7.0 Basic Features Demo ===")
+
+print("\n=== 1. Variables and Data Types ===")
+
+// Variable declarations
+let name = "Sona"
+let version = 0.7
+let is_ready = true
+let user_count = 1000
+
+print("Language: " + name)
+print("Version: " + str(version))
+print("Ready: " + str(is_ready))
+print("Users: " + str(user_count))
+
+// Constants
+const PI = 3.14159
+const MAX_CONNECTIONS = 100
+
+print("PI constant: " + str(PI))
+print("Max connections: " + str(MAX_CONNECTIONS))
+
+print("\n=== 2. Basic Operations ===")
+
+// Arithmetic operations
+let a = 15
+let b = 4
+
+print("a = " + str(a) + ", b = " + str(b))
+print("Addition: " + str(a + b))
+print("Subtraction: " + str(a - b))
+print("Multiplication: " + str(a * b))
+print("Division: " + str(a / b))
+
+// Comparison operations
+print("a > b: " + str(a > b))
+print("a == b: " + str(a == b))
+print("a != b: " + str(a != b))
+
+// Logical operations
+let x = true
+let y = false
+print("x AND y: " + str(x && y))
+print("x OR y: " + str(x || y))
+print("NOT x: " + str(!x))
+
+print("\n=== 3. String Operations ===")
+
+let first_name = "Alice"
+let last_name = "Johnson"
+let full_name = first_name + " " + last_name
+
+print("First name: " + first_name)
+print("Last name: " + last_name)
+print("Full name: " + full_name)
+
+// String with numbers
+let age = 25
+let message = "Hello, I'm " + full_name + " and I'm " + str(age) + " years old."
+print(message)
+
+print("\n=== 4. Arrays ===")
+
+let numbers = [1, 2, 3, 4, 5]
+let fruits = ["apple", "banana", "orange", "grape"]
+let mixed = [1, "hello", true, 3.14]
+
+print("Numbers array created")
+print("Fruits array created")
+print("Mixed array created")
+
+print("\n=== 5. Control Flow - Conditionals ===")
+
+let score = 85
+
+if (score >= 90) {
+    print("Grade: A")
+} else if (score >= 80) {
+    print("Grade: B")
+} else if (score >= 70) {
+    print("Grade: C")
+} else if (score >= 60) {
+    print("Grade: D")
+} else {
+    print("Grade: F")
+}
+
+// Nested conditionals
+let weather = "sunny"
+let temperature = 75
+
+if (weather == "sunny") {
+    if (temperature > 70) {
+        print("Perfect day for outdoor activities!")
+    } else {
+        print("Sunny but a bit cool")
+    }
+} else {
+    print("Maybe stay indoors today")
+}
+
+print("\n=== 6. Control Flow - Loops ===")
+
+// For loop
+print("Counting to 5:")
+for (let i = 1; i <= 5; i += 1) {
+    print("Count: " + str(i))
+}
+
+// While loop
+print("\nCountdown from 3:")
+let countdown = 3
+while (countdown > 0) {
+    print("T-minus " + str(countdown))
+    countdown = countdown - 1
+}
+print("Blast off!")
+
+print("\n=== 7. Functions ===")
+
+// Simple function
+func greet(name) {
+    return "Hello, " + name + "!"
+}
+
+print(greet("World"))
+print(greet("Sona Developer"))
+
+// Function with multiple parameters
+func calculate_area(length, width) {
+    return length * width
+}
+
+let room_area = calculate_area(12, 10)
+print("Room area: " + str(room_area) + " square feet")
+
+// Function with default behavior
+func power(base, exponent) {
+    let result = 1
+    for (let i = 0; i < exponent; i += 1) {
+        result = result * base
+    }
+    return result
+}
+
+print("2^3 = " + str(power(2, 3)))
+print("5^2 = " + str(power(5, 2)))
+
+// Recursive function
+func factorial(n) {
+    if (n <= 1) {
+        return 1
+    } else {
+        return n * factorial(n - 1)
+    }
+}
+
+print("5! = " + str(factorial(5)))
+print("7! = " + str(factorial(7)))
+
+print("\n=== 8. Dictionary Operations ===")
+
+let config = {
+    app_name: "My App",
+    version: "1.0.0",
+    debug: true
+}
+
+print("App name from config")
+print("Dictionary created successfully")
+
+print("\n=== 9. Error Handling ===")
+
+func safe_divide(a, b) {
+    try {
+        if (b == 0) {
+            throw "Division by zero error"
+        }
+        return a / b
+    } catch (error) {
+        return "Error: " + str(error)
+    }
+}
+
+print("10 / 2 = " + str(safe_divide(10, 2)))
+print("10 / 0 = " + str(safe_divide(10, 0)))
+
+print("\n=== Basic Features Demo Complete ===")
+print("Sona v0.7.0 - Ready for your next project!")
+
+print("\n=== 5. Control Flow - Conditionals ===")
+
+let score = 85
+
+if (score >= 90) {
+    print("Grade: A")
+} else if (score >= 80) {
+    print("Grade: B")
+} else if (score >= 70) {
+    print("Grade: C")
+} else if (score >= 60) {
+    print("Grade: D")
+} else {
+    print("Grade: F")
+}
+
+// Nested conditionals
+let weather = "sunny"
+let temperature = 75
+
+if (weather == "sunny") {
+    if (temperature > 70) {
+        print("Perfect day for outdoor activities!")
+    } else {
+        print("Sunny but a bit cool")
+    }
+} else {
+    print("Maybe stay indoors today")
+}
+
+print("\n=== 6. Control Flow - Loops ===")
+
+// For loop
+print("Counting to 5:")
+for (let i = 1; i <= 5; i += 1) {
+    print("Count: " + str(i))
+}
+
+// While loop
+print("\nCountdown from 3:")
+let countdown = 3
+while (countdown > 0) {
+    print("T-minus " + str(countdown))
+    countdown = countdown - 1
+}
+print("Blast off!")
+
+// Loop with arrays
+print("\nFruits in our basket:")
+for (let i = 0; i < len(fruits); i += 1) {
+    print("- " + fruits[i])
+}
+
+print("\n=== 7. Functions ===")
+
+// Simple function
+func greet(name) {
+    return "Hello, " + name + "!"
+}
+
+print(greet("World"))
+print(greet("Sona Developer"))
+
+// Function with multiple parameters
+func calculate_area(length, width) {
+    return length * width
+}
+
+let room_area = calculate_area(12, 10)
+print("Room area: " + str(room_area) + " square feet")
+
+// Function with default behavior
+func power(base, exponent) {
+    let result = 1
+    for (let i = 0; i < exponent; i += 1) {
+        result = result * base
+    }
+    return result
+}
+
+print("2^3 = " + str(power(2, 3)))
+print("5^2 = " + str(power(5, 2)))
+
+// Recursive function
+func factorial(n) {
+    if (n <= 1) {
+        return 1
+    } else {
+        return n * factorial(n - 1)
+    }
+}
+
+print("5! = " + str(factorial(5)))
+print("7! = " + str(factorial(7)))
+
+print("\n=== 8. Pattern Matching ===")
+
+func describe_number(num) {
+    match num {
+        case 0: return "Zero"
+        case 1: return "One"
+        case 2: return "Two"
+        case 3: return "Three"
+        default: return "Other number: " + str(num)
+    }
+}
+
+for (let i = 0; i <= 5; i += 1) {
+    print(str(i) + " -> " + describe_number(i))
+}
+
+print("\n=== 9. Error Handling ===")
+
+func safe_divide(a, b) {
+    try {
+        if (b == 0) {
+            throw "Division by zero error"
+        }
+        return a / b
+    } catch (error) {
+        return "Error: " + str(error)
+    }
+}
+
+print("10 / 2 = " + str(safe_divide(10, 2)))
+print("10 / 0 = " + str(safe_divide(10, 0)))
+
+print("\n=== 10. Complex Example ===")
+
+// A function that combines multiple features
+func process_student_data(students) {
+    let results = {
+        total_students: len(students),
+        passed: 0,
+        failed: 0,
+        average_score: 0,
+        highest_score: 0,
+        lowest_score: 100
+    }
+    
+    let total_score = 0
+    
+    for (let i = 0; i < len(students); i += 1) {
+        let student = students[i]
+        let score = student.score
+        
+        total_score = total_score + score
+        
+        if (score >= 60) {
+            results.passed = results.passed + 1
+        } else {
+            results.failed = results.failed + 1
+        }
+        
+        if (score > results.highest_score) {
+            results.highest_score = score
+        }
+        
+        if (score < results.lowest_score) {
+            results.lowest_score = score
+        }
+    }
+    
+    results.average_score = total_score / results.total_students
+    
+    return results
+}
+
+let student_data = [
+    {name: "Alice", score: 85},
+    {name: "Bob", score: 92},
+    {name: "Charlie", score: 78},
+    {name: "Diana", score: 96},
+    {name: "Eve", score: 54}
+]
+
+let analysis = process_student_data(student_data)
+
+print("\n=== Student Analysis Results ===")
+print("Total students: " + str(analysis.total_students))
+print("Passed: " + str(analysis.passed))
+print("Failed: " + str(analysis.failed))
+print("Average score: " + str(analysis.average_score))
+print("Highest score: " + str(analysis.highest_score))
+print("Lowest score: " + str(analysis.lowest_score))
+
+print("\n=== Basic Features Demo Complete ===")
+print("Sona v0.7.0 - Ready for your next project!")

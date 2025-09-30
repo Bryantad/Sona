@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sona v0.7.0 - Advanced Application Platform</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Top Bar -->
+    <header class="top-bar">
+        <div class="top-bar-left">
+            <button class="sidebar-toggle" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="platform-info">
+                <span class="platform-name">Sona</span>
+                <span class="platform-version">v0.7.0</span>
+            </div>
+        </div>
+        
+        <div class="top-bar-center">
+            <div class="execution-mode">
+                <button class="mode-btn active" data-mode="sandbox">
+                    <i class="fas fa-shield-alt"></i>
+                    Sandbox
+                </button>
+                <button class="mode-btn" data-mode="native">
+                    <i class="fas fa-desktop"></i>
+                    Native
+                </button>
+                <button class="mode-btn" data-mode="remote">
+                    <i class="fas fa-cloud"></i>
+                    Remote
+                </button>
+            </div>
+        </div>
+        
+        <div class="top-bar-right">
+            <button class="console-toggle" id="consoleToggle">
+                <i class="fas fa-terminal"></i>
+                Console
+            </button>
+            <button class="settings-btn">
+                <i class="fas fa-cog"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="search-container">
+                <input type="text" class="search-input" placeholder="Search apps..." id="searchInput">
+                <i class="fas fa-search search-icon"></i>
+            </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <!-- Games Section -->
+            <div class="nav-section">
+                <div class="section-header" data-section="games">
+                    <i class="fas fa-gamepad"></i>
+                    <span>Games</span>
+                    <i class="fas fa-chevron-down section-arrow"></i>
+                </div>
+                <div class="section-content active">
+                    <div class="nav-item" data-app="tetris">
+                        <i class="fas fa-th-large item-icon"></i>
+                        <div class="item-info">
+                            <span class="item-name">Tetris</span>
+                            <span class="item-tag arcade">Arcade</span>
+                        </div>
+                    </div>
+                    <div class="nav-item" data-app="snake">
+                        <i class="fas fa-snake item-icon"></i>
+                        <div class="item-info">
+                            <span class="item-name">Snake Game</span>
+                            <span class="item-tag arcade">Arcade</span>
+                        </div>
+                    </div>
+                    <div class="nav-item" data-app="space-shooter">
+                        <i class="fas fa-rocket item-icon"></i>
+                        <div class="item-info">
+                            <span class="item-name">Space Shooter</span>
+                            <span class="item-tag arcade">Arcade</span>
+                        </div>
+                    </div>
+                    <div class="nav-item" data-app="solitaire">
+                        <i class="fas fa-cards item-icon"></i>
+                        <div class="item-info">
+                            <span class="item-name">Solitaire</span>
+                            <span class="item-tag card">Card</span>
+                        </div>
+                    </div>
+                    <div class="nav-item" data-app="ping-pong">
+                        <i class="fas fa-table-tennis item-icon"></i>
+                        <div class="item-info">
+                            <span class="item-name">Ping Pong</span>
+                            <span class="item-tag arcade">Arcade</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tools Section -->
+            <div class="nav-section">
+                <div class="section-header" data-section="tools">
+                    <i class="fas fa-tools"></i>
+                    <span>Tools</span>
+                    <i class="fas fa-chevron-down section-arrow"></i>
+                </div>
+                <div class="section-content">
+                    <div class="nav-item" data-app="calculator">
+                        <i class="fas fa-calculator item-icon"></i>
+                        <div class="item-info">
+                            <span class="item-name">Calculator</span>
+                            <span class="item-tag system">System</span>
+                        </div>
+                    </div>
+                    <div class="nav-item" data-app="text-editor">
+                        <i class="fas fa-edit item-icon"></i>
+                        <div class="item-info">
+                            <span class="item-name">Text Editor</span>
+                            <span class="item-tag system">System</span>
+                        </div>
+                    </div>
+                    <div class="nav-item" data-app="file-organizer">
+                        <i class="fas fa-folder-open item-icon"></i>
+                        <div class="item-info">
+                            <span class="item-name">File Organizer</span>
+                            <span class="item-tag system">System</span>
+                        </div>
+                    </div>
+                    <div class="nav-item" data-app="media-player">
+                        <i class="fas fa-play item-icon"></i>
+                        <div class="item-info">
+                            <span class="item-name">Media Player</span>
+                            <span class="item-tag media">Media</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Apps Section -->
+            <div class="nav-section">
+                <div class="section-header" data-section="data">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Data Apps</span>
+                    <i class="fas fa-chevron-down section-arrow"></i>
+                </div>
+                <div class="section-content">
+                    <div class="nav-item" data-app="chart-viewer">
+                        <i class="fas fa-chart-line item-icon"></i>
+                        <div class="item-info">
+                            <span class="item-name">Chart Viewer</span>
+                            <span class="item-tag new">NEW</span>
+                        </div>
+                    </div>
+                    <div class="nav-item" data-app="data-analyzer">
+                        <i class="fas fa-database item-icon"></i>
+                        <div class="item-info">
+                            <span class="item-name">Data Analyzer</span>
+                            <span class="item-tag analytics">Analytics</span>
+                        </div>
+                    </div>
+                    <div class="nav-item" data-app="ai-playground">
+                        <i class="fas fa-robot item-icon"></i>
+                        <div class="item-info">
+                            <span class="item-name">AI Playground</span>
+                            <span class="item-tag beta">BETA</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tutorials Section -->
+            <div class="nav-section">
+                <div class="section-header" data-section="tutorials">
+                    <i class="fas fa-graduation-cap"></i>
+                    <span>Tutorials</span>
+                    <i class="fas fa-chevron-down section-arrow"></i>
+                </div>
+                <div class="section-content">
+                    <div class="nav-item" data-app="hello-world">
+                        <i class="fas fa-play-circle item-icon"></i>
+                        <div class="item-info">
+                            <span class="item-name">Hello World</span>
+                            <span class="item-tag tutorial">Tutorial</span>
+                        </div>
+                    </div>
+                    <div class="nav-item" data-app="loops-logic">
+                        <i class="fas fa-sync item-icon"></i>
+                        <div class="item-info">
+                            <span class="item-name">Loops & Logic</span>
+                            <span class="item-tag tutorial">Tutorial</span>
+                        </div>
+                    </div>
+                    <div class="nav-item" data-app="functions">
+                        <i class="fas fa-code item-icon"></i>
+                        <div class="item-info">
+                            <span class="item-name">Functions</span>
+                            <span class="item-tag tutorial">Tutorial</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Main Panel -->
+    <main class="main-panel" id="mainPanel">
+        <div class="main-header">
+            <div class="app-title">
+                <h1 id="appTitle">Welcome to Sona Platform</h1>
+                <div class="app-stats" id="appStats" style="display: none;">
+                    <div class="stat">
+                        <span class="stat-label">Score:</span>
+                        <span class="stat-value" id="scoreValue">0</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Level:</span>
+                        <span class="stat-value" id="levelValue">1</span>
+                    </div>
+                </div>
+            </div>
+            <div class="app-controls">
+                <button class="control-btn" id="runBtn" style="display: none;">
+                    <i class="fas fa-play"></i>
+                    Run
+                </button>
+                <button class="control-btn" id="resetBtn" style="display: none;">
+                    <i class="fas fa-redo"></i>
+                    Reset
+                </button>
+            </div>
+        </div>
+
+        <div class="main-content" id="mainContent">
+            <div class="welcome-screen">
+                <div class="welcome-logo">
+                    <i class="fas fa-code-branch"></i>
+                </div>
+                <h2>Sona v0.7.0</h2>
+                <p>Advanced Application Platform</p>
+                <div class="welcome-stats">
+                    <div class="welcome-stat">
+                        <span class="number">15+</span>
+                        <span class="label">Applications</span>
+                    </div>
+                    <div class="welcome-stat">
+                        <span class="number">4</span>
+                        <span class="label">Categories</span>
+                    </div>
+                    <div class="welcome-stat">
+                        <span class="number">∞</span>
+                        <span class="label">Possibilities</span>
+                    </div>
+                </div>
+                <p class="welcome-subtitle">Select an application from the sidebar to get started</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Console Panel -->
+    <div class="console-panel" id="consolePanel">
+        <div class="console-header">
+            <div class="console-title">
+                <i class="fas fa-terminal"></i>
+                Console Output
+            </div>
+            <div class="console-controls">
+                <button class="console-control" id="clearConsole">
+                    <i class="fas fa-trash"></i>
+                </button>
+                <button class="console-control" id="pinConsole">
+                    <i class="fas fa-thumbtack"></i>
+                </button>
+                <button class="console-control" id="closeConsole">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        <div class="console-content" id="consoleContent">
+            <div class="console-line">
+                <span class="console-timestamp">[12:34:56]</span>
+                <span class="console-text">Sona Platform initialized...</span>
+            </div>
+            <div class="console-line">
+                <span class="console-timestamp">[12:34:57]</span>
+                <span class="console-text">Ready for execution.</span>
+            </div>
+        </div>
+        <div class="console-resize-handle" id="consoleResizeHandle"></div>
+    </div>
+
+    <!-- App Templates -->
+    <div class="app-templates" style="display: none;">
+        <!-- Tetris App Template -->
+        <div class="app-template" id="tetris-template">
+            <div class="game-container">
+                <div class="game-board" id="tetrisBoard">
+                    <canvas id="tetrisCanvas" width="400" height="600"></canvas>
+                </div>
+                <div class="game-sidebar">
+                    <div class="next-piece">
+                        <h3>Next</h3>
+                        <canvas id="nextPieceCanvas" width="100" height="100"></canvas>
+                    </div>
+                    <div class="game-info">
+                        <div class="info-item">
+                            <span>Lines:</span>
+                            <span id="linesCount">0</span>
+                        </div>
+                        <div class="info-item">
+                            <span>Level:</span>
+                            <span id="gameLevel">1</span>
+                        </div>
+                    </div>
+                    <div class="game-controls">
+                        <button class="game-btn" id="pauseBtn">Pause</button>
+                        <button class="game-btn" id="restartBtn">Restart</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calculator App Template -->
+        <div class="app-template" id="calculator-template">
+            <div class="calculator">
+                <div class="calculator-display">
+                    <input type="text" id="calcDisplay" readonly value="0">
+                </div>
+                <div class="calculator-buttons">
+                    <button class="calc-btn clear">C</button>
+                    <button class="calc-btn">±</button>
+                    <button class="calc-btn">%</button>
+                    <button class="calc-btn operator">÷</button>
+                    
+                    <button class="calc-btn">7</button>
+                    <button class="calc-btn">8</button>
+                    <button class="calc-btn">9</button>
+                    <button class="calc-btn operator">×</button>
+                    
+                    <button class="calc-btn">4</button>
+                    <button class="calc-btn">5</button>
+                    <button class="calc-btn">6</button>
+                    <button class="calc-btn operator">-</button>
+                    
+                    <button class="calc-btn">1</button>
+                    <button class="calc-btn">2</button>
+                    <button class="calc-btn">3</button>
+                    <button class="calc-btn operator">+</button>
+                    
+                    <button class="calc-btn zero">0</button>
+                    <button class="calc-btn">.</button>
+                    <button class="calc-btn equals">=</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Text Editor App Template -->
+        <div class="app-template" id="text-editor-template">
+            <div class="editor-container">
+                <div class="editor-toolbar">
+                    <button class="editor-btn"><i class="fas fa-file"></i> New</button>
+                    <button class="editor-btn"><i class="fas fa-folder-open"></i> Open</button>
+                    <button class="editor-btn"><i class="fas fa-save"></i> Save</button>
+                    <div class="editor-separator"></div>
+                    <button class="editor-btn"><i class="fas fa-cut"></i></button>
+                    <button class="editor-btn"><i class="fas fa-copy"></i></button>
+                    <button class="editor-btn"><i class="fas fa-paste"></i></button>
+                </div>
+                <div class="editor-content">
+                    <div class="line-numbers" id="lineNumbers">1</div>
+                    <textarea class="code-editor" id="codeEditor" placeholder="Start typing your Sona code here...">// Welcome to Sona Text Editor
+// This is a sample Sona program
+
+let greeting = "Hello, Sona!"
+print(greeting)
+
+// Define a simple function
+func calculateSum(a, b) {
+    return a + b
+}
+
+let result = calculateSum(5, 3)
+print("Result: " + result)</textarea>
+                </div>
+                <div class="editor-status">
+                    <span>Line 1, Column 1</span>
+                    <span>Sona</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Code Viewer Template -->
+        <div class="app-template" id="code-viewer-template">
+            <div class="code-viewer">
+                <div class="code-header">
+                    <div class="file-info">
+                        <i class="fas fa-file-code"></i>
+                        <span id="fileName">example.sona</span>
+                    </div>
+                    <button class="code-btn" id="runCode">
+                        <i class="fas fa-play"></i>
+                        Run Code
+                    </button>
+                </div>
+                <div class="code-content">
+                    <pre><code id="codeContent"></code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overlay for mobile sidebar -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>

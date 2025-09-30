@@ -1,0 +1,48 @@
+// Absolute Minimal Working Example - Sona 0.8.0
+// This uses only the most basic working features
+
+print("=== Minimal Working Example ===")
+
+// Basic variable assignment
+let name = "Alice"
+print("Name:")
+print(name)
+
+// Basic arithmetic
+let x = 10
+let y = 5
+let sum = x + y
+print("Sum:")
+print(sum)
+
+// Basic string concatenation
+let greeting = "Hello, " + name
+print("Greeting:")
+print(greeting)
+
+// Basic function
+func sayHello() {
+    print("Hello from function!")
+}
+
+sayHello()
+
+// Basic conditional
+let age = 25
+if age >= 18 {
+    print("Adult")
+} else {
+    print("Minor")
+}
+
+// Basic array (no indexing)
+let numbers = [1, 2, 3, 4, 5]
+print("Numbers array:")
+print(numbers)
+
+// Basic dictionary
+let person = {"name": "Bob", "age": 30}
+print("Person:")
+print(person)
+
+print("=== Minimal Example Complete ===")

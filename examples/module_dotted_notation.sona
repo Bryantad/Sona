@@ -1,0 +1,92 @@
+# Sona v0.7.0 - Module System with Dotted Notation
+# This example demonstrates enhanced module usage
+
+print("=== Module System with Dotted Notation ===")
+
+# Import standard library modules
+import math
+import string
+import time
+
+print("\n=== Math Module Examples ===")
+
+# Using dotted notation for module methods (preferred)
+let sqrt_result = math.sqrt(25)
+let power_result = math.pow(2, 8)
+let abs_result = math.abs(-42)
+
+print("Square root of 25: " + sqrt_result)
+print("2 to the power of 8: " + power_result)
+print("Absolute value of -42: " + abs_result)
+
+# Traditional underscore notation still works for compatibility
+let sin_result = math_sin(1.57)  # approximately π/2
+print("Sin(π/2) ≈ " + sin_result)
+
+print("\n=== String Module Examples ===")
+
+let text = "  Hello, World!  "
+let upper_text = string.upper(text)
+let lower_text = string.lower(text)
+let trimmed_text = string.trim(text)
+
+print("Original: '" + text + "'")
+print("Uppercase: '" + upper_text + "'")
+print("Lowercase: '" + lower_text + "'")
+print("Trimmed: '" + trimmed_text + "'")
+
+# String operations with method chaining concept
+let processed = string.trim(string.upper("  hello world  "))
+print("Processed text: '" + processed + "'")
+
+print("\n=== Time Module Examples ===")
+
+print("Current timestamp: " + time.now())
+print("Sleeping for 1 second...")
+time.sleep(1)
+print("Done sleeping!")
+
+print("\n=== Mixed Module and OOP Usage ===")
+
+# Combining module functions with objects
+class Calculator {
+    constructor(name) {
+        this.name = name
+        this.history = []
+    }
+    
+    method sqrt(number) {
+        let result = math.sqrt(number)
+        this.history = this.history + ["sqrt(" + number + ") = " + result]
+        return result
+    }
+    
+    method power(base, exponent) {
+        let result = math.pow(base, exponent)
+        this.history = this.history + [base + "^" + exponent + " = " + result]
+        return result
+    }
+    
+    method getHistory() {
+        return this.history
+    }
+    
+    method formatResult(operation, result) {
+        return string.upper(this.name) + ": " + operation + " = " + result
+    }
+}
+
+let calc = Calculator("Scientific Calculator")
+
+print("\n=== Calculator with Module Integration ===")
+let sqrt_calc = calc.sqrt(16)
+let power_calc = calc.power(3, 4)
+
+print(calc.formatResult("sqrt(16)", sqrt_calc))
+print(calc.formatResult("3^4", power_calc))
+
+print("\nCalculation history:")
+let history = calc.getHistory()
+print(history)
+
+print("\n=== Module System Example completed successfully! ===")

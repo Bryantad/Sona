@@ -1,0 +1,18 @@
+import fs
+import path
+
+let scratch = path.join(["tmp", "fs_demo.txt"])
+fs.mkdir(path.dirname(scratch), true, true)
+
+fs.write(scratch, "Hello from Sona!", nil)
+print("Created: " + scratch)
+
+let info = fs.stat(scratch)
+print("size=" + info["size"])
+
+let event = fs.watch(scratch, 1000, 100)
+if event == nil {
+    fs.append(scratch, "\nlog entry", nil)
+}
+
+print(fs.read(scratch, nil))

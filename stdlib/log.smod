@@ -1,0 +1,50 @@
+# log.smod
+# Purpose: Structured logging facade with adjustable levels and pluggable sinks.
+# Inputs: log level identifiers, message strings, metadata maps, and sink descriptors.
+# Outputs: Structured log records dispatched to registered sinks.
+# Errors: Future Result integration will emit EIO for sink failures and EINVAL for unknown levels.
+
+# Sets the global log level threshold.
+func set_level(level) {
+    # TODO: implement level threshold update
+}
+
+# Registers a new sink (stdout, file, memory, custom callback).
+func add_sink(sink) {
+    # TODO: implement sink registration
+}
+
+# Removes a previously registered sink by identifier.
+func remove_sink(sink_id) {
+    # TODO: implement sink removal
+}
+
+# Logs a debug message.
+func debug(message, context) {
+    # TODO: implement debug logging
+}
+
+# Logs an informational message.
+func info(message, context) {
+    # TODO: implement info logging
+}
+
+# Logs a warning message.
+func warn(message, context) {
+    # TODO: implement warn logging
+}
+
+# Logs an error message.
+func error(message, context) {
+    # TODO: implement error logging
+}
+
+# Logs a fatal message and optionally triggers shutdown hook.
+func fatal(message, context) {
+    # TODO: implement fatal logging
+}
+
+# Attaches contextual metadata for subsequent log messages within a scope.
+func with_context(context, block) {
+    # TODO: implement contextual logging scope
+}

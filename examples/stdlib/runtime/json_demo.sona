@@ -1,0 +1,23 @@
+import json
+
+let payload = {
+    "name": "Sona",
+    "flags": {
+        "beta": true
+    }
+}
+
+let pretty = json.pretty(payload)
+print(pretty)
+
+let normalized = json.normalize(payload)
+print(normalized)
+
+let merged = json.merge([
+    payload,
+    {"flags": {"stable": false, "features": ["json", "env"]}}
+])
+print(json.pretty(merged))
+
+let updated = json.pointer_set(merged, "/flags/features/0", "time")
+print(json.pretty(updated))

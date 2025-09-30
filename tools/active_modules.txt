@@ -1,0 +1,11 @@
+sona/cli.py
+sona/interpreter.py
+sona/ai/enhanced_cli.py
+sona/ai/gpt2_integration.py
+sona/ai/code_completion.py
+sona/ai/cognitive_assistant.py
+sona/ai/natural_language.py
+sona/ai/real_ai_provider.py
+sona/secure_storage.py
+sona/key_migration.py
+sona/setup_azure.py

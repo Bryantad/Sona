@@ -1,0 +1,89 @@
+﻿start: statement+
+
+?statement: expr
+         | var_assignment
+         | print_stmt
+         | return_stmt
+         | if_stmt
+         | while_stmt
+         | for_stmt
+         | func_def
+         | class_def
+         | import_stmt
+
+var_assignment: ("let" | "const") NAME "=" expr
+
+print_stmt: "print" "(" expr ")"
+
+return_stmt: "return" expr
+
+if_stmt: "if" expr "{" statement* "}" ["else" "{" statement* "}"]
+
+while_stmt: "while" expr "{" statement* "}"
+
+for_stmt: "for" NAME "in" expr "{" statement* "}"
+
+func_def: "func" NAME "(" [param_list] ")" "{" statement* "}"
+param_list: NAME ("," NAME)*
+
+class_def: "class" NAME "{" class_body "}"
+class_body: (method_def | property_def)*
+method_def: NAME "(" [param_list] ")" "{" statement* "}"
+property_def: NAME "=" expr
+
+import_stmt: "import" NAME
+
+?expr: or_expr
+
+?or_expr: and_expr
+        | or_expr "||" and_expr
+
+?and_expr: comparison
+         | and_expr "&&" comparison
+
+?comparison: sum
+           | comparison "==" sum
+           | comparison "!=" sum
+           | comparison ">" sum
+           | comparison "<" sum
+           | comparison ">=" sum
+           | comparison "<=" sum
+
+?sum: product
+    | sum "+" product
+    | sum "-" product
+
+?product: unary
+        | product "*" unary
+        | product "/" unary
+        | product "%" unary
+
+?unary: atom
+      | "-" unary
+      | "!" unary
+
+?atom: "(" expr ")"
+     | NUMBER
+     | STRING
+     | "true"
+     | "false"
+     | array_literal
+     | dict_literal
+     | func_call
+     | NAME
+
+array_literal: "[" [expr ("," expr)*] "]"
+dict_literal: "{" [dict_item ("," dict_item)*] "}"
+dict_item: (STRING | NAME) ":" expr
+
+func_call: NAME "(" [args] ")"
+args: expr ("," expr)*
+
+STRING: /("(?:[^"\\]|\\.)*")|('(?:[^'\\]|\\.)*')/
+NUMBER: /[0-9]+(\.[0-9]+)?/
+NAME: /[a-zA-Z_][a-zA-Z0-9_]*/
+
+COMMENT: /\/\/[^\n]*/
+%import common.WS_INLINE
+%ignore WS_INLINE
+%ignore COMMENT

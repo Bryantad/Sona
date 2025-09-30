@@ -1,0 +1,55 @@
+name: verify-stdlib-and-package
+on:
+  push:
+    tags: ["v0.9.4.1", "v*.*.*"]
+  workflow_dispatch: {}
+
+jobs:
+  test-and-package:
+    runs-on: windows-latest
+    env:
+      SONA_DEBUG: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev] coverage pytest pytest-cov
+
+      - name: Verify stdlib tests w/ coverage gate
+        run: |
+          pytest -q
+
+      - name: Coverage report (stdout)
+        run: |
+          coverage run -m pytest
+          coverage report
+
+      - name: Setup Node + vsce
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm i -g @vscode/vsce
+
+      - name: Generate stdlib manifest
+        run: python scripts/generate_stdlib_manifest.py
+
+      - name: Package VSIX
+        working-directory: vscode-extension/sona-ai-native-programming
+        run: vsce package
+
+      - name: Check VSIX assets
+        run: |
+          $file = Get-ChildItem -Path vscode-extension/sona-ai-native-programming -Filter "*.vsix" | Select-Object -First 1
+          if (-not $file) { throw "VSIX not found" }
+          python scripts/check_vsix.py $file.FullName
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vsix
+          path: vscode-extension/sona-ai-native-programming/*.vsix

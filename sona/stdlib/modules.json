@@ -1,0 +1,76 @@
+{
+    "modules": [
+        {
+            "name": "env",
+            "category": "runtime",
+            "status": "beta",
+            "version": "0.9.5",
+            "doc_path": "docs/stdlib/runtime/env.md",
+            "example_path": "examples/stdlib/runtime/env_demo.sona"
+        },
+        {
+            "name": "time",
+            "category": "runtime",
+            "status": "beta",
+            "version": "0.9.5",
+            "doc_path": "docs/stdlib/runtime/time.md",
+            "example_path": "examples/stdlib/runtime/time_demo.sona"
+        },
+        {
+            "name": "date",
+            "category": "runtime",
+            "status": "beta",
+            "version": "0.9.5",
+            "doc_path": "docs/stdlib/runtime/date.md",
+            "example_path": "examples/stdlib/runtime/date_demo.sona"
+        },
+        {
+            "name": "json",
+            "category": "runtime",
+            "status": "beta",
+            "version": "0.9.5",
+            "doc_path": "docs/stdlib/runtime/json.md",
+            "example_path": "examples/stdlib/runtime/json_demo.sona"
+        },
+        {
+            "name": "string",
+            "category": "runtime",
+            "status": "beta",
+            "version": "0.9.5",
+            "doc_path": "docs/stdlib/runtime/string.md",
+            "example_path": "examples/stdlib/runtime/string_demo.sona"
+        },
+        {
+            "name": "math",
+            "category": "runtime",
+            "status": "beta",
+            "version": "0.9.5",
+            "doc_path": "docs/stdlib/runtime/math.md",
+            "example_path": "examples/stdlib/runtime/math_demo.sona"
+        },
+        {
+            "name": "regex",
+            "category": "runtime",
+            "status": "beta",
+            "version": "0.9.5",
+            "doc_path": "docs/stdlib/runtime/regex.md",
+            "example_path": "examples/stdlib/runtime/regex_demo.sona"
+        },
+        {
+            "name": "fs",
+            "category": "filesystem",
+            "status": "beta",
+            "version": "0.9.5",
+            "doc_path": "docs/stdlib/filesystem/fs.md",
+            "example_path": "examples/stdlib/filesystem/fs_demo.sona"
+        },
+        {
+            "name": "path",
+            "category": "filesystem",
+            "status": "beta",
+            "version": "0.9.5",
+            "doc_path": "docs/stdlib/filesystem/path.md",
+            "example_path": "examples/stdlib/filesystem/path_demo.sona"
+        }
+    ]
+}

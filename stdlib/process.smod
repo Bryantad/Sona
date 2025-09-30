@@ -1,0 +1,40 @@
+# process.smod
+# Purpose: Spawn and manage operating system processes from Sona programs.
+# Inputs: command strings, argument arrays, and option maps (env, cwd, timeout).
+# Outputs: Process handles, exit status metadata, and captured stdout/stderr strings.
+# Errors: Returns structured error maps with type and message information.
+
+# Runs a command synchronously, returning the exit code and captured output.
+func run(command, args, options) {
+    return __native__.process_run(command, args, options)
+}
+
+# Spawns a background process and returns a handle for later interaction.
+func spawn(command, args, options) {
+    return __native__.process_spawn(command, args, options)
+}
+
+# Waits for a spawned process to finish with optional timeout.
+func wait(pid, timeout_ms) {
+    return __native__.process_wait(pid, timeout_ms)
+}
+
+# Sends a termination signal to the process.
+func terminate(pid, signal) {
+    return __native__.process_terminate(pid, signal or "TERM")
+}
+
+# Forces the process to stop immediately.
+func kill(pid) {
+    return __native__.process_kill(pid)
+}
+
+# Returns exit status information (code, success flag, signal) for a running process.
+func status(pid) {
+    return __native__.process_status(pid)
+}
+
+# Runs a command and captures stdout/stderr separately.
+func capture(command, args, options) {
+    return __native__.process_capture(command, args, options)
+}

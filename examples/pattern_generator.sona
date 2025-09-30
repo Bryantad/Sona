@@ -1,0 +1,118 @@
+// Pattern Generator - Sona 0.8.0
+// This file demonstrates creating visual patterns with loops
+
+print("=== Pattern Generator ===")
+
+// Pattern 1: Star Triangle
+print("\n1. Star Triangle:")
+for row in [1, 2, 3, 4, 5] {
+    let pattern = ""
+    let col = 1
+    while col <= row {
+        let pattern = pattern + "⭐"
+        let col = col + 1
+    }
+    print(pattern)
+}
+
+// Pattern 2: Number Triangle
+print("\n2. Number Triangle:")
+for row in [1, 2, 3, 4, 5] {
+    let pattern = ""
+    let col = 1
+    while col <= row {
+        let pattern = pattern + f"{col} "
+        let col = col + 1
+    }
+    print(pattern)
+}
+
+// Pattern 3: Multiplication Table
+print("\n3. Multiplication Table for 7:")
+for i in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] {
+    let result = 7 * i
+    print(f"7 x {i} = {result}")
+}
+
+// Pattern 4: Diamond Pattern
+print("\n4. Diamond Pattern:")
+// Top half
+for row in [1, 2, 3, 4, 5] {
+    let spaces = ""
+    let stars = ""
+    
+    // Add spaces
+    let space_count = 5 - row
+    let s = 1
+    while s <= space_count {
+        let spaces = spaces + " "
+        let s = s + 1
+    }
+    
+    // Add stars
+    let star_count = row * 2 - 1
+    let st = 1
+    while st <= star_count {
+        let stars = stars + "*"
+        let st = st + 1
+    }
+    
+    print(spaces + stars)
+}
+
+// Bottom half
+for row in [4, 3, 2, 1] {
+    let spaces = ""
+    let stars = ""
+    
+    // Add spaces
+    let space_count = 5 - row
+    let s = 1
+    while s <= space_count {
+        let spaces = spaces + " "
+        let s = s + 1
+    }
+    
+    // Add stars
+    let star_count = row * 2 - 1
+    let st = 1
+    while st <= star_count {
+        let stars = stars + "*"
+        let st = st + 1
+    }
+    
+    print(spaces + stars)
+}
+
+// Pattern 5: Checkerboard
+print("\n5. Checkerboard (5x5):")
+for row in [1, 2, 3, 4, 5] {
+    let pattern = ""
+    for col in [1, 2, 3, 4, 5] {
+        let total = row + col
+        if (total % 2) == 0 {
+            let pattern = pattern + "⬛"
+        } else {
+            let pattern = pattern + "⬜"
+        }
+    }
+    print(pattern)
+}
+
+// Pattern 6: Fibonacci Sequence
+print("\n6. Fibonacci Sequence (first 10):")
+let fib1 = 0
+let fib2 = 1
+print(f"0")
+print(f"1")
+
+let count = 2
+while count < 10 {
+    let next_fib = fib1 + fib2
+    print(f"{next_fib}")
+    let fib1 = fib2
+    let fib2 = next_fib
+    let count = count + 1
+}
+
+print("\n=== Pattern Generation Complete ===")

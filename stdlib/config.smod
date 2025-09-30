@@ -1,0 +1,40 @@
+# config.smod
+# Purpose: Layer configuration sources (defaults, files, environment variables) with precedence rules.
+# Inputs: file paths, environment prefixes, nested maps, and key selectors.
+# Outputs: Merged configuration maps and resolved scalar values.
+# Errors: Will expose Result err codes for parse failures (EINVAL) and missing files (ENOTFOUND).
+
+# Loads configuration from a JSON or YAML file.
+func load_file(path) {
+    # TODO: implement config file loading
+}
+
+# Reads configuration values from the environment using a prefix.
+func load_env(prefix) {
+    # TODO: implement environment variable loading
+}
+
+# Applies default values to a live config map without overriding explicit values.
+func apply_defaults(config, defaults) {
+    # TODO: implement defaults overlay
+}
+
+# Deep merges multiple configuration maps using precedence order.
+func merge(sources) {
+    # TODO: implement deep merge strategy
+}
+
+# Retrieves a configuration value by dot-separated key, returning fallback when missing.
+func get(config, key, fallback) {
+    # TODO: implement dotted key lookup with fallback
+}
+
+# Validates that required keys are present.
+func require_keys(config, keys) {
+    # TODO: implement required key validation
+}
+
+# Serialises the configuration map back to JSON for inspection.
+func to_json(config, pretty) {
+    # TODO: implement JSON serialisation
+}

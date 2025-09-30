@@ -1,0 +1,10 @@
+import time
+
+let start = time.utcnow("milliseconds")
+print("start=" + start)
+
+let shifted = time.shift(start, { "seconds": 10, "milliseconds": 250 })
+print("shifted=" + shifted)
+
+let diff = time.diff(start, shifted, "seconds", true)
+print("diff=" + diff)

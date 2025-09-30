@@ -1,0 +1,77 @@
+// Shopping List Manager - Sona 0.8.0
+// This file demonstrates managing a shopping list with prices
+
+print("=== Shopping List Manager ===")
+
+// Shopping data
+let items = ["milk", "bread", "eggs", "cheese", "apples", "chicken", "rice", "pasta"]
+let prices = [3.50, 2.25, 4.00, 5.75, 2.99, 8.50, 1.99, 1.75]
+let quantities = [2, 1, 1, 1, 3, 2, 1, 2]
+
+let total_cost = 0
+let total_items = 0
+
+print("=== Shopping List ===")
+print("Item\t\tPrice\tQty\tSubtotal")
+print("-" * 40)
+
+// Process each item
+let index = 0
+for item in items {
+    let price = prices[index]
+    let quantity = quantities[index]
+    let subtotal = price * quantity
+    
+    print(f"{item}\t\t${price}\t{quantity}\t${subtotal}")
+    
+    let total_cost = total_cost + subtotal
+    let total_items = total_items + quantity
+    
+    let index = index + 1
+}
+
+print("-" * 40)
+print(f"Total items: {total_items}")
+print(f"Total cost: ${total_cost}")
+
+// Categorize shopping trip
+if total_cost > 30 {
+    print("💰 Expensive shopping trip!")
+} else if total_cost > 20 {
+    print("💸 Moderate shopping trip")
+} else {
+    print("💵 Budget-friendly shopping trip")
+}
+
+// Find most expensive item
+let most_expensive_item = ""
+let highest_price = 0
+
+let index = 0
+for item in items {
+    let price = prices[index]
+    if price > highest_price {
+        let highest_price = price
+        let most_expensive_item = item
+    }
+    let index = index + 1
+}
+
+print(f"\nMost expensive item: {most_expensive_item} (${highest_price})")
+
+// Find items under $3
+print("\nBudget items (under $3):")
+let index = 0
+for item in items {
+    let price = prices[index]
+    if price < 3.00 {
+        print(f"- {item}: ${price}")
+    }
+    let index = index + 1
+}
+
+// Calculate average price
+let average_price = total_cost / total_items
+print(f"\nAverage price per item: ${average_price}")
+
+print("\n=== Shopping List Complete ===")

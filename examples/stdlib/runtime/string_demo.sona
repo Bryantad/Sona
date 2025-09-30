@@ -1,0 +1,10 @@
+import string
+
+let phrase = "  Hello from Sona!  "
+let trimmed = string.trim(phrase)
+let slug = string.slugify(trimmed)
+let camel = string.camel_case(trimmed)
+
+print("Trimmed: " + trimmed)
+print("Slug: " + slug)
+print("Camel: " + camel)

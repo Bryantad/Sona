@@ -1,0 +1,17 @@
+import math
+import string
+
+let samples = [2, 4, 6, 8]
+let avg = math.mean(samples)
+let std = math.stddev(samples)
+let normalized = math.normalize([3, 4])
+let lerped = math.lerp(0, 10, 0.25)
+let remapped = math.remap(75, 0, 100, 0, 1)
+let near = math.is_close(0.3000000001, 0.3)
+
+print(string.format("Avg: {0}", {"args": [avg]}))
+print(string.format("Std Dev: {0}", {"args": [std]}))
+print(string.format("Unit vector: {0}", {"args": [normalized]}))
+print(string.format("Lerp 25% (0->10): {0}", {"args": [lerped]}))
+print(string.format("Remap 75% to 0..1: {0}", {"args": [remapped]}))
+print(string.format("Near equals? {0}", {"args": [near]}))

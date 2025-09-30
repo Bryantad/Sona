@@ -1,0 +1,56 @@
+// Actually Working Loop Examples - Sona 0.8.0
+// This uses only verified working syntax
+
+print("=== Actually Working Examples ===")
+
+// Example 1: Basic variable operations (no loops yet)
+print("1. Basic Variable Operations:")
+let x = 10
+let y = 20
+let sum = x + y
+print("Sum of 10 and 20:")
+print(sum)
+
+// Example 2: Array access
+print("2. Array Access:")
+let numbers = [1, 2, 3, 4, 5]
+print("First number:")
+print(numbers[0])
+print("Second number:")
+print(numbers[1])
+print("Third number:")
+print(numbers[2])
+
+// Example 3: Simple function
+print("3. Simple Function:")
+func greet(name) {
+    print("Hello, " + name + "!")
+}
+
+greet("Alice")
+greet("Bob")
+
+// Example 4: Conditional logic
+print("4. Conditional Logic:")
+let age = 25
+if age >= 18 {
+    print("You are an adult")
+} else {
+    print("You are a minor")
+}
+
+// Example 5: String operations
+print("5. String Operations:")
+let first_name = "John"
+let last_name = "Doe"
+let full_name = first_name + " " + last_name
+print("Full name:")
+print(full_name)
+
+// Example 6: Dictionary operations
+print("6. Dictionary Operations:")
+let person = {"name": "Alice", "age": 30}
+print("Person data:")
+print(person)
+
+print("=== All Examples Complete ===")

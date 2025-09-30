@@ -1,0 +1,6 @@
+// Sona Space Invaders Game
+// This is a placeholder - the actual game runs as an embedded GUI app
+print("=== Sona Space Invaders ===")
+print("This example demonstrates a classic Space Invaders style game")
+print("Switch to 'Embedded App' mode to play the interactive game")
+print("Use Left/Right arrows to move and Spacebar to shoot")

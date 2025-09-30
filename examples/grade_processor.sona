@@ -1,0 +1,87 @@
+// Grade Processor Example - Sona 0.8.0
+// This file demonstrates processing student grades with loops
+
+print("=== Student Grade Processor ===")
+
+// Sample student data
+let grades = [85, 92, 78, 95, 88, 76, 90, 82, 94, 68]
+let student_names = ["Alice", "Bob", "Charlie", "Diana", "Eve", "Frank", "Grace", "Henry", "Ivy", "Jack"]
+
+let total = 0
+let passing_count = 0
+let highest_grade = 0
+let lowest_grade = 100
+
+print("Processing student grades...\n")
+
+// Process each grade
+let index = 0
+for grade in grades {
+    let student_name = student_names[index]
+    
+    print(f"Processing {student_name}: {grade}")
+    
+    // Add to total
+    let total = total + grade
+    
+    // Track highest and lowest
+    if grade > highest_grade {
+        let highest_grade = grade
+    }
+    if grade < lowest_grade {
+        let lowest_grade = grade
+    }
+    
+    // Check if passing
+    if grade >= 70 {
+        let passing_count = passing_count + 1
+        print("✅ Passing grade")
+    } else {
+        print("❌ Failing grade")
+    }
+    
+    let index = index + 1
+    print("")
+}
+
+// Calculate statistics
+let average = total / 10
+let passing_percentage = (passing_count / 10) * 100
+
+print("=== Class Statistics ===")
+print(f"Total students: 10")
+print(f"Class average: {average}")
+print(f"Passing students: {passing_count}/10")
+print(f"Passing percentage: {passing_percentage}%")
+print(f"Highest grade: {highest_grade}")
+print(f"Lowest grade: {lowest_grade}")
+
+// Grade distribution
+print("\n=== Grade Distribution ===")
+let a_count = 0
+let b_count = 0
+let c_count = 0
+let d_count = 0
+let f_count = 0
+
+for grade in grades {
+    if grade >= 90 {
+        let a_count = a_count + 1
+    } else if grade >= 80 {
+        let b_count = b_count + 1
+    } else if grade >= 70 {
+        let c_count = c_count + 1
+    } else if grade >= 60 {
+        let d_count = d_count + 1
+    } else {
+        let f_count = f_count + 1
+    }
+}
+
+print(f"A grades (90+): {a_count}")
+print(f"B grades (80-89): {b_count}")
+print(f"C grades (70-79): {c_count}")
+print(f"D grades (60-69): {d_count}")
+print(f"F grades (below 60): {f_count}")
+
+print("\n=== Grade Processing Complete ===")

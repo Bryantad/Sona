@@ -1,0 +1,22 @@
+// Sona Endless Runner Game
+// Fast-paced side-scrolling game with increasing difficulty
+// This example demonstrates real-time gameplay mechanics in Sona
+
+print("=== Sona Endless Runner ===")
+print("Welcome to the Sona Endless Runner engine demonstration!")
+print("Features:")
+print("  * Progressive difficulty system that increases with score")
+print("  * Procedurally spawned obstacles and coins")
+print("  * Physics-based jumping mechanics")
+print("  * Score tracking and high score saving")
+print("  * Dynamic cloud animations in the background")
+print()
+print("How to Play:")
+print("1. Switch to 'Embedded App' mode in the launcher")
+print("2. Click 'Start' to begin the game")
+print("3. Press SPACE to jump over obstacles")
+print("4. Collect gold coins for bonus points")
+print("5. The game speeds up as your score increases")
+print("6. Try to beat your high score!")
+print()
+print("How long can you survive the endless run? Good luck!")

@@ -1,0 +1,563 @@
+{
+  "system_info": {
+    "cpu_count": 6,
+    "cpu_freq": 4000.0,
+    "memory_total": 31.92436981201172,
+    "memory_available": 12.323135375976562,
+    "platform": "Windows",
+    "python_version": "3.12.6",
+    "architecture": "64bit"
+  },
+  "benchmark_results": {
+    "fibonacci_recursive": {
+      "sona": {
+        "avg_time": 0.00038105999701656403,
+        "min_time": 9.270000737160444e-05,
+        "max_time": 0.00047909998102113605,
+        "std_time": 0.00016296647094687415,
+        "avg_ops_per_sec": 3928.0725140222485,
+        "max_ops_per_sec": 10787.485657809308,
+        "iterations": 5,
+        "implementation": "sona"
+      },
+      "python": {
+        "avg_time": 0.14477246000315064,
+        "min_time": 0.14002120000077412,
+        "max_time": 0.14960580001934431,
+        "std_time": 0.003510652177624749,
+        "avg_ops_per_sec": 6.91064048596753,
+        "max_ops_per_sec": 7.141775673929887,
+        "iterations": 5,
+        "implementation": "python"
+      },
+      "javascript": {
+        "avg_time": 0.00988782,
+        "min_time": 0.0090745,
+        "max_time": 0.0122223,
+        "std_time": 0.0013181245263631206,
+        "avg_ops_per_sec": 102.38019349036794,
+        "max_ops_per_sec": 110.1989090308006,
+        "iterations": 5,
+        "implementation": "javascript"
+      }
+    },
+    "prime_generation": {
+      "sona": {
+        "avg_time": 0.00041091999737545847,
+        "min_time": 0.00014180000289343297,
+        "max_time": 0.0005001999961677939,
+        "std_time": 0.00015193052992205127,
+        "avg_ops_per_sec": 30867251.56070633,
+        "max_ops_per_sec": 70521860.33815038,
+        "iterations": 5,
+        "implementation": "sona"
+      },
+      "python": {
+        "avg_time": 0.010828919999767095,
+        "min_time": 0.009240499988663942,
+        "max_time": 0.01364409999223426,
+        "std_time": 0.0016953771509821416,
+        "avg_ops_per_sec": 939808.6863779959,
+        "max_ops_per_sec": 1082192.5233772844,
+        "iterations": 5,
+        "implementation": "python"
+      },
+      "javascript": {
+        "avg_time": 0.00229874,
+        "min_time": 0.0021631,
+        "max_time": 0.0025478,
+        "std_time": 0.00015159519451486578,
+        "avg_ops_per_sec": 4364628.252133372,
+        "max_ops_per_sec": 4622994.776015904,
+        "iterations": 5,
+        "implementation": "javascript"
+      }
+    },
+    "matrix_multiplication": {
+      "sona": {
+        "avg_time": 0.0009377399925142527,
+        "min_time": 0.0008082999847829342,
+        "max_time": 0.0009768999880179763,
+        "std_time": 7.258363117207716e-05,
+        "avg_ops_per_sec": 1072118.7020604685,
+        "max_ops_per_sec": 1237164.4424421783,
+        "iterations": 5,
+        "implementation": "sona"
+      },
+      "python": {
+        "avg_time": 0.10665376000106334,
+        "min_time": 0.10501560001284815,
+        "max_time": 0.11016059998655692,
+        "std_time": 0.0020223035119906188,
+        "avg_ops_per_sec": 9378.775446710022,
+        "max_ops_per_sec": 9522.394766850399,
+        "iterations": 5,
+        "implementation": "python"
+      },
+      "javascript": {
+        "avg_time": 0.01176936,
+        "min_time": 0.0109522,
+        "max_time": 0.013048,
+        "std_time": 0.000927457294434628,
+        "avg_ops_per_sec": 85375.91698590951,
+        "max_ops_per_sec": 91305.85635762678,
+        "iterations": 5,
+        "implementation": "javascript"
+      }
+    },
+    "computational_loop": {
+      "sona": {
+        "avg_time": 2.1519995061680675e-05,
+        "min_time": 8.199975127354264e-06,
+        "max_time": 6.75999908708036e-05,
+        "std_time": 2.583199397987484e-05,
+        "avg_ops_per_sec": 85773791478.10234,
+        "max_ops_per_sec": 121951589421.79031,
+        "iterations": 5,
+        "implementation": "sona"
+      },
+      "python": {
+        "avg_time": 0.19816673999885098,
+        "min_time": 0.19582299998728558,
+        "max_time": 0.201895100006368,
+        "std_time": 0.0024885749144016407,
+        "avg_ops_per_sec": 5046888.068822918,
+        "max_ops_per_sec": 5106652.43646011,
+        "iterations": 5,
+        "implementation": "python"
+      },
+      "javascript": {
+        "avg_time": 0.00405194,
+        "min_time": 0.0038862,
+        "max_time": 0.0041975,
+        "std_time": 0.00014991140050042893,
+        "avg_ops_per_sec": 247068045.20068866,
+        "max_ops_per_sec": 257320776.07946068,
+        "iterations": 5,
+        "implementation": "javascript"
+      }
+    },
+    "string_processing": {
+      "sona": {
+        "avg_time": 0.00045306000974960626,
+        "min_time": 0.00037220001104287803,
+        "max_time": 0.0004811999970115721,
+        "std_time": 4.5787694904312025e-05,
+        "avg_ops_per_sec": 222810085.0073163,
+        "max_ops_per_sec": 268672748.6111757,
+        "iterations": 5,
+        "implementation": "sona"
+      },
+      "python": {
+        "avg_time": 0.01936225999961607,
+        "min_time": 0.018795899988617748,
+        "max_time": 0.01975700000184588,
+        "std_time": 0.00041216420067947913,
+        "avg_ops_per_sec": 5166575.088447099,
+        "max_ops_per_sec": 5320309.21959348,
+        "iterations": 5,
+        "implementation": "python"
+      },
+      "javascript": {
+        "avg_time": 0.04044594,
+        "min_time": 0.0387843,
+        "max_time": 0.04175,
+        "std_time": 0.0013618104963613695,
+        "avg_ops_per_sec": 2474705.0859359303,
+        "max_ops_per_sec": 2578362.894263916,
+        "iterations": 5,
+        "implementation": "javascript"
+      }
+    },
+    "array_operations": {
+      "sona": {
+        "avg_time": 0.00043156000901944935,
+        "min_time": 0.00029180001001805067,
+        "max_time": 0.00047530001029372215,
+        "std_time": 7.833155770873228e-05,
+        "avg_ops_per_sec": 240054838.48436424,
+        "max_ops_per_sec": 342700468.01511085,
+        "iterations": 5,
+        "implementation": "sona"
+      },
+      "python": {
+        "avg_time": 0.04544966000248678,
+        "min_time": 0.0423855000117328,
+        "max_time": 0.0475297000084538,
+        "std_time": 0.001891942440786637,
+        "avg_ops_per_sec": 2203389.349896822,
+        "max_ops_per_sec": 2359297.4005808313,
+        "iterations": 5,
+        "implementation": "python"
+      },
+      "javascript": {
+        "avg_time": 0.02249386,
+        "min_time": 0.0220231,
+        "max_time": 0.0233062,
+        "std_time": 0.0004850760589845677,
+        "avg_ops_per_sec": 4447280.275852437,
+        "max_ops_per_sec": 4540686.824289042,
+        "iterations": 5,
+        "implementation": "javascript"
+      }
+    },
+    "nested_loops": {
+      "sona": {
+        "avg_time": 0.00035170000046491623,
+        "min_time": 1.5300000086426735e-05,
+        "max_time": 0.0004820000031031668,
+        "std_time": 0.00019940352191425068,
+        "avg_ops_per_sec": 14960257332.906534,
+        "max_ops_per_sec": 65359476754.97999,
+        "iterations": 5,
+        "implementation": "sona"
+      },
+      "python": {
+        "avg_time": 0.1264552800101228,
+        "min_time": 0.12241110001923516,
+        "max_time": 0.13086530001601204,
+        "std_time": 0.003649965444308338,
+        "avg_ops_per_sec": 7913196.928159515,
+        "max_ops_per_sec": 8169193.805487119,
+        "iterations": 5,
+        "implementation": "python"
+      },
+      "javascript": {
+        "avg_time": 0.00275858,
+        "min_time": 0.0027178,
+        "max_time": 0.0028155,
+        "std_time": 4.1024833942381756e-05,
+        "avg_ops_per_sec": 362569102.9617977,
+        "max_ops_per_sec": 367944661.1229671,
+        "iterations": 5,
+        "implementation": "javascript"
+      }
+    }
+  },
+  "analysis": {
+    "language_rankings": {
+      "fibonacci_recursive": [
+        {
+          "language": "sona",
+          "ops_per_sec": 3928.0725140222485
+        },
+        {
+          "language": "javascript",
+          "ops_per_sec": 102.38019349036794
+        },
+        {
+          "language": "python",
+          "ops_per_sec": 6.91064048596753
+        }
+      ],
+      "prime_generation": [
+        {
+          "language": "sona",
+          "ops_per_sec": 30867251.56070633
+        },
+        {
+          "language": "javascript",
+          "ops_per_sec": 4364628.252133372
+        },
+        {
+          "language": "python",
+          "ops_per_sec": 939808.6863779959
+        }
+      ],
+      "matrix_multiplication": [
+        {
+          "language": "sona",
+          "ops_per_sec": 1072118.7020604685
+        },
+        {
+          "language": "javascript",
+          "ops_per_sec": 85375.91698590951
+        },
+        {
+          "language": "python",
+          "ops_per_sec": 9378.775446710022
+        }
+      ],
+      "computational_loop": [
+        {
+          "language": "sona",
+          "ops_per_sec": 85773791478.10234
+        },
+        {
+          "language": "javascript",
+          "ops_per_sec": 247068045.20068866
+        },
+        {
+          "language": "python",
+          "ops_per_sec": 5046888.068822918
+        }
+      ],
+      "string_processing": [
+        {
+          "language": "sona",
+          "ops_per_sec": 222810085.0073163
+        },
+        {
+          "language": "python",
+          "ops_per_sec": 5166575.088447099
+        },
+        {
+          "language": "javascript",
+          "ops_per_sec": 2474705.0859359303
+        }
+      ],
+      "array_operations": [
+        {
+          "language": "sona",
+          "ops_per_sec": 240054838.48436424
+        },
+        {
+          "language": "javascript",
+          "ops_per_sec": 4447280.275852437
+        },
+        {
+          "language": "python",
+          "ops_per_sec": 2203389.349896822
+        }
+      ],
+      "nested_loops": [
+        {
+          "language": "sona",
+          "ops_per_sec": 14960257332.906534
+        },
+        {
+          "language": "javascript",
+          "ops_per_sec": 362569102.9617977
+        },
+        {
+          "language": "python",
+          "ops_per_sec": 7913196.928159515
+        }
+      ]
+    },
+    "sona_performance": {
+      "wins": 14,
+      "total_comparisons": 14,
+      "win_rate": 100.0,
+      "average_speedup": 1453.143301441291,
+      "max_speedup": 16995.382165887284,
+      "min_speedup": 7.072137597427416
+    },
+    "comparative_analysis": {
+      "fibonacci_recursive_python": {
+        "sona_ops": 3928.0725140222485,
+        "other_ops": 6.91064048596753,
+        "ops_ratio": 568.4093279050524,
+        "time_ratio": 379.9203829754337,
+        "sona_faster": true,
+        "speedup": "568.4x"
+      },
+      "fibonacci_recursive_javascript": {
+        "sona_ops": 3928.0725140222485,
+        "other_ops": 102.38019349036794,
+        "ops_ratio": 38.36750430044661,
+        "time_ratio": 25.948197337465977,
+        "sona_faster": true,
+        "speedup": "38.4x"
+      },
+      "prime_generation_python": {
+        "sona_ops": 30867251.56070633,
+        "other_ops": 939808.6863779959,
+        "ops_ratio": 32.84418627760093,
+        "time_ratio": 26.352866905799885,
+        "sona_faster": true,
+        "speedup": "32.8x"
+      },
+      "prime_generation_javascript": {
+        "sona_ops": 30867251.56070633,
+        "other_ops": 4364628.252133372,
+        "ops_ratio": 7.072137597427416,
+        "time_ratio": 5.594130280059446,
+        "sona_faster": true,
+        "speedup": "7.1x"
+      },
+      "matrix_multiplication_python": {
+        "sona_ops": 1072118.7020604685,
+        "other_ops": 9378.775446710022,
+        "ops_ratio": 114.3132926203662,
+        "time_ratio": 113.73489544271763,
+        "sona_faster": true,
+        "speedup": "114.3x"
+      },
+      "matrix_multiplication_javascript": {
+        "sona_ops": 1072118.7020604685,
+        "other_ops": 85375.91698590951,
+        "ops_ratio": 12.55762444387463,
+        "time_ratio": 12.55077110281304,
+        "sona_faster": true,
+        "speedup": "12.6x"
+      },
+      "computational_loop_python": {
+        "sona_ops": 85773791478.10234,
+        "other_ops": 5046888.068822918,
+        "ops_ratio": 16995.382165887284,
+        "time_ratio": 9208.493748760855,
+        "sona_faster": true,
+        "speedup": "16995.4x"
+      },
+      "computational_loop_javascript": {
+        "sona_ops": 85773791478.10234,
+        "other_ops": 247068045.20068866,
+        "ops_ratio": 347.16667389516084,
+        "time_ratio": 188.28721792855052,
+        "sona_faster": true,
+        "speedup": "347.2x"
+      },
+      "string_processing_python": {
+        "sona_ops": 222810085.0073163,
+        "other_ops": 5166575.088447099,
+        "ops_ratio": 43.12529697004474,
+        "time_ratio": 42.73663440372293,
+        "sona_faster": true,
+        "speedup": "43.1x"
+      },
+      "string_processing_javascript": {
+        "sona_ops": 222810085.0073163,
+        "other_ops": 2474705.0859359303,
+        "ops_ratio": 90.03500508952557,
+        "time_ratio": 89.27280962703672,
+        "sona_faster": true,
+        "speedup": "90.0x"
+      },
+      "array_operations_python": {
+        "sona_ops": 240054838.48436424,
+        "other_ops": 2203389.349896822,
+        "ops_ratio": 108.94798892243229,
+        "time_ratio": 105.31480918668363,
+        "sona_faster": true,
+        "speedup": "108.9x"
+      },
+      "array_operations_javascript": {
+        "sona_ops": 240054838.48436424,
+        "other_ops": 4447280.275852437,
+        "ops_ratio": 53.97789741019897,
+        "time_ratio": 52.12220671490962,
+        "sona_faster": true,
+        "speedup": "54.0x"
+      },
+      "nested_loops_python": {
+        "sona_ops": 14960257332.906534,
+        "other_ops": 7913196.928159515,
+        "ops_ratio": 1890.5453091492889,
+        "time_ratio": 359.55439250201914,
+        "sona_faster": true,
+        "speedup": "1890.5x"
+      },
+      "nested_loops_javascript": {
+        "sona_ops": 14960257332.906534,
+        "other_ops": 362569102.9617977,
+        "ops_ratio": 41.26180970936961,
+        "time_ratio": 7.843559841778225,
+        "sona_faster": true,
+        "speedup": "41.3x"
+      }
+    },
+    "performance_matrix": {
+      "fibonacci_recursive": {
+        "sona": {
+          "ops_per_sec": 3928.0725140222485,
+          "time_seconds": 0.00038105999701656403
+        },
+        "python": {
+          "ops_per_sec": 6.91064048596753,
+          "time_seconds": 0.14477246000315064
+        },
+        "javascript": {
+          "ops_per_sec": 102.38019349036794,
+          "time_seconds": 0.00988782
+        }
+      },
+      "prime_generation": {
+        "sona": {
+          "ops_per_sec": 30867251.56070633,
+          "time_seconds": 0.00041091999737545847
+        },
+        "python": {
+          "ops_per_sec": 939808.6863779959,
+          "time_seconds": 0.010828919999767095
+        },
+        "javascript": {
+          "ops_per_sec": 4364628.252133372,
+          "time_seconds": 0.00229874
+        }
+      },
+      "matrix_multiplication": {
+        "sona": {
+          "ops_per_sec": 1072118.7020604685,
+          "time_seconds": 0.0009377399925142527
+        },
+        "python": {
+          "ops_per_sec": 9378.775446710022,
+          "time_seconds": 0.10665376000106334
+        },
+        "javascript": {
+          "ops_per_sec": 85375.91698590951,
+          "time_seconds": 0.01176936
+        }
+      },
+      "computational_loop": {
+        "sona": {
+          "ops_per_sec": 85773791478.10234,
+          "time_seconds": 2.1519995061680675e-05
+        },
+        "python": {
+          "ops_per_sec": 5046888.068822918,
+          "time_seconds": 0.19816673999885098
+        },
+        "javascript": {
+          "ops_per_sec": 247068045.20068866,
+          "time_seconds": 0.00405194
+        }
+      },
+      "string_processing": {
+        "sona": {
+          "ops_per_sec": 222810085.0073163,
+          "time_seconds": 0.00045306000974960626
+        },
+        "python": {
+          "ops_per_sec": 5166575.088447099,
+          "time_seconds": 0.01936225999961607
+        },
+        "javascript": {
+          "ops_per_sec": 2474705.0859359303,
+          "time_seconds": 0.04044594
+        }
+      },
+      "array_operations": {
+        "sona": {
+          "ops_per_sec": 240054838.48436424,
+          "time_seconds": 0.00043156000901944935
+        },
+        "python": {
+          "ops_per_sec": 2203389.349896822,
+          "time_seconds": 0.04544966000248678
+        },
+        "javascript": {
+          "ops_per_sec": 4447280.275852437,
+          "time_seconds": 0.02249386
+        }
+      },
+      "nested_loops": {
+        "sona": {
+          "ops_per_sec": 14960257332.906534,
+          "time_seconds": 0.00035170000046491623
+        },
+        "python": {
+          "ops_per_sec": 7913196.928159515,
+          "time_seconds": 0.1264552800101228
+        },
+        "javascript": {
+          "ops_per_sec": 362569102.9617977,
+          "time_seconds": 0.00275858
+        }
+      }
+    },
+    "overall_assessment": "\ud83c\udfc6 EXCEPTIONAL - Sona dominates across all benchmarks"
+  },
+  "timestamp": "2025-07-23 14:41:27"
+}

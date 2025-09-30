@@ -1,0 +1,13 @@
+{
+    "allowed_tools": [
+        "none"
+    ],
+    "max_tokens": 2000,
+    "disallow_ops": [
+        "shell",
+        "file_read",
+        "network"
+    ],
+    "trust_mode": "warn",
+    "version": "1"
+}

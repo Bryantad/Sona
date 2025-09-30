@@ -1,0 +1,193 @@
+{
+    "categories": [
+        {
+            "id": "dev_tools",
+            "name": "Developer Tools",
+            "icon": "code",
+            "description": "Tools for Sona language development",
+            "collapsible": true,
+            "defaultExpanded": true
+        },
+        {
+            "id": "examples",
+            "name": "Examples",
+            "icon": "book",
+            "description": "Example Sona programs",
+            "collapsible": true,
+            "defaultExpanded": true
+        },
+        {
+            "id": "games",
+            "name": "Games",
+            "icon": "games",
+            "description": "Interactive games built with Sona",
+            "collapsible": true,
+            "defaultExpanded": true
+        },
+        {
+            "id": "utilities",
+            "name": "Utilities",
+            "icon": "build",
+            "description": "Utility applications",
+            "collapsible": true,
+            "defaultExpanded": true
+        },
+        {
+            "id": "tutorials",
+            "name": "Tutorials",
+            "icon": "school",
+            "description": "Interactive learning materials",
+            "collapsible": true,
+            "defaultExpanded": false
+        }
+    ],
+    "applications": [
+        {
+            "id": "sona_repl",
+            "name": "Sona REPL",
+            "description": "Interactive Sona language console",
+            "category": "dev_tools",
+            "icon": "terminal",
+            "tags": [
+                "core",
+                "development"
+            ],
+            "module": "repl_app",
+            "class": "SonaREPLApp",
+            "priority": 100
+        },
+        {
+            "id": "sona_editor",
+            "name": "Code Editor",
+            "description": "Edit and run Sona code",
+            "category": "dev_tools",
+            "icon": "edit",
+            "tags": [
+                "core",
+                "development"
+            ],
+            "module": "editor_app",
+            "class": "SonaEditorApp",
+            "priority": 90
+        },
+        {
+            "id": "memory_game",
+            "name": "Memory Game",
+            "description": "Test your memory skills",
+            "category": "games",
+            "icon": "psychology",
+            "tags": [
+                "game",
+                "beginner"
+            ],
+            "file": "examples/memory_game.sona",
+            "priority": 80
+        },
+        {
+            "id": "tetris",
+            "name": "Tetris",
+            "description": "Classic puzzle game with modern design",
+            "category": "games",
+            "icon": "grid_4x4",
+            "tags": [
+                "game",
+                "puzzle",
+                "classic"
+            ],
+            "module": "tetris_app",
+            "class": "TetrisApp",
+            "priority": 95
+        },
+        {
+            "id": "calculator",
+            "name": "Calculator",
+            "description": "Simple Sona calculator",
+            "category": "utilities",
+            "icon": "calculate",
+            "tags": [
+                "tool",
+                "math"
+            ],
+            "file": "examples/calculator.sona",
+            "priority": 70
+        },
+        {
+            "id": "todo_list",
+            "name": "Todo List",
+            "description": "Task management application",
+            "category": "utilities",
+            "icon": "check_box",
+            "tags": [
+                "productivity",
+                "beginner"
+            ],
+            "file": "examples/todo_list.sona",
+            "priority": 60
+        },
+        {
+            "id": "hello_world",
+            "name": "Hello World",
+            "description": "Basic Hello World example",
+            "category": "examples",
+            "icon": "waving_hand",
+            "tags": [
+                "beginner",
+                "example"
+            ],
+            "file": "examples/hello_world.sona",
+            "priority": 50
+        },
+        {
+            "id": "ascii_viz",
+            "name": "ASCII Visualizer",
+            "description": "Create ASCII art visualizations",
+            "category": "examples",
+            "icon": "apps",
+            "tags": [
+                "creative",
+                "example"
+            ],
+            "file": "examples/ascii_visualization.sona",
+            "priority": 40
+        },
+        {
+            "id": "quiz_app",
+            "name": "Quiz Application",
+            "description": "Interactive quiz game",
+            "category": "games",
+            "icon": "quiz",
+            "tags": [
+                "game",
+                "interactive"
+            ],
+            "file": "examples/quiz_app.sona",
+            "priority": 30
+        },
+        {
+            "id": "http_demo",
+            "name": "HTTP Request Demo",
+            "description": "Example of making HTTP requests",
+            "category": "examples",
+            "icon": "http",
+            "tags": [
+                "networking",
+                "intermediate"
+            ],
+            "file": "examples/http_get.sona",
+            "priority": 20
+        },
+        {
+            "id": "feature_demo",
+            "name": "Feature Demo",
+            "description": "Demo of Sona v0.5.0+ features",
+            "category": "tutorials",
+            "icon": "new_releases",
+            "tags": [
+                "example",
+                "advanced"
+            ],
+            "file": "examples/v0.5.0_feature_demo_fixed.sona",
+            "priority": 10
+        }
+    ]
+}

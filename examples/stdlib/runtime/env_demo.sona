@@ -1,0 +1,10 @@
+import env
+
+let before = env.get("SONA_DEMO", "unset")
+print("before=" + before)
+
+env.set("SONA_DEMO", "configured")
+let snapshot = env.as_dict("SONA_", true, true)
+print(snapshot["demo"])
+
+env.save_dotenv(".env.demo", { "SONA_DEMO": "configured" }, true, "utf-8")

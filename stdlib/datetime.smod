@@ -1,0 +1,50 @@
+# datetime.smod
+# Purpose: Work with absolute timestamps, local/UTC conversions, and formatting utilities.
+# Inputs: timezone identifiers, RFC3339 strings, duration maps, and timestamp numbers.
+# Outputs: Structured datetime records, formatted strings, and converted timezones.
+# Errors: Planned Result err codes for invalid formats (EINVAL) and unsupported zones (EUNSUPPORTED).
+
+# Returns the current UTC timestamp (seconds + nanoseconds).
+func now_utc() {
+    # TODO: implement UTC clock retrieval
+}
+
+# Returns the current local timestamp including timezone offset.
+func now_local() {
+    # TODO: implement local clock retrieval
+}
+
+# Parses an RFC3339 timestamp into a datetime record.
+func parse_rfc3339(value) {
+    # TODO: implement RFC3339 parsing
+}
+
+# Parses a custom format string into a datetime record.
+func parse(value, format) {
+    # TODO: implement format-driven parsing
+}
+
+# Formats a datetime record using a format string (e.g., RFC3339).
+func format(datetime_record, format) {
+    # TODO: implement datetime formatting
+}
+
+# Converts a datetime record to UTC.
+func to_utc(datetime_record) {
+    # TODO: implement conversion to UTC
+}
+
+# Converts a datetime record to the supplied timezone identifier.
+func to_timezone(datetime_record, timezone) {
+    # TODO: implement timezone conversion
+}
+
+# Adds a duration (seconds, minutes, hours) to a datetime record.
+func add_duration(datetime_record, duration) {
+    # TODO: implement duration addition
+}
+
+# Calculates the difference between two datetime records.
+func diff(start_datetime, end_datetime) {
+    # TODO: implement duration difference calculation
+}

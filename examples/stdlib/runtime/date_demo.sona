@@ -1,0 +1,20 @@
+import date
+
+let tz = "UTC"
+let today = date.today(tz)
+print("Today: " + today)
+
+let end_of_month = date.end_of_month(today, tz)
+print("Month ends: " + end_of_month)
+
+let sprint_days = date.range(
+    today,
+    date.shift(today, {"weeks": 2}),
+    7,
+    true,
+    tz
+)
+print("Sprints: " + sprint_days)
+
+let metadata = date.parse(end_of_month, tz)
+print("Week: " + metadata["iso_week"] + ", Quarter: " + metadata["quarter"])

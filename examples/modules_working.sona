@@ -1,0 +1,53 @@
+# Module System Example - Sona v0.7.0
+# Demonstrates working module imports and usage
+
+print("=== Module System Demo ===")
+
+# Import math module for mathematical operations
+import math
+
+let number = 16
+print("Number: " + number)
+
+let square_root = math.sqrt(number)
+print("Square root of " + number + ": " + square_root)
+
+let power_result = math.pow(2, 4)
+print("2^4 = " + power_result)
+
+let cos_result = math.cos(0)
+print("cos(0) = " + cos_result)
+
+let sin_result = math.sin(0)
+print("sin(0) = " + sin_result)
+
+# Import string module for text operations  
+import string
+
+let text = "hello world"
+print("Original text: " + text)
+
+let capitalized = string.capitalize(text)
+print("Capitalized: " + capitalized)
+
+let uppercase = string.upper(text)
+print("Uppercase: " + uppercase)
+
+let title_case = string.title(text)
+print("Title case: " + title_case)
+
+# Import time module
+import time
+
+let current_time = time.now()
+print("Current timestamp: " + current_time)
+
+# Combining multiple modules
+let calc_input = 25
+let calc_result = math.sqrt(calc_input)
+let description = "Square root of " + calc_input + " is " + calc_result
+let final_text = string.upper(description)
+
+print("Final result: " + final_text)
+
+print("=== Module System Demo Complete ===")

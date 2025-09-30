@@ -1,0 +1,14 @@
+# Path module demo
+import path
+
+print("=== join/normalize ===")
+let joined = path.join(["/usr", "local", "sona"])
+print(joined)
+
+print("=== resolve relative target ===")
+let resolved = path.resolve(joined, "logs/2025")
+print(resolved)
+
+print("=== basename/dirname ===")
+print(path.basename(resolved))
+print(path.dirname(resolved))

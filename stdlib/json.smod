@@ -1,0 +1,120 @@
+func __default(value, fallback) {
+    if value == nil {
+        return fallback
+    }
+    return value
+}
+
+func loads(text, options) {
+    if options == nil {
+        options = {}
+    }
+    return __native__.json.loads(
+        text,
+        allow_comments=__default(options["allow_comments"], false),
+        allow_trailing_commas=__default(options["allow_trailing_commas"], false),
+        strict=__default(options["strict"], true)
+    )
+}
+
+func load(path, options) {
+    if options == nil {
+        options = {}
+    }
+    return __native__.json.load(
+        path,
+        encoding=__default(options["encoding"], "utf-8"),
+        allow_comments=__default(options["allow_comments"], false),
+        allow_trailing_commas=__default(options["allow_trailing_commas"], false),
+        strict=__default(options["strict"], true)
+    )
+}
+
+func dumps(value, options) {
+    if options == nil {
+        options = {}
+    }
+    return __native__.json.dumps(
+        value,
+        indent=__default(options["indent"], nil),
+        sort_keys=__default(options["sort_keys"], false),
+        ensure_ascii=__default(options["ensure_ascii"], false),
+        trailing_newline=__default(options["trailing_newline"], false)
+    )
+}
+
+func dump(value, path, options) {
+    if options == nil {
+        options = {}
+    }
+    return __native__.json.dump(
+        value,
+        path,
+        indent=__default(options["indent"], 2),
+        sort_keys=__default(options["sort_keys"], false),
+        ensure_ascii=__default(options["ensure_ascii"], false),
+        encoding=__default(options["encoding"], "utf-8"),
+        newline=__default(options["newline"], "\n"),
+        trailing_newline=__default(options["trailing_newline"], true)
+    )
+}
+
+func pretty(value) {
+    return __native__.json.pretty(value)
+}
+
+func normalize(value, options) {
+    if options == nil {
+        options = {}
+    }
+    return __native__.json.normalize(
+        value,
+        sort_keys=__default(options["sort_keys"], true),
+        ensure_ascii=__default(options["ensure_ascii"], false)
+    )
+}
+
+func is_valid(text, options) {
+    if options == nil {
+        options = {}
+    }
+    return __native__.json.is_valid(
+        text,
+        allow_comments=__default(options["allow_comments"], false),
+        allow_trailing_commas=__default(options["allow_trailing_commas"], false)
+    )
+}
+
+func validate(text, options) {
+    if options == nil {
+        options = {}
+    }
+    return __native__.json.validate(
+        text,
+        allow_comments=__default(options["allow_comments"], false),
+        allow_trailing_commas=__default(options["allow_trailing_commas"], false)
+    )
+}
+
+func merge(values, deep) {
+    if deep == nil {
+        deep = true
+    }
+    return __native__.json.merge(values..., deep=deep)
+}
+
+func pointer_get(value, pointer, default) {
+    return __native__.json.pointer_get(value, pointer, __default(default, nil))
+}
+
+func pointer_set(value, pointer, new_value) {
+    return __native__.json.pointer_set(value, pointer, new_value)
+}
+
+func parse(text, options) {
+    return loads(text, options)
+}
+
+func stringify(value, options) {
+    return dumps(value, options)
+}

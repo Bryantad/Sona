@@ -1,0 +1,50 @@
+# path.smod
+# Purpose: Path manipulation helpers for building, normalising, and inspecting filesystem paths.
+# Inputs: strings representing path segments or absolute/relative paths.
+# Outputs: normalised path strings (relative or absolute) and boolean predicates.
+# Errors: Future Result integration will surface EINVAL for malformed paths and ENOTFOUND for missing segments.
+
+# Combines multiple path segments into a normalised path string.
+func join(parts) {
+    return __native__.path_join(parts)
+}
+
+# Normalises a path string (resolves '.', '..', and duplicate separators).
+func normalize(path) {
+    return __native__.path_normalize(path)
+}
+
+# Returns the final component of the path.
+func basename(path) {
+    return __native__.path_basename(path)
+}
+
+# Returns the directory portion of the path.
+func dirname(path) {
+    return __native__.path_dirname(path)
+}
+
+# Splits a path into (root, parts) for manual inspection.
+func split(path) {
+    return __native__.path_split(path)
+}
+
+# Returns the file extension (including the leading dot) or empty string.
+func extension(path) {
+    return __native__.path_extension(path)
+}
+
+# Checks whether the path is absolute for the running platform.
+func is_absolute(path) {
+    return __native__.path_is_absolute(path)
+}
+
+# Checks whether the path is relative.
+func is_relative(path) {
+    return __native__.path_is_relative(path)
+}
+
+# Resolves a target path against a base directory.
+func resolve(base, target) {
+    return __native__.path_resolve(base, target)
+}

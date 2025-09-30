@@ -1,0 +1,119 @@
+// Habit Tracker - Sona 0.8.0
+// This file demonstrates a personal habit tracking system
+
+print("=== Personal Habit Tracker ===")
+
+// Define habits and weekly data
+let habits = ["exercise", "read", "drink water", "meditate", "journal"]
+let days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+// Simulate habit completion data (true = completed, false = missed)
+let exercise_data = [true, false, true, true, false, true, false]
+let read_data = [true, true, false, true, true, false, true]
+let water_data = [true, true, true, true, true, true, true]
+let meditate_data = [false, true, false, true, false, true, false]
+let journal_data = [true, false, true, false, true, true, false]
+
+// Store all data in arrays for easy processing
+let habit_data = [exercise_data, read_data, water_data, meditate_data, journal_data]
+
+let total_habits = 0
+let total_completed = 0
+
+// Process each habit
+let habit_index = 0
+for habit in habits {
+    let current_data = habit_data[habit_index]
+    
+    print(f"--- {habit} ---")
+    let completed_days = 0
+    
+    // Check each day
+    let day_index = 0
+    for day in days {
+        let completed = current_data[day_index]
+        
+        if completed {
+            print(f"{day}: ✅ Done")
+            let completed_days = completed_days + 1
+        } else {
+            print(f"{day}: ❌ Missed")
+        }
+        
+        let day_index = day_index + 1
+    }
+    
+    // Calculate success rate
+    let success_rate = (completed_days / 7) * 100
+    print(f"Success rate: {success_rate}%")
+    
+    // Provide feedback
+    if success_rate >= 80 {
+        print("🎉 Excellent habit!")
+    } else if success_rate >= 60 {
+        print("👍 Good progress!")
+    } else {
+        print("💪 Room for improvement!")
+    }
+    
+    print("")
+    
+    // Update totals
+    let total_habits = total_habits + 7
+    let total_completed = total_completed + completed_days
+    
+    let habit_index = habit_index + 1
+}
+
+// Overall statistics
+let overall_success = (total_completed / total_habits) * 100
+print("=== Weekly Summary ===")
+print(f"Total habit opportunities: {total_habits}")
+print(f"Total completed: {total_completed}")
+print(f"Overall success rate: {overall_success}%")
+
+// Find best and worst habits
+let best_habit = ""
+let best_rate = 0
+let worst_habit = ""
+let worst_rate = 100
+
+let habit_index = 0
+for habit in habits {
+    let current_data = habit_data[habit_index]
+    let completed_days = 0
+    
+    for completed in current_data {
+        if completed {
+            let completed_days = completed_days + 1
+        }
+    }
+    
+    let success_rate = (completed_days / 7) * 100
+    
+    if success_rate > best_rate {
+        let best_rate = success_rate
+        let best_habit = habit
+    }
+    
+    if success_rate < worst_rate {
+        let worst_rate = success_rate
+        let worst_habit = habit
+    }
+    
+    let habit_index = habit_index + 1
+}
+
+print(f"\nBest habit: {best_habit} ({best_rate}%)")
+print(f"Habit needing attention: {worst_habit} ({worst_rate}%)")
+
+// Motivational message
+if overall_success >= 80 {
+    print("\n🎉 Amazing week! You're crushing your goals!")
+} else if overall_success >= 60 {
+    print("\n👍 Good work! Keep building those habits!")
+} else {
+    print("\n💪 Every day is a new opportunity to improve!")
+}
+
+print("\n=== Habit Tracking Complete ===")

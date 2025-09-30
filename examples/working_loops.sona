@@ -1,0 +1,74 @@
+// Working Loop Examples - Sona 0.8.0
+// This file contains working loop examples using correct syntax
+
+print("=== Working Loop Examples ===")
+
+// Example 1: Simple counting with while loop
+print("1. Simple Counting:")
+let count = 1
+while count <= 5 {
+    print("Count:")
+    print(count)
+    let count = count + 1
+}
+
+// Example 2: Array processing with index
+print("2. Array Processing:")
+let numbers = [10, 20, 30, 40, 50]
+let index = 0
+let sum = 0
+
+while index < 5 {
+    let current = numbers[index]
+    print("Processing:")
+    print(current)
+    let sum = sum + current
+    let index = index + 1
+}
+print("Final sum:")
+print(sum)
+
+// Example 3: Basic conditional processing
+print("3. Conditional Processing:")
+let scores = [85, 92, 78, 95, 88]
+let i = 0
+
+while i < 5 {
+    let score = scores[i]
+    print("Score:")
+    print(score)
+    if score >= 90 {
+        print("Grade: Excellent!")
+    } else {
+        print("Grade: Good effort!")
+    }
+    let i = i + 1
+}
+
+// Example 4: String processing
+print("4. String Processing:")
+let names = ["Alice", "Bob", "Charlie", "Diana"]
+let name_index = 0
+
+while name_index < 4 {
+    let name = names[name_index]
+    print("Hello, " + name + "!")
+    let name_index = name_index + 1
+}
+
+// Example 5: Mathematical operations
+print("5. Mathematical Operations:")
+let values = [10, 20, 30, 40, 50]
+let val_index = 0
+
+while val_index < 5 {
+    let value = values[val_index]
+    let doubled = value * 2
+    print("Value:")
+    print(value)
+    print("Doubled:")
+    print(doubled)
+    let val_index = val_index + 1
+}
+
+print("=== Loop Examples Complete ===")

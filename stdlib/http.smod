@@ -1,0 +1,47 @@
+# http.smod
+# Purpose: HTTP client helper with request-building, headers, cookies, and auth support.
+# Inputs: method strings, URLs, option maps (headers, query, body, timeout_ms, follow_redirects).
+# Outputs: Response records containing status, headers, body, and timing information.
+# Errors: Planned Result err codes for network failures (ECONN), timeouts (ETIMEOUT), and invalid URLs (EINVAL).
+
+# Generic request dispatcher. Options map should hold headers/query/body/timeouts.
+func request(method, url, options) {
+    # TODO: implement generic HTTP request bridging (method, headers, query, body, timeout)
+}
+
+# Convenience helper for GET requests.
+func get(url, options) {
+    # TODO: delegate to request with method "GET" and query parameters
+    return __native__.http.get(url)
+}
+
+# Convenience helper for POST requests.
+func post(url, body, options) {
+    # TODO: delegate to request with method "POST" and structured body support
+    return __native__.http.post(url, body)
+}
+
+# Convenience helper for PUT requests.
+func put(url, body, options) {
+    # TODO: implement PUT request handling
+}
+
+# Convenience helper for DELETE requests.
+func delete(url, options) {
+    # TODO: implement DELETE request handling
+}
+
+# Sets default headers applied to every request.
+func set_default_headers(headers) {
+    # TODO: implement default header management
+}
+
+# Sets a global timeout (milliseconds) for HTTP requests.
+func set_timeout(timeout_ms) {
+    # TODO: implement timeout configuration
+}
+
+# Configures cookie storage policies.
+func set_cookie_store(store) {
+    # TODO: implement cookie persistence
+}

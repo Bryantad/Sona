@@ -1,0 +1,110 @@
+name: "Security Review"
+description: "Document the security posture for stdlib modules that touch remote services or sensitive data."
+title: "[Security Review] <module>"
+labels:
+  - security-review
+  - phase-a
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template to capture the approved Phase A security workflow. Attach artefacts (docs, diagrams, logs) as comments or file uploads.
+  - type: input
+    id: module
+    attributes:
+      label: Module name(s)
+      description: Stdlib module(s) covered by this review (e.g., ai.cache, web.server)
+      placeholder: ai.router
+    validations:
+      required: true
+  - type: input
+    id: pr
+    attributes:
+      label: Related pull request
+      description: Link to the PR that will merge the module(s)
+      placeholder: https://github.com/<owner>/<repo>/pull/<id>
+    validations:
+      required: true
+  - type: textarea
+    id: threat-model
+    attributes:
+      label: Threat model summary
+      description: Describe trust boundaries, attack vectors, mitigations. Link diagrams if available.
+      placeholder: "Entry points, data flows, mitigations..."
+    validations:
+      required: true
+  - type: textarea
+    id: credential-handling
+    attributes:
+      label: Credential handling
+      description: Storage location, rotation policy, in-flight protections, and prohibited transports.
+      placeholder: "Secrets stored in..."
+    validations:
+      required: true
+  - type: textarea
+    id: logging
+    attributes:
+      label: Logging & telemetry plan
+      description: What data is logged, redaction strategy, PII handling, retention assumptions.
+      placeholder: "Logs redact..."
+    validations:
+      required: true
+  - type: textarea
+    id: live-test
+    attributes:
+      label: Live test posture
+      description: Mock vs. replay vs. limited live calls. Include rate limits and fallback plan.
+      placeholder: "Tests use mocked transport..."
+    validations:
+      required: true
+  - type: textarea
+    id: dependency-audit
+    attributes:
+      label: Dependency audit
+      description: List new packages, licenses, CVE scan output, and justifications.
+      placeholder: "New dependency: ..."
+    validations:
+      required: true
+  - type: textarea
+    id: rollback
+    attributes:
+      label: Rollback / disable strategy
+      description: Feature flags, kill switches, config knobs, and test evidence.
+      placeholder: "Feature flag: ..."
+    validations:
+      required: true
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Review checklist
+      options:
+        - label: Threat model attached and reviewed
+          required: true
+        - label: Credential handling verified and secrets redacted in tests/logs
+          required: true
+        - label: Logging/telemetry scrubbed for PII and secrets
+          required: true
+        - label: Live test posture documented with fallback plan
+          required: true
+        - label: Fuzz/property tests cover untrusted inputs
+          required: true
+        - label: Dependency audit complete (licenses + CVE scan)
+          required: true
+        - label: Rollback/kill switch exercised or dry-run documented
+          required: true
+  - type: textarea
+    id: reviewer
+    attributes:
+      label: Security reviewer sign-off
+      description: Name, date, summary of approval, and link to approval comment.
+      placeholder: "Approved by..."
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional notes
+      description: Optional follow-up items or monitoring tasks
+      placeholder: "Monitor..."
+    validations:
+      required: false

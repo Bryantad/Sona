@@ -1,0 +1,16 @@
+import regex
+import string
+
+let log_line = "INFO 2025-09-27 12:41:55,123 Transaction 42 completed in 87ms"
+let time_pattern = regex.compile("(\\d{4}-\\d{2}-\\d{2}) (\\d{2}:\\d{2}:\\d{2}),\\d{3}")
+let number_pattern = regex.compile("\\d+", {"max_matches": 3})
+
+let timestamp = regex.match(time_pattern, log_line)
+let top_numbers = regex.find_all(number_pattern, log_line)
+let cleaned = regex.replace("(?i)transaction", log_line, "event")
+let parts = regex.split("\\s+", log_line, {"maxsplit": 5})
+
+print(string.format("Timestamp: {0}", {"args": [timestamp["match"]]}))
+print(string.format("Numbers: {0}", {"args": [top_numbers]}))
+print(string.format("Cleaned: {0}", {"args": [cleaned]}))
+print(string.format("Parts: {0}", {"args": [parts]}))

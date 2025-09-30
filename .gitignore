@@ -1,0 +1,195 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Project-specific excludes
+# Exclude only development/test GUI files, keep core GUI launcher
+launch_modern_gui.py
+run_modern_launcher.py
+gui/test_*.py
+gui/*_test.py
+gui/pyside6_installer.py
+gui/quick_pyside6_test.py
+
+# Testing and debugging files
+advanced_oop_test.py
+comprehensive_method_test.py
+core_features_demo.sona
+debug_*.py
+demo_*.py
+direct_oop_test.py
+execution_test.py
+final_test.py
+just_func_def.sona
+minimal_class_test*.py
+phase2_comprehensive_oop_test.sona
+proper_object_test.py
+simple_*_test.py
+simple_*_test.sona
+sona_v070_release_demo.sona
+test_*.py
+test_*.sona
+tests/
+validate_*.py
+verify_*.py
+working_execution_test.py
+
+# Reports and additional documentation (keep only core docs)
+*.md
+!README.md
+!CHANGELOG.md
+!LICENSE
+!MANIFEST.in
+!CODE_OF_CONDUCT.md
+!Contributing.md
+!SECURITY.md
+!GUI_README.md
+!RELEASE_NOTES_v0.9.2.md
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Development backups and emergency files
+*.bak
+*.backup
+*.emergency_backup_*
+*.param_fix_backup
+*_bak
+interpreter*.py.bak
+interpreter*.py.backup
+interpreter*.py.emergency_backup_*
+interpreter*.py.param_fix_backup
+
+# Log files
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Local configuration
+local_config.py
+config_local.py
+
+# AI Credentials (SECURITY - Keep local and never commit)
+.credentials
+.credentials.json
+azure_credentials.py
+openai_credentials.py
+anthropic_credentials.py
+google_credentials.py
+.sona-credentials/
+.sona-secure/
+*.pem
+*.key
+*.crt
+*.pfx
+*.p12
+*.der
+# Additional .env variants
+.env.local
+.env.development
+.env.production
+.env.test
+*.env
+# Secret scan baselines
+.secrets.baseline
+# Migration backups (auto-generated)
+.sona-migration-backups/
+
+# --- Sona 0.9.4.1 repo prep (denylist) ---
+
+# Python
+**pycache**/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.venv/
+venv/
+.coverage*
+coverage.xml
+
+# Node/VS Code
+node_modules/
+out/
+dist/
+*.tsbuildinfo
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# VSIX
+*.vsix
+
+# Local/IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# Generated at package-time (do not commit)
+vscode-extension/sona-ai-native-programming/runtime/

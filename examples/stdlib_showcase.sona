@@ -1,0 +1,49 @@
+# Standard Library Showcase
+# Demonstrates Sona's built-in modules and functions
+
+# File system operations
+import fs
+
+print("=== File System Operations ===")
+current_dir = fs.get_current_dir()
+print("Current directory: " + current_dir)
+
+# Create a test file
+test_content = "Hello from Sona file system!"
+fs.write("test_file.txt", test_content)
+
+# Read it back
+file_content = fs.read("test_file.txt")
+print("File content: " + file_content)
+
+# Check if file exists
+if fs.exists("test_file.txt"):
+    print("File exists and is ready!")
+
+# Time operations
+import time
+
+print("\n=== Time Operations ===")
+current_time = time.now()
+print("Current time: " + str(current_time))
+
+# Math operations
+import math
+
+print("\n=== Math Operations ===")
+print("Square root of 16: " + str(math.sqrt(16)))
+print("2^8 = " + str(math.pow(2, 8)))
+print("Sin(π/2): " + str(math.sin(3.14159/2)))
+
+# JSON operations
+import json
+
+print("\n=== JSON Operations ===")
+data = {"name": "Sona", "version": "0.9.4", "features": ["types", "stdlib"]}
+json_string = json.dumps(data)
+print("JSON: " + json_string)
+
+parsed_data = json.loads(json_string)
+print("Parsed name: " + parsed_data["name"])
+
+print("\nStandard library showcase completed!")

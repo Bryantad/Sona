@@ -1,0 +1,27 @@
+# Type System Example - Demonstrates Sona's Type Checking
+# This shows the new type system features in 0.9.4
+
+# Function with type annotations
+@check_types
+def add_numbers(a: int, b: int) -> int:
+    """Add two integers together"""
+    return a + b
+
+@check_types
+def greet_user(name: str) -> str:
+    """Greet a user with their name"""
+    return "Hello, " + name + "!"
+
+# Examples that work correctly
+result1 = add_numbers(10, 20)
+print("10 + 20 = " + str(result1))
+
+greeting = greet_user("Alice")
+print(greeting)
+
+# Type checking will catch errors
+# Uncomment these lines to see type errors:
+# result2 = add_numbers("not", "numbers")  # Type error!
+# bad_greeting = greet_user(123)           # Type error!
+
+print("Type system example completed!")

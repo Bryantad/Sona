@@ -1,0 +1,43 @@
+// Basic Loops Example - Sona 0.8.0
+// This file demonstrates fundamental loop patterns
+
+print("=== Basic Loops Demo ===")
+
+// Simple repeat loop
+print("\n1. Basic Repeat Loop:")
+let count = 0
+while count < 5 {
+    print("Welcome to Sona programming!")
+    print("You're doing great!")
+    let count = count + 1
+}
+
+// Looping through arrays
+print("\n2. Looping Through Lists:")
+let friends = ["Alice", "Bob", "Charlie", "Diana"]
+
+for friend in friends {
+    print(f"Hello, {friend}!")
+    print("Nice to see you!")
+}
+
+// Counting loops
+print("\n3. Counting Loops:")
+for i in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] {
+    print(f"Count: {i}")
+}
+
+// Counting backwards
+print("\n4. Countdown:")
+for i in [10, 9, 8, 7, 6, 5, 4, 3, 2, 1] {
+    print(f"Countdown: {i}")
+}
+
+// Even numbers only
+print("\n5. Even Numbers:")
+let numbers = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
+for num in numbers {
+    print(f"Even number: {num}")
+}
+
+print("\n=== Basic Loops Demo Complete ===")
