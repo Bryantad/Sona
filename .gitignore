@@ -101,6 +101,13 @@ working_execution_test.py
 !SECURITY.md
 !GUI_README.md
 !RELEASE_NOTES_v0.9.2.md
+!INSTALL_EXTENSION.md
+!QUICK_INSTALL.md
+!EXTENSION_COMPARISON.md
+!COMPLETE_INSTALLATION_GUIDE.md
+!SOLUTION_SUMMARY.md
+!FILES_CREATED.md
+!sona-ai-native-programming-0.9.4/README.md
 
 # OS
 .DS_Store
@@ -183,8 +190,9 @@ build/
 dist/
 *.egg-info/
 
-# VSIX
+# VSIX - exclude all except the stable v0.9.4 version
 *.vsix
+!sona-ai-native-programming-0.9.4/sona-ai-native-programming-0.9.4.vsix
 
 # Local/IDE
 .vscode/
