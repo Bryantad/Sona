@@ -1,0 +1,12 @@
+// Test yaml module
+import yaml;
+
+print("=== Testing YAML Module ===");
+
+// Test serialization first (easier)
+let obj = {"language": "Sona", "version": "0.9.6", "type": "interpreter"};
+let yaml_out = yaml.dumps(obj);
+print("Serialized to YAML:");
+print(yaml_out);
+
+print("YAML module test complete!");

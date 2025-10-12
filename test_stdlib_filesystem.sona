@@ -1,0 +1,101 @@
+# Sona 0.9.6 - Filesystem and I/O Test
+# Tests: fs, path, io, env
+
+print("=== Sona 0.9.6 Filesystem & I/O Test ===");
+print("");
+
+# ===== PATH MODULE =====
+print("--- Path Module ---");
+import path;
+
+file_path = "/home/user/documents/report.txt";
+print("Path: " + file_path);
+print("Basename: " + path.basename(file_path));
+print("Dirname: " + path.dirname(file_path));
+print("Extension: " + path.extension(file_path));
+
+joined = path.join("/home/user", "projects", "sona");
+print("Joined path: " + joined);
+
+normalized = path.normalize("/home/user/../user/./projects");
+print("Normalized: " + normalized);
+print("");
+
+# ===== ENV MODULE =====
+print("--- Environment Module ---");
+import env;
+
+# Set and get environment variable
+env.set("SONA_TEST_VAR", "Hello from Sona!");
+test_var = env.get("SONA_TEST_VAR");
+print("SONA_TEST_VAR: " + test_var);
+
+has_var = env.has("SONA_TEST_VAR");
+print("Has SONA_TEST_VAR: " + str(has_var));
+
+# Get PATH (should exist on most systems)
+path_var = env.get("PATH", "not found");
+print("PATH exists: " + str(len(path_var) > 0));
+print("");
+
+# ===== IO MODULE =====
+print("--- I/O Module ---");
+import io;
+
+# Write to file
+test_file = "test_output_096.txt";
+print("Writing to file: " + test_file);
+io.write_file(test_file, "Sona 0.9.6 Test Output\nLine 2\nLine 3");
+print("File written successfully");
+
+# Read from file
+print("Reading file...");
+content = io.read_file(test_file);
+print("Content read: " + str(len(content)) + " characters");
+print("First line: " + content.split("\n")[0]);
+
+# Append to file
+io.append_file(test_file, "\nAppended line");
+print("Appended to file");
+
+# Check file exists
+exists = io.file_exists(test_file);
+print("File exists: " + str(exists));
+print("");
+
+# ===== FS MODULE =====
+print("--- Filesystem Module ---");
+import fs;
+
+# Create directory
+test_dir = "test_dir_096";
+print("Creating directory: " + test_dir);
+fs.mkdir(test_dir);
+print("Directory created");
+
+# Check if directory exists
+dir_exists = fs.exists(test_dir);
+print("Directory exists: " + str(dir_exists));
+
+# List current directory (limit output)
+print("Listing current directory...");
+items = fs.listdir(".");
+print("Found " + str(len(items)) + " items");
+print("First 3 items: " + str(items[:3]));
+
+# Check if path is directory
+is_dir = fs.is_dir(test_dir);
+print("Is directory: " + str(is_dir));
+
+# Check if path is file
+is_file = fs.is_file(test_file);
+print("Is file: " + str(is_file));
+
+# Cleanup
+print("Cleaning up...");
+fs.remove(test_file);
+fs.rmdir(test_dir);
+print("Cleanup complete");
+print("");
+
+print("=== All Filesystem & I/O Tests Complete! ===");

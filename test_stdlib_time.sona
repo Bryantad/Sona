@@ -1,0 +1,79 @@
+# Sona 0.9.6 - Time and Date Modules Test
+# Tests: time, date, timer, random
+
+print("=== Sona 0.9.6 Time & Random Test ===");
+print("");
+
+# ===== TIME MODULE =====
+print("--- Time Module ---");
+import time;
+
+timestamp = time.now();
+print("Current timestamp: " + str(timestamp));
+
+iso = time.to_iso(timestamp);
+print("ISO format: " + iso);
+
+formatted = time.format(timestamp, "%Y-%m-%d %H:%M:%S");
+print("Formatted: " + formatted);
+
+print("Sleeping for 1 second...");
+time.sleep(1);
+print("Awake!");
+print("");
+
+# ===== DATE MODULE =====
+print("--- Date Module ---");
+import date;
+
+today = date.today();
+print("Today: " + today);
+
+year = date.year(today);
+month = date.month(today);
+day = date.day(today);
+print("Year: " + str(year) + ", Month: " + str(month) + ", Day: " + str(day));
+
+weekday = date.weekday(today);
+print("Weekday: " + weekday);
+
+tomorrow = date.add_days(today, 1);
+print("Tomorrow: " + tomorrow);
+
+yesterday = date.subtract_days(today, 1);
+print("Yesterday: " + yesterday);
+print("");
+
+# ===== TIMER MODULE =====
+print("--- Timer Module ---");
+import timer;
+
+print("Starting timer...");
+t = timer.start();
+time.sleep(0.5);
+elapsed = timer.elapsed(t);
+print("Elapsed time: " + str(elapsed) + " seconds");
+
+timer.stop(t);
+print("Timer stopped");
+print("");
+
+# ===== RANDOM MODULE =====
+print("--- Random Module ---");
+import random;
+
+rand_int = random.randint(1, 100);
+print("Random integer (1-100): " + str(rand_int));
+
+rand_float = random.random();
+print("Random float (0-1): " + str(rand_float));
+
+choices = ["apple", "banana", "cherry"];
+choice = random.choice(choices);
+print("Random choice from ['apple', 'banana', 'cherry']: " + choice);
+
+shuffled = random.shuffle([1, 2, 3, 4, 5]);
+print("Shuffled [1, 2, 3, 4, 5]: " + str(shuffled));
+print("");
+
+print("=== All Time & Random Tests Complete! ===");

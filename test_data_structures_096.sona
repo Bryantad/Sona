@@ -1,0 +1,144 @@
+# Sona 0.9.6 - Data Structures Test
+# Tests lists, dictionaries, and other built-in data structures
+
+print("╔════════════════════════════════════════════════════════════╗");
+print("║      Sona 0.9.6 - Data Structures Test                    ║");
+print("╚════════════════════════════════════════════════════════════╝");
+print("");
+
+# ===== LISTS =====
+print("=== Lists ===");
+numbers = [1, 2, 3, 4, 5];
+print("Numbers list: " + str(numbers));
+
+fruits = ["apple", "banana", "cherry"];
+print("Fruits list: " + str(fruits));
+
+mixed = [1, "two", 3.0, true, null];
+print("Mixed types: " + str(mixed));
+
+empty = [];
+print("Empty list: " + str(empty));
+print("");
+
+# ===== LIST ACCESS =====
+print("=== List Access ===");
+items = [10, 20, 30, 40, 50];
+print("Items: " + str(items));
+print("First item (items[0]): " + str(items[0]));
+print("Second item (items[1]): " + str(items[1]));
+print("Last item (items[4]): " + str(items[4]));
+print("");
+
+# ===== LIST SLICING (if supported) =====
+print("=== List Slicing ===");
+sequence = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+print("Sequence: " + str(sequence));
+# Note: slicing syntax may vary
+print("");
+
+# ===== DICTIONARIES =====
+print("=== Dictionaries ===");
+person = {"name": "Alice", "age": 30, "city": "Portland"};
+print("Person: " + str(person));
+
+config = {"version": "0.9.6", "debug": true, "timeout": 60};
+print("Config: " + str(config));
+
+empty_dict = {};
+print("Empty dict: " + str(empty_dict));
+print("");
+
+# ===== DICTIONARY ACCESS =====
+print("=== Dictionary Access ===");
+user = {"username": "john_doe", "email": "john@example.com", "active": true};
+print("User: " + str(user));
+print("Username: " + str(user["username"]));
+print("Email: " + str(user["email"]));
+print("Active: " + str(user["active"]));
+print("");
+
+# ===== NESTED STRUCTURES =====
+print("=== Nested Structures ===");
+nested = {
+    "name": "Sona",
+    "version": "0.9.6",
+    "features": ["AI-native", "Fast", "Modern"],
+    "config": {"debug": false, "level": 3}
+};
+print("Nested structure: " + str(nested));
+print("");
+
+# ===== LISTS OF DICTIONARIES =====
+print("=== Lists of Dictionaries ===");
+users = [
+    {"name": "Alice", "score": 95},
+    {"name": "Bob", "score": 87},
+    {"name": "Charlie", "score": 92}
+];
+print("Users list: " + str(users));
+print("First user: " + str(users[0]));
+print("First user name: " + str(users[0]["name"]));
+print("");
+
+# ===== DICTIONARIES OF LISTS =====
+print("=== Dictionaries of Lists ===");
+teams = {
+    "red": ["Alice", "Bob"],
+    "blue": ["Charlie", "Diana"],
+    "green": ["Eve", "Frank"]
+};
+print("Teams: " + str(teams));
+print("Red team: " + str(teams["red"]));
+print("");
+
+# ===== DATA PROCESSING =====
+print("=== Data Processing ===");
+scores = [85, 92, 78, 95, 88];
+print("Scores: " + str(scores));
+
+# Calculate sum manually
+total = 0;
+total = total + scores[0];
+total = total + scores[1];
+total = total + scores[2];
+total = total + scores[3];
+total = total + scores[4];
+print("Total: " + str(total));
+
+average = total / 5;
+print("Average: " + str(average));
+print("");
+
+# ===== UPDATING STRUCTURES =====
+print("=== Updating Structures ===");
+cart = [];
+print("Initial cart: " + str(cart));
+# Note: List modification methods may vary
+print("");
+
+settings = {"theme": "dark", "lang": "en"};
+print("Initial settings: " + str(settings));
+# Note: Dictionary modification methods may vary
+print("");
+
+# ===== TUPLES (if supported) =====
+print("=== Tuples ===");
+# Note: Tuple syntax may vary or not be implemented
+coordinates = (10, 20);
+print("Coordinates: " + str(coordinates));
+print("");
+
+# ===== SETS (if supported) =====
+print("=== Sets ===");
+# Note: Set syntax may vary or not be implemented
+# unique = {1, 2, 3, 2, 1};
+# print("Set: " + str(unique));
+print("Sets may require stdlib module");
+print("");
+
+print("════════════════════════════════════════════════════════════");
+print("✓ Data structures test complete!");
+print("════════════════════════════════════════════════════════════");
+print("");
+print("Note: Advanced operations require standard library modules");

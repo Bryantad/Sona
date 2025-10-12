@@ -1,0 +1,47 @@
+// Sona 0.9.6 - Feature Showcase
+
+// Variables and Types
+let name = "Sona";
+let version = "0.9.6";
+let x = 42;
+let active = true;
+
+// Lists
+let nums = [1, 2, 3, 4, 5];
+
+// Dictionaries
+let config = {"mode": "prod", "port": 8080};
+
+// Functions
+func greet(name) {
+    return "Hello, " + name;
+};
+
+// For Loops
+print("Numbers:");
+for n in nums {
+    print(n);
+};
+
+// Try/Catch
+try {
+    let bad = 1 / 0;
+} catch err {
+    print("Caught error!");
+};
+
+// Stdlib - Math
+import math;
+print("sqrt(16) = " + math.math_sqrt(16));
+print("PI = " + math.math_PI);
+
+// Stdlib - String
+import string;
+print(string.string_upper("hello"));
+print(string.string_lower("WORLD"));
+
+// Stdlib - Time
+import time;
+print(time.time_now());
+
+print("Demo complete!");

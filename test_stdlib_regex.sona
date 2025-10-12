@@ -1,0 +1,93 @@
+# Sona 0.9.6 - Regular Expressions Test
+# Tests: regex module
+
+print("=== Sona 0.9.6 Regular Expressions Test ===");
+print("");
+
+import regex;
+
+# ===== BASIC MATCHING =====
+print("--- Basic Matching ---");
+text = "The quick brown fox jumps over the lazy dog";
+pattern = "fox";
+
+matches = regex.match(pattern, text);
+print("Text: " + text);
+print("Pattern: " + pattern);
+print("Matches: " + str(matches));
+print("");
+
+# ===== SEARCH =====
+print("--- Search ---");
+email_text = "Contact us at support@example.com or sales@example.com";
+email_pattern = r"\w+@\w+\.\w+";
+
+found = regex.search(email_pattern, email_text);
+print("Text: " + email_text);
+print("Pattern: " + email_pattern);
+print("First match found: " + str(found));
+print("");
+
+# ===== FIND ALL =====
+print("--- Find All ---");
+all_emails = regex.findall(email_pattern, email_text);
+print("All email matches: " + str(all_emails));
+print("");
+
+# ===== REPLACE =====
+print("--- Replace ---");
+phone_text = "Call 555-1234 or 555-5678";
+phone_pattern = r"\d{3}-\d{4}";
+replacement = "XXX-XXXX";
+
+replaced = regex.replace(phone_pattern, replacement, phone_text);
+print("Original: " + phone_text);
+print("Pattern: " + phone_pattern);
+print("Replaced: " + replaced);
+print("");
+
+# ===== SPLIT =====
+print("--- Split ---");
+csv_line = "John,Doe,30,Engineer";
+split_pattern = ",";
+
+parts = regex.split(split_pattern, csv_line);
+print("Text: " + csv_line);
+print("Split by: " + split_pattern);
+print("Parts: " + str(parts));
+print("");
+
+# ===== VALIDATION =====
+print("--- Validation ---");
+test_strings = [
+    "test@example.com",
+    "not-an-email",
+    "another@test.org"
+];
+
+email_validation_pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$";
+print("Validating emails with pattern: " + email_validation_pattern);
+
+for test_str in test_strings:
+    is_valid = regex.match(email_validation_pattern, test_str);
+    print(test_str + " -> " + str(is_valid));
+print("");
+
+# ===== COMPLEX PATTERNS =====
+print("--- Complex Patterns ---");
+log_line = "2025-10-09 14:30:45 ERROR: Connection failed";
+date_pattern = r"\d{4}-\d{2}-\d{2}";
+time_pattern = r"\d{2}:\d{2}:\d{2}";
+level_pattern = r"(ERROR|WARN|INFO|DEBUG)";
+
+date_match = regex.search(date_pattern, log_line);
+time_match = regex.search(time_pattern, log_line);
+level_match = regex.search(level_pattern, log_line);
+
+print("Log line: " + log_line);
+print("Date found: " + str(date_match));
+print("Time found: " + str(time_match));
+print("Level found: " + str(level_match));
+print("");
+
+print("=== All Regex Tests Complete! ===");

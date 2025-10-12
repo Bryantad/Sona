@@ -1,0 +1,64 @@
+// examples/control_flow.sona
+// Example: Control flow - loops, conditionals, break/continue
+
+import math;
+
+print("=== Control Flow Example ===\n");
+
+// === Conditionals ===
+print("1. Conditionals:");
+let temperature = 25;
+
+if temperature > 30 {
+    print("  It's hot!");
+} elif temperature > 20 {
+    print("  It's comfortable!");
+} else {
+    print("  It's cold!");
+}
+
+// === For Loop ===
+print("\n2. For Loop:");
+let fruits = ["apple", "banana", "cherry", "date"];
+for fruit in fruits {
+    print("  - " + fruit);
+}
+
+// === While Loop ===
+print("\n3. While Loop:");
+let counter = 1;
+while counter <= 5 {
+    print("  Count: " + counter);
+    counter = counter + 1;
+}
+
+// === Break Statement ===
+print("\n4. Break (find first even number):");
+let numbers = [1, 3, 5, 8, 9, 11];
+for n in numbers {
+    if n % 2 == 0 {
+        print("  Found even number: " + n);
+        break;  // Exit loop
+    }
+}
+
+// === Continue Statement ===
+print("\n5. Continue (print odd numbers only):");
+for n in [1, 2, 3, 4, 5, 6] {
+    if n % 2 == 0 {
+        continue;  // Skip even numbers
+    }
+    print("  Odd: " + n);
+}
+
+// === Nested Loops ===
+print("\n6. Nested Loops (multiplication table 3x3):");
+for i in [1, 2, 3] {
+    let row = "";
+    for j in [1, 2, 3] {
+        row = row + (i * j) + " ";
+    }
+    print("  " + row);
+}
+
+print("\nControl flow demo complete!");

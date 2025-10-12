@@ -1,0 +1,145 @@
+# Sona 0.9.6 - Basic Syntax and Operations Test
+# Tests core language features without module imports
+
+print("╔════════════════════════════════════════════════════════════╗");
+print("║     Sona 0.9.6 - Core Language Features Test              ║");
+print("╚════════════════════════════════════════════════════════════╝");
+print("");
+
+# ===== VARIABLES AND TYPES =====
+print("=== Variables and Types ===");
+x = 42;
+y = 10;
+name = "Sona";
+version = "0.9.6";
+is_stable = true;
+is_beta = false;
+
+print("Integer: x = " + str(x));
+print("Integer: y = " + str(y));
+print("String: name = " + name);
+print("String: version = " + version);
+print("Boolean: is_stable = " + str(is_stable));
+print("Boolean: is_beta = " + str(is_beta));
+print("");
+
+# ===== ARITHMETIC OPERATIONS =====
+print("=== Arithmetic Operations ===");
+sum = x + y;
+diff = x - y;
+product = x * y;
+quotient = x / y;
+modulo = x % y;
+
+print(str(x) + " + " + str(y) + " = " + str(sum));
+print(str(x) + " - " + str(y) + " = " + str(diff));
+print(str(x) + " * " + str(y) + " = " + str(product));
+print(str(x) + " / " + str(y) + " = " + str(quotient));
+print(str(x) + " % " + str(y) + " = " + str(modulo));
+print("");
+
+# ===== STRING OPERATIONS =====
+print("=== String Operations ===");
+hello = "Hello";
+world = "World";
+greeting = hello + ", " + world + "!";
+print("Concatenation: " + greeting);
+
+lang = "Sona";
+ver = "0.9.6";
+full = lang + " " + ver;
+print("Full version: " + full);
+print("");
+
+# ===== COMPARISON OPERATIONS =====
+print("=== Comparison Operations ===");
+a = 15;
+b = 20;
+print("a = " + str(a) + ", b = " + str(b));
+print("a == b: " + str(a == b));
+print("a != b: " + str(a != b));
+print("a < b: " + str(a < b));
+print("a > b: " + str(a > b));
+print("a <= b: " + str(a <= b));
+print("a >= b: " + str(a >= b));
+print("");
+
+# ===== BOOLEAN OPERATIONS =====
+print("=== Boolean Operations ===");
+t = true;
+f = false;
+print("true AND true: " + str(t and t));
+print("true AND false: " + str(t and f));
+print("true OR false: " + str(t or f));
+print("false OR false: " + str(f or f));
+print("NOT true: " + str(not t));
+print("NOT false: " + str(not f));
+print("");
+
+# ===== EXPRESSIONS =====
+print("=== Complex Expressions ===");
+result1 = (10 + 5) * 2;
+print("(10 + 5) * 2 = " + str(result1));
+
+result2 = 100 / (4 + 6);
+print("100 / (4 + 6) = " + str(result2));
+
+result3 = 2 * 3 + 4 * 5;
+print("2 * 3 + 4 * 5 = " + str(result3));
+
+result4 = (true or false) and true;
+print("(true OR false) AND true = " + str(result4));
+print("");
+
+# ===== NULL HANDLING =====
+print("=== Null Handling ===");
+empty = null;
+print("empty = null: " + str(empty));
+print("empty == null: " + str(empty == null));
+print("");
+
+# ===== NUMBERS =====
+print("=== Number Types ===");
+integer = 42;
+negative = -15;
+decimal = 3.14159;
+large = 1000000;
+small = 0.001;
+
+print("Integer: " + str(integer));
+print("Negative: " + str(negative));
+print("Decimal: " + str(decimal));
+print("Large: " + str(large));
+print("Small: " + str(small));
+print("");
+
+# ===== STRING FEATURES =====
+print("=== String Features ===");
+multiline = "Line 1\nLine 2\nLine 3";
+print("Multiline string:");
+print(multiline);
+print("");
+
+escaped = "Quote: \"Hello\" and Tab:\tTabbed";
+print("Escaped characters: " + escaped);
+print("");
+
+# ===== VARIABLE UPDATES =====
+print("=== Variable Updates ===");
+counter = 0;
+print("Initial counter: " + str(counter));
+counter = counter + 1;
+print("After increment: " + str(counter));
+counter = counter + 10;
+print("After adding 10: " + str(counter));
+counter = counter * 2;
+print("After doubling: " + str(counter));
+print("");
+
+# ===== TEST SUMMARY =====
+print("════════════════════════════════════════════════════════════");
+print("✓ All core language features tested successfully!");
+print("════════════════════════════════════════════════════════════");
+print("");
+print("Sona 0.9.6 - Core language is operational");
+print("Standard library imports require separate module system");

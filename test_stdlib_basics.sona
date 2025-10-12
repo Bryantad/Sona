@@ -1,0 +1,75 @@
+# Sona 0.9.6 - Standard Library Basic Features Test
+# Tests core modules: string, math, numbers, boolean, type, comparison
+
+print("=== Sona 0.9.6 Standard Library Basics Test ===");
+print("");
+
+# ===== STRING MODULE =====
+print("--- String Module ---");
+import string;
+
+text = "  Hello, Sona!  ";
+print("Original: '" + text + "'");
+print("Length: " + str(string.length(text)));
+print("Upper: " + string.upper(text));
+print("Lower: " + string.lower(text));
+print("Trim: '" + string.trim(text) + "'");
+print("Reverse: " + string.reverse("Hello"));
+print("Contains 'Sona': " + str(string.contains(text, "Sona")));
+print("");
+
+# ===== MATH MODULE =====
+print("--- Math Module ---");
+import math;
+
+print("abs(-42): " + str(math.abs(-42)));
+print("max(10, 25): " + str(math.max(10, 25)));
+print("min(10, 25): " + str(math.min(10, 25)));
+print("pow(2, 8): " + str(math.pow(2, 8)));
+print("sqrt(16): " + str(math.sqrt(16)));
+print("floor(3.7): " + str(math.floor(3.7)));
+print("ceil(3.2): " + str(math.ceil(3.2)));
+print("round(3.6): " + str(math.round(3.6)));
+print("");
+
+# ===== NUMBERS MODULE =====
+print("--- Numbers Module ---");
+import numbers;
+
+print("is_even(42): " + str(numbers.is_even(42)));
+print("is_odd(42): " + str(numbers.is_odd(42)));
+print("is_positive(10): " + str(numbers.is_positive(10)));
+print("is_negative(-5): " + str(numbers.is_negative(-5)));
+print("clamp(15, 0, 10): " + str(numbers.clamp(15, 0, 10)));
+print("");
+
+# ===== BOOLEAN MODULE =====
+print("--- Boolean Module ---");
+import boolean;
+
+print("and(true, true): " + str(boolean.and(true, true)));
+print("or(false, true): " + str(boolean.or(false, true)));
+print("not(true): " + str(boolean.not(true)));
+print("xor(true, false): " + str(boolean.xor(true, false)));
+print("");
+
+# ===== TYPE MODULE =====
+print("--- Type Module ---");
+import type;
+
+print("type_of(42): " + type.type_of(42));
+print("type_of('hello'): " + type.type_of("hello"));
+print("is_string('test'): " + str(type.is_string("test")));
+print("is_number(42): " + str(type.is_number(42)));
+print("");
+
+# ===== COMPARISON MODULE =====
+print("--- Comparison Module ---");
+import comparison;
+
+print("equals(10, 10): " + str(comparison.equals(10, 10)));
+print("greater_than(15, 10): " + str(comparison.greater_than(15, 10)));
+print("less_than(5, 10): " + str(comparison.less_than(5, 10)));
+print("");
+
+print("=== All Basic Tests Complete! ===");

@@ -1,0 +1,320 @@
+{
+    "name": "sona-language-support",
+    "displayName": "Sona Language Support",
+    "description": "AI-powered Sona programming language support with cognitive accessibility features",
+    "version": "1.0.0",
+    "publisher": "bryantad",
+    "engines": {
+        "vscode": "^1.60.0"
+    },
+    "categories": [
+        "Programming Languages",
+        "AI",
+        "Other"
+    ],
+    "keywords": [
+        "sona",
+        "ai",
+        "programming",
+        "cognitive",
+        "accessibility",
+        "adhd",
+        "dyslexia",
+        "neurotypical"
+    ],
+    "main": "./out/src/extension.js",
+    "contributes": {
+        "languages": [
+            {
+                "id": "sona",
+                "aliases": [
+                    "Sona",
+                    "sona"
+                ],
+                "extensions": [
+                    ".sona"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "commands": [
+            {
+                "command": "sona.welcome",
+                "title": "Welcome & Setup",
+                "category": "Sona",
+                "icon": "$(home)"
+            },
+            {
+                "command": "sona.aiPlanSelection",
+                "title": "Sona: AI Plan Selection",
+                "category": "Sona",
+                "icon": "$(list-unordered)"
+            },
+            {
+                "command": "sona.aiReviewSelection",
+                "title": "Sona: AI Review Selection",
+                "category": "Sona",
+                "icon": "$(search)"
+            },
+            {
+                "command": "sona.setup.azure",
+                "title": "Setup Azure OpenAI",
+                "category": "Sona",
+                "icon": "$(cloud)"
+            },
+            {
+                "command": "sona.setup.manual",
+                "title": "Manual AI Setup",
+                "category": "Sona",
+                "icon": "$(gear)"
+            },
+            {
+                "command": "sona.selectUserProfile",
+                "title": "Select User Profile",
+                "category": "Sona",
+                "icon": "$(person)"
+            },
+            {
+                "command": "sona.run",
+                "title": "Run Sona File",
+                "category": "Sona",
+                "icon": "$(play)"
+            },
+            {
+                "command": "sona.transpile",
+                "title": "Transpile to Python",
+                "category": "Sona",
+                "icon": "$(arrow-right)"
+            },
+            {
+                "command": "sona.repl",
+                "title": "Start REPL",
+                "category": "Sona",
+                "icon": "$(terminal)"
+            },
+            {
+                "command": "sona.check",
+                "title": "Check Syntax",
+                "category": "Sona",
+                "icon": "$(check)"
+            },
+            {
+                "command": "sona.format",
+                "title": "Format Code",
+                "category": "Sona",
+                "icon": "$(word-wrap)"
+            },
+            {
+                "command": "sona.explain",
+                "title": "Explain Code",
+                "category": "Sona",
+                "icon": "$(question)"
+            },
+            {
+                "command": "sona.suggest",
+                "title": "Get AI Suggestions",
+                "category": "Sona",
+                "icon": "$(lightbulb)"
+            },
+            {
+                "command": "sona.profile",
+                "title": "Profile Performance",
+                "category": "Sona",
+                "icon": "$(graph)"
+            },
+            {
+                "command": "sona.benchmark",
+                "title": "Benchmark Code",
+                "category": "Sona",
+                "icon": "$(dashboard)"
+            },
+            {
+                "command": "sona.info",
+                "title": "Show System Info",
+                "category": "Sona",
+                "icon": "$(info)"
+            },
+            {
+                "command": "sona.help",
+                "title": "Help & Commands",
+                "category": "Sona",
+                "icon": "$(question)"
+            },
+            {
+                "command": "sona.checkAIConnection",
+                "title": "Check AI Connection",
+                "category": "Sona",
+                "icon": "$(pulse)"
+            }
+        ],
+        "menus": {
+            "commandPalette": [
+                {
+                    "command": "sona.welcome",
+                    "when": "true"
+                },
+                {
+                    "command": "sona.setup.azure",
+                    "when": "true"
+                },
+                {
+                    "command": "sona.setup.manual",
+                    "when": "true"
+                },
+                {
+                    "command": "sona.selectUserProfile",
+                    "when": "true"
+                },
+                {
+                    "command": "sona.run",
+                    "when": "editorLangId == sona"
+                },
+                {
+                    "command": "sona.transpile",
+                    "when": "editorLangId == sona"
+                },
+                {
+                    "command": "sona.repl",
+                    "when": "true"
+                },
+                {
+                    "command": "sona.check",
+                    "when": "editorLangId == sona"
+                },
+                {
+                    "command": "sona.format",
+                    "when": "editorLangId == sona"
+                },
+                {
+                    "command": "sona.explain",
+                    "when": "editorHasSelection"
+                },
+                {
+                    "command": "sona.suggest",
+                    "when": "editorLangId == sona || editorLangId == python || editorLangId == javascript"
+                },
+                {
+                    "command": "sona.profile",
+                    "when": "editorLangId == sona"
+                },
+                {
+                    "command": "sona.benchmark",
+                    "when": "editorLangId == sona"
+                },
+                {
+                    "command": "sona.info",
+                    "when": "true"
+                },
+                {
+                    "command": "sona.help",
+                    "when": "true"
+                },
+                {
+                    "command": "sona.checkAIConnection",
+                    "when": "true"
+                }
+            ],
+            "editor/context": [
+                {
+                    "submenu": "sona.contextMenu",
+                    "when": "editorLangId == sona",
+                    "group": "sona"
+                }
+            ],
+            "sona.contextMenu": [
+                {
+                    "command": "sona.run",
+                    "when": "editorLangId == sona",
+                    "group": "execution"
+                },
+                {
+                    "command": "sona.transpile",
+                    "when": "editorLangId == sona",
+                    "group": "execution"
+                },
+                {
+                    "command": "sona.check",
+                    "when": "editorLangId == sona",
+                    "group": "validation"
+                },
+                {
+                    "command": "sona.format",
+                    "when": "editorLangId == sona",
+                    "group": "validation"
+                },
+                {
+                    "command": "sona.explain",
+                    "when": "editorHasSelection",
+                    "group": "ai"
+                },
+                {
+                    "command": "sona.suggest",
+                    "when": "editorLangId == sona",
+                    "group": "ai"
+                }
+            ]
+        },
+        "submenus": [
+            {
+                "id": "sona.contextMenu",
+                "label": "Sona AI"
+            }
+        ],
+        "configuration": {
+            "title": "Sona",
+            "properties": {
+                "sona.cli.pythonPath": {
+                    "type": "string",
+                    "default": "python",
+                    "description": "Path to Python executable for running Sona CLI"
+                },
+                "sona.cli.timeout": {
+                    "type": "number",
+                    "default": 30000,
+                    "description": "CLI command timeout in milliseconds"
+                },
+                "sona.userProfile": {
+                    "type": "string",
+                    "enum": [
+                        "neurotypical",
+                        "adhd",
+                        "dyslexia"
+                    ],
+                    "default": "neurotypical",
+                    "description": "UI profile for accessibility optimization",
+                    "enumDescriptions": [
+                        "Standard UI/UX for typical users",
+                        "High-contrast, minimal distractions for ADHD",
+                        "Dyslexia-friendly fonts and enhanced readability"
+                    ]
+                },
+                "sona.ai.autoSetup": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Automatically prompt for AI setup when needed"
+                },
+                "sona.onboarding.showWelcome": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show welcome message and profile setup on first use"
+                }
+            }
+        }
+    },
+    "activationEvents": [
+        "onLanguage:sona",
+        "onCommand:sona.selectUserProfile",
+        "onCommand:sona.welcome",
+        "onStartupFinished"
+    ],
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./"
+    },
+    "devDependencies": {
+        "@types/vscode": "^1.60.0",
+        "@types/node": "16.x",
+        "typescript": "^4.4.4"
+    }
+}

@@ -1,0 +1,43 @@
+// examples/data_structures.sona
+// Example: Using collection data structures
+
+import collection;
+import queue;
+import stack;
+
+print("=== Data Structures Example ===\n");
+
+// === Collections ===
+print("1. Collection Operations:");
+let numbers = [1, 2, 3, 4, 5];
+print("  Original: " + numbers);
+print("  Length: " + collection.len(numbers));
+print("  First: " + collection.first(numbers));
+print("  Last: " + collection.last(numbers));
+print("  Range 2-4: " + collection.range(numbers, 2, 4));
+
+// === Queue (FIFO) ===
+print("\n2. Queue (First In, First Out):");
+let q = queue.Queue();
+q.enqueue("Task 1");
+q.enqueue("Task 2");
+q.enqueue("Task 3");
+print("  Enqueued 3 tasks");
+print("  Queue size: " + q.size());
+print("  Dequeue: " + q.dequeue());  // Task 1
+print("  Dequeue: " + q.dequeue());  // Task 2
+print("  Remaining: " + q.size());
+
+// === Stack (LIFO) ===
+print("\n3. Stack (Last In, First Out):");
+let s = stack.Stack();
+s.push("Page 1");
+s.push("Page 2");
+s.push("Page 3");
+print("  Pushed 3 pages");
+print("  Stack size: " + s.size());
+print("  Peek top: " + s.peek());    // Page 3
+print("  Pop: " + s.pop());          // Page 3
+print("  New top: " + s.peek());     // Page 2
+
+print("\nData structures demo complete!");

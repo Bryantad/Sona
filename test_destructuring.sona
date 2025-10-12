@@ -1,0 +1,28 @@
+// Test destructuring (unpacking values)
+print("=== Testing Destructuring ===");
+
+// Test array destructuring
+let arr = [1, 2, 3];
+let [a, b, c] = arr;
+print("a = " + a);
+print("b = " + b);
+print("c = " + c);
+
+print("");
+
+// Test object destructuring
+let obj = {"name": "John", "age": 30, "city": "NYC"};
+let {name, age, city} = obj;
+print("Name: " + name);
+print("Age: " + age);
+print("City: " + city);
+
+print("");
+
+// Test nested destructuring
+let nested = {"user": {"id": 1, "email": "test@example.com"}};
+let {user: {id, email}} = nested;
+print("ID: " + id);
+print("Email: " + email);
+
+print("Destructuring tests complete!");

@@ -1,0 +1,55 @@
+// Tier 3 Features Test
+
+// 1. If/Else Statements
+print("=== If/Else Tests ===");
+
+let score = 85;
+
+if score >= 90 {
+    print("Grade: A");
+} else if score >= 80 {
+    print("Grade: B");
+} else if score >= 70 {
+    print("Grade: C");
+} else {
+    print("Grade: F");
+};
+
+// 2. While Loops
+print("");
+print("=== While Loop Test ===");
+
+let count = 0;
+while count < 5 {
+    print("Count: " + count);
+    count = count + 1;
+};
+
+// 3. Array Indexing
+print("");
+print("=== Array Indexing Test ===");
+
+let nums = [10, 20, 30, 40, 50];
+print("First: " + nums[0]);
+print("Third: " + nums[2]);
+print("Last: " + nums[4]);
+
+// 4. Dictionary Indexing
+print("");
+print("=== Dict Indexing Test ===");
+
+let person = {"name": "Alice", "age": 30, "city": "Boston"};
+print("Name: " + person["name"]);
+print("Age: " + person["age"]);
+print("City: " + person["city"]);
+
+// 5. String Indexing
+print("");
+print("=== String Indexing Test ===");
+
+let text = "Hello";
+print("First char: " + text[0]);
+print("Third char: " + text[2]);
+
+print("");
+print("All Tier 3 features complete!");

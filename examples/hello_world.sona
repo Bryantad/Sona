@@ -1,0 +1,5 @@
+// examples/hello_world.sona
+// The simplest Sona program
+
+print("Hello, World!");
+print("Welcome to Sona v0.9.6!");

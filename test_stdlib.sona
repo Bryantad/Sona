@@ -1,0 +1,22 @@
+// Test multiple stdlib modules
+import math;
+import string;
+import time;
+
+// Math operations
+print("Math tests:");
+print(math.math_sqrt(25));
+print(math.math_pow(2, 8));
+print(math.math_PI);
+
+// String operations  
+print("");
+print("String tests:");
+print(string.string_upper("hello world"));
+print(string.string_lower("HELLO WORLD"));
+print(string.string_length("test"));
+
+// Time operations
+print("");
+print("Time tests:");
+print(time.time_now());

@@ -1,0 +1,44 @@
+// Test experimental modules
+print("=== Testing Experimental Modules ===");
+print("");
+
+// Test random
+import random;
+print("Random module:");
+let rand_num = random.random();
+print("  Random float: " + rand_num);
+let rand_int = random.randint(1, 10);
+print("  Random int (1-10): " + rand_int);
+print("");
+
+// Test uuid
+import uuid;
+print("UUID module:");
+let id = uuid.uuid4();
+print("  Generated UUID: " + id);
+print("");
+
+// Test hashing
+import hashing;
+print("Hashing module:");
+let hash = hashing.md5("Hello Sona");
+print("  MD5 hash: " + hash);
+print("");
+
+// Test statistics
+import statistics;
+print("Statistics module:");
+let data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+let mean = statistics.mean(data);
+print("  Mean of 1-10: " + mean);
+print("");
+
+// Test sort
+import sort;
+print("Sort module:");
+let unsorted = [5, 2, 8, 1, 9, 3];
+let sorted = sort.quicksort(unsorted);
+print("  Quicksort: " + sorted);
+print("");
+
+print("All experimental modules test complete!");

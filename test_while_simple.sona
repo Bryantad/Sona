@@ -1,0 +1,12 @@
+let count = 0;
+print("Before: " + count);
+
+count = 5;
+print("After: " + count);
+
+while count > 0 {
+    print("Count: " + count);
+    count = count - 1;
+};
+
+print("Done!");

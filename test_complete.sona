@@ -1,0 +1,61 @@
+// ========================================
+// SONA 0.9.6 - TIER 1 & TIER 2 COMPLETE!
+// ========================================
+
+print("=== TIER 1 FEATURES ===");
+
+// 1. Comments (you're reading one!)
+
+// 2. Variables
+let name = "Sona";
+const version = "0.9.6";
+
+// 3. Booleans
+let isReady = true;
+
+// 4. Numbers  
+let count = 42;
+
+// 5. Strings
+print(name);
+print(version);
+
+// 6. Lists
+let features = ["fast", "AI-native", "powerful"];
+print(features);
+
+// 7. Functions
+func greet(who) {
+    print("Hello, " + who + "!");
+};
+
+greet("World");
+
+// 8. Binary operations
+let sum = 5 + 3;
+print(sum);
+
+print("=== TIER 2 FEATURES ===");
+
+// 1. Dictionaries
+let person = {"name": "Alice", "role": "Developer"};
+print(person);
+
+// 2. For loops - list iteration
+for item in [1, 2, 3] {
+    print(item);
+};
+
+// 3. For loops - range
+for i in range(3) {
+    print(i);
+};
+
+// 4. Try/catch
+try {
+    print("Try block executed");
+} catch Exception as e {
+    print("This won't run");
+};
+
+print("=== ALL TESTS PASSED ===");

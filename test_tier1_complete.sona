@@ -1,0 +1,29 @@
+//
+// Sona 0.9.6 Tier 1 Feature Test
+// Testing: Comments, Booleans, Lists, Functions, Imports
+//
+
+// Test 1: Comments work!
+# Hash-style comments also work!
+
+// Test 2: Boolean Literals
+let is_ready = true;
+print(is_ready);
+
+// Test 3: List Literals  
+let numbers = [1, 2, 3, 4, 5];
+print(numbers);
+
+// Test 4: Function Definition
+func greet(name) {
+    return "Hello, " + name;
+};
+let greeting = greet("World");
+print(greeting);
+
+// Test 5: Math Function
+func multiply(a, b) {
+    return a * b;
+};
+let product = multiply(6, 7);
+print(product);

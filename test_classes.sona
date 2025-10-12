@@ -1,0 +1,19 @@
+// Test class definitions
+print("=== Testing Classes ===");
+
+class Person {
+    let name = "Unknown";
+    let age = 0;
+    
+    func greet() {
+        return "Hello, I'm " + name;
+    };
+};
+
+print("Class Person defined");
+
+// Try to create instance (if supported)
+// let p = Person();
+// print(p.greet());
+
+print("Classes test complete (basic definition works)");

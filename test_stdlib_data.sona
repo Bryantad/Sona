@@ -1,0 +1,80 @@
+# Sona 0.9.6 - Data Processing Modules Test
+# Tests: json, csv, encoding, hashing, uuid
+
+print("=== Sona 0.9.6 Data Processing Test ===");
+print("");
+
+# ===== JSON MODULE =====
+print("--- JSON Module ---");
+import json;
+
+json_text = '{"name": "Sona", "version": "0.9.6", "count": 42}';
+print("Parsing JSON: " + json_text);
+parsed = json.parse(json_text);
+print("Parsed successfully!");
+
+data = {"language": "Sona", "stable": true};
+encoded = json.stringify(data);
+print("Stringified: " + encoded);
+print("");
+
+# ===== ENCODING MODULE =====
+print("--- Encoding Module ---");
+import encoding;
+
+text = "Hello Sona!";
+print("Original text: " + text);
+
+base64_encoded = encoding.base64_encode(text);
+print("Base64 encoded: " + base64_encoded);
+
+base64_decoded = encoding.base64_decode(base64_encoded);
+print("Base64 decoded: " + base64_decoded);
+
+hex_encoded = encoding.hex_encode(text);
+print("Hex encoded: " + hex_encoded);
+
+hex_decoded = encoding.hex_decode(hex_encoded);
+print("Hex decoded: " + hex_decoded);
+print("");
+
+# ===== HASHING MODULE =====
+print("--- Hashing Module ---");
+import hashing;
+
+data = "Sona 0.9.6";
+print("Data to hash: " + data);
+
+md5_hash = hashing.md5(data);
+print("MD5: " + md5_hash);
+
+sha256_hash = hashing.sha256(data);
+print("SHA256: " + sha256_hash);
+
+sha1_hash = hashing.sha1(data);
+print("SHA1: " + sha1_hash);
+print("");
+
+# ===== UUID MODULE =====
+print("--- UUID Module ---");
+import uuid;
+
+uuid4 = uuid.uuid4();
+print("Generated UUID4: " + uuid4);
+print("Is valid UUID: " + str(uuid.is_valid(uuid4)));
+print("");
+
+# ===== VALIDATION MODULE =====
+print("--- Validation Module ---");
+import validation;
+
+email = "test@example.com";
+print("Validating email: " + email);
+print("Is valid email: " + str(validation.is_email(email)));
+
+url = "https://example.com";
+print("Validating URL: " + url);
+print("Is valid URL: " + str(validation.is_url(url)));
+print("");
+
+print("=== All Data Processing Tests Complete! ===");

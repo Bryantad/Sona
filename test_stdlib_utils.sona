@@ -1,0 +1,35 @@
+// Test utility stdlib modules
+print("=== Testing Collection Module ===");
+import collection;
+// Test basic collection operations if available
+
+print("");
+print("=== Testing Queue Module ===");
+import queue;
+// Test queue operations
+
+print("");
+print("=== Testing Stack Module ===");
+import stack;
+// Test stack operations
+
+print("");
+print("=== Testing Random Module ===");
+import random;
+// let r = random.random();
+// print("Random number: " + r);
+
+print("");
+print("=== Testing UUID Module ===");
+import uuid;
+// let id = uuid.uuid4();
+// print("UUID: " + id);
+
+print("");
+print("=== Testing Hashing Module ===");
+import hashing;
+// let hash = hashing.md5("hello");
+// print("MD5 hash: " + hash);
+
+print("");
+print("Utility modules import test complete!");

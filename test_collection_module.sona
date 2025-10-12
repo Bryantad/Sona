@@ -1,0 +1,22 @@
+// Test collection module
+import collection;
+
+print("=== Testing Collection Module ===");
+
+// Test len
+let arr = [1, 2, 3, 4, 5];
+print("Length of array: " + collection.len(arr));
+
+// Test range
+let numbers = collection.range(1, 6);
+print("Range 1-5: " + numbers);
+
+// Test first and last
+print("First: " + collection.first(arr));
+print("Last: " + collection.last(arr));
+
+// Test take
+let first_three = collection.take(arr, 3);
+print("First 3: " + first_three);
+
+print("Collection module test complete!");

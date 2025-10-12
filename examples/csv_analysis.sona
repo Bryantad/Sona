@@ -1,0 +1,38 @@
+// examples/csv_analysis.sona
+// Example: CSV data processing and analysis
+
+import csv;
+import io;
+import statistics;
+
+print("=== CSV Analysis Example ===\n");
+
+// Create sample CSV data
+let csv_data = "name,score,grade\nAlice,95,A\nBob,87,B\nCharlie,92,A\nDiana,78,C\nEve,88,B";
+
+// Save to file
+io.write_file("students.csv", csv_data);
+print("✓ Created students.csv\n");
+
+// Read and parse CSV
+let rows = csv.reader("students.csv");
+let scores = [];
+let students = [];
+
+print("Students:");
+for row in rows {
+    if row["name"] != "name" {  // Skip header
+        print("  " + row["name"] + ": " + row["score"] + " (" + row["grade"] + ")");
+        students.append(row["name"]);
+        scores.append(number.parse(row["score"]));
+    }
+}
+
+// Calculate statistics
+print("\nStatistics:");
+print("  Total students: " + len(students));
+print("  Average score: " + statistics.mean(scores));
+print("  Highest score: " + statistics.max(scores));
+print("  Lowest score: " + statistics.min(scores));
+
+print("\nAnalysis complete!");

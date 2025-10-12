@@ -1,0 +1,117 @@
+# Sona 0.9.6 - Collections and Data Structures Test
+# Tests: collection, queue, stack, sort, search, statistics
+
+print("=== Sona 0.9.6 Collections Test ===");
+print("");
+
+# ===== COLLECTION MODULE =====
+print("--- Collection Module ---");
+import collection;
+
+items = [1, 2, 3, 4, 5];
+print("Items: [1, 2, 3, 4, 5]");
+print("Length: " + str(collection.length(items)));
+print("First: " + str(collection.first(items)));
+print("Last: " + str(collection.last(items)));
+print("Contains 3: " + str(collection.contains(items, 3)));
+print("Is empty: " + str(collection.is_empty(items)));
+
+# Map and filter
+doubled = collection.map(items, lambda x: x * 2);
+print("Doubled: " + str(doubled));
+
+evens = collection.filter(items, lambda x: x % 2 == 0);
+print("Evens: " + str(evens));
+
+sum = collection.reduce(items, lambda acc, x: acc + x, 0);
+print("Sum: " + str(sum));
+print("");
+
+# ===== QUEUE MODULE =====
+print("--- Queue Module ---");
+import queue;
+
+q = queue.create();
+print("Created empty queue");
+
+queue.enqueue(q, "first");
+queue.enqueue(q, "second");
+queue.enqueue(q, "third");
+print("Enqueued: first, second, third");
+print("Size: " + str(queue.size(q)));
+print("Peek: " + queue.peek(q));
+
+item = queue.dequeue(q);
+print("Dequeued: " + item);
+print("Size after dequeue: " + str(queue.size(q)));
+print("");
+
+# ===== STACK MODULE =====
+print("--- Stack Module ---");
+import stack;
+
+s = stack.create();
+print("Created empty stack");
+
+stack.push(s, "bottom");
+stack.push(s, "middle");
+stack.push(s, "top");
+print("Pushed: bottom, middle, top");
+print("Size: " + str(stack.size(s)));
+print("Peek: " + stack.peek(s));
+
+popped = stack.pop(s);
+print("Popped: " + popped);
+print("Size after pop: " + str(stack.size(s)));
+print("");
+
+# ===== SORT MODULE =====
+print("--- Sort Module ---");
+import sort;
+
+unsorted = [5, 2, 8, 1, 9, 3];
+print("Unsorted: [5, 2, 8, 1, 9, 3]");
+
+sorted_asc = sort.sort(unsorted);
+print("Sorted ascending: " + str(sorted_asc));
+
+sorted_desc = sort.sort(unsorted, "desc");
+print("Sorted descending: " + str(sorted_desc));
+print("");
+
+# ===== SEARCH MODULE =====
+print("--- Search Module ---");
+import search;
+
+haystack = [10, 20, 30, 40, 50];
+print("Searching in: [10, 20, 30, 40, 50]");
+
+index = search.index_of(haystack, 30);
+print("Index of 30: " + str(index));
+
+found = search.contains(haystack, 40);
+print("Contains 40: " + str(found));
+print("");
+
+# ===== STATISTICS MODULE =====
+print("--- Statistics Module ---");
+import statistics;
+
+numbers = [10, 20, 30, 40, 50];
+print("Numbers: [10, 20, 30, 40, 50]");
+
+mean = statistics.mean(numbers);
+print("Mean: " + str(mean));
+
+median = statistics.median(numbers);
+print("Median: " + str(median));
+
+stdev = statistics.stdev(numbers);
+print("Standard deviation: " + str(stdev));
+
+min_val = statistics.min(numbers);
+max_val = statistics.max(numbers);
+print("Min: " + str(min_val) + ", Max: " + str(max_val));
+print("");
+
+print("=== All Collections Tests Complete! ===");

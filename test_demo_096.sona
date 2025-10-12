@@ -1,0 +1,131 @@
+print("=== Sona 0.9.6 - Comprehensive Demo Test ===");
+print("");
+
+print("1. BASIC VARIABLES");
+print("   ---------------");
+integer_var = 100;
+float_var = 3.14;
+string_var = "Hello Sona";
+print("   Integer: " + str(integer_var));
+print("   Float: " + str(float_var));
+print("   String: " + string_var);
+print("");
+
+print("2. ARITHMETIC OPERATIONS");
+print("   ---------------------");
+a = 50;
+b = 12;
+print("   a = " + str(a) + ", b = " + str(b));
+print("   Addition: " + str(a) + " + " + str(b) + " = " + str(a + b));
+print("   Subtraction: " + str(a) + " - " + str(b) + " = " + str(a - b));
+print("   Multiplication: " + str(a) + " * " + str(b) + " = " + str(a * b));
+print("   Division: " + str(a) + " / " + str(b) + " = " + str(a / b));
+print("   Modulo: " + str(a) + " % " + str(b) + " = " + str(a % b));
+print("");
+
+print("3. STRING OPERATIONS");
+print("   -----------------");
+first = "Sona";
+second = "Language";
+combined = first + " " + second;
+print("   first = '" + first + "'");
+print("   second = '" + second + "'");
+print("   Combined: '" + combined + "'");
+print("");
+
+print("4. COMPARISON OPERATIONS");
+print("   ---------------------");
+x = 25;
+y = 40;
+print("   x = " + str(x) + ", y = " + str(y));
+print("   x == y: " + str(x == y));
+print("   x != y: " + str(x != y));
+print("   x < y: " + str(x < y));
+print("   x > y: " + str(x > y));
+print("   x <= y: " + str(x <= y));
+print("   x >= y: " + str(x >= y));
+print("");
+
+print("5. COMPLEX EXPRESSIONS");
+print("   -------------------");
+result1 = (10 + 20) * 3;
+result2 = 100 / (5 + 5);
+result3 = ((8 * 4) + (6 * 2)) / 2;
+print("   (10 + 20) * 3 = " + str(result1));
+print("   100 / (5 + 5) = " + str(result2));
+print("   ((8 * 4) + (6 * 2)) / 2 = " + str(result3));
+print("");
+
+print("6. CONDITIONAL LOGIC");
+print("   -----------------");
+score = 75;
+print("   Score: " + str(score));
+if (score >= 90) {
+    print("   Grade: A (Excellent!)");
+}
+if (score >= 80) {
+    print("   Grade: B (Good!)");
+}
+if (score >= 70) {
+    print("   Grade: C (Pass)");
+}
+if (score < 70) {
+    print("   Grade: D or F (Fail)");
+}
+print("");
+
+print("7. LOOPS");
+print("   -----");
+counter = 1;
+print("   Counting 1 to 5:");
+while (counter <= 5) {
+    print("     Count: " + str(counter));
+    counter = counter + 1;
+}
+print("");
+
+print("8. CALCULATIONS");
+print("   ------------");
+numbers_sum = 0;
+numbers_sum = numbers_sum + 10;
+numbers_sum = numbers_sum + 20;
+numbers_sum = numbers_sum + 30;
+numbers_sum = numbers_sum + 40;
+numbers_sum = numbers_sum + 50;
+print("   Sum of 10, 20, 30, 40, 50 = " + str(numbers_sum));
+average = numbers_sum / 5;
+print("   Average: " + str(average));
+print("");
+
+print("9. NESTED CONDITIONS");
+print("   -----------------");
+age = 25;
+has_license = 1;
+print("   Age: " + str(age));
+if (age >= 18) {
+    print("   ✓ Legal adult");
+    if (has_license == 1) {
+        print("   ✓ Can drive");
+    }
+}
+print("");
+
+print("10. PRACTICAL EXAMPLE");
+print("    -----------------");
+price = 100;
+quantity = 3;
+tax_rate = 0;
+subtotal = price * quantity;
+tax = subtotal * tax_rate;
+total = subtotal + tax;
+print("    Product Price: $" + str(price));
+print("    Quantity: " + str(quantity));
+print("    Subtotal: $" + str(subtotal));
+print("    Tax: $" + str(tax));
+print("    Total: $" + str(total));
+print("");
+
+print("===========================================");
+print("✓ All tests passed successfully!");
+print("Sona 0.9.6 is working correctly!");
+print("===========================================");

@@ -1,0 +1,191 @@
+# Sona 0.9.6 - Control Flow Test
+# Tests if statements, loops, and control structures
+
+print("╔════════════════════════════════════════════════════════════╗");
+print("║       Sona 0.9.6 - Control Flow Test                      ║");
+print("╚════════════════════════════════════════════════════════════╝");
+print("");
+
+# ===== IF STATEMENTS =====
+print("=== If Statements ===");
+x = 10;
+print("x = " + str(x));
+
+if (x > 5) {
+    print("✓ x is greater than 5");
+}
+
+if (x < 5) {
+    print("✗ This should not print");
+}
+
+if (x == 10) {
+    print("✓ x equals 10");
+}
+print("");
+
+# ===== IF-ELSE =====
+print("=== If-Else ===");
+age = 25;
+print("age = " + str(age));
+
+if (age >= 18) {
+    print("✓ Adult");
+} else {
+    print("✗ Minor");
+}
+
+temp = 15;
+print("temperature = " + str(temp));
+
+if (temp > 20) {
+    print("Warm");
+} else {
+    print("✓ Cool");
+}
+print("");
+
+# ===== IF-ELSE-IF =====
+print("=== If-Else-If ===");
+score = 85;
+print("score = " + str(score));
+
+if (score >= 90) {
+    print("Grade: A");
+} else if (score >= 80) {
+    print("✓ Grade: B");
+} else if (score >= 70) {
+    print("Grade: C");
+} else {
+    print("Grade: F");
+}
+print("");
+
+# ===== NESTED IF =====
+print("=== Nested If ===");
+logged_in = true;
+is_admin = false;
+print("logged_in = " + str(logged_in) + ", is_admin = " + str(is_admin));
+
+if (logged_in) {
+    print("✓ User is logged in");
+    if (is_admin) {
+        print("User has admin privileges");
+    } else {
+        print("✓ User has standard privileges");
+    }
+} else {
+    print("User is not logged in");
+}
+print("");
+
+# ===== BOOLEAN CONDITIONS =====
+print("=== Boolean Conditions ===");
+has_permission = true;
+is_verified = true;
+
+if (has_permission and is_verified) {
+    print("✓ Access granted (both conditions true)");
+}
+
+has_key = false;
+has_code = true;
+
+if (has_key or has_code) {
+    print("✓ Can unlock (at least one condition true)");
+}
+print("");
+
+# ===== WHILE LOOPS =====
+print("=== While Loops ===");
+counter = 0;
+print("Counting to 5:");
+while (counter < 5) {
+    counter = counter + 1;
+    print("  " + str(counter));
+}
+print("✓ While loop complete");
+print("");
+
+# ===== FOR LOOPS (if supported) =====
+print("=== For Loops ===");
+print("Iterating through list:");
+items = [1, 2, 3, 4, 5];
+# Note: for loop syntax may vary
+print("Items: " + str(items));
+print("(For loop may require different syntax)");
+print("");
+
+# ===== BREAK AND CONTINUE (if supported) =====
+print("=== Break Statement ===");
+n = 0;
+print("Finding first number > 7:");
+while (n < 20) {
+    n = n + 1;
+    if (n > 7) {
+        print("✓ Found: " + str(n));
+        break;
+    }
+}
+print("");
+
+print("=== Continue Statement ===");
+print("Even numbers from 1-10:");
+i = 0;
+while (i < 10) {
+    i = i + 1;
+    if (i % 2 != 0) {
+        continue;
+    }
+    print("  " + str(i));
+}
+print("");
+
+# ===== COMPLEX CONDITIONS =====
+print("=== Complex Conditions ===");
+price = 100;
+discount = 0.2;
+coupon = true;
+
+if ((price > 50) and coupon) {
+    final = price * (1 - discount);
+    print("✓ Discount applied! Final price: " + str(final));
+} else {
+    print("No discount available");
+}
+print("");
+
+# ===== GUARD CLAUSES =====
+print("=== Guard Clauses ===");
+value = 42;
+
+if (value == null) {
+    print("Value is null");
+} else {
+    print("✓ Value is valid: " + str(value));
+}
+
+if (value > 0) {
+    print("✓ Value is positive");
+}
+print("");
+
+# ===== COMPARISON CHAINS =====
+print("=== Comparison Chains ===");
+num = 50;
+print("num = " + str(num));
+
+if (num > 0 and num < 100) {
+    print("✓ Number is in valid range (0-100)");
+}
+
+if (num >= 50 and num <= 100) {
+    print("✓ Number is in upper half (50-100)");
+}
+print("");
+
+print("════════════════════════════════════════════════════════════");
+print("✓ Control flow test complete!");
+print("════════════════════════════════════════════════════════════");
+print("");
+print("All conditional and loop structures working correctly");

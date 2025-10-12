@@ -1,0 +1,25 @@
+// Test when statement (conditional expressions)
+print("=== Testing When Statement ===");
+
+let x = 10;
+let result = when {
+    x < 5 => "Small";
+    x < 15 => "Medium";
+    x < 25 => "Large";
+    _ => "Extra Large";
+};
+print("Result: " + result);
+
+print("");
+
+// Test when with boolean conditions
+let age = 25;
+let category = when {
+    age < 13 => "Child";
+    age < 20 => "Teenager";
+    age < 65 => "Adult";
+    _ => "Senior";
+};
+print("Category: " + category);
+
+print("When statement tests complete!");

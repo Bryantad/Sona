@@ -1,0 +1,343 @@
+// Comprehensive test of all 30 stdlib modules
+print("=== Testing All 30 Standard Library Modules ===");
+print("");
+
+let passed = 0;
+let failed = 0;
+
+// Module 1: json
+try {
+    import json;
+    let obj = {"test": "value"};
+    let str = json.stringify(obj);
+    let parsed = json.parse(str);
+    print("✅ json - OK");
+    passed = passed + 1;
+} catch e {
+    print("❌ json - FAILED: " + e);
+    failed = failed + 1;
+};
+
+// Module 2: string
+try {
+    import string;
+    let upper = string.upper("hello");
+    print("✅ string - OK");
+    passed = passed + 1;
+} catch e {
+    print("❌ string - FAILED: " + e);
+    failed = failed + 1;
+};
+
+// Module 3: math
+try {
+    import math;
+    let result = math.sqrt(16);
+    print("✅ math - OK");
+    passed = passed + 1;
+} catch e {
+    print("❌ math - FAILED: " + e);
+    failed = failed + 1;
+};
+
+// Module 4: regex
+try {
+    import regex;
+    let result = regex.test("test123", "[0-9]+");
+    print("✅ regex - OK");
+    passed = passed + 1;
+} catch e {
+    print("❌ regex - FAILED: " + e);
+    failed = failed + 1;
+};
+
+// Module 5: fs
+try {
+    import fs;
+    let exists = fs.exists(".");
+    print("✅ fs - OK");
+    passed = passed + 1;
+} catch e {
+    print("❌ fs - FAILED: " + e);
+    failed = failed + 1;
+};
+
+// Module 6: path
+try {
+    import path;
+    let joined = path.join("a", "b");
+    print("✅ path - OK");
+    passed = passed + 1;
+} catch e {
+    print("❌ path - FAILED: " + e);
+    failed = failed + 1;
+};
+
+// Module 7: io
+try {
+    import io;
+    // Just test module loads
+    print("✅ io - OK");
+    passed = passed + 1;
+} catch e {
+    print("❌ io - FAILED: " + e);
+    failed = failed + 1;
+};
+
+// Module 8: env
+try {
+    import env;
+    let home = env.get("HOME", "default");
+    print("✅ env - OK");
+    passed = passed + 1;
+} catch e {
+    print("❌ env - FAILED: " + e);
+    failed = failed + 1;
+};
+
+// Module 9: csv
+try {
+    import csv;
+    // Just test module loads
+    print("✅ csv - OK");
+    passed = passed + 1;
+} catch e {
+    print("❌ csv - FAILED: " + e);
+    failed = failed + 1;
+};
+
+// Module 10: date
+try {
+    import date;
+    let now = date.now();
+    print("✅ date - OK");
+    passed = passed + 1;
+} catch e {
+    print("❌ date - FAILED: " + e);
+    failed = failed + 1;
+};
+
+// Module 11: time
+try {
+    import time;
+    let now = time.time();
+    print("✅ time - OK");
+    passed = passed + 1;
+} catch e {
+    print("❌ time - FAILED: " + e);
+    failed = failed + 1;
+};
+
+// Module 12: numbers
+try {
+    import numbers;
+    let abs_val = numbers.abs(-5);
+    print("✅ numbers - OK");
+    passed = passed + 1;
+} catch e {
+    print("❌ numbers - FAILED: " + e);
+    failed = failed + 1;
+};
+
+// Module 13: boolean
+try {
+    import boolean;
+    let t = boolean.is_true(1);
+    print("✅ boolean - OK");
+    passed = passed + 1;
+} catch e {
+    print("❌ boolean - FAILED: " + e);
+    failed = failed + 1;
+};
+
+// Module 14: type
+try {
+    import type;
+    let t = type.typeof(5);
+    print("✅ type - OK");
+    passed = passed + 1;
+} catch e {
+    print("❌ type - FAILED: " + e);
+    failed = failed + 1;
+};
+
+// Module 15: comparison
+try {
+    import comparison;
+    let result = comparison.equals(5, 5);
+    print("✅ comparison - OK");
+    passed = passed + 1;
+} catch e {
+    print("❌ comparison - FAILED: " + e);
+    failed = failed + 1;
+};
+
+// Module 16: operators
+try {
+    import operators;
+    let result = operators.add(2, 3);
+    print("✅ operators - OK");
+    passed = passed + 1;
+} catch e {
+    print("❌ operators - FAILED: " + e);
+    failed = failed + 1;
+};
+
+// Module 17: random
+try {
+    import random;
+    let r = random.random();
+    print("✅ random - OK");
+    passed = passed + 1;
+} catch e {
+    print("❌ random - FAILED: " + e);
+    failed = failed + 1;
+};
+
+// Module 18: encoding
+try {
+    import encoding;
+    // Just test module loads
+    print("✅ encoding - OK");
+    passed = passed + 1;
+} catch e {
+    print("❌ encoding - FAILED: " + e);
+    failed = failed + 1;
+};
+
+// Module 19: timer
+try {
+    import timer;
+    let t = timer.Timer();
+    print("✅ timer - OK");
+    passed = passed + 1;
+} catch e {
+    print("❌ timer - FAILED: " + e);
+    failed = failed + 1;
+};
+
+// Module 20: validation
+try {
+    import validation;
+    // Just test module loads
+    print("✅ validation - OK");
+    passed = passed + 1;
+} catch e {
+    print("❌ validation - FAILED: " + e);
+    failed = failed + 1;
+};
+
+// Module 21: statistics
+try {
+    import statistics;
+    let m = statistics.mean([1, 2, 3]);
+    print("✅ statistics - OK");
+    passed = passed + 1;
+} catch e {
+    print("❌ statistics - FAILED: " + e);
+    failed = failed + 1;
+};
+
+// Module 22: sort
+try {
+    import sort;
+    let sorted = sort.quicksort([3, 1, 2]);
+    print("✅ sort - OK");
+    passed = passed + 1;
+} catch e {
+    print("❌ sort - FAILED: " + e);
+    failed = failed + 1;
+};
+
+// Module 23: search
+try {
+    import search;
+    let idx = search.linear([1, 2, 3], 2);
+    print("✅ search - OK");
+    passed = passed + 1;
+} catch e {
+    print("❌ search - FAILED: " + e);
+    failed = failed + 1;
+};
+
+// Module 24: uuid
+try {
+    import uuid;
+    let id = uuid.v4();
+    print("✅ uuid - OK");
+    passed = passed + 1;
+} catch e {
+    print("❌ uuid - FAILED: " + e);
+    failed = failed + 1;
+};
+
+// Module 25: toml
+try {
+    import toml;
+    // Just test module loads
+    print("✅ toml - OK");
+    passed = passed + 1;
+} catch e {
+    print("❌ toml - FAILED: " + e);
+    failed = failed + 1;
+};
+
+// Module 26: hashing
+try {
+    import hashing;
+    let hash = hashing.md5("test");
+    print("✅ hashing - OK");
+    passed = passed + 1;
+} catch e {
+    print("❌ hashing - FAILED: " + e);
+    failed = failed + 1;
+};
+
+// Module 27: collection
+try {
+    import collection;
+    let l = collection.len([1, 2, 3]);
+    print("✅ collection - OK");
+    passed = passed + 1;
+} catch e {
+    print("❌ collection - FAILED: " + e);
+    failed = failed + 1;
+};
+
+// Module 28: queue
+try {
+    import queue;
+    let q = queue.Queue();
+    print("✅ queue - OK");
+    passed = passed + 1;
+} catch e {
+    print("❌ queue - FAILED: " + e);
+    failed = failed + 1;
+};
+
+// Module 29: stack
+try {
+    import stack;
+    let s = stack.Stack();
+    print("✅ stack - OK");
+    passed = passed + 1;
+} catch e {
+    print("❌ stack - FAILED: " + e);
+    failed = failed + 1;
+};
+
+// Module 30: yaml
+try {
+    import yaml;
+    let y = yaml.dumps({"test": "value"});
+    print("✅ yaml - OK");
+    passed = passed + 1;
+} catch e {
+    print("❌ yaml - FAILED: " + e);
+    failed = failed + 1;
+};
+
+print("");
+print("======================");
+print("Results: " + passed + "/30 passed, " + failed + "/30 failed");
+print("======================");

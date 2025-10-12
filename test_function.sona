@@ -1,0 +1,12 @@
+// Test function definition and calling
+func greet(name) {
+    print(name);
+};
+
+func add(a, b) {
+    return a + b;
+};
+
+greet("Alice");
+let result = add(5, 3);
+print(result);

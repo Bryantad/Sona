@@ -1,0 +1,109 @@
+// Sona 0.9.6 - Comprehensive Feature Demo
+// This demonstrates all implemented Tier 1 and Tier 2 features plus stdlib
+
+// ===================
+// TIER 1 FEATURES
+// ===================
+
+// 1. Variables (let and const)
+let name = "Sona";
+const version = "0.9.6";
+print("Language: " + name + " v" + version);
+
+// 2. Numbers and Math
+let x = 10;
+let y = 20;
+let sum = x + y;
+let product = x * y;
+print("x + y = " + sum);
+print("x * y = " + product);
+
+// 3. Booleans
+let isReady = true;
+print("Ready: " + isReady);
+
+// 4. Lists
+let numbers = [1, 2, 3, 4, 5];
+print("Numbers: " + numbers);
+
+// 5. Functions
+func greet(person) {
+    return "Hello, " + person + "!";
+};
+
+print(greet("World"));
+
+// 6. Built-in Functions
+print("List length: " + len(numbers));
+print("Range 1-5: " + range(1, 6));
+
+// ===================
+// TIER 2 FEATURES
+// ===================
+
+// 7. Dictionaries
+let person = {
+    "name": "Alice",
+    "age": 30,
+    "city": "Boston"
+};
+print("Person: " + person);
+
+// 8. For Loops (list iteration)
+print("Iterating numbers:");
+for num in numbers {
+    print("  - " + num);
+};
+
+// 9. For Loops (range iteration)
+print("Counting to 3:");
+for i in range(1, 4) {
+    print("  Count: " + i);
+};
+
+// 10. Try/Catch
+print("Testing error handling:");
+try {
+    let result = 100 / 0;
+} catch error {
+    print("  Caught an error!");
+};
+
+// ===================
+// STDLIB MODULES
+// ===================
+
+import math;
+import string;
+import time;
+
+// Math module
+print("");
+print("Math Operations:");
+print("  sqrt(16) = " + math.math_sqrt(16));
+print("  pow(2, 10) = " + math.math_pow(2, 10));
+print("  PI = " + math.math_PI);
+
+// String module
+print("");
+print("String Operations:");
+print("  upper('hello') = " + string.string_upper("hello"));
+print("  lower('WORLD') = " + string.string_lower("WORLD"));
+print("  length('test') = " + string.string_length("test"));
+
+// Time module
+print("");
+print("Time Operations:");
+print("  Current time: " + time.time_now());
+
+// ===================
+// ESCAPE SEQUENCES
+// ===================
+
+print("");
+print("Escape Sequences:");
+print("Line 1\nLine 2");
+print("Tab\there");
+
+print("");
+print("Demo complete!");

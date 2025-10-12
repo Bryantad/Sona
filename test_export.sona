@@ -1,0 +1,20 @@
+// Test export statement (module exports)
+print("=== Testing Export Statement ===");
+
+// Export functions
+export func add(a, b) {
+    return a + b;
+};
+
+export func multiply(x, y) {
+    return x * y;
+};
+
+// Export constants
+export const PI = 3.14159;
+export const VERSION = "1.0.0";
+
+// Export variables
+export let counter = 0;
+
+print("Exports defined successfully!");

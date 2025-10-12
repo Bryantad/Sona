@@ -1,0 +1,12 @@
+// Test stdlib imports
+import math;
+
+print("Import successful");
+
+// Test property access
+let pi_val = math.math_PI;
+print(pi_val);
+
+// Test function call
+let root = math.math_sqrt(16);
+print(root);

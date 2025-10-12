@@ -1,0 +1,28 @@
+// Tier 2 Features Test
+
+// 1. Dictionaries
+let person = {"name": "Alice", "age": 30};
+print(person);
+
+// 2. For loops - iterate over list
+let numbers = [1, 2, 3];
+for num in numbers {
+    print(num);
+};
+
+// 3. For loops - range
+for i in range(3) {
+    print(i);
+};
+
+// 4. String interpolation (if supported)
+let greeting = "World";
+// print(f"Hello, {greeting}!");
+
+// 5. Try/catch
+try {
+    let result = 10 / 2;
+    print(result);
+} catch Exception as error {
+    print("Error occurred!");
+};

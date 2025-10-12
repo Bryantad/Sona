@@ -1,0 +1,11 @@
+// Simple try/catch test
+print("Before try");
+
+try {
+    print("In try block");
+    print("Still in try");
+} catch Exception as e {
+    print("In catch block");
+};
+
+print("After try");

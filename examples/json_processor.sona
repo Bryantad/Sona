@@ -1,0 +1,38 @@
+// examples/json_processor.sona
+// Example: Working with JSON data
+
+import json;
+import io;
+import string;
+
+print("=== JSON Processor Example ===\n");
+
+// Create some data
+let users = [
+    {"name": "Alice", "age": 30, "role": "developer"},
+    {"name": "Bob", "age": 25, "role": "designer"},
+    {"name": "Charlie", "age": 35, "role": "manager"}
+];
+
+print("Original data:");
+for user in users {
+    print("  " + user["name"] + " - " + user["role"]);
+}
+
+// Convert to JSON
+let json_str = json.stringify(users);
+print("\nJSON representation:");
+print(json_str);
+
+// Save to file
+io.write_file("users.json", json_str);
+print("\n✓ Saved to users.json");
+
+// Read back from file
+let loaded_json = io.read_file("users.json");
+let loaded_users = json.parse(loaded_json);
+
+print("\n✓ Loaded from users.json:");
+print("  Found " + len(loaded_users) + " users");
+
+print("\nProcessing complete!");

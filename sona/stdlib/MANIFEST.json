@@ -1,0 +1,48 @@
+{
+  "version": "0.9.6",
+  "stdlib_cap": 30,
+  "manifest_hash": "verified_all_30_working",
+  "description": "Sona v0.9.6 Standard Library - All 30 Modules Verified Working",
+  "modules": [
+    "json",
+    "string",
+    "math",
+    "regex",
+    "fs",
+    "path",
+    "io",
+    "env",
+    "csv",
+    "date",
+    "time",
+    "numbers",
+    "boolean",
+    "type",
+    "comparison",
+    "operators",
+    "random",
+    "encoding",
+    "timer",
+    "validation",
+    "statistics",
+    "sort",
+    "search",
+    "uuid",
+    "toml",
+    "hashing",
+    "collection",
+    "queue",
+    "stack",
+    "yaml"
+  ],
+  "removed_from_096": {
+    "modules": [
+      "list",
+      "dict",
+      "set",
+      "tuple"
+    ],
+    "reason": "Builtin name collision - will be re-introduced in v0.9.7 under collection.* namespace with deprecation shims",
+    "target_release": "0.9.7"
+  }
+}

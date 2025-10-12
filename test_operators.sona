@@ -1,0 +1,42 @@
+// Test operators explicitly
+let x = 5;
+let y = 10;
+
+print("x = 5, y = 10");
+print("");
+
+if x < y {
+    print("x < y: TRUE (correct)");
+} else {
+    print("x < y: FALSE (wrong!)");
+};
+
+if x > y {
+    print("x > y: TRUE (wrong!)");
+} else {
+    print("x > y: FALSE (correct)");
+};
+
+if x <= y {
+    print("x <= y: TRUE (correct)");
+} else {
+    print("x <= y: FALSE (wrong!)");
+};
+
+if x >= y {
+    print("x >= y: TRUE (wrong!)");
+} else {
+    print("x >= y: FALSE (correct)");
+};
+
+if x == y {
+    print("x == y: TRUE (wrong!)");
+} else {
+    print("x == y: FALSE (correct)");
+};
+
+if x != y {
+    print("x != y: TRUE (correct)");
+} else {
+    print("x != y: FALSE (wrong!)");
+};

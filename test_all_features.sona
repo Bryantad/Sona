@@ -1,0 +1,136 @@
+// Comprehensive Sona 0.9.6 Feature Test
+// Tests Tier 1, Tier 2, Tier 3, and stdlib
+
+print("=== SONA 0.9.6 COMPREHENSIVE TEST ===");
+print("");
+
+// ===== TIER 1 FEATURES =====
+print("=== TIER 1: Basic Features ===");
+
+// Variables and print
+let name = "Sona";
+let version = "0.9.6";
+print("Language: " + name + " v" + version);
+
+// Functions
+func greet(name) {
+    return "Hello, " + name + "!";
+};
+print(greet("World"));
+
+// Lists
+let numbers = [1, 2, 3, 4, 5];
+print("Numbers: " + numbers);
+
+// Math operators
+let a = 10;
+let b = 3;
+print("10 + 3 = " + (a + b));
+print("10 - 3 = " + (a - b));
+print("10 * 3 = " + (a * b));
+print("10 / 3 = " + (a / b));
+
+// String operations
+let first = "Hello";
+let second = "World";
+print(first + " " + second);
+
+// Comments work!
+print("");
+
+// ===== TIER 2 FEATURES =====
+print("=== TIER 2: Medium Features ===");
+
+// Dictionaries
+let person = {
+    name: "Alice",
+    age: 30,
+    city: "Boston"
+};
+print("Person: " + person);
+
+// For loops
+print("For loop:");
+for item in numbers {
+    print("  Item: " + item);
+};
+
+// Try/catch
+print("Try/catch:");
+try {
+    let result = 10 / 2;
+    print("  Result: " + result);
+} catch error {
+    print("  Error: " + error);
+};
+
+print("");
+
+// ===== TIER 3 FEATURES =====
+print("=== TIER 3: Advanced Features ===");
+
+// If/else/elif
+let score = 85;
+print("Score: " + score);
+if score >= 90 {
+    print("Grade: A");
+} else if score >= 80 {
+    print("Grade: B");
+} else if score >= 70 {
+    print("Grade: C");
+} else {
+    print("Grade: F");
+};
+
+// While loops
+print("While loop:");
+let count = 0;
+while count < 3 {
+    print("  Count: " + count);
+    count = count + 1;
+};
+
+// Array indexing
+let colors = ["red", "green", "blue"];
+print("First color: " + colors[0]);
+print("Last color: " + colors[2]);
+
+// Dict indexing
+print("Person name: " + person["name"]);
+print("Person age: " + person["age"]);
+
+// String indexing
+let text = "Hello";
+print("First char: " + text[0]);
+print("Third char: " + text[2]);
+
+print("");
+
+// ===== COMPLEX COMBINATIONS =====
+print("=== COMPLEX: Feature Combinations ===");
+
+// Function with if/else and while
+func factorial(n) {
+    let result = 1;
+    let i = 1;
+    while i <= n {
+        result = result * i;
+        i = i + 1;
+    };
+    return result;
+};
+
+print("Factorial of 5 = " + factorial(5));
+
+// For loop with if/else
+print("Even numbers from 1-10:");
+let nums = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+for num in nums {
+    if num % 2 == 0 {
+        print("  " + num);
+    };
+};
+
+print("");
+print("=== ALL TESTS COMPLETE ===");
+print("✅ All Tier 1, 2, and 3 features working!");

@@ -1,0 +1,32 @@
+// Test repeat loop (alternative loop syntax)
+print("=== Testing Repeat Loop ===");
+
+// Test repeat N times
+print("Counting with repeat:");
+let i = 0;
+repeat 5 {
+    print("Count: " + i);
+    i = i + 1;
+};
+
+print("");
+
+// Test repeat while
+print("Repeat while countdown:");
+let count = 3;
+repeat while count > 0 {
+    print("Countdown: " + count);
+    count = count - 1;
+};
+
+print("");
+
+// Test repeat until
+print("Repeat until:");
+let n = 0;
+repeat until n >= 3 {
+    print("n = " + n);
+    n = n + 1;
+};
+
+print("Repeat loop tests complete!");

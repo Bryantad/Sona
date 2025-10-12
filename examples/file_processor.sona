@@ -1,0 +1,32 @@
+// examples/file_processor.sona
+// Example: Process files in a directory
+
+import fs;
+import path;
+import io;
+import string;
+
+print("=== File Processor Example ===");
+
+// Get all files in current directory
+let files = fs.list_dir(".");
+let sona_files = [];
+
+// Filter for .sona files
+for file in files {
+    if string.ends_with(file, ".sona") {
+        sona_files.append(file);
+    }
+}
+
+print("Found " + len(sona_files) + " Sona files:");
+
+// Display file information
+for file in sona_files {
+    let full_path = path.join(".", file);
+    if fs.exists(full_path) {
+        print("  ✓ " + file);
+    }
+}
+
+print("\nProcessing complete!");
