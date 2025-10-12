@@ -1,0 +1,91 @@
+# time.smod
+# Purpose: Time operations for retrieving timestamps, formatting, parsing, and measuring durations.
+# Inputs: ISO timestamps, durations in seconds, optional timezone identifiers.
+# Outputs: Strings (ISO or formatted), floats for timestamps/differences, and maps for parsed components.
+# Errors: Invalid inputs fall back to sane defaults; future revisions will surface Result errors.
+
+func __default(value, fallback) {
+	if value == nil {
+		return fallback
+	}
+	return value
+}
+
+func now(timespec, tz) {
+	return __native__.time_now(__default(timespec, nil), __default(tz, nil))
+}
+
+func utcnow(timespec) {
+	return __native__.time_utcnow(__default(timespec, nil))
+}
+
+func timestamp() {
+	return __native__.time_timestamp()
+}
+
+func from_timestamp(value, timespec, tz) {
+	return __native__.time_from_timestamp(
+		value,
+		__default(timespec, nil),
+		__default(tz, nil)
+	)
+}
+
+func to_timestamp(value, tz) {
+	return __native__.time_to_timestamp(value, __default(tz, nil))
+}
+
+func parse(value, tz, timespec) {
+	return __native__.time_parse(
+		value,
+		__default(tz, nil),
+		__default(timespec, "microseconds")
+	)
+}
+
+func format_iso(value, timespec, tz) {
+	return __native__.time_format_iso(
+		value,
+		__default(timespec, nil),
+		__default(tz, nil)
+	)
+}
+
+func format(value, pattern, tz) {
+	return __native__.time_format_pattern(
+		value,
+		pattern,
+		__default(tz, nil)
+	)
+}
+
+func diff(start, end, unit, absolute) {
+	if absolute == nil {
+		absolute = true
+	}
+	return __native__.time_diff(
+		start,
+		end,
+		__default(unit, "seconds"),
+		absolute
+	)
+}
+
+func shift(value, options) {
+	if options == nil {
+		options = {}
+	}
+	return __native__.time_shift(value, options)
+}
+
+func sleep(seconds) {
+	__native__.time_sleep(seconds)
+}
+
+func monotonic() {
+	return __native__.time_monotonic()
+}
+
+func perf_counter() {
+	return __native__.time_perf_counter()
+}

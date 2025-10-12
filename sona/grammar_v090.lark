@@ -1,0 +1,239 @@
+//
+// Sona Language Grammar v0.9.6 - Enhanced Control Flow
+// Complete implementation of if/else/elif, loops, and exception handling
+// with AI integration and cognitive accessibility features
+// Using semicolon as primary statement separator
+//
+
+// ======== Whitespace and Comments (MUST BE FIRST) ========
+// Single line comments (both // and # styles)
+COMMENT: "//" /[^\n]*/ | /\#[^\n]*/
+// Multi-line comments  
+MULTILINE_COMMENT: "/*" /(.|\n)*?/ "*/"
+
+%import common.WS
+%ignore WS
+%ignore COMMENT
+%ignore MULTILINE_COMMENT
+
+// ======== Grammar Start ========
+
+start: statement_list
+
+statement_list: statement (";" statement)* ";"?
+
+?statement: expr
+     | import_stmt
+     | export_stmt
+     | var_assignment
+     | bare_assignment
+     | destructuring_assignment
+     | print_stmt
+     | show_stmt
+     | think_stmt
+     | calculate_stmt
+     | enhanced_if_stmt
+     | when_stmt
+     | match_stmt
+     | enhanced_while_stmt
+     | enhanced_for_stmt
+     | repeat_stmt
+     | func_def
+     | class_def
+     | enhanced_try_stmt
+     | return_stmt
+     | break_stmt
+     | continue_stmt
+     | ai_stmt
+
+// ======== Enhanced Control Flow (v0.9.0) ========
+
+// Enhanced if/else/elif with complete support
+enhanced_if_stmt: "if" expr "{" statement* "}" elif_clause* else_clause? -> enhanced_if_stmt
+elif_clause: "else" "if" expr "{" statement* "}" -> elif_clause
+else_clause: "else" "{" statement* "}" -> else_clause
+
+// Enhanced loops with break/continue support
+enhanced_for_stmt: "for" NAME "in" expr "{" statement_list? "}" -> enhanced_for_stmt
+enhanced_while_stmt: "while" expr "{" statement_list? "}" -> enhanced_while_stmt
+
+// Enhanced try/catch/finally with exception type matching
+enhanced_try_stmt: "try" "{" statement* "}" catch_clause+ finally_clause? -> enhanced_try_stmt
+catch_clause: "catch" exception_type ["as" NAME] "{" statement* "}" -> catch_clause
+finally_clause: "finally" "{" statement* "}" -> finally_clause
+exception_type: NAME | STRING
+
+// Loop control statements
+break_stmt: "break" -> break_stmt
+continue_stmt: "continue" -> continue_stmt
+
+// ======== Module System (v0.9.0) ========
+
+// Import statements with advanced syntax
+import_stmt: "import" module_path ["as" NAME] -> import_stmt
+           | "import" "{" import_list "}" "from" module_path -> import_from_stmt
+
+// Export statements
+export_stmt: "export" (func_def | class_def | var_assignment | bare_assignment) -> export_stmt
+
+// Module and import utilities
+module_path: NAME ("." NAME)* -> module_path
+import_list: NAME ("," NAME)* -> import_list
+
+// ======== AI Integration Statements ========
+
+ai_stmt: ai_complete_stmt
+       | ai_explain_stmt
+       | ai_debug_stmt
+       | ai_optimize_stmt
+       | cognitive_stmt
+
+ai_complete_stmt: "ai_complete" "(" STRING ")" -> ai_complete_stmt
+ai_explain_stmt: "ai_explain" "(" expr ")" -> ai_explain_stmt  
+ai_debug_stmt: "ai_debug" "(" [expr] ")" -> ai_debug_stmt
+ai_optimize_stmt: "ai_optimize" "(" expr ")" -> ai_optimize_stmt
+
+// Cognitive programming statements
+cognitive_stmt: cognitive_check_stmt
+              | focus_mode_stmt
+              | working_memory_stmt
+
+cognitive_check_stmt: "cognitive_check" "{" cognitive_body "}" -> cognitive_check_stmt
+focus_mode_stmt: "focus_mode" "{" cognitive_body "}" -> focus_mode_stmt
+working_memory_stmt: "working_memory" "{" cognitive_body "}" -> working_memory_stmt
+
+cognitive_body: cognitive_assignment*
+cognitive_assignment: NAME "=" expr -> cognitive_assignment
+
+// ======== Classic Assignment ========
+var_assignment: let_assignment | const_assignment
+let_assignment: "let" NAME "=" expr -> let_assign
+const_assignment: "const" NAME "=" expr -> const_assign
+
+// ======== Cognitive Syntax ========
+// Bare assignment (documented style)
+bare_assignment: NAME "=" expr -> bare_assign
+
+// Destructuring assignment (for arrays/objects)
+destructuring_assignment: "[" NAME ("," NAME)* "]" "=" expr -> destructure_assign
+
+// Output statements
+print_stmt: "print" "(" expr ")" -> print_stmt
+show_stmt: "show" expr -> show_stmt
+
+// Cognitive comments and operations
+think_stmt: "think" STRING -> think_stmt
+calculate_stmt: "calculate" NAME "=" expr -> calculate_assign
+
+// ======== Legacy Control Flow (for compatibility) ========
+
+// Cognitive conditionals (legacy)
+when_stmt: "when" expr ":" NEWLINE _INDENT statement+ _DEDENT ["else" ":" NEWLINE _INDENT statement+ _DEDENT] -> when_stmt
+
+// Classic match statements
+match_stmt: "match" expr "{" match_case+ "}" -> match_stmt
+match_case: (expr | "_") "=>" (expr | "{" statement* "}") -> match_case
+
+// ======== Cognitive Loops (legacy) ========
+// Basic repeat loop: repeat 5 times:
+repeat_stmt: "repeat" expr "times" ":" NEWLINE _INDENT statement+ _DEDENT -> repeat_times
+           // List iteration: repeat for each item in items:
+           | "repeat" "for" "each" NAME "in" expr ":" NEWLINE _INDENT statement+ _DEDENT -> repeat_for_each
+           // Range iteration: repeat for i from 1 to 10:
+           | "repeat" "for" NAME "from" expr "to" expr ":" NEWLINE _INDENT statement+ _DEDENT -> repeat_for_range
+           // Range with step: repeat for i from 1 to 10 step 2:
+           | "repeat" "for" NAME "from" expr "to" expr "step" expr ":" NEWLINE _INDENT statement+ _DEDENT -> repeat_for_range_step
+
+// ======== Function Definition ========
+func_def: ("func" | "def") NAME "(" [param_list] ")" [return_type] "{" statement_list? "}" -> func_def
+param_list: param ("," param)*
+param: NAME [":" type_hint] ["=" expr] -> param
+return_type: "->" type_hint -> return_type
+type_hint: NAME -> type_hint
+
+// ======== Class Definition ========
+class_def: "class" NAME ["(" NAME ")"] "{" class_body "}" -> class_def
+class_body: (method_def | property_def)*
+method_def: "method" NAME "(" [param_list] ")" [return_type] "{" statement* "}" -> method_def
+property_def: "property" NAME [":" type_hint] ["=" expr] -> property_def
+
+// ======== Return Statement ========
+return_stmt: "return" expr -> return_stmt
+
+// ======== Expressions ========
+?expr: or_expr
+
+?or_expr: and_expr
+        | or_expr "||" and_expr -> or_op
+        | or_expr "or" and_expr -> or_op
+
+?and_expr: equality
+         | and_expr "&&" equality -> and_op
+         | and_expr "and" equality -> and_op
+
+?equality: comparison
+         | equality "==" comparison -> eq
+         | equality "!=" comparison -> neq
+
+?comparison: sum
+           | comparison "<" sum -> lt
+           | comparison ">" sum -> gt
+           | comparison "<=" sum -> lte
+           | comparison ">=" sum -> gte
+
+?sum: term
+    | sum "+" term -> add
+    | sum "-" term -> sub
+
+?term: factor
+     | term "*" factor -> mul
+     | term "/" factor -> div
+     | term "%" factor -> mod
+
+?factor: power
+       | "+" factor -> uplus
+       | "-" factor -> uminus
+       | "!" factor -> not_op
+       | "not" factor -> not_op
+
+?power: atom
+      | atom "**" factor -> pow
+
+?atom: NAME -> var
+     | NUMBER -> num
+     | STRING -> str
+     | TEMPLATE_STRING -> template_str
+     | "true" -> true
+     | "false" -> false
+     | "null" -> null
+     | array
+     | object
+     | function_call
+     | method_call
+     | property_access
+     | atom "[" expr "]" -> index_access
+     | atom "[" [expr] ":" [expr] "]" -> slice_access
+     | "(" expr ")"
+
+// ======== Data Structures ========
+array: "[" [expr_list] "]" -> array
+object: "{" [object_pairs] "}" -> object
+object_pairs: object_pair ("," object_pair)*
+object_pair: (NAME | STRING) ":" expr -> object_pair
+expr_list: expr ("," expr)*
+
+// ======== Function and Method Calls ========
+function_call: NAME "(" [arguments] ")" -> func_call
+method_call: atom "." NAME "(" [arguments] ")" -> method_call
+property_access: atom "." NAME -> prop_access
+arguments: expr ("," expr)* -> arg_list
+arg_list: arguments
+
+// ======== Terminals ========
+NAME: /[a-zA-Z_][a-zA-Z0-9_]*/
+NUMBER: /\d+(\.\d+)?/
+STRING: /"[^"]*"/ | /'[^']*'/
+TEMPLATE_STRING: /`[^`]*`/
+
+// Indentation for cognitive syntax (Python-style)
+%declare _INDENT _DEDENT

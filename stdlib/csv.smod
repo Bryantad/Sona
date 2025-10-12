@@ -1,0 +1,45 @@
+# csv.smod
+# Purpose: Parse, write, and manipulate CSV (Comma Separated Values) data.
+# Inputs: file paths, CSV strings, delimiters, parsing options (headers, quotes, escapes).
+# Outputs: parsed data structures, formatted CSV strings, field validation results.
+# Errors: Returns structured error maps with type and message information.
+
+# Parses a CSV string into an array of records.
+func parse(csv_data, options) {
+    return __native__.csv_parse(csv_data, options)
+}
+
+# Parses a CSV file into an array of records.
+func parse_file(file_path, options) {
+    return __native__.csv_parse_file(file_path, options)
+}
+
+# Converts an array of records into a CSV string.
+func stringify(records, options) {
+    return __native__.csv_stringify(records, options)
+}
+
+# Writes an array of records to a CSV file.
+func write_file(file_path, records, options) {
+    return __native__.csv_write_file(file_path, records, options)
+}
+
+# Validates CSV structure and returns any parsing errors.
+func validate(csv_data, options) {
+    return __native__.csv_validate(csv_data, options)
+}
+
+# Streams CSV data for processing large files line by line.
+func stream(file_path, callback, options) {
+    return __native__.csv_stream(file_path, callback, options)
+}
+
+# Extracts specific fields from CSV records.
+func extract_fields(records, field_names) {
+    return __native__.csv_extract_fields(records, field_names)
+}
+
+# Transforms CSV records using a mapping function.
+func transform(records, transformer, options) {
+    return __native__.csv_transform(records, transformer, options)
+}

@@ -1,0 +1,28 @@
+"""Validation utility functions for Sona"""
+
+# Core validation functions
+let is_number = fn(x) { 
+    return type(x) == "number" 
+}
+
+let is_string = fn(x) { 
+    return type(x) == "string" 
+}
+
+let is_empty = fn(x) { 
+    return x == "" or x == [] or x == null 
+}
+
+let has_length = fn(x) { 
+    return type(x) == "string" or type(x) == "array" 
+}
+
+let in_range = fn(x, min, max) {  
+    return x >= min and x <= max 
+}
+
+# Email validation
+let is_email = fn(email) { 
+    if not is_string(email) { return false }
+    return string.match(email, "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
+}

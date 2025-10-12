@@ -1,0 +1,81 @@
+# module: regex
+# version: 0.9.5
+# purpose: Safe, timeout-aware regular expression helpers for Sona programs.
+# inputs: pattern strings or compiled handles, subject text, option maps (case_insensitive, multiline, dotall, ignore_whitespace, timeout_ms, max_matches).
+# outputs: Match records, lists of captures, transformed strings, and escaped patterns.
+# errors: Propagates regex.compile errors and timeout exceptions as runtime errors.
+
+func __default(value, fallback) {
+    if value == nil {
+        return fallback
+    }
+    return value
+}
+
+func __options(value) {
+    if value == nil {
+        return {}
+    }
+    return value
+}
+
+func compile(pattern, options) {
+    return __native__.regex_compile(pattern, __options(options))
+}
+
+func match(pattern, text, options) {
+    return __native__.regex_match(
+        pattern,
+        text,
+        options=__options(options)
+    )
+}
+
+func search(pattern, text, options) {
+    return __native__.regex_search(
+        pattern,
+        text,
+        options=__options(options)
+    )
+}
+
+func test(pattern, text, options) {
+    return __native__.regex_test(
+        pattern,
+        text,
+        options=__options(options)
+    )
+}
+
+func find_all(pattern, text, options) {
+    return __native__.regex_find_all(
+        pattern,
+        text,
+        options=__options(options)
+    )
+}
+
+func replace(pattern, text, replacement, options) {
+    let opts = __options(options)
+    return __native__.regex_replace(
+        pattern,
+        text,
+        replacement,
+        count=__default(opts["count"], nil),
+        options=opts
+    )
+}
+
+func split(pattern, text, options) {
+    let opts = __options(options)
+    return __native__.regex_split(
+        pattern,
+        text,
+        maxsplit=__default(opts["maxsplit"], nil),
+        options=opts
+    )
+}
+
+func escape(text) {
+    return __native__.regex_escape(text)
+}

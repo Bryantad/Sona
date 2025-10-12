@@ -1,0 +1,123 @@
+# fs.smod
+# Purpose: High-level filesystem helpers for Sona scripts.
+# Inputs: Paths (strings) and payloads (strings or byte arrays) for file operations.
+# Outputs: Booleans indicating success, strings/bytes for contents, dictionaries for metadata.
+# Errors: Native layer surfaces OSErrors as ``false`` or ``nil`` results; Result types will wrap these in future revisions.
+
+func __default_encoding(value) {
+    if value == nil {
+        return "utf-8"
+    }
+    return value
+}
+
+func read(path, encoding) {
+    return __native__.fs_read(path, __default_encoding(encoding))
+}
+
+func read_bytes(path) {
+    return __native__.fs_read_bytes(path)
+}
+
+func write(path, content, encoding) {
+    return __native__.fs_write(path, content, __default_encoding(encoding))
+}
+
+func write_bytes(path, data) {
+    return __native__.fs_write_bytes(path, data)
+}
+
+func append(path, content, encoding) {
+    return __native__.fs_append(path, content, __default_encoding(encoding))
+}
+
+func exists(path) {
+    return __native__.fs_exists(path)
+}
+
+func is_file(path) {
+    return __native__.fs_is_file(path)
+}
+
+func is_dir(path) {
+    return __native__.fs_is_dir(path)
+}
+
+func list_dir(path) {
+    return __native__.fs_list_dir(path, false)
+}
+
+func list_all(path) {
+    return __native__.fs_list_dir(path, true)
+}
+
+func mkdir(path, parents, exist_ok) {
+    if parents == nil {
+        parents = true
+    }
+    if exist_ok == nil {
+        exist_ok = true
+    }
+    return __native__.fs_mkdir(path, parents, exist_ok)
+}
+
+func remove(path, recursive) {
+    if recursive == nil {
+        recursive = true
+    }
+    return __native__.fs_remove(path, recursive)
+}
+
+func copy(src, dst, overwrite) {
+    if overwrite == nil {
+        overwrite = true
+    }
+    return __native__.fs_copy(src, dst, overwrite)
+}
+
+func move(src, dst, overwrite) {
+    if overwrite == nil {
+        overwrite = true
+    }
+    return __native__.fs_move(src, dst, overwrite)
+}
+
+func touch(path, exist_ok) {
+    if exist_ok == nil {
+        exist_ok = true
+    }
+    return __native__.fs_touch(path, exist_ok)
+}
+
+func chmod(path, mode) {
+    return __native__.fs_chmod(path, mode)
+}
+
+func stat(path) {
+    return __native__.fs_stat(path)
+}
+
+func symlink(target, link_path, exist_ok) {
+    if exist_ok == nil {
+        exist_ok = false
+    }
+    return __native__.fs_symlink(target, link_path, exist_ok)
+}
+
+func readlink(path) {
+    return __native__.fs_readlink(path)
+}
+
+func watch(path, timeout_ms, interval_ms) {
+    if timeout_ms == nil {
+        timeout_ms = 1000
+    }
+    if interval_ms == nil {
+        interval_ms = 100
+    }
+    return __native__.fs_watch(path, timeout_ms, interval_ms)
+}
+
+func set_times(path, access_time, modified_time) {
+    return __native__.fs_set_times(path, access_time, modified_time)
+}

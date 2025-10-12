@@ -1,0 +1,305 @@
+func __default(value, fallback) {
+    if value == nil {
+        return fallback
+    }
+    return value
+}
+
+func upper(value) {
+    return __native__.string_upper(value)
+}
+
+func lower(value) {
+    return __native__.string_lower(value)
+}
+
+func casefold(value) {
+    return __native__.string_casefold(value)
+}
+
+func capitalize(value) {
+    return __native__.string_capitalize(value)
+}
+
+func title(value) {
+    return __native__.string_title(value)
+}
+
+func swapcase(value) {
+    return __native__.string_swapcase(value)
+}
+
+func repeat(value, count) {
+    return __native__.string_repeat(value, count)
+}
+
+func trim(value, chars) {
+    return __native__.string_trim(value, __default(chars, nil))
+}
+
+func ltrim(value, chars) {
+    return __native__.string_ltrim(value, __default(chars, nil))
+}
+
+func rtrim(value, chars) {
+    return __native__.string_rtrim(value, __default(chars, nil))
+}
+
+func ensure_prefix(value, prefix) {
+    return __native__.string_ensure_prefix(value, prefix)
+}
+
+func ensure_suffix(value, suffix) {
+    return __native__.string_ensure_suffix(value, suffix)
+}
+
+func remove_prefix(value, prefix) {
+    return __native__.string_remove_prefix(value, prefix)
+}
+
+func remove_suffix(value, suffix) {
+    return __native__.string_remove_suffix(value, suffix)
+}
+
+func contains(value, substring, options) {
+    if options == nil {
+        options = {}
+    }
+    return __native__.string_contains(
+        value,
+        substring,
+        __default(options["ignore_case"], false)
+    )
+}
+
+func starts_with(value, prefix, options) {
+    if options == nil {
+        options = {}
+    }
+    return __native__.string_startswith(
+        value,
+        prefix,
+        ignore_case=__default(options["ignore_case"], false)
+    )
+}
+
+func ends_with(value, suffix, options) {
+    if options == nil {
+        options = {}
+    }
+    return __native__.string_endswith(
+        value,
+        suffix,
+        ignore_case=__default(options["ignore_case"], false)
+    )
+}
+
+func count(value, substring, options) {
+    if options == nil {
+        options = {}
+    }
+    return __native__.string_count(
+        value,
+        substring,
+        ignore_case=__default(options["ignore_case"], false)
+    )
+}
+
+func split(value, delimiter, options) {
+    if options == nil {
+        options = {}
+    }
+    return __native__.string_split(
+        value,
+        __default(delimiter, nil),
+        maxsplit=__default(options["maxsplit"], -1),
+        keep_empty=__default(options["keep_empty"], true)
+    )
+}
+
+func rsplit(value, delimiter, options) {
+    if options == nil {
+        options = {}
+    }
+    return __native__.string_rsplit(
+        value,
+        __default(delimiter, nil),
+        maxsplit=__default(options["maxsplit"], -1)
+    )
+}
+
+func lines(value, options) {
+    if options == nil {
+        options = {}
+    }
+    return __native__.string_lines(value, __default(options["keepends"], false))
+}
+
+func words(value) {
+    return __native__.string_words(value)
+}
+
+func join(parts, delimiter) {
+    return __native__.string_join(parts, __default(delimiter, ""))
+}
+
+func replace(value, old, new, options) {
+    if options == nil {
+        options = {}
+    }
+    return __native__.string_replace(
+        value,
+        old,
+        new,
+        count=__default(options["count"], nil)
+    )
+}
+
+func replace_many(value, replacements, options) {
+    if options == nil {
+        options = {}
+    }
+    return __native__.string_replace_many(
+        value,
+        replacements,
+        ignore_case=__default(options["ignore_case"], false)
+    )
+}
+
+func collapse_whitespace(value) {
+    return __native__.string_collapse_whitespace(value)
+}
+
+func pad_left(value, width, fill) {
+    return __native__.string_pad_left(value, width, __default(fill, " "))
+}
+
+func pad_right(value, width, fill) {
+    return __native__.string_pad_right(value, width, __default(fill, " "))
+}
+
+func pad_center(value, width, fill) {
+    return __native__.string_pad_center(value, width, __default(fill, " "))
+}
+
+func truncate(value, length, options) {
+    if options == nil {
+        options = {}
+    }
+    return __native__.string_truncate(
+        value,
+        length,
+        suffix=__default(options["suffix"], "…")
+    )
+}
+
+func is_blank(value) {
+    return __native__.string_is_blank(value)
+}
+
+func slugify(value, separator) {
+    return __native__.string_slugify(value, __default(separator, "-"))
+}
+
+func snake_case(value) {
+    return __native__.string_snake_case(value)
+}
+
+func kebab_case(value) {
+    return __native__.string_kebab_case(value)
+}
+
+func camel_case(value) {
+    return __native__.string_camel_case(value)
+}
+
+func pascal_case(value) {
+    return __native__.string_pascal_case(value)
+}
+
+func format(template, options) {
+    if options == nil {
+        options = {}
+    }
+    return __native__.string_format(
+        template,
+        __default(options["args"], []),
+        __default(options["kwargs"], {})
+    )
+}
+
+func length(value) {
+    return __native__.string_length(value)
+}
+
+func regex_escape(value) {
+    return __native__.string_regex_escape(value)
+}
+
+func __regex_flags(options) {
+    if options == nil {
+        return nil
+    }
+    return __default(options["flags"], nil)
+}
+
+func regex_test(value, pattern, options) {
+    return __native__.string_regex_test(
+        value,
+        pattern,
+        flags=__regex_flags(options)
+    )
+}
+
+func regex_match(value, pattern, options) {
+    return __native__.string_regex_match(
+        value,
+        pattern,
+        flags=__regex_flags(options)
+    )
+}
+
+func regex_search(value, pattern, options) {
+    return __native__.string_regex_search(
+        value,
+        pattern,
+        flags=__regex_flags(options)
+    )
+}
+
+func regex_findall(value, pattern, options) {
+    return __native__.string_regex_findall(
+        value,
+        pattern,
+        flags=__regex_flags(options)
+    )
+}
+
+func regex_replace(value, pattern, replacement, options) {
+    if options == nil {
+        options = {}
+    }
+    return __native__.string_regex_replace(
+        value,
+        pattern,
+        replacement,
+        count=__default(options["count"], 0),
+        flags=__regex_flags(options)
+    )
+}
+
+func regex_split(value, pattern, options) {
+    if options == nil {
+        options = {}
+    }
+    return __native__.string_regex_split(
+        value,
+        pattern,
+        maxsplit=__default(options["maxsplit"], 0),
+        flags=__regex_flags(options)
+    )
+}
+
+func parse(value) {
+    return words(value)
+}

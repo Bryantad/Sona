@@ -1,0 +1,127 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "Sona"
+version = "0.9.6"
+description = "Sona Programming Language with Cognitive Accessibility and Neurodivergent-First Features"
+authors = [{name = "WayCore Inc.", email = "info@waycore.com"}]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+	"lark-parser>=0.12.0",
+]
+classifiers = [
+	"Programming Language :: Python :: 3",
+	"Programming Language :: Python :: 3.11",
+	"Programming Language :: Python :: 3.12",
+	"License :: OSI Approved :: MIT License",
+	"Intended Audience :: Developers",
+]
+
+[project.optional-dependencies]
+ai = [
+	"torch>=2.2; platform_system!='Windows'",
+	"transformers>=4.43",
+	"accelerate>=0.33",
+]
+toml = [
+	"tomli-w>=1.0.0",
+]
+dev = [
+	"ruff>=0.5",
+	"black>=24.4",
+	"pytest>=8.0",
+	"coverage>=7.5",
+	"pytest-cov>=5.0",
+	"mypy>=1.10",
+	"hypothesis>=6.100",
+	"pytest-randomly>=3.15",
+]
+
+[project.scripts]
+sona = "sona.cli:main"
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+# Limit formatting strictly to core package files
+include = "sona/.*\\.pyi?$"
+extend-exclude = '''
+/(demos|examples|playground|benchmarks|notebooks|legacy|scripts|.venv|build|dist)/
+|working_memory\.py
+|unified_interpreter\.py
+|utils/debug\.py
+|utils/suppress\.py
+|sona/type_system/.*
+|sona/vm/.*
+|type_aware_interpreter\.py
+|stdlib/utils/string/smod\.py
+|traditional_repl\.py
+|sona/stdlib/.*
+|sona/performance/.*
+|sona_cli_clean\.py
+|sona_unified_cli\.py
+|features/string_interpolation\.py
+|enhanced_repl\.py
+'''
+
+[tool.ruff]
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E","F","I","UP","B","SIM","RUF"]
+ignore = []
+exclude = [
+	"demos/**",
+	"examples/**",
+	"playground/**",
+	"benchmarks/**",
+	"notebooks/**",
+	"legacy/**",
+	"scripts/**",
+	".venv/**",
+	"build/**",
+	"dist/**",
+	"**/working_memory.py",
+	"**/unified_interpreter.py",
+	"**/utils/debug.py",
+	"**/utils/suppress.py",
+	"**/type_system/**",
+	"**/vm/**",
+	"**/type_aware_interpreter.py",
+	"**/stdlib/**",
+	"**/performance/**",
+	"**/sona_cli_clean.py",
+	"**/sona_unified_cli.py",
+	"**/features/string_interpolation.py",
+	"**/enhanced_repl.py",
+]
+
+[tool.ruff.format]
+line-length = 100
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+
+[tool.coverage.run]
+branch = true
+source = ["sona"]
+omit = [
+	"tests/*",
+	"*/__init__.py",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 90
+
+[tool.pytest.ini_options]
+addopts = "-q --strict-markers --cov=sona --cov-report=xml --cov-report=term:skip-covered --cov-fail-under=90 --hypothesis-show-statistics"
+testpaths = ["tests"]
+markers = [
+	"property: property-based stdlib tests",
+	"stdlib: exercises stdlib harness",
+]

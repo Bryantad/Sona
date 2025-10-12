@@ -1,0 +1,231 @@
+const PI = __native__.math_PI
+const TAU = __native__.math_TAU
+const E = __native__.math_E
+const PHI = __native__.math_PHI
+
+func __default(value, fallback) {
+	if value == nil {
+		return fallback
+	}
+	return value
+}
+
+func add(a, b) {
+	return __native__.math_add(a, b)
+}
+
+func subtract(a, b) {
+	return __native__.math_subtract(a, b)
+}
+
+func multiply(a, b) {
+	return __native__.math_multiply(a, b)
+}
+
+func divide(a, b) {
+	return __native__.math_divide(a, b)
+}
+
+func safe_divide(a, b, fallback) {
+	return __native__.math_safe_divide(a, b, __default(fallback, 0.0))
+}
+
+func mod(a, b) {
+	return __native__.math_mod(a, b)
+}
+
+func pow(x, y) {
+	return __native__.math_pow(x, y)
+}
+
+func sqrt(x) {
+	return __native__.math_sqrt(x)
+}
+
+func cbrt(x) {
+	return __native__.math_cbrt(x)
+}
+
+func sin(x) {
+	return __native__.math_sin(x)
+}
+
+func cos(x) {
+	return __native__.math_cos(x)
+}
+
+func tan(x) {
+	return __native__.math_tan(x)
+}
+
+func asin(x) {
+	return __native__.math_asin(x)
+}
+
+func acos(x) {
+	return __native__.math_acos(x)
+}
+
+func atan(x) {
+	return __native__.math_atan(x)
+}
+
+func atan2(y, x) {
+	return __native__.math_atan2(y, x)
+}
+
+func log(x, base) {
+	return __native__.math_log(x, __default(base, nil))
+}
+
+func log10(x) {
+	return __native__.math_log10(x)
+}
+
+func exp(x) {
+	return __native__.math_exp(x)
+}
+
+func sigmoid(x) {
+	return __native__.math_sigmoid(x)
+}
+
+func clamp(value, lower, upper) {
+	return __native__.math_clamp(value, lower, upper)
+}
+
+func lerp(start, end, t) {
+	return __native__.math_lerp(start, end, t)
+}
+
+func inv_lerp(start, end, value) {
+	return __native__.math_inv_lerp(start, end, value)
+}
+
+func remap(value, in_start, in_end, out_start, out_end) {
+	return __native__.math_remap(value, in_start, in_end, out_start, out_end)
+}
+
+func deg2rad(degrees) {
+	return __native__.math_deg2rad(degrees)
+}
+
+func rad2deg(radians) {
+	return __native__.math_rad2deg(radians)
+}
+
+func floor(value) {
+	return __native__.math_floor(value)
+}
+
+func ceil(value) {
+	return __native__.math_ceil(value)
+}
+
+func round(value, digits) {
+	return __native__.math_round(value, __default(digits, nil))
+}
+
+func trunc(value) {
+	return __native__.math_trunc(value)
+}
+
+func abs(value) {
+	return __native__.math_abs(value)
+}
+
+func sum(values) {
+	return __native__.math_sum(values)
+}
+
+func product(values) {
+	return __native__.math_product(values)
+}
+
+func mean(values) {
+	return __native__.math_mean(values)
+}
+
+func median(values) {
+	return __native__.math_median(values)
+}
+
+func variance(values, options) {
+	if options == nil {
+		options = {}
+	}
+	return __native__.math_variance(
+		values,
+		sample=__default(options["sample"], false)
+	)
+}
+
+func stddev(values, options) {
+	if options == nil {
+		options = {}
+	}
+	return __native__.math_stddev(
+		values,
+		sample=__default(options["sample"], false)
+	)
+}
+
+func minimum(values) {
+	return __native__.math_minimum(values)
+}
+
+func maximum(values) {
+	return __native__.math_maximum(values)
+}
+
+func dot(a, b) {
+	return __native__.math_dot(a, b)
+}
+
+func magnitude(vec) {
+	return __native__.math_magnitude(vec)
+}
+
+func normalize(vec) {
+	return __native__.math_normalize(vec)
+}
+
+func distance(a, b) {
+	return __native__.math_distance(a, b)
+}
+
+func is_close(a, b, options) {
+	if options == nil {
+		options = {}
+	}
+	return __native__.math_is_close(
+		a,
+		b,
+		rel_tol=__default(options["rel_tol"], 1e-9),
+		abs_tol=__default(options["abs_tol"], 0.0)
+	)
+}
+
+func hypot(values) {
+	return __native__.math_hypot(values)
+}
+
+func gcd(a, b) {
+	return __native__.math_gcd(a, b)
+}
+
+func lcm(a, b) {
+	return __native__.math_lcm(a, b)
+}
+
+func factorial(n) {
+	return __native__.math_factorial(n)
+}
+
+func choose(n, k) {
+	return __native__.math_choose(n, k)
+}
+
+func permute(n, k) {
+	return __native__.math_permute(n, k)
+}
