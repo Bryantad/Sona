@@ -1,8 +1,8 @@
 {
-  "version": "0.9.6",
-  "stdlib_cap": 30,
-  "manifest_hash": "verified_all_30_working",
-  "description": "Sona v0.9.6 Standard Library - All 30 Modules Verified Working",
+  "version": "0.9.7-dev",
+  "stdlib_cap": 40,
+  "manifest_hash": "in_development",
+  "description": "Sona v0.9.7 Standard Library - Expanding to 40 Modules (IN DEVELOPMENT)",
   "modules": [
     "json",
     "string",
