@@ -1,0 +1,33 @@
+// Test collection.dict module - v0.9.7
+import collection.dict
+
+// Test safe_get()
+let d = {"a": 1, "b": 2}
+assert collection.dict.safe_get(d, "a") == 1
+assert collection.dict.safe_get(d, "c", 0) == 0
+print("✓ safe_get() tests passed")
+
+// Test merge() - prefer_right (default)
+let merged = collection.dict.merge({"x": 1}, {"y": 2})
+assert merged == {"x": 1, "y": 2}
+print("✓ merge() no conflict test passed")
+
+let merged_right = collection.dict.merge({"x": 1}, {"x": 2})
+assert merged_right["x"] == 2
+print("✓ merge() prefer_right test passed")
+
+// Test merge() - prefer_left
+let merged_left = collection.dict.merge({"x": 1}, {"x": 2}, "prefer_left")
+assert merged_left["x"] == 1
+print("✓ merge() prefer_left test passed")
+
+// Test remap()
+let remapped = collection.dict.remap({"a": 1, "b": 2}, {"a": "x"})
+assert remapped == {"x": 1, "b": 2}
+print("✓ remap() basic test passed")
+
+let remap_collision = collection.dict.remap({"a": 1, "b": 2}, {"a": "x", "b": "x"})
+assert remap_collision["x"] == 2
+print("✓ remap() collision (last wins) test passed")
+
+print("✅ All collection.dict tests passed!")

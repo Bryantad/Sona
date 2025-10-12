@@ -119,13 +119,54 @@ class SimpleModuleSystem:
         self.stdlib_path = Path(__file__).parent / "stdlib"
     
     def import_module(self, module_path: str, alias: str | None = None):
-        """Import a module and make it available in the interpreter"""
+        """Import a module and make it available in the interpreter
+        
+        Supports nested namespaces like 'collection.list':
+        - collection.list → sona/stdlib/collection/list.py
+        - http → sona/stdlib/http.py or native_http.py
+        """
         module_name = alias if alias else module_path
         
         # Check if already loaded
         if module_name in self.loaded_modules:
             return self.loaded_modules[module_name]
         
+        # Handle nested namespaces (e.g., collection.list)
+        parts = module_path.split('.')
+        
+        if len(parts) > 1:
+            # Nested namespace: collection.list
+            # Build path: sona/stdlib/collection/list.py
+            namespace_dir = self.stdlib_path / parts[0]
+            module_file = namespace_dir / f"{parts[1]}.py"
+            
+            if module_file.exists():
+                import importlib.util
+                spec = importlib.util.spec_from_file_location(
+                    f"sona.stdlib.{module_path}",
+                    module_file
+                )
+                if spec and spec.loader:
+                    module = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(module)
+                    
+                    # Store module object
+                    self.loaded_modules[module_name] = module
+                    
+                    # Make module available as a variable
+                    self.interpreter.memory.set_variable(
+                        module_name,
+                        module,
+                        global_scope=True
+                    )
+                    
+                    return module
+            
+            raise ImportError(
+                f"Nested module '{module_path}' not found at {module_file}"
+            )
+        
+        # Single-level module: try native first, then regular
         # Try native module first (native_{module}.py)
         native_module_path = self.stdlib_path / f"native_{module_path}.py"
         

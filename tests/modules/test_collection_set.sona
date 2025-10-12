@@ -1,0 +1,31 @@
+// Test collection.set module - v0.9.7
+import collection.set
+
+// Test union()
+let unioned = collection.set.union([1, 2], [2, 3])
+assert unioned == [1, 2, 3]
+print("✓ union() two sets test passed")
+
+let union_multi = collection.set.union([1, 2], [3, 4], [5, 6])
+assert union_multi == [1, 2, 3, 4, 5, 6]
+print("✓ union() multiple sets test passed")
+
+// Test intersect()
+let intersected = collection.set.intersect([1, 2, 3], [2, 3, 4])
+assert intersected == [2, 3]
+print("✓ intersect() two sets test passed")
+
+let intersect_multi = collection.set.intersect([1, 2], [2, 3], [2, 4])
+assert intersect_multi == [2]
+print("✓ intersect() multiple sets test passed")
+
+// Test diff()
+let diffed = collection.set.diff([1, 2, 3], [2, 3, 4])
+assert diffed == [1]
+print("✓ diff() basic test passed")
+
+let diff_disjoint = collection.set.diff([1, 2], [3, 4])
+assert diff_disjoint == [1, 2]
+print("✓ diff() disjoint sets test passed")
+
+print("✅ All collection.set tests passed!")

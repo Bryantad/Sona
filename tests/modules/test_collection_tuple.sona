@@ -1,0 +1,31 @@
+// Test collection.tuple module - v0.9.7
+import collection.tuple
+
+// Test zipn()
+let zipped = collection.tuple.zipn([1, 2, 3], ["a", "b", "c"])
+assert zipped == [(1, "a"), (2, "b"), (3, "c")]
+print("✓ zipn() equal length test passed")
+
+let zip_unequal = collection.tuple.zipn([1, 2], [10, 20, 30])
+assert zip_unequal == [(1, 10), (2, 20)]
+print("✓ zipn() unequal length test passed")
+
+// Test unzip()
+let unzipped = collection.tuple.unzip([(1, "a"), (2, "b")])
+assert unzipped == [[1, 2], ["a", "b"]]
+print("✓ unzip() basic test passed")
+
+let unzip_three = collection.tuple.unzip([(1, 2, 3), (4, 5, 6)])
+assert unzip_three == [[1, 4], [2, 5], [3, 6]]
+print("✓ unzip() three elements test passed")
+
+// Test head_tail()
+let ht = collection.tuple.head_tail((1, 2, 3))
+assert ht == (1, [2, 3])
+print("✓ head_tail() basic test passed")
+
+let ht_single = collection.tuple.head_tail([1])
+assert ht_single == (1, [])
+print("✓ head_tail() single element test passed")
+
+print("✅ All collection.tuple tests passed!")
