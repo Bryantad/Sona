@@ -49,13 +49,16 @@ statement_list: statement (";" statement)* ";"?
 // ======== Enhanced Control Flow (v0.9.0) ========
 
 // Enhanced if/else/elif with complete support
-enhanced_if_stmt: "if" expr "{" statement* "}" elif_clause* else_clause? -> enhanced_if_stmt
-elif_clause: "else" "if" expr "{" statement* "}" -> elif_clause
+enhanced_if_stmt: "if" "(" expr ")" "{" statement* "}" elif_clause* else_clause? -> enhanced_if_stmt
+               | "if" expr "{" statement* "}" elif_clause* else_clause? -> enhanced_if_stmt
+elif_clause: "else" "if" "(" expr ")" "{" statement* "}" -> elif_clause
+           | "else" "if" expr "{" statement* "}" -> elif_clause
 else_clause: "else" "{" statement* "}" -> else_clause
 
 // Enhanced loops with break/continue support
 enhanced_for_stmt: "for" NAME "in" expr "{" statement_list? "}" -> enhanced_for_stmt
-enhanced_while_stmt: "while" expr "{" statement_list? "}" -> enhanced_while_stmt
+enhanced_while_stmt: "while" "(" expr ")" "{" statement_list? "}" -> enhanced_while_stmt
+                  | "while" expr "{" statement_list? "}" -> enhanced_while_stmt
 
 // Enhanced try/catch/finally with exception type matching
 enhanced_try_stmt: "try" "{" statement* "}" catch_clause+ finally_clause? -> enhanced_try_stmt
@@ -135,8 +138,10 @@ match_stmt: "match" expr "{" match_case+ "}" -> match_stmt
 match_case: (expr | "_") "=>" (expr | "{" statement* "}") -> match_case
 
 // ======== Cognitive Loops (legacy) ========
-// Basic repeat loop: repeat 5 times:
-repeat_stmt: "repeat" expr "times" ":" NEWLINE _INDENT statement+ _DEDENT -> repeat_times
+// Basic repeat loop with C-style braces: repeat 5 { ... } or repeat 5 times { ... }
+repeat_stmt: "repeat" expr "{" statement_list? "}" -> repeat_n_times
+           | "repeat" expr "times" "{" statement_list? "}" -> repeat_n_times
+           | "repeat" expr "times" ":" NEWLINE _INDENT statement+ _DEDENT -> repeat_times
            // List iteration: repeat for each item in items:
            | "repeat" "for" "each" NAME "in" expr ":" NEWLINE _INDENT statement+ _DEDENT -> repeat_for_each
            // Range iteration: repeat for i from 1 to 10:

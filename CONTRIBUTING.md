@@ -247,7 +247,7 @@ def function_name(param1: type, param2: type) -> return_type:
 6. **Environment**:
    - OS: Windows 11 / Linux / macOS
    - Python version: 3.12
-   - Sona version: 0.9.6
+   - Sona version: 0.9.8
 7. **Code Sample** - Minimal reproducible example
 8. **Error Message** - Full error output
 

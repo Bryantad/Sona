@@ -107,6 +107,50 @@ def fs_set_times(
     )
 
 
+def fs_glob(pattern: str, recursive: bool = False) -> list[str]:
+    return _fs.glob(pattern, recursive=recursive)
+
+
+def fs_find_files(path: str, pattern: str = "*", recursive: bool = True) -> list[str]:
+    return _fs.find_files(path, pattern=pattern, recursive=recursive)
+
+
+def fs_disk_usage(path: str) -> dict:
+    return _fs.disk_usage(path)
+
+
+def fs_get_size(path: str, follow_symlinks: bool = True) -> int:
+    return _fs.get_size(path, follow_symlinks=follow_symlinks)
+
+
+def fs_rename(src: str, dst: str) -> str:
+    return _fs.rename(src, dst)
+
+
+def fs_read_lines(path: str, encoding: str | None = "utf-8") -> list[str]:
+    return _fs.read_lines(path, encoding=encoding or "utf-8")
+
+
+def fs_write_lines(path: str, lines: list[str], encoding: str | None = "utf-8") -> int:
+    return _fs.write_lines(path, lines, encoding=encoding or "utf-8")
+
+
+def fs_is_empty(path: str) -> bool:
+    return _fs.is_empty(path)
+
+
+def fs_walk(path: str) -> list[dict]:
+    return _fs.walk(path)
+
+
+def fs_temp_file(suffix: str = "", prefix: str = "tmp", dir: str | None = None) -> str:
+    return _fs.temp_file(suffix=suffix, prefix=prefix, dir=dir)
+
+
+def fs_temp_dir(prefix: str = "tmp", dir: str | None = None) -> str:
+    return _fs.temp_dir(prefix=prefix, dir=dir)
+
+
 __all__ = [
     "fs_read",
     "fs_read_bytes",
@@ -128,4 +172,15 @@ __all__ = [
     "fs_readlink",
     "fs_watch",
     "fs_set_times",
+    "fs_glob",
+    "fs_find_files",
+    "fs_disk_usage",
+    "fs_get_size",
+    "fs_rename",
+    "fs_read_lines",
+    "fs_write_lines",
+    "fs_is_empty",
+    "fs_walk",
+    "fs_temp_file",
+    "fs_temp_dir",
 ]

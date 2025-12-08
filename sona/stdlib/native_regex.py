@@ -32,6 +32,15 @@ def regex_match(
     return _regex.match(pattern, text, options=_normalize_options(options))
 
 
+def regex_fullmatch(
+    pattern: Any,
+    text: Any,
+    *,
+    options: Any = None,
+) -> dict[str, Any]:
+    return _regex.fullmatch(pattern, text, options=_normalize_options(options))
+
+
 def regex_search(
     pattern: Any,
     text: Any,
@@ -76,6 +85,21 @@ def regex_replace(
     )
 
 
+def regex_replace_callback(
+    pattern: Any,
+    text: Any,
+    callback: Any,
+    *,
+    options: Any = None,
+) -> str:
+    return _regex.replace_callback(
+        pattern,
+        text,
+        callback,
+        options=_normalize_options(options),
+    )
+
+
 def regex_split(
     pattern: Any,
     text: Any,
@@ -98,10 +122,12 @@ def regex_escape(text: Any) -> str:
 __all__ = [
     "regex_compile",
     "regex_match",
+    "regex_fullmatch",
     "regex_search",
     "regex_test",
     "regex_find_all",
     "regex_replace",
+    "regex_replace_callback",
     "regex_split",
     "regex_escape",
 ]

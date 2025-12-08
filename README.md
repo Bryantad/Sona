@@ -1,677 +1,543 @@
-﻿# Sona v0.9.6# Sona v0.9.6 - AI-Native Programming Language# Sona 0.9.6 Official Workspace
+# 🎵 Sona v0.9.8
 
-**Status**: Production Ready ✅**Status**: Production Ready ✅ This is the official, minimal workspace for Sona 0.9.6 and onwards.
+**AI-Native Programming Language with 80-Module Standard Library**
 
-Sona is a modern, expressive programming language with built-in AI capabilities, designed for rapid development of automation tools, data processing pipelines, and AI-assisted applications.**Core Features**: 18/18 Fully Functional
+[![Version](https://img.shields.io/badge/version-0.9.8-blue.svg)](https://github.com/Bryantad/Sona)
+[![Python](https://img.shields.io/badge/python-3.11+-green.svg)](https://www.python.org/)
+[![License](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 
-## ⚡ Quick Facts**Stdlib Modules**: 16 Verified + 10 Experimental ## Quick Start
-
-- ✅ **18/18 Core Features** - All Tier 1/2/3 features fully functionalSona is a modern, expressive programming language with built-in AI capabilities, designed for rapid development of automation tools, data processing pipelines, and AI-assisted applications.### 1. Setup Virtual Environment
-
-- ✅ **30/30 Stdlib Modules** - All modules verified and working
-
-- ✅ **Break/Continue** - Fixed and tested---```powershell
-
-- ✅ **Module Loading** - Supports both native and regular Python modules
-
-- 🐍 **Python 3.12+** - Built on modern Pythonpython -m venv .venv
-
-- 🪟 **Windows/Linux/macOS** - Cross-platform compatible
-
-## 🚀 Quick Start.\.venv\Scripts\Activate.ps1 # Windows
+Sona is a modern, expressive programming language designed for rapid development with built-in AI capabilities. Perfect for automation, data processing, web services, and AI-assisted applications.
 
 ---
 
-# source .venv/bin/activate # Linux/macOS
+## ⚡ What's New in v0.9.8
+
+- 🧭 **Parser & runtime hardening** – BOM/escaped-path handling, stricter Unicode escape parsing, and friendlier error recovery for production runs.
+- 🔒 **Security follow-ups** – Safer defaults for networked modules, HF model pinning guidance, and SQLi/FTP mitigations documented.
+- 🧪 **CI + coverage uplift** – 90%+ coverage target baked into pytest/coverage config with randomized ordering to shake out flakes.
+- 🤖 **Micro-chunked AI workflows** – Smaller, deterministic tasks for IDE assistance to keep focus/resume reliable.
+- 🖥️ **Local/Ollama & offline-friendly** – Documented local endpoints and Ollama setup so you can run without cloud dependencies.
+- 📓 **Docs refresh** – Updated quick start, security policy, and release notes to stay aligned with the new workflows.
+
+[See Full Release Notes →](RELEASE_NOTES_v0.9.8.md)
+
+---
 
 ## 🚀 Quick Start
 
-### 1. Setup Virtual Environment```
-
-### 1. Setup Virtual Environment
-
-````powershell### 2. Install Dependencies
+### Installation
 
 ```powershell
+# 1. Clone or download
+git clone https://github.com/Bryantad/Sona.git
+cd Sona
 
-python -m venv .venvpython -m venv .venv
-
+# 2. Create virtual environment
+python -m venv .venv
 .\.venv\Scripts\Activate.ps1  # Windows
+# source .venv/bin/activate   # Linux/macOS
 
-# source .venv/bin/activate   # Linux/macOS.\.venv\Scripts\Activate.ps1  # Windows```bash
+# 3. Install dependencies
+pip install -r requirements.txt
 
+# 4. Install Sona
+pip install -e .
 ```
 
-# source .venv/bin/activate   # Linux/macOSpip install -r requirements.txt
+### Your First Program
 
-### 2. Install Dependencies
+Create `hello.sona`:
 
-````
+```sona
+// Simple greeting
+print("Hello from Sona v0.9.8!");
+
+// Use stdlib
+import json;
+let data = {"version": "0.9.8", "modules": 80};
+print(json.stringify(data));
+```
+
+Run it:
 
 ```bash
-
-pip install -r requirements.txt### 2. Install Dependencies### 3. Install Sona
-
+python run_sona.py hello.sona
 ```
-
-`bash`bash
-
-### 3. Install Sona
-
-pip install -r requirements.txtpip install -e .
-
-`````bash
-
-pip install -e .````
-
-`````
-
-### 4. Run Your First Script
-
-### 3. Install Sona### 4. Test Installation
-
-```bash
-
-python run_sona.py test_hello.sona
-
-```
-
-`bash`bash
-
-### 5. Verify All Modules Work
-
-pip install -e .# Test import
-
-````bash
-
-python run_sona.py test_all_30_imports.sona```python -c "from sona.interpreter import *; print('âœ“ Sona loaded')"
-
-# Expected: 30/30 passed, 0/30 failed ✅
-
-````
-
----### 4. Test Installation# Run a program
-
-## 📚 Documentationsona test.sona
-
-All documentation is now organized in the [`docs/`](./docs/) folder:`bash`
-
-### 🆘 [Troubleshooting](./docs/troubleshooting/)# Test import
-
-**Start here if you have errors!**
-
-- [MODULE_LOADER_FIX.md](./docs/troubleshooting/MODULE_LOADER_FIX.md) - Module import errorspython -c "from sona.interpreter import \*; print('✅ Sona loaded')"## Directory Structure
-
-- [BREAK_CONTINUE_FIX.md](./docs/troubleshooting/BREAK_CONTINUE_FIX.md) - Break/continue issues
-
-- [WHERE_ARE_MY_MODULES.md](./docs/troubleshooting/WHERE_ARE_MY_MODULES.md) - Module troubleshooting
-
-### 📋 [Release Notes](./docs/release-notes/)# Run a program```
-
-- [CHANGELOG.md](./docs/release-notes/CHANGELOG.md) - Version history
-
-- [FINAL_RELEASE_STATUS.md](./docs/release-notes/FINAL_RELEASE_STATUS.md) - Current release statussona test.sonasona/ # Core interpreter
-
-### 🧪 [Testing](./docs/testing/)stdlib/ # Standard library (30 modules)
-
-- [TESTING_GUIDE.md](./docs/testing/TESTING_GUIDE.md) - How to test your code
-
-- [TEST_INDEX.md](./docs/testing/TEST_INDEX.md) - All test files# Or use the direct runner (no install needed)test.sona # Test file
-
-### 🚀 [Features](./docs/features/)python run_sona.py test.sonarun_sona.py # Direct runner (no install needed)
-
-- [FEATURE_AUDIT_096.md](./docs/features/FEATURE_AUDIT_096.md) - Complete feature list
-
-- [STDLIB_30_MODULES.md](./docs/features/STDLIB_30_MODULES.md) - All 30 stdlib modules````
-
-### 🎯 [Projects](./docs/projects/)---## Running Sona Programs
-
-- [RESEARCH_SONA_PROJECTS.md](./docs/projects/RESEARCH_SONA_PROJECTS.md) - 8 detailed project ideas
-
-## ✨ Features### Method 1: Direct Runner (No Installation)
-
-### 📖 [Guides](./docs/guides/)
-
-- Getting started tutorials### Core Language (All Working ✅)```bash
-
-- Best practices
-
-- Code examplespython run_sona.py your_program.sona
-
-### 💻 [Development](./docs/development/)**Foundation**```
-
-- Implementation notes
-
-- Progress reports- Variables (`let`, `const`)
-
-- Architecture docs
-
-- Functions (`func`, `def`) ### Method 2: Installed CLI
-
-**📑 [Full Documentation Index](./docs/README.md)**
-
-- Control flow (`if`, `else`, `elif`)
 
 ---
 
-- Loops (`for`, `while`, `break`, `continue`)```bash
-
-## 💡 Language Features
-
-- Return statementssona your_program.sona
-
-### Core Syntax
-
-- Comments (`//` single-line, `/* */` multi-line)```
-
-`````sona
-
-// Variables and constants**Data Types & Operations**### Method 3: Python Module
-
-let x = 10;
-
-let name = "Sona";- Arrays `[1, 2, 3]`
-
-let flag = true;
-
-- Objects `{"key": "value"}````bash
-
-// Functions
-
-func greet(name) {- Strings with interpolationpython -m sona.cli your_program.sona
-
-    return "Hello, " + name;
-
-}- Numbers (int, float)```
-
-
-
-// Control flow- Booleans
-
-if x > 5 {
-
-    print("Greater than 5");- Type checking## Documentation
-
-} else {
-
-    print("5 or less");**Advanced**- **FEATURE_FLAGS.md** - Available features
-
-}
-
-- Error handling (`try`/`catch`/`finally`)- **CHANGELOG.md** - Version history
-
-// Loops
-
-for i in [1, 2, 3, 4, 5] {- Modules (`import`/`export`)- **.sona-policy.json** - Security policies
-
-    print(i);
-
-}- Lambda expressions- **sona/stdlib/MANIFEST.json** - Stdlib module listing
-
-
-
-while x > 0 {- Higher-order functions
-
-    print(x);
-
-    x = x - 1;- Spread operator `...`## Version
-
-}
-
-- Async/await support
-
-// Break and continue
-
-for i in [1, 2, 3, 4, 5] {Sona 0.9.6 - AI-Native Programming Language
-
-    if i == 3 { continue; }  // Skip 3
-
-    if i == 5 { break; }      // Stop at 5**Operators (Correct Precedence)**
-
-    print(i);                 // Prints: 1, 2, 4
-
-}- Arithmetic: `+`, `-`, `*`, `/`, `%`, `**`## License
-
-
-
-// Error handling- Comparison: `==`, `!=`, `<`, `>`, `<=`, `>=`
-
-try {
-
-    let data = risky_operation();- Logical: `and`, `or`, `not`See LICENSE file
-
-    print(data);
-
-} catch e {- Bitwise: `&`, `|`, `^`, `~`
-
-    print("Error: " + e);- Assignment: `=`, `+=`, `-=`, etc.
-
-}
-
-### Standard Library
-
-// Modules
-
-import json;**16 Verified Modules** ✅
-
-import string;
-
-import math;```sona
-
-import json;      // JSON parse/stringify
-
-let data = json.parse('{"key": "value"}');import string;    // String manipulation
-
-let upper = string.upper("hello");import math;      // Math operations
-
-let sqrt = math.sqrt(16);import regex;     // Regular expressions
-
-```import fs;        // File system
-
-import path;      // Path manipulation
-
----import io;        // Input/output
-
-import env;       // Environment variables
-
-## 📦 Standard Library (30 Modules)import csv;       // CSV processing
-
-import date;      // Date operations
-
-All 30 modules are verified and working! ✅import time;      // Time operations
-
-import numbers;   // Number utilities
-
-### Data Processingimport boolean;   // Boolean operations
-
-- `json` - JSON parsing and serializationimport type;      // Type checking
-
-- `csv` - CSV reading and writingimport comparison;// Comparisons
-
-- `toml` - TOML configuration filesimport operators; // Operator utilities
-
-- `yaml` - YAML serialization```
-
-
-
-### File System**10 Experimental Modules** ⚠️
-
-- `fs` - File system operations
-
-- `path` - Path manipulation```sona
-
-- `io` - Input/output operations// Available but not fully tested
-
-import random; import encoding; import timer;
-
-### Text Processingimport validation; import statistics; import sort;
-
-- `string` - String utilitiesimport search; import uuid; import toml; import hashing;
-
-- `regex` - Regular expressions```
-
-- `encoding` - Text encoding/decoding
+## 🎯 Core Features
+
+### ✅ All Tier 1 Features (Production Ready)
+
+| Feature            | Description                           | Status |
+| ------------------ | ------------------------------------- | ------ |
+| **Variables**      | `let x = 10;` `const PI = 3.14;`      | ✅     |
+| **Functions**      | `func add(a, b) { return a + b; }`    | ✅     |
+| **Control Flow**   | `if`, `when`, `match`, `while`, `for` | ✅     |
+| **Loop Control**   | `break`, `continue`, `repeat`         | ✅     |
+| **Collections**    | Lists, Dicts, Sets, Tuples            | ✅     |
+| **Destructuring**  | `let [a, b] = [1, 2];`                | ✅     |
+| **Error Handling** | `try/catch` blocks                    | ✅     |
+| **Modules**        | `import json;` `export func;`         | ✅     |
+| **Classes**        | OOP with inheritance                  | ✅     |
+| **Operators**      | Arithmetic, logical, comparison       | ✅     |
 
 ---
 
-### Mathematics
+## 📦 Standard Library (80 Modules)
 
-- `math` - Mathematical functions## 📝 Example Programs
+### 🔵 Core System (7 modules)
 
-- `random` - Random number generation
+```sona
+import json;        // JSON parsing/serialization
+import math;        // Mathematical operations
+import string;      // String manipulation
+import regex;       // Regular expressions
+import boolean;     // Boolean utilities
+import type;        // Type checking
+import comparison;  // Comparison utilities
+```
 
-- `statistics` - Statistical functions### Hello World
+### 📊 Data Structures (7 modules)
 
+```sona
+import collection;  // Collections namespace
+import queue;       // Queue operations
+import stack;       // Stack operations
+import graph;       // Graph algorithms
+import tree;        // Tree structures
+import heap;        // Min/Max heaps
+import matrix;      // 2D matrices
+```
 
+### 📁 I/O & Formats (8 modules)
 
-### Date & Time```sona
+```sona
+import fs;          // File system operations
+import path;        // Path manipulation
+import io;          // Input/output
+import csv;         // CSV processing
+import yaml;        // YAML serialization
+import toml;        // TOML configuration
+import compression; // Gzip/zip compression
+import xml;         // XML parsing/building
+```
 
-- `date` - Date manipulationprint("Hello from Sona v0.9.6!");
+### 🌐 Network & Web (9 modules)
 
-- `time` - Time utilities```
+```sona
+import http;        // HTTP client
+import url;         // URL parsing/building
+import cookies;     // Cookie management
+import session;     // HTTP sessions
+import websocket;   // WebSocket client
+import dns;         // DNS resolution
+import smtp;        // Email sending
+import proxy;       // HTTP proxy
+import ftp;         // FTP client
+import oauth;       // OAuth2 flows
+```
 
-- `timer` - Performance timing
+### 💾 Database & Storage (6 modules)
 
-### Variables and Functions
+```sona
+import sqlite;      // SQLite database
+import cache;       // In-memory cache
+import redis;       // Redis client
+import orm;         // Simple ORM
+import query;       // SQL query builder
+import migration;   // Database migrations
+```
 
-### Collections
+### 🔒 Security & Auth (6 modules)
 
-- `collection` - Collection utilities```sona
+```sona
+import jwt;         // JWT tokens
+import crypto;      // Cryptographic hashing
+import password;    // Password hashing
+import hashing;     // General hashing
+import secrets;     // Secure random
+import permissions; // RBAC system
+```
 
-- `queue` - Queue data structurelet name = "Sona";
+### ⚡ Async & Concurrency (5 modules)
 
-- `stack` - Stack data structureconst version = "0.9.6";
+```sona
+import async;       // Async utilities
+import thread;      // Threading
+import process;     // Process management
+import pool;        // Thread/process pools
+import promise;     // Promise/Future pattern
+```
 
-- `sort` - Sorting algorithms
+### 🧪 Testing & Quality (5 modules)
 
-- `search` - Search algorithmsfunc greet(who) {
+```sona
+import test;        // Test framework
+import assert;      // Assertions
+import mock;        // Mock objects
+import benchmark;   // Performance testing
+import profiler;    // Code profiling
+```
 
-    return "Hello, " + who + "!";
+### 🛠️ Utilities (13 modules)
 
-### System Utilities};
+```sona
+import env;         // Environment variables
+import date;        // Date operations
+import time;        // Time operations
+import timer;       // Timer utilities
+import random;      // Random generation
+import encoding;    // Base64/URL encoding
+import uuid;        // UUID generation
+import validation;  // Input validation
+import statistics;  // Statistical functions
+import sort;        // Sorting algorithms
+import search;      // Search algorithms
+import numbers;     // Number utilities
+import operators;   // Operator utilities
+```
 
-- `env` - Environment variables
+### 🤖 Automation (7 modules)
 
-- `type` - Type checkingprint(greet(name));
+```sona
+import cli;         // CLI argument parsing
+import logging;     // Logging system
+import config;      // Configuration management
+import scheduler;   // Task scheduling
+import signal;      // Event system
+import shell;       // Shell commands
+import bitwise;     // Bitwise operations
+```
 
-- `boolean` - Boolean operations```
+### 🔧 Functional Programming (4 modules)
 
-- `numbers` - Number utilities
+```sona
+import functional;  // Composition, currying
+import decorator;   // Common decorators
+import iterator;    // Iterator utilities
+import color;       // Color manipulation
+```
 
-- `comparison` - Comparison utilities### Loops and Control Flow
+### 📝 Templates & Processing (3 modules)
 
-- `operators` - Operator utilities
+```sona
+import template;    // Template engine
+import markdown;    // Markdown to HTML
+import xml;         // XML processing
+```
 
-- `validation` - Input validation```sona
+---
 
-- `uuid` - UUID generation// For loop with break
+## 💡 Code Examples
 
-- `hashing` - Hash functionsfor i in [1, 2, 3, 4, 5] {
+### Web Scraping with Sessions
 
-    if i == 3 {
+```sona
+import session;
+import json;
 
-**Full documentation**: [docs/features/STDLIB_30_MODULES.md](./docs/features/STDLIB_30_MODULES.md)        break;  // ← NEW in v0.9.6!
+// Create HTTP session
+let s = session.create();
+s.set_header("User-Agent", "Sona/0.9.8");
 
-    };
+// Make requests
+let response = s.get("https://api.example.com/data");
+let data = json.parse(response.body);
 
----    print("Number: " + i);
+print("Fetched " + data.length + " items");
+```
 
+### Database Operations
+
+```sona
+import sqlite;
+import orm;
+
+// Connect to database
+let db = sqlite.connect("app.db");
+db.execute("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, email TEXT)");
+
+// Insert data
+db.insert("users", {"name": "Alice", "email": "alice@example.com"});
+db.insert("users", {"name": "Bob", "email": "bob@example.com"});
+
+// Query
+let users = db.query("SELECT * FROM users WHERE name LIKE ?", ["A%"]);
+for user in users {
+    print(user.name + ": " + user.email);
+}
+```
+
+### JWT Authentication
+
+```sona
+import jwt;
+import password;
+
+// Hash password
+let hashed = password.hash("secretpassword");
+print("Hashed: " + hashed);
+
+// Create JWT token
+let payload = {
+    "user_id": 123,
+    "username": "alice",
+    "role": "admin"
 };
 
-## 🎯 What Can You Build?
-
-// While loop with continue
-
-Sona is perfect for:let n = 0;
-
-while n < 5 {
-
-✅ **CLI Automation Tools** - File organizers, log parsers, batch processors      n = n + 1;
-
-✅ **Data Processing Pipelines** - ETL, CSV/JSON transforms, analytics      if n % 2 == 0 {
-
-✅ **API Integrations** - Webhook handlers, API clients, data syncs          continue;  // ← NEW in v0.9.6!
-
-✅ **Developer Utilities** - Code generators, project scaffolders, helpers      };
-
-✅ **Educational Tools** - Teaching platforms, auto-graders, exercises      print("Odd: " + n);
-
-✅ **Task Automation** - Schedulers, workers, background jobs  };
-
-✅ **Microservices** - Small APIs, webhook endpoints, services  ```
-
-
-
-**See 8 detailed project ideas**: [docs/projects/RESEARCH_SONA_PROJECTS.md](./docs/projects/RESEARCH_SONA_PROJECTS.md)### File Operations
-
-
-
----```sona
-
-import fs; import io; import json;
-
-## 🔧 Project Structure
-
-// Read file
-
-```let content = io.read_file("data.txt");
-
-SonaMinimal/print(content);
-
-├── sona/                  # Core language implementation
-
-│   ├── interpreter.py     # Main interpreter// Write JSON
-
-│   ├── parser_v090.py     # Parserlet data = {"name": "Sona", "version": "0.9.6"};
-
-│   ├── ast_nodes_v090.py  # AST definitionsio.write_file("config.json", json.stringify(data));
-
-│   ├── grammar_v091_fixed.lark  # Grammar
-
-│   ├── stdlib/            # Standard library (30 modules)// List directory
-
-│   ├── ai/                # AI integration moduleslet files = fs.list_dir(".");
-
-│   ├── core/              # Core utilitiesfor f in files {
-
-│   ├── control/           # Control flow    print(f);
-
-│   └── type_system/       # Type checking};
-
-├── docs/                  # 📚 All documentation```
-
-│   ├── troubleshooting/   # Bug fixes and debugging
-
-│   ├── release-notes/     # Version history### Error Handling
-
-│   ├── testing/           # Testing guides
-
-│   ├── features/          # Feature documentation```sona
-
-│   ├── projects/          # Project ideastry {
-
-│   ├── guides/            # Tutorials    let data = json.parse('{"invalid": }');
-
-│   └── development/       # Implementation notes} catch e {
-
-├── stdlib/                # Sona module files (.smod)    print("Parse error: " + e);
-
-├── run_sona.py            # Main entry point} finally {
-
-├── requirements.txt       # Python dependencies    print("Cleanup complete");
-
-├── pyproject.toml         # Project configuration};
-
-└── LICENSE                # License file```
-
-`````
-
----
-
----
-
-## 🗂️ Directory Structure
-
-## 🐛 Common Issues
-
-````
-
-### Module Import Error?sona/               # Core interpreter & parser
-
-```  ├── interpreter.py
-
-ImportError: Module 'collection' not found  ├── parser_v090.py
-
-```  ├── ast_nodes_v090.py
-
-**Solution**: See [docs/troubleshooting/MODULE_LOADER_FIX.md](./docs/troubleshooting/MODULE_LOADER_FIX.md)  ├── grammar_v091_fixed.lark
-
-  └── stdlib/       # Standard library modules
-
-### Break/Continue Not Working?stdlib/             # .smod module files
-
-```test.sona           # Example test file
-
-Loop not exiting with breakrun_sona.py         # Direct runner (no install needed)
-
-````
-
-**Solution**: See [docs/troubleshooting/BREAK_CONTINUE_FIX.md](./docs/troubleshooting/BREAK_CONTINUE_FIX.md)
-
----
-
-### Need More Help?
-
-Check the [docs/troubleshooting/](./docs/troubleshooting/) folder!## 🏃 Running Sona Programs
-
----### Method 1: Direct Runner (No Installation)
-
-## 🧪 Testing```bash
-
-python run_sona.py your_program.sona
-
-### Run All Tests```
-
-```bash
-
-python run_sona.py test_all_features.sona### Method 2: Installed CLI
-
+let token = jwt.encode(payload, "my-secret-key", exp_minutes=60);
+print("Token: " + token);
+
+// Verify token
+let decoded = jwt.decode(token, "my-secret-key");
+print("User ID: " + decoded.user_id);
 ```
 
-````bash
+### Graph Algorithms
 
-### Test Specific Featuresona your_program.sona
+```sona
+import graph;
 
-```bash```
+// Create graph
+let g = graph.create();
+g.add_edge("A", "B");
+g.add_edge("B", "C");
+g.add_edge("A", "C");
+g.add_edge("C", "D");
 
-python run_sona.py test_break_continue.sona
+// Find shortest path
+let path = g.shortest_path("A", "D");
+print("Path: " + path.join(" -> "));  // A -> C -> D
 
-```### Method 3: Python Module
+// Check for cycles
+let has_cycle = g.has_cycle();
+print("Has cycle: " + has_cycle);
+```
 
+### Testing with Assertions
 
+```sona
+import test;
+import assert;
 
-### Verify All 30 Modules```bash
+// Create test suite
+let suite = test.suite("Math Tests");
 
-```bashpython -m sona.cli your_program.sona
+suite.add_test("addition", func() {
+    let result = 2 + 2;
+    assert.equal(result, 4);
+});
 
-python run_sona.py test_all_30_imports.sona```
+suite.add_test("division", func() {
+    let result = 10 / 2;
+    assert.equal(result, 5);
+});
 
-# Should show: 30/30 passed, 0/30 failed ✅
+// Run tests
+let results = suite.run();
+print("Passed: " + results.passed + "/" + results.total);
+```
 
-```---
+### Template Rendering
 
+```sona
+import template;
 
+// Create template
+let tmpl = "Hello {{name}}, you have {{count}} messages.";
 
-**Testing guide**: [docs/testing/TESTING_GUIDE.md](./docs/testing/TESTING_GUIDE.md)## 📚 Documentation
+// Render
+let output = template.render(tmpl, {
+    "name": "Alice",
+    "count": 5
+});
 
+print(output);  // Hello Alice, you have 5 messages.
+```
 
+### Functional Programming
 
----| Document                    | Description                                        |
+```sona
+import functional;
 
-| --------------------------- | -------------------------------------------------- |
+// Function composition
+let add_one = func(x) { return x + 1; };
+let double = func(x) { return x * 2; };
 
-## 📈 Version History| `FEATURE_AUDIT_096.md`      | Complete feature testing matrix                    |
+let f = functional.pipe(add_one, double);
+let result = f(5);  // (5 + 1) * 2 = 12
 
-| `FINAL_RELEASE_STATUS.md`   | Pre-release status and recommendations             |
+print("Result: " + result);
 
-### v0.9.6 (Current) - October 2025| `RESEARCH_SONA_PROJECTS.md` | 8 project ideas you can build with Sona            |
-
-- ✅ All 18 core features verified| `BREAK_CONTINUE_FIX.md`     | Technical details of break/continue implementation |
-
-- ✅ All 30 stdlib modules working| `CHANGELOG.md`              | Version history                                    |
-
-- ✅ Fixed break/continue statements| `sona/stdlib/MANIFEST.json` | Standard library module listing                    |
-
-- ✅ Fixed module loader regression
-
-- ✅ Comprehensive documentation reorganization---
-
-
-
-**Full changelog**: [docs/release-notes/CHANGELOG.md](./docs/release-notes/CHANGELOG.md)## 🎯 What Can You Build?
-
-
-
----Sona v0.9.6 is production-ready for:
-
-
-
-## 🤝 Contributing1. **CLI Automation Tools** - File organizers, log parsers, dev utilities
-
-2. **Data Processing** - ETL pipelines, CSV/JSON transforms, analytics
-
-Contributions are welcome! Please see:3. **API Clients** - Integration scripts, webhook handlers, sync tools
-
-- [docs/development/](./docs/development/) - Development guides4. **AI-Assisted Development** - Code generators, scaffolding tools
-
-- [docs/features/FEATURE_ROADMAP.md](./docs/features/FEATURE_ROADMAP.md) - Planned features5. **Task Automation** - Schedulers, background workers, cron jobs
-
-6. **Microservices** - Small APIs, internal tools, endpoints
-
----7. **CI/CD Tools** - Test runners, build scripts, deployment automation
-
-8. **Educational Projects** - Teaching programming, interactive exercises
-
-## 📄 License
-
-See `RESEARCH_SONA_PROJECTS.md` for detailed project architectures and code examples.
-
-See [LICENSE](./LICENSE) file for details.
-
----
-
----
-
-## 🆕 What's New in v0.9.6
-
-## 🌟 Quick Links
-
-### Fixed
-
-- **Get Started**: [docs/guides/](./docs/guides/)
-
-- **Learn Features**: [docs/features/FEATURE_AUDIT_096.md](./docs/features/FEATURE_AUDIT_096.md)- ✅ **Break and Continue statements** - Now fully functional in all loops
-
-- **Build Projects**: [docs/projects/RESEARCH_SONA_PROJECTS.md](./docs/projects/RESEARCH_SONA_PROJECTS.md)- ✅ **Operator precedence** - All operators have correct priority
-
-- **Troubleshoot**: [docs/troubleshooting/](./docs/troubleshooting/)- ✅ **Standard library** - Verified 16 core modules
-
-- **Full Docs**: [docs/README.md](./docs/README.md)
-
-### Added
+// Currying
+let multiply = func(a, b) { return a * b; };
+let triple = functional.curry(multiply)(3);
+print("Triple 7: " + triple(7));  // 21
+```
 
 ---
 
-- ✅ **Export statement** - Module exports work correctly
+## 📚 Documentation
 
-**Sona v0.9.6** - Built with ❤️ for rapid development and AI integration- ✅ **Comprehensive testing** - Full feature audit completed
-
-
-### Documentation
-
-- ✅ **Feature matrix** - Complete testing coverage documented
-- ✅ **Project ideas** - 8 detailed project architectures
-- ✅ **Module manifest** - Accurate stdlib listing
+- **[Quick Start Guide](QUICK_START.md)** - Get up and running in 5 minutes
+- **[API Reference](API.md)** - Complete API documentation
+- **[Release Notes](RELEASE_NOTES_v0.9.8.md)** - What's new in v0.9.8
+- **[Examples](examples/)** - Sample projects and code snippets
 
 ---
 
-## 🔬 Testing
+## ✅ Verification
 
-Run the test suite:
+Run the comprehensive test suite:
 
-```bash
-python run_sona.py test_all_features.sona
-python run_sona.py test_break_continue.sona
-````
+```powershell
+# PowerShell
+.\run_all_tests.ps1
 
-All 18 core features have passing tests.
+# Or run test file directly
+python run_sona.py test_all_097.sona
+```
+
+Expected output:
+
+```
+✅ ALL 80 MODULES VERIFIED SUCCESSFULLY!
+
+Module Categories:
+  • Core System:        7 modules
+  • Data Structures:    7 modules
+  • I/O & Formats:      8 modules
+  • Network & Web:      9 modules
+  • Database:           6 modules
+  • Security:           6 modules
+  • Async:              5 modules
+  • Testing:            5 modules
+  • Utilities:         13 modules
+  • Automation:         7 modules
+  • Functional:         4 modules
+  • Templates:          3 modules
+                      ────────────
+  TOTAL:               80 modules
+```
+
+---
+
+## 🏗️ Architecture
+
+### Zero Dependencies
+
+Sona's standard library has **zero external dependencies**. Everything is built on Python's standard library, ensuring:
+
+- ✅ Fast installation
+- ✅ No version conflicts
+- ✅ Maximum stability
+- ✅ Easy deployment
+
+### Module Design
+
+Each module follows consistent patterns:
+
+```python
+# Comprehensive docstrings
+def function(param: type) -> type:
+    """
+    Description of what function does.
+
+    Args:
+        param: Description of parameter
+
+    Returns:
+        Description of return value
+
+    Example:
+        >>> result = function(value)
+        >>> print(result)
+    """
+    # Implementation
+    pass
+```
+
+### Category Organization
+
+Modules are organized into 12 logical categories:
+
+1. **Core System** - Fundamental operations
+2. **Data Structures** - Collections and algorithms
+3. **I/O & Formats** - File and format handling
+4. **Network & Web** - HTTP, WebSocket, DNS, etc.
+5. **Database & Storage** - Data persistence
+6. **Security & Auth** - Cryptography and authentication
+7. **Async & Concurrency** - Parallel execution
+8. **Testing & Quality** - Test and debug tools
+9. **Utilities** - Common helper functions
+10. **Automation** - CLI, logging, scheduling
+11. **Functional Programming** - FP patterns
+12. **Templates & Processing** - Text processing
+
+---
+
+## 🛣️ Roadmap
+
+### v0.9.9 (Planned)
+
+- Enhanced error messages with context
+- Performance optimizations
+- Module documentation website
+- Interactive REPL improvements
+
+### v1.0.0 (Target: Q2 2024)
+
+- Production-grade stability
+- Comprehensive test coverage
+- Package manager (npm-like)
+- VS Code extension
 
 ---
 
 ## 🤝 Contributing
 
-This is a stable release workspace. For experimental features and development:
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-- Match statements (syntax exists, runtime TBD)
-- When expressions (planned for v0.9.7)
-- Classes (planned for v0.10.0)
-- Destructuring (planned for v0.10.0)
+### Areas for Contribution
+
+- 📝 Documentation improvements
+- 🧪 Additional test cases
+- 🐛 Bug fixes
+- ✨ New module proposals
+- 🌍 Internationalization
 
 ---
 
 ## 📄 License
 
-See LICENSE file for details.
+Sona is released under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ---
 
-## 🆚 Version
+## 🙏 Acknowledgments
 
-**Sona v0.9.6** - "Stable Core, Growing Ecosystem"  
-Released: October 2025  
-Python Compatibility: 3.8+  
-Platform: Windows, Linux, macOS
+Built with ❤️ using:
+
+- **Python** - Core runtime
+- **Lark** - Parser generator
+- **Community feedback** - Feature requests and bug reports
 
 ---
 
-**Ready to build? Run `python run_sona.py test.sona` to get started!**
+## 📞 Support
+
+- **Issues**: [GitHub Issues](https://github.com/Bryantad/Sona/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/Bryantad/Sona/discussions)
+- **Documentation**: [docs/](docs/)
+
+---
+
+<div align="center">
+
+**Sona v0.9.8** - 80 Modules, Zero Dependencies, Infinite Possibilities
+
+Made with 🎵 by the Sona Team
+
+</div>

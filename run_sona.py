@@ -12,7 +12,7 @@ try:
     # Add current dir to path first
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     from sona import __version__ as SONA_VERSION
-    assert SONA_VERSION.startswith("0.9.6"), f"Expected 0.9.6, got {SONA_VERSION}"
+    assert SONA_VERSION.startswith("0.9.7"), f"Expected 0.9.7, got {SONA_VERSION}"
 except ImportError:
     print("⚠️  Warning: Could not verify Sona version (module not in path)")
 except AssertionError as e:
@@ -61,8 +61,15 @@ def run_sona_file(filename):
         interpreter = SonaUnifiedInterpreter()
         
         # Check if source contains Sona-specific keywords
-        sona_keywords = ['let', 'const', 'func', 'import', '//', 'true', 'false']
-        has_sona_syntax = any(keyword in source for keyword in sona_keywords)
+        sona_keywords = [
+            'let', 'const', 'func', 'import', '//', 'true', 'false',
+            'while', 'for', 'if', 'repeat', 'break', 'continue',
+            'match', 'case', 'try', 'catch', 'finally'
+        ]
+        has_sona_syntax = (
+            any(keyword in source for keyword in sona_keywords) or
+            '{' in source  # C-style braces indicate Sona syntax
+        )
         
         if has_sona_syntax:
             # Parse as complete Sona program

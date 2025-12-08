@@ -12,17 +12,17 @@ with open(os.path.join(this_directory, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name="sona-lang",
-    version="0.9.6",
+    name="Sona: AI-Native Programming Language",
+    version="0.9.8",
     author="Sona Development Team",
-    author_email="team@sona-lang.dev",
+    author_email="sona-dev@hotmail.com",
     description=(
         "The world's first AI-native programming language with "
         "cognitive accessibility features"
     ),
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/SonaAI/sona",
+    url="https://github.com/Bryantad/Sona.git",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 4 - Beta",
@@ -36,6 +36,7 @@ setup(
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.11",
@@ -73,8 +74,8 @@ setup(
         "cognitive-accessibility ai-native"
     ),
     project_urls={
-        "Bug Reports": "https://github.com/SonaAI/sona/issues",
-        "Source": "https://github.com/SonaAI/sona",
-        "Documentation": "https://sona-lang.dev/docs",
+        "Bug Reports": "https://github.com/Bryantad/Sona/issues",
+        "Source": "https://github.com/Bryantad/Sona.git",
+        "Documentation": "https://github.com/Bryantad/Sona.wiki.git",
     },
 )

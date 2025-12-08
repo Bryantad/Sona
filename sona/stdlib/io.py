@@ -77,6 +77,123 @@ def copy(src: str, dst: str) -> None:
     shutil.copy(src, dst)
 
 
+def read_bytes(path: str) -> bytes:
+    """Read file as bytes.
+    
+    Args:
+        path: File path
+    
+    Returns:
+        File contents as bytes
+    
+    Example:
+        data = read_bytes('image.png')
+    """
+    with open(path, "rb") as f:
+        return f.read()
+
+
+def write_bytes(path: str, data: bytes) -> None:
+    """Write bytes to file.
+    
+    Args:
+        path: File path
+        data: Bytes to write
+    
+    Example:
+        write_bytes('image.png', b'\\x89PNG...')
+    """
+    with open(path, "wb") as f:
+        f.write(data)
+
+
+def read_lines(path: str, encoding: str = "utf-8") -> list[str]:
+    """Read file as list of lines.
+    
+    Args:
+        path: File path
+        encoding: Text encoding
+    
+    Returns:
+        List of lines (with newlines)
+    
+    Example:
+        lines = read_lines('data.txt')
+    """
+    with open(path, "r", encoding=encoding) as f:
+        return f.readlines()
+
+
+def write_lines(
+    path: str,
+    lines: list[str],
+    encoding: str = "utf-8",
+) -> None:
+    """Write list of lines to file.
+    
+    Args:
+        path: File path
+        lines: List of lines
+        encoding: Text encoding
+    
+    Example:
+        write_lines('data.txt', ['line1\\n', 'line2\\n'])
+    """
+    with open(path, "w", encoding=encoding) as f:
+        f.writelines(lines)
+
+
+def move(src: str, dst: str) -> None:
+    """Move file or directory.
+    
+    Args:
+        src: Source path
+        dst: Destination path
+    
+    Example:
+        move('old.txt', 'new.txt')
+    """
+    shutil.move(src, dst)
+
+
+def size(path: str) -> int:
+    """Get file size in bytes.
+    
+    Args:
+        path: File path
+    
+    Returns:
+        File size in bytes
+    
+    Example:
+        bytes_count = size('file.txt')
+    """
+    return Path(path).stat().st_size
+
+
+def print_to_file(
+    path: str,
+    *values,
+    sep: str = " ",
+    end: str = "\n",
+    encoding: str = "utf-8",
+) -> None:
+    """Print values to file.
+    
+    Args:
+        path: File path
+        values: Values to print
+        sep: Separator between values
+        end: End character
+        encoding: Text encoding
+    
+    Example:
+        print_to_file('log.txt', 'Hello', 'World')
+    """
+    with open(path, "a", encoding=encoding) as f:
+        print(*values, sep=sep, end=end, file=f)
+
+
 __all__ = [
     "input",
     "read_file",
@@ -91,4 +208,12 @@ __all__ = [
     "mkdir",
     "listdir",
     "copy",
+    # advanced
+    "read_bytes",
+    "write_bytes",
+    "read_lines",
+    "write_lines",
+    "move",
+    "size",
+    "print_to_file",
 ]

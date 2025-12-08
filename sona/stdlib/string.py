@@ -60,7 +60,7 @@ def _tokenize_words(value: str) -> list[str]:
     - Whitespace boundaries
     - camelCase/PascalCase boundaries
     - Non-alphanumeric separators (-, _, etc.)
-    
+
     Examples:
         "hello world" → ["hello", "world"]
         "CamelCaseWord" → ["Camel", "Case", "Word"]
@@ -69,14 +69,14 @@ def _tokenize_words(value: str) -> list[str]:
     # First, insert spaces before uppercase letters that follow lowercase/digits
     # This handles camelCase → camel Case
     spaced = re.sub(r'([a-z0-9])([A-Z])', r'\1 \2', value)
-    
+
     # Also insert spaces before uppercase sequences followed by lowercase
     # This handles "XMLParser" → "XML Parser"
     spaced = re.sub(r'([A-Z]+)([A-Z][a-z])', r'\1 \2', spaced)
-    
+
     # Now replace all non-alphanumeric with spaces
     spaced = re.sub(r"[^A-Za-z0-9]+", " ", spaced)
-    
+
     # Split and filter empty
     tokens = [chunk for chunk in spaced.strip().split() if chunk]
     return tokens
@@ -125,13 +125,13 @@ def rtrim(value: Any, chars: Optional[str] = None) -> str:
 def reverse(value: Any) -> str:
     """
     Reverse a string (Unicode-safe).
-    
+
     Args:
         value: String to reverse (or coercible to string)
-        
+
     Returns:
         Reversed string
-        
+
     Example:
         >>> reverse("hello")
         'olleh'
@@ -324,6 +324,20 @@ def truncate(value: Any, length: int, *, suffix: str = "…") -> str:
     return f"{text[:slice_len]}{suffix}" if slice_len else suffix[:length]
 
 
+def truncate_safe(value: Any, length: int, *, suffix: str = "...") -> str:
+    """Truncate on a word boundary when possible, otherwise fall back to hard cut."""
+    text = _ensure_text(value)
+    if length <= 0:
+        return ""
+    if len(text) <= length:
+        return text
+    limit = max(length - len(suffix), 0)
+    boundary = text.rfind(" ", 0, limit)
+    if boundary == -1:
+        return truncate(text, length, suffix=suffix)
+    return f"{text[:boundary].rstrip()} {suffix}".strip()
+
+
 def is_blank(value: Any) -> bool:
     return collapse_whitespace(value) == ""
 
@@ -394,6 +408,15 @@ def regex_match(
     return _regex.match(pattern, value, options=_options_from_flags(flags))
 
 
+def regex_fullmatch(
+    value: Any,
+    pattern: str,
+    *,
+    flags: Any = None,
+) -> dict[str, Any]:
+    return _regex.fullmatch(pattern, value, options=_options_from_flags(flags))
+
+
 def regex_search(
     value: Any,
     pattern: str,
@@ -429,6 +452,21 @@ def regex_replace(
     )
 
 
+def regex_replace_callback(
+    value: Any,
+    pattern: str,
+    callback: Any,
+    *,
+    flags: Any = None,
+) -> str:
+    return _regex.replace_callback(
+        pattern,
+        value,
+        callback,
+        options=_options_from_flags(flags),
+    )
+
+
 def regex_split(
     value: Any,
     pattern: str,
@@ -440,6 +478,87 @@ def regex_split(
     if opts is None:
         return _regex.split(pattern, value, maxsplit=maxsplit)
     return _regex.split(pattern, value, maxsplit=maxsplit, options=opts)
+
+
+def wrap(value: Any, width: int = 70) -> str:
+    """Wrap text to specified width."""
+    import textwrap
+    text = _ensure_text(value)
+    return textwrap.fill(text, width=width)
+
+
+def indent(value: Any, spaces: int = 4, prefix: str = " ") -> str:
+    """Indent each line."""
+    text = _ensure_text(value)
+    indent_str = prefix * spaces
+    return "\n".join(indent_str + line for line in text.splitlines())
+
+
+def dedent(value: Any) -> str:
+    """Remove common leading whitespace."""
+    import textwrap
+    text = _ensure_text(value)
+    return textwrap.dedent(text)
+
+
+def escape_html(value: Any) -> str:
+    """Escape HTML special characters."""
+    import html
+    text = _ensure_text(value)
+    return html.escape(text)
+
+
+def unescape_html(value: Any) -> str:
+    """Unescape HTML entities."""
+    import html
+    text = _ensure_text(value)
+    return html.unescape(text)
+
+
+def levenshtein(s1: Any, s2: Any) -> int:
+    """Compute Levenshtein edit distance."""
+    str1 = _ensure_text(s1)
+    str2 = _ensure_text(s2)
+
+    if len(str1) < len(str2):
+        return levenshtein(str2, str1)
+
+    if len(str2) == 0:
+        return len(str1)
+
+    previous_row = range(len(str2) + 1)
+    for i, c1 in enumerate(str1):
+        current_row = [i + 1]
+        for j, c2 in enumerate(str2):
+            insertions = previous_row[j + 1] + 1
+            deletions = current_row[j] + 1
+            substitutions = previous_row[j] + (c1 != c2)
+            current_row.append(min(insertions, deletions, substitutions))
+        previous_row = current_row
+
+    return previous_row[-1]
+
+
+def center(value: Any, width: int, fillchar: str = " ") -> str:
+    """Center string in field of given width."""
+    text = _ensure_text(value)
+    return text.center(width, fillchar)
+
+
+def quote(value: Any, char: str = '"') -> str:
+    """Wrap string in quotes."""
+    text = _ensure_text(value)
+    return f"{char}{text}{char}"
+
+
+def unquote(value: Any) -> str:
+    """Remove surrounding quotes."""
+    text = _ensure_text(value)
+    if len(text) >= 2:
+        if (text[0] == '"' and text[-1] == '"') or \
+           (text[0] == "'" and text[-1] == "'"):
+            return text[1:-1]
+    return text
 
 
 __all__ = [
@@ -466,8 +585,10 @@ __all__ = [
     "pascal_case",
     "regex_escape",
     "regex_findall",
+    "regex_fullmatch",
     "regex_match",
     "regex_replace",
+    "regex_replace_callback",
     "regex_search",
     "regex_split",
     "regex_test",
@@ -487,6 +608,17 @@ __all__ = [
     "title",
     "trim",
     "truncate",
+    "truncate_safe",
     "upper",
     "words",
+    # advanced
+    "center",
+    "dedent",
+    "escape_html",
+    "indent",
+    "levenshtein",
+    "quote",
+    "unescape_html",
+    "unquote",
+    "wrap",
 ]
