@@ -169,6 +169,13 @@ def format(
     return format_pattern(value, pattern, tz)
 
 
+def fromisoformat(value: str, timespec: Optional[str] = None, tz: Optional[str] = None) -> str:
+    """Normalize an ISO string and optionally coerce to a timezone."""
+    dt = _apply_timezone(_parse_iso(value), tz)
+    spec = _normalize_timespec(timespec)
+    return dt.isoformat(timespec=spec)
+
+
 def format_pattern(
     value: str,
     pattern: str,
@@ -239,12 +246,140 @@ def sleep(seconds: float) -> None:
     _time.sleep(float(seconds))
 
 
+def sleep_until(iso_time: str) -> None:
+    target = _parse_iso(iso_time)
+    now_dt = _local_now()
+    if target.tzinfo is None:
+        target = target.replace(tzinfo=now_dt.tzinfo)
+    delta = (target - now_dt).total_seconds()
+    if delta > 0:
+        _time.sleep(delta)
+
+
 def monotonic() -> float:
     return _time.monotonic()
 
 
 def perf_counter() -> float:
     return _time.perf_counter()
+
+
+def elapsed(start: float) -> float:
+    """
+    Calculate elapsed time from a start timestamp.
+
+    Args:
+        start: Start time from monotonic() or perf_counter()
+
+    Returns:
+        Elapsed seconds
+
+    Example:
+        start = time.monotonic()
+        # ... do work ...
+        duration = time.elapsed(start)
+    """
+    return _time.monotonic() - start
+
+
+def time_ago(iso_time: str) -> Dict[str, int]:
+    """
+    Calculate time difference from now as human-readable components.
+
+    Args:
+        iso_time: ISO 8601 timestamp
+
+    Returns:
+        Dict with days, hours, minutes, seconds
+
+    Example:
+        ago = time.time_ago("2024-01-01T00:00:00")
+        print(f"{ago['days']} days ago")
+    """
+    dt = _parse_iso(iso_time)
+    now_dt = _local_now()
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=now_dt.tzinfo)
+
+    delta = now_dt - dt
+    total_seconds = int(delta.total_seconds())
+
+    days = total_seconds // 86400
+    hours = (total_seconds % 86400) // 3600
+    minutes = (total_seconds % 3600) // 60
+    seconds = total_seconds % 60
+
+    return {
+        'days': days,
+        'hours': hours,
+        'minutes': minutes,
+        'seconds': seconds
+    }
+
+
+def is_future(iso_time: str) -> bool:
+    """
+    Check if timestamp is in the future.
+
+    Args:
+        iso_time: ISO 8601 timestamp
+
+    Returns:
+        True if future
+
+    Example:
+        if time.is_future(deadline):
+            print("Still time")
+    """
+    dt = _parse_iso(iso_time)
+    now_dt = _local_now()
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=now_dt.tzinfo)
+    return dt > now_dt
+
+
+def is_past(iso_time: str) -> bool:
+    """
+    Check if timestamp is in the past.
+
+    Args:
+        iso_time: ISO 8601 timestamp
+
+    Returns:
+        True if past
+
+    Example:
+        if time.is_past(event_time):
+            print("Missed it")
+    """
+    dt = _parse_iso(iso_time)
+    now_dt = _local_now()
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=now_dt.tzinfo)
+    return dt < now_dt
+
+
+def get_timezone_offset(tz: Optional[str] = None) -> str:
+    """
+    Get timezone offset string.
+
+    Args:
+        tz: Timezone name or None for local
+
+    Returns:
+        Offset string like "+05:30"
+
+    Example:
+        offset = time.get_timezone_offset("America/New_York")
+    """
+    tzinfo = _resolve_timezone(tz)
+    if tzinfo is None:
+        tzinfo = datetime.now().astimezone().tzinfo
+    dt = datetime.now(tzinfo)
+    offset = dt.strftime('%z')
+    if len(offset) == 5:
+        return f"{offset[:3]}:{offset[3:]}"
+    return offset
 
 
 __all__ = [
@@ -257,9 +392,16 @@ __all__ = [
     "format_iso",
     "format",
     "format_pattern",
+    "fromisoformat",
     "diff",
     "shift",
     "sleep",
+    "sleep_until",
     "monotonic",
     "perf_counter",
+    "elapsed",
+    "time_ago",
+    "is_future",
+    "is_past",
+    "get_timezone_offset"
 ]

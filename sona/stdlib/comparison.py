@@ -8,7 +8,9 @@ Stability: stable
 Version: 0.9.6
 """
 
-__all__ = ['eq', 'neq', 'lt', 'lte', 'gt', 'gte', 'cmp', 'deep_equal']
+__all__ = ['eq', 'neq', 'lt', 'lte', 'gt', 'gte', 'cmp', 'deep_equal',
+           'in_range', 'between', 'closest', 'compare_with', 'min_by', 
+           'max_by', 'clamp']
 
 def eq(a, b):
     """
@@ -243,3 +245,167 @@ def deep_equal(a, b):
     
     # For all other types, use standard equality
     return a == b
+
+
+def in_range(value, start, end, inclusive=True):
+    """
+    Check if value is within range.
+    
+    Args:
+        value: Value to check
+        start: Range start
+        end: Range end
+        inclusive: Include boundaries (default: True)
+        
+    Returns:
+        bool: True if value is in range
+        
+    Example:
+        >>> in_range(5, 1, 10)
+        True
+        >>> in_range(10, 1, 10, inclusive=False)
+        False
+    """
+    if inclusive:
+        return start <= value <= end
+    else:
+        return start < value < end
+
+
+def between(value, low, high):
+    """
+    Check if value is between low and high (inclusive).
+    
+    Args:
+        value: Value to check
+        low: Lower bound
+        high: Upper bound
+        
+    Returns:
+        bool: True if low <= value <= high
+        
+    Example:
+        >>> between(5, 1, 10)
+        True
+        >>> between(0, 1, 10)
+        False
+    """
+    return low <= value <= high
+
+
+def closest(value, candidates):
+    """
+    Find closest value from candidates.
+    
+    Args:
+        value: Target value
+        candidates: List of candidate values
+        
+    Returns:
+        Closest value from candidates
+        
+    Example:
+        >>> closest(7, [1, 5, 10, 15])
+        5
+        >>> closest(12, [1, 5, 10, 15])
+        10
+    """
+    if not candidates:
+        raise ValueError("candidates list cannot be empty")
+    
+    return min(candidates, key=lambda x: abs(x - value))
+
+
+def compare_with(value, other, comparator):
+    """
+    Compare using custom comparator function.
+    
+    Args:
+        value: First value
+        other: Second value
+        comparator: Function that takes (a, b) and returns comparison
+        
+    Returns:
+        Result of comparator(value, other)
+        
+    Example:
+        >>> compare_with(5, 3, lambda a, b: a > b)
+        True
+        >>> compare_with("abc", "xyz", lambda a, b: len(a) == len(b))
+        True
+    """
+    return comparator(value, other)
+
+
+def min_by(items, key_func):
+    """
+    Find minimum item using key function.
+    
+    Args:
+        items: Iterable of items
+        key_func: Function to extract comparison key
+        
+    Returns:
+        Item with minimum key value
+        
+    Example:
+        >>> min_by(["a", "bbb", "cc"], len)
+        'a'
+        >>> min_by([{"age": 30}, {"age": 20}], lambda x: x["age"])
+        {'age': 20}
+    """
+    if not items:
+        raise ValueError("items cannot be empty")
+    
+    return min(items, key=key_func)
+
+
+def max_by(items, key_func):
+    """
+    Find maximum item using key function.
+    
+    Args:
+        items: Iterable of items
+        key_func: Function to extract comparison key
+        
+    Returns:
+        Item with maximum key value
+        
+    Example:
+        >>> max_by(["a", "bbb", "cc"], len)
+        'bbb'
+        >>> max_by([{"age": 30}, {"age": 20}], lambda x: x["age"])
+        {'age': 30}
+    """
+    if not items:
+        raise ValueError("items cannot be empty")
+    
+    return max(items, key=key_func)
+
+
+def clamp(value, min_val, max_val):
+    """
+    Clamp value to range [min_val, max_val].
+    
+    Args:
+        value: Value to clamp
+        min_val: Minimum value
+        max_val: Maximum value
+        
+    Returns:
+        Clamped value
+        
+    Example:
+        >>> clamp(5, 0, 10)
+        5
+        >>> clamp(-5, 0, 10)
+        0
+        >>> clamp(15, 0, 10)
+        10
+    """
+    if value < min_val:
+        return min_val
+    elif value > max_val:
+        return max_val
+    else:
+        return value

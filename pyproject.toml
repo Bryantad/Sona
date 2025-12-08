@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "Sona"
-version = "0.9.6"
+version = "0.9.8"
 description = "Sona Programming Language with Cognitive Accessibility and Neurodivergent-First Features"
 authors = [{name = "WayCore Inc.", email = "info@waycore.com"}]
 readme = "README.md"

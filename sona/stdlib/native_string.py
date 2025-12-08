@@ -168,6 +168,10 @@ def string_truncate(value: Any, length: int, suffix: str = "…") -> str:
     return _string.truncate(value, length, suffix=suffix)
 
 
+def string_truncate_safe(value: Any, length: int, suffix: str = "...") -> str:
+    return _string.truncate_safe(value, length, suffix=suffix)
+
+
 def string_is_blank(value: Any) -> bool:
     return _string.is_blank(value)
 
@@ -222,6 +226,14 @@ def string_regex_match(
     return _string.regex_match(value, pattern, flags=flags)
 
 
+def string_regex_fullmatch(
+    value: Any,
+    pattern: str,
+    flags: Any = None,
+) -> dict[str, Any]:
+    return _string.regex_fullmatch(value, pattern, flags=flags)
+
+
 def string_regex_search(
     value: Any,
     pattern: str,
@@ -251,6 +263,21 @@ def string_regex_replace(
         pattern,
         replacement,
         count=count,
+        flags=flags,
+    )
+
+
+def string_regex_replace_callback(
+    value: Any,
+    pattern: str,
+    callback: Any,
+    *,
+    flags: Any = None,
+) -> str:
+    return _string.regex_replace_callback(
+        value,
+        pattern,
+        callback,
         flags=flags,
     )
 
@@ -301,6 +328,7 @@ __all__ = [
     "string_pad_right",
     "string_pad_center",
     "string_truncate",
+    "string_truncate_safe",
     "string_is_blank",
     "string_slugify",
     "string_snake_case",
@@ -312,8 +340,10 @@ __all__ = [
     "string_regex_escape",
     "string_regex_test",
     "string_regex_match",
+    "string_regex_fullmatch",
     "string_regex_search",
     "string_regex_findall",
     "string_regex_replace",
+    "string_regex_replace_callback",
     "string_regex_split",
 ]

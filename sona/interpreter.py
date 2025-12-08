@@ -1,16 +1,20 @@
 """
-Sona v0.9.2 - Enhanced Interpreter (Phase 2 Priority 1)
-======================================================
+Sona v0.9.7 - Enhanced Interpreter with Full Loop Support
+========================================================
 
-Rebuilt enhanced interpreter for methodical development.
-Focuses on core literal support for Priority 1 implementation.
+Production-grade interpreter with complete language feature support.
+Includes all control flow constructs, module system, and cognitive features.
 
 Features:
-- Boolean literals (true, false)
-- Null literal (null)
-- Basic expressions and comparisons
-- Type function support
-- Lark Tree integration
+- Full control flow (if/else/elif, while, for, repeat)
+- Break/continue statements
+- Module system (import/export)
+- AI integration statements
+- Cognitive programming support
+- Try/catch/finally exception handling
+- Function definitions with parameters
+- Class definitions and methods
+- Complete expression evaluation
 """
 
 import ast
@@ -42,6 +46,7 @@ try:
         AIDebugStatement,
         AIExplainStatement,
         AIOptimizeStatement,
+        ReturnValue,
     )
 except ImportError:
     try:
@@ -50,6 +55,7 @@ except ImportError:
             AIDebugStatement,
             AIExplainStatement,
             AIOptimizeStatement,
+            ReturnValue,
         )
     except ImportError:
         print("⚠️  AST nodes not available, using placeholder mode")
@@ -74,18 +80,18 @@ except ImportError:
     try:
         from ai.cognitive_assistant import CognitiveAssistant
     except ImportError:
-        print("⚠️  CognitiveAssistant not available, using placeholder mode")
-        
+        print("[WARN] CognitiveAssistant not available, using placeholder mode")
+
         class CognitiveAssistant:
             def __init__(self):
                 pass
-            
+
             def analyze_working_memory(self, *args, **kwargs):
                 return {'cognitive_load': 'medium', 'suggestions': []}
-            
+
             def detect_hyperfocus(self, *args, **kwargs):
                 return {'hyperfocus_detected': False}
-            
+
             def analyze_executive_function(self, *args, **kwargs):
                 return {'task_breakdown': [], 'support_strategies': []}
 
@@ -112,34 +118,34 @@ class ContinueException(Exception):
 
 class SimpleModuleSystem:
     """Simple module system for loading stdlib modules"""
-    
+
     def __init__(self, interpreter):
         self.interpreter = interpreter
         self.loaded_modules = {}
         self.stdlib_path = Path(__file__).parent / "stdlib"
-    
+
     def import_module(self, module_path: str, alias: str | None = None):
         """Import a module and make it available in the interpreter
-        
+
         Supports nested namespaces like 'collection.list':
         - collection.list → sona/stdlib/collection/list.py
         - http → sona/stdlib/http.py or native_http.py
         """
         module_name = alias if alias else module_path
-        
+
         # Check if already loaded
         if module_name in self.loaded_modules:
             return self.loaded_modules[module_name]
-        
+
         # Handle nested namespaces (e.g., collection.list)
         parts = module_path.split('.')
-        
+
         if len(parts) > 1:
             # Nested namespace: collection.list
             # Build path: sona/stdlib/collection/list.py
             namespace_dir = self.stdlib_path / parts[0]
             module_file = namespace_dir / f"{parts[1]}.py"
-            
+
             if module_file.exists():
                 import importlib.util
                 spec = importlib.util.spec_from_file_location(
@@ -149,27 +155,27 @@ class SimpleModuleSystem:
                 if spec and spec.loader:
                     module = importlib.util.module_from_spec(spec)
                     spec.loader.exec_module(module)
-                    
+
                     # Store module object
                     self.loaded_modules[module_name] = module
-                    
+
                     # Make module available as a variable
                     self.interpreter.memory.set_variable(
                         module_name,
                         module,
                         global_scope=True
                     )
-                    
+
                     return module
-            
+
             raise ImportError(
                 f"Nested module '{module_path}' not found at {module_file}"
             )
-        
+
         # Single-level module: try native first, then regular
         # Try native module first (native_{module}.py)
         native_module_path = self.stdlib_path / f"native_{module_path}.py"
-        
+
         if native_module_path.exists():
             # Load native Python module
             import importlib.util
@@ -180,22 +186,22 @@ class SimpleModuleSystem:
             if spec and spec.loader:
                 module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(module)
-                
+
                 # Store module object
                 self.loaded_modules[module_name] = module
-                
+
                 # Make module available as a variable
                 self.interpreter.memory.set_variable(
                     module_name,
                     module,
                     global_scope=True
                 )
-                
+
                 return module
-        
+
         # Try regular module (module.py)
         regular_module_path = self.stdlib_path / f"{module_path}.py"
-        
+
         if regular_module_path.exists():
             # Load regular Python module
             import importlib.util
@@ -206,59 +212,59 @@ class SimpleModuleSystem:
             if spec and spec.loader:
                 module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(module)
-                
+
                 # Store module object
                 self.loaded_modules[module_name] = module
-                
+
                 # Make module available as a variable
                 self.interpreter.memory.set_variable(
                     module_name,
                     module,
                     global_scope=True
                 )
-                
+
                 return module
-        
+
         raise ImportError(f"Module '{module_path}' not found")
 
 
 class SonaMemoryManager:
     """Manages memory and variable scoping for Sona interpreter"""
-    
+
     def __init__(self):
         self.global_scope = {}
         self.local_scopes = []
         self.call_stack = []
-    
+
     def push_scope(self, scope_name: str = "local"):
         """Push a new local scope"""
         self.local_scopes.append({})
         self.call_stack.append(scope_name)
-    
+
     def pop_scope(self):
         """Pop the current local scope"""
         if self.local_scopes:
             self.local_scopes.pop()
             self.call_stack.pop()
-    
+
     def set_variable(self, name: str, value: Any, global_scope: bool = False):
         """Set a variable in the appropriate scope"""
         if global_scope or not self.local_scopes:
             self.global_scope[name] = value
         else:
             self.local_scopes[-1][name] = value
-    
+
     def get_variable(self, name: str) -> Any:
         """Get a variable from the appropriate scope"""
         # Check local scopes first (most recent first)
         for scope in reversed(self.local_scopes):
             if name in scope:
                 return scope[name]
-        
+
         # Check global scope
         if name in self.global_scope:
             return self.global_scope[name]
-        
+
         raise NameError(f"Variable '{name}' is not defined")
 
     def has_variable(
@@ -275,7 +281,7 @@ class SonaMemoryManager:
 
 class SonaFunction:
     """Represents a function in Sona"""
-    
+
     def __init__(
         self,
         name: str,
@@ -287,7 +293,7 @@ class SonaFunction:
         self.parameters = parameters
         self.body = body
         self.interpreter = interpreter
-    
+
     def call(
         self,
         arguments: list[Any]
@@ -298,15 +304,15 @@ class SonaFunction:
                 f"Function '{self.name}' expects {len(self.parameters)} "
                 f"arguments, got {len(arguments)}"
             )
-        
+
         # Push new scope for function execution
         self.interpreter.memory.push_scope(f"function:{self.name}")
-        
+
         try:
             # Set parameters as local variables
             for param, arg in zip(self.parameters, arguments, strict=False):
                 self.interpreter.memory.set_variable(param, arg)
-            
+
             # Execute function body
             result = self.interpreter.execute_block(self.body)
             return result
@@ -320,7 +326,7 @@ class SonaUnifiedInterpreter:
     Unified interpreter for the Sona programming language.
     Supports cognitive programming, AI assistance, and enhanced control flow.
     """
-    
+
     def __init__(self):
         """Initialize the interpreter with all necessary components"""
         self.memory = SonaMemoryManager()
@@ -329,18 +335,18 @@ class SonaUnifiedInterpreter:
         self.ai_enabled = False
         self.debug_mode = False
         self.execution_stack = []
-        
+
         # Initialize module system
         self.module_system = SimpleModuleSystem(self)
-        
+
         # Initialize cognitive assistant
         self.cognitive_assistant = CognitiveAssistant()
         self.session_start_time = time.time()
         self.current_context = ""
-        
+
         # Initialize built-in functions
         self._setup_builtins()
-    
+
     def _setup_builtins(self):
         """Setup built-in functions and variables"""
         # Built-in functions
@@ -358,7 +364,7 @@ class SonaUnifiedInterpreter:
         gv('sum', self._builtin_sum, global_scope=True)
         gv('max', self._builtin_max, global_scope=True)
         gv('min', self._builtin_min, global_scope=True)
-        
+
         # Cognitive AI built-in functions
         self.memory.set_variable('think', self._cognitive_think,
                                  global_scope=True)
@@ -368,7 +374,7 @@ class SonaUnifiedInterpreter:
                                  global_scope=True)
         self.memory.set_variable('analyze_load', self._cognitive_analyze_load,
                                  global_scope=True)
-        
+
         # REAL AI-Native Language Features - NO MOCKS
         self.memory.set_variable('ai_complete', self._real_ai_complete,
                                  global_scope=True)
@@ -424,7 +430,7 @@ class SonaUnifiedInterpreter:
         self.memory.set_variable('review_progress',
                                  self._cognitive_review_progress,
                                  global_scope=True)
-        
+
         # Day 3C: Advanced AI Constructs
         self.memory.set_variable('adaptive_learning',
                                  self._ai_adaptive_learning,
@@ -438,77 +444,77 @@ class SonaUnifiedInterpreter:
         self.memory.set_variable('multi_step_reasoning',
                                  self._ai_multi_step_reasoning,
                                  global_scope=True)
-        
+
         # Built-in variables
-        self.memory.set_variable('__version__', '0.9.4', global_scope=True)
+        self.memory.set_variable('__version__', '0.9.7', global_scope=True)
         self.memory.set_variable('__sona__', True, global_scope=True)
         self.memory.set_variable('True', True, global_scope=True)
         self.memory.set_variable('False', False, global_scope=True)
         self.memory.set_variable('None', None, global_scope=True)
-    
+
     def _builtin_print(self, *args):
         """Built-in print function"""
         print(*args)
         return None
-    
+
     def _builtin_len(self, obj):
         """Built-in len function"""
         return len(obj)
-    
+
     def _builtin_type(self, obj):
         """Built-in type function"""
         return type(obj).__name__
-    
+
     def _builtin_str(self, obj):
         """Built-in str function"""
         return str(obj)
-    
+
     def _builtin_int(self, obj):
         """Built-in int function"""
         return int(obj)
-    
+
     def _builtin_float(self, obj):
         """Built-in float function"""
         return float(obj)
-    
+
     def _builtin_bool(self, obj):
         """Built-in bool function"""
         return bool(obj)
-    
+
     def _builtin_list(self, obj=None):
         """Built-in list function"""
         if obj is None:
             return []
         return list(obj)
-    
+
     def _builtin_dict(self, *args, **kwargs):
         """Built-in dict function"""
         return dict(*args, **kwargs)
-    
+
     def _builtin_range(self, *args):
         """Built-in range function"""
         return list(range(*args))
-    
+
     def _builtin_sum(self, iterable, start=0):
         """Built-in sum function"""
         return sum(iterable, start)
-    
+
     def _builtin_max(self, *args):
         """Built-in max function"""
         if len(args) == 1 and hasattr(args[0], '__iter__'):
             return max(args[0])
         return max(args)
-    
+
     def _builtin_min(self, *args):
         """Built-in min function"""
         if len(args) == 1 and hasattr(args[0], '__iter__'):
             return min(args[0])
         return min(args)
-    
+
     # ========================================================================
     # FUNCTION MANAGEMENT (v0.9.6)
     # ========================================================================
-    
+
     def define_function(self, name: str, func_def):
         """Define a user function"""
         self.functions[name] = SonaFunction(
@@ -519,7 +525,7 @@ class SonaUnifiedInterpreter:
         )
         # Also register in variable scope for calling
         self.memory.set_variable(name, self.functions[name], global_scope=True)
-    
+
     def call_function(self, name: str, arguments: list[Any]) -> Any:
         """Call a user-defined or built-in function"""
         # Check built-in functions first
@@ -546,25 +552,28 @@ class SonaUnifiedInterpreter:
                     f"len() takes exactly 1 argument, got {len(arguments)}"
                 )
             return len(arguments[0])
-        
+
         # Check user-defined functions
         if name not in self.functions:
             raise NameError(f"Function '{name}' is not defined")
-        
+
         func = self.functions[name]
         return func.call(arguments)
-    
+
     def execute_block(self, statements: list) -> Any:
         """Execute a block of Sona AST statements"""
-        from .ast_nodes_v090 import ReturnValue
-        
         result = None
         for stmt in statements:
             try:
                 if hasattr(stmt, 'execute'):
+                    # Custom Sona AST node
                     result = stmt.execute(self)
                 elif hasattr(stmt, 'evaluate'):
+                    # Custom Sona AST node
                     result = stmt.evaluate(self)
+                else:
+                    # Python AST node or other
+                    result = self.execute_ast_node(stmt)
             except ReturnValue as ret:
                 # Return from function
                 return ret.value
@@ -572,24 +581,24 @@ class SonaUnifiedInterpreter:
                 # Re-raise break/continue to propagate to enclosing loop
                 raise
         return result
-    
+
     # Alias for compatibility with AST nodes
     def execute_statements(self, statements: list) -> Any:
         """Alias for execute_block for AST node compatibility"""
         return self.execute_block(statements)
-    
+
     # ========================================================================
     # CODE INTERPRETATION
     # ========================================================================
-    
+
     def interpret(self, code: str, filename: str = "<string>") -> Any:
         """
         Interpret Sona code from a string
-        
+
         Args:
             code: The Sona source code
             filename: Optional filename for error reporting
-            
+
         Returns:
             The result of the interpretation
         """
@@ -609,7 +618,7 @@ class SonaUnifiedInterpreter:
 
     def _is_sona_syntax(self, code: str) -> bool:
         """Detect if code contains Sona-specific syntax"""
-        
+
         # AI-native function names that should use Python execution
         ai_functions = [
             'think', 'remember', 'focus', 'analyze_load',
@@ -620,24 +629,24 @@ class SonaUnifiedInterpreter:
             'adaptive_learning', 'meta_cognition', 'dynamic_context_switching',
             'multi_step_reasoning'
         ]
-        
+
         # Check for AI function calls - these should use Python execution
         for func_name in ai_functions:
             if f'{func_name}(' in code:
                 return False  # Force Python execution for AI functions
-        
+
         sona_keywords = [
             'let', 'const', 'func', 'function', '=>',
             'if', 'else', 'while', 'for', 'match', 'case',
             'class', 'extends', 'import', 'export',
             'true', 'false', 'null', 'undefined'
         ]
-        
+
         # Check for Sona keywords
         for keyword in sona_keywords:
             if keyword in code:
                 return True
-        
+
         # Check for Sona-style syntax patterns
         sona_patterns = [
             ' = [',  # List assignments
@@ -645,23 +654,138 @@ class SonaUnifiedInterpreter:
             'let ',  # Variable declarations
             'const ', # Constant declarations
         ]
-        
+
         return any(pattern in code for pattern in sona_patterns)
-                
+
         return False
+
+    def _convert_sona_to_python(self, code: str) -> str:
+        """Convert Sona C-style syntax to Python for compatibility"""
+        import re
+
+        # First, handle line-by-line conversion of keywords
+        lines = code.split('\n')
+        result_lines = []
+        i = 0
+        indent_level = 0
+
+        while i < len(lines):
+            line = lines[i]
+            stripped = line.strip()
+
+            # Skip empty lines
+            if not stripped:
+                result_lines.append('')
+                i += 1
+                continue
+
+            # Remove trailing semicolons
+            if stripped.endswith(';'):
+                stripped = stripped[:-1]
+
+            # Handle closing braces
+            if stripped.startswith('}'):
+                indent_level = max(0, indent_level - 1)
+                i += 1
+                continue
+
+            # Convert while (condition) { to while condition:
+            if 'while' in stripped and '{' in stripped:
+                # Extract condition
+                match = re.search(
+                    r'while\s*\(?\s*(.+?)\s*\)?\s*\{',
+                    stripped
+                )
+                if match:
+                    condition = match.group(1).strip()
+                    result_lines.append(
+                        '    ' * indent_level + f'while {condition}:'
+                    )
+                    indent_level += 1
+                    i += 1
+                    continue
+
+            # Convert if (condition) { to if condition:
+            if 'if' in stripped and '{' in stripped:
+                match = re.search(
+                    r'if\s*\(?\s*(.+?)\s*\)?\s*\{',
+                    stripped
+                )
+                if match:
+                    condition = match.group(1).strip()
+                    result_lines.append(
+                        '    ' * indent_level + f'if {condition}:'
+                    )
+                    indent_level += 1
+                    i += 1
+                    continue
+
+            # Convert repeat N times { to for _ in range(N):
+            if 'repeat' in stripped and 'times' in stripped and '{' in stripped:
+                match = re.search(
+                    r'repeat\s+(.+?)\s+times\s*\{',
+                    stripped
+                )
+                if match:
+                    count = match.group(1).strip()
+                    result_lines.append(
+                        '    ' * indent_level + f'for _ in range({count}):'
+                    )
+                    indent_level += 1
+                    i += 1
+                    continue
+
+            # Convert repeat N { to for _ in range(N):
+            if 'repeat' in stripped and '{' in stripped and 'times' not in stripped:
+                match = re.search(
+                    r'repeat\s+(.+?)\s*\{',
+                    stripped
+                )
+                if match:
+                    count = match.group(1).strip()
+                    result_lines.append(
+                        '    ' * indent_level + f'for _ in range({count}):'
+                    )
+                    indent_level += 1
+                    i += 1
+                    continue
+
+            # Convert for x in y { to for x in y:
+            if 'for' in stripped and 'in' in stripped and '{' in stripped:
+                match = re.search(
+                    r'for\s+(\w+)\s+in\s+(.+?)\s*\{',
+                    stripped
+                )
+                if match:
+                    var = match.group(1).strip()
+                    iter_expr = match.group(2).strip()
+                    result_lines.append(
+                        '    ' * indent_level + f'for {var} in {iter_expr}:'
+                    )
+                    indent_level += 1
+                    i += 1
+                    continue
+
+            # Regular statement (add indentation)
+            result_lines.append('    ' * indent_level + stripped)
+            i += 1
+
+        return '\n'.join(result_lines)
 
     def _execute_sona_code(self, code: str, filename: str = "<string>") -> Any:
         """Execute Sona code using the proper Sona parser"""
         try:
             # Create parser instance
             parser = SonaParserv090()
-            
+
             # Parse Sona code into AST nodes
             ast_nodes = parser.parse(code, filename)
-            
+
             if ast_nodes is None:
-                raise SonaRuntimeError(f"Failed to parse Sona code in {filename}")
-            
+                raise SonaRuntimeError(
+                    f"Failed to parse Sona code in {filename}"
+                )
+
             # Execute AST nodes
             result = None
             for node in ast_nodes:
@@ -672,10 +796,39 @@ class SonaUnifiedInterpreter:
                 else:
                     # Handle raw values or simple nodes
                     result = self._handle_simple_node(node)
-            
+
             return result
-            
+
         except Exception as e:
+            print(f"DEBUG: Exception in _execute_sona_code: {e}")
+            print(f"DEBUG: Exception type: {type(e)}")
+
+            # If Sona parsing fails, try converting to Python
+            has_braces = '{' in code
+            has_keywords = any(
+                kw in code for kw in ['while', 'for', 'if', 'repeat']
+            )
+
+            print(f"DEBUG: has_braces={has_braces}, has_keywords={has_keywords}")
+
+            if has_braces and has_keywords:
+                try:
+                    print("DEBUG: Converting Sona to Python...")
+                    converted_code = self._convert_sona_to_python(code)
+                    print(
+                        "DEBUG: Conversion successful, executing converted code..."
+                    )
+                    result = self.execute_python_like(
+                        converted_code,
+                        filename
+                    )
+                    print("DEBUG: Converted code executed successfully!")
+                    return result
+                except Exception as convert_error:
+                    print(f"Convert error: {convert_error}")
+                    import traceback
+                    traceback.print_exc()
+
             # If Sona parsing fails, try Python compatibility mode
             print(f"⚠️  Sona parsing failed: {e}")
             print("   Falling back to Python compatibility mode")
@@ -689,7 +842,7 @@ class SonaUnifiedInterpreter:
             return node
         else:
             return str(node)
-    
+
     def execute_python_like(
         self,
         code: str,
@@ -702,7 +855,7 @@ class SonaUnifiedInterpreter:
             return self.execute_ast_node(tree)
         except SyntaxError as e:
             raise SonaRuntimeError(f"Syntax error in {filename}: {e}") from e
-    
+
     def execute(
         self,
         tree
@@ -727,7 +880,7 @@ class SonaUnifiedInterpreter:
             if self.debug_mode:
                 traceback.print_exc()
             raise SonaRuntimeError(f"Execution error: {e}") from e
-    
+
     def execute_ast_node(
         self,
         node: ast.AST
@@ -738,10 +891,10 @@ class SonaUnifiedInterpreter:
             for stmt in node.body:
                 result = self.execute_ast_node(stmt)
             return result
-        
+
         elif isinstance(node, ast.Expr):
             return self.execute_ast_node(node.value)
-        
+
         elif isinstance(node, ast.Assign):
             value = self.execute_ast_node(node.value)
             for target in node.targets:
@@ -750,7 +903,7 @@ class SonaUnifiedInterpreter:
                 else:
                     raise SonaRuntimeError(f"Unsupported assignment target: {type(target)}")
             return value
-        
+
         elif isinstance(node, ast.AugAssign):
             # Augmented assignment (+=, -=, etc.)
             if isinstance(node.target, ast.Name):
@@ -761,18 +914,18 @@ class SonaUnifiedInterpreter:
                 return result
             else:
                 raise SonaRuntimeError(f"Unsupported augmented assignment target: {type(node.target)}")
-        
+
         elif isinstance(node, ast.Name):
             return self.memory.get_variable(node.id)
-        
+
         elif isinstance(node, ast.Constant):
             return node.value
-        
+
         elif isinstance(node, ast.BinOp):
             left = self.execute_ast_node(node.left)
             right = self.execute_ast_node(node.right)
             return self._execute_binary_op(node.op, left, right)
-        
+
         elif isinstance(node, ast.Compare):
             left = self.execute_ast_node(node.left)
             result = left
@@ -783,15 +936,15 @@ class SonaUnifiedInterpreter:
                     break
                 result = right  # For chained comparisons
             return bool(result)
-        
+
         elif isinstance(node, ast.List):
             return [self.execute_ast_node(elt) for elt in node.elts]
-        
+
         elif isinstance(node, ast.Subscript):
             value = self.execute_ast_node(node.value)
             index = self.execute_ast_node(node.slice)
             return value[index]
-        
+
         elif isinstance(node, ast.Dict):
             result = {}
             for key, value in zip(node.keys, node.values, strict=False):
@@ -799,18 +952,18 @@ class SonaUnifiedInterpreter:
                 value_val = self.execute_ast_node(value)
                 result[key_val] = value_val
             return result
-        
+
         elif isinstance(node, ast.Call):
             func = self.execute_ast_node(node.func)
             args = [self.execute_ast_node(arg) for arg in node.args]
-            
+
             if callable(func):
                 return func(*args)
             elif isinstance(func, SonaFunction):
                 return func.call(args)
             else:
                 raise SonaRuntimeError(f"'{func}' is not callable")
-        
+
         elif isinstance(node, ast.If):
             condition = self.execute_ast_node(node.test)
             if condition:
@@ -818,7 +971,7 @@ class SonaUnifiedInterpreter:
             elif node.orelse:
                 return self.execute_block(node.orelse)
             return None
-        
+
         elif isinstance(node, ast.For):
             iterable = self.execute_ast_node(node.iter)
             result = None
@@ -835,7 +988,7 @@ class SonaUnifiedInterpreter:
             except BreakException:
                 pass
             return result
-        
+
         elif isinstance(node, ast.While):
             result = None
             try:
@@ -849,14 +1002,31 @@ class SonaUnifiedInterpreter:
             except BreakException:
                 pass
             return result
-        
+
+        elif hasattr(ast, 'Repeat') and isinstance(node, ast.Repeat):
+            # Handle repeat N times { ... } construct
+            # This is a custom AST node that may come from Lark parser
+            count = self.execute_ast_node(node.count)
+            result = None
+            try:
+                for _ in range(int(count)):
+                    try:
+                        result = self.execute_block(node.body)
+                    except ContinueException:
+                        continue
+                    except BreakException:
+                        break
+            except BreakException:
+                pass
+            return result
+
         elif isinstance(node, ast.FunctionDef):
             params = [arg.arg for arg in node.args.args]
             func = SonaFunction(node.name, params, node.body, self)
             self.functions[node.name] = func
             self.memory.set_variable(node.name, func)
             return func
-        
+
         elif isinstance(node, ast.Lambda):
             params = [arg.arg for arg in node.args.args]
             # Create anonymous function with lambda body
@@ -867,22 +1037,22 @@ class SonaUnifiedInterpreter:
                 interpreter=self
             )
             return lambda_func
-        
+
         elif isinstance(node, ast.Return):
             if node.value:
                 return self.execute_ast_node(node.value)
             return None
-        
+
         elif isinstance(node, ast.Break):
             raise BreakException()
-        
+
         elif isinstance(node, ast.Continue):
             raise ContinueException()
-        
+
         elif isinstance(node, ast.Attribute):
             obj = self.execute_ast_node(node.value)
             return getattr(obj, node.attr)
-        
+
         elif isinstance(node, ast.ListComp):
             # List comprehension: [expr for target in iter if condition]
             result = []
@@ -895,20 +1065,20 @@ class SonaUnifiedInterpreter:
                     # Save old value if it exists
                     if self.memory.has_variable(var_name):
                         old_value = self.memory.get_variable(var_name)
-                    
+
                     self.memory.set_variable(var_name, item)
-                    
+
                     # Check conditions
                     include = True
                     for condition in node.generators[0].ifs:
                         if not self.execute_ast_node(condition):
                             include = False
                             break
-                    
+
                     # Add to result if conditions met
                     if include:
                         result.append(self.execute_ast_node(node.elt))
-                    
+
                     # Restore old value or remove variable
                     if old_value is not None:
                         self.memory.set_variable(var_name, old_value)
@@ -916,7 +1086,7 @@ class SonaUnifiedInterpreter:
                         # Note: This is simplified - proper scope handling needed
                         pass
             return result
-        
+
         elif isinstance(node, ast.JoinedStr):
             # f-string support
             result = ""
@@ -929,21 +1099,21 @@ class SonaUnifiedInterpreter:
                 else:
                     result += str(self.execute_ast_node(value))
             return result
-        
+
         else:
             raise SonaRuntimeError(f"Unsupported AST node type: {type(node)}")
-    
+
     def execute_python_block(self, statements: list[ast.AST]) -> Any:
         """Execute a block of Python AST statements"""
         result = None
         for stmt in statements:
             result = self.execute_ast_node(stmt)
         return result
-    
+
     def _execute_binary_op(
-        self, 
-        op: ast.operator, 
-        left: Any, 
+        self,
+        op: ast.operator,
+        left: Any,
         right: Any
     ) -> Any:
         """Execute a binary operation"""
@@ -961,11 +1131,11 @@ class SonaUnifiedInterpreter:
             return left ** right
         else:
             raise SonaRuntimeError(f"Unsupported binary operator: {type(op)}")
-    
+
     def _execute_compare_op(
-        self, 
-        op: ast.cmpop, 
-        left: Any, 
+        self,
+        op: ast.cmpop,
+        left: Any,
         right: Any
     ) -> bool:
         """Execute a comparison operation"""
@@ -991,14 +1161,14 @@ class SonaUnifiedInterpreter:
             return left not in right
         else:
             raise SonaRuntimeError(f"Unsupported comparison operator: {type(op)}")
-    
+
     def evaluate(self, expression: str) -> Any:
         """
         Evaluate a single Sona expression
-        
+
         Args:
             expression: The expression to evaluate
-            
+
         Returns:
             The result of the evaluation
         """
@@ -1008,72 +1178,72 @@ class SonaUnifiedInterpreter:
             return self.execute_ast_node(tree.body)
         except Exception as e:
             raise SonaRuntimeError(f"Evaluation error: {e}") from e
-    
+
     def execute_statement(self, statement: str) -> Any:
         """
         Execute a single Sona statement
-        
+
         Args:
             statement: The statement to execute
-            
+
         Returns:
             The result of the execution
         """
         return self.interpret(statement)
-    
+
     def execute_file(self, filepath: str) -> Any:
         """
         Execute a Sona file
-        
+
         Args:
             filepath: Path to the Sona file
-            
+
         Returns:
             The result of the file execution
         """
         path = Path(filepath)
         if not path.exists():
             raise SonaRuntimeError(f"File not found: {filepath}")
-        
+
         try:
             with open(filepath, encoding='utf-8') as f:
                 code = f.read()
             return self.interpret(code, filename=filepath)
         except Exception as e:
             raise SonaRuntimeError(f"Error executing file {filepath}: {e}") from e
-    
+
     def set_variable(self, name: str, value: Any, global_scope: bool = False):
         """Set a variable in the interpreter"""
         self.memory.set_variable(name, value, global_scope)
-    
+
     def get_variable(self, name: str) -> Any:
         """Get a variable from the interpreter"""
         return self.memory.get_variable(name)
-    
+
     def has_variable(self, name: str) -> bool:
         """Check if a variable exists"""
         return self.memory.has_variable(name)
-    
+
     def enable_ai(self):
         """Enable AI assistance features"""
         self.ai_enabled = True
-    
+
     def disable_ai(self):
         """Disable AI assistance features"""
         self.ai_enabled = False
-    
+
     def enable_debug(self):
         """Enable debug mode"""
         self.debug_mode = True
-    
+
     def disable_debug(self):
         """Disable debug mode"""
         self.debug_mode = False
-    
+
     def reset(self):
         """Reset the interpreter state"""
         self.__init__()
-    
+
     def get_state(self) -> dict[str, Any]:
         """Get the current interpreter state"""
         return {
@@ -1083,14 +1253,14 @@ class SonaUnifiedInterpreter:
             'ai_enabled': self.ai_enabled,
             'debug_mode': self.debug_mode
         }
-    
+
     # Cognitive AI Built-in Functions
-    
+
     def _cognitive_think(self, prompt: str) -> dict[str, Any]:
         """Built-in cognitive thinking function"""
         self.current_context = prompt
         session_time = time.time() - self.session_start_time
-        
+
         # Provide compatible parameters for both real and placeholder
         try:
             analysis = self.cognitive_assistant.analyze_working_memory(
@@ -1100,18 +1270,18 @@ class SonaUnifiedInterpreter:
         except TypeError:
             # Fallback for placeholder or different interface
             analysis = self.cognitive_assistant.analyze_working_memory()
-        
+
         return {
             'thought': prompt,
             'cognitive_analysis': analysis,
             'timestamp': time.time(),
             'session_duration': session_time
         }
-    
+
     def _cognitive_remember(self, key: str, value: Any = None) -> Any:
         """Built-in cognitive memory function"""
         memory_key = f"_cognitive_memory_{key}"
-        
+
         if value is not None:
             # Store memory
             self.memory.set_variable(memory_key, value, global_scope=True)
@@ -1132,11 +1302,11 @@ class SonaUnifiedInterpreter:
                     'key': key,
                     'message': f"No memory found for key '{key}'"
                 }
-    
+
     def _cognitive_focus(self, task_description: str) -> dict[str, Any]:
         """Built-in cognitive focus function"""
         session_time = time.time() - self.session_start_time
-        
+
         # Provide compatible parameters for both real and placeholder
         try:
             # Real CognitiveAssistant expects typing_data
@@ -1146,14 +1316,14 @@ class SonaUnifiedInterpreter:
                 detect_hyperfocus(typing_data)
         except TypeError:
             hyperfocus_analysis = self.cognitive_assistant.detect_hyperfocus()
-            
+
         try:
             executive_analysis = self.cognitive_assistant.\
                 analyze_executive_function(task_description)
         except TypeError:
             executive_analysis = self.cognitive_assistant.\
                 analyze_executive_function()
-        
+
         return {
             'task': task_description,
             'hyperfocus_state': hyperfocus_analysis,
@@ -1161,11 +1331,11 @@ class SonaUnifiedInterpreter:
             'focus_timestamp': time.time(),
             'session_duration': session_time
         }
-    
+
     def _cognitive_analyze_load(self) -> dict[str, Any]:
         """Built-in cognitive load analysis function"""
         session_time = time.time() - self.session_start_time
-        
+
         # Provide compatible parameters for both real and placeholder
         try:
             memory_analysis = self.cognitive_assistant.analyze_working_memory(
@@ -1176,7 +1346,7 @@ class SonaUnifiedInterpreter:
             )
         except TypeError:
             memory_analysis = self.cognitive_assistant.analyze_working_memory()
-        
+
         return {
             'cognitive_load': memory_analysis.get('cognitive_load', 'medium'),
             'working_memory_analysis': memory_analysis,
@@ -1190,9 +1360,9 @@ class SonaUnifiedInterpreter:
             'recommendations': memory_analysis.get('suggestions', []),
             'timestamp': time.time()
         }
-    
+
     # AI-Native Language Features (Day 3B)
-    
+
     # REAL AI IMPLEMENTATION METHODS - NO MOCKS
     def _setup_real_ai_provider(self):
         """Initialize REAL AI provider using MultiAIProvider - NO MOCKS"""
@@ -1200,12 +1370,12 @@ class SonaUnifiedInterpreter:
             # Use our MultiAIProvider with external credentials
             import sys
             from pathlib import Path
-            
+
             # Add current directory to path for imports
             sona_root = Path(__file__).parent.parent
             if str(sona_root) not in sys.path:
                 sys.path.append(str(sona_root))
-            
+
             from multi_ai_provider import MultiAIProvider
             self.real_ai = MultiAIProvider()
             print("✅ REAL AI provider initialized with MultiAIProvider")
@@ -1219,12 +1389,12 @@ class SonaUnifiedInterpreter:
             except ImportError:
                 print("❌ Failed to import fallback AI provider")
                 self.real_ai = None
-    
+
     def _real_ai_complete(self, code_context: str) -> str:
         """REAL AI code completion - NO MOCKS"""
         if not hasattr(self, 'real_ai'):
             self._setup_real_ai_provider()
-        
+
         if self.real_ai:
             try:
                 response = self.real_ai.ai_complete(code_context)
@@ -1239,13 +1409,13 @@ class SonaUnifiedInterpreter:
                 return f"# AI completion failed: {e}"
         else:
             return "# Real AI not available - check configuration"
-    
-    def _real_ai_explain(self, code_snippet: str, 
+
+    def _real_ai_explain(self, code_snippet: str,
                          level: str = "intermediate") -> str:
         """REAL AI code explanation - NO MOCKS"""
         if not hasattr(self, 'real_ai'):
             self._setup_real_ai_provider()
-        
+
         if self.real_ai:
             try:
                 response = self.real_ai.ai_explain(code_snippet, level)
@@ -1260,12 +1430,12 @@ class SonaUnifiedInterpreter:
                 return f"AI explanation failed: {e}"
         else:
             return "Real AI not available - check configuration"
-    
+
     def _real_ai_debug(self, error_context: str, code: str = "") -> str:
         """REAL AI debugging assistance - NO MOCKS"""
         if not hasattr(self, 'real_ai'):
             self._setup_real_ai_provider()
-        
+
         if self.real_ai:
             try:
                 response = self.real_ai.ai_debug(error_context, code)
@@ -1274,12 +1444,12 @@ class SonaUnifiedInterpreter:
                 return f"AI debugging failed: {e}"
         else:
             return "Real AI not available - check configuration"
-    
+
     def _real_ai_generate_code(self, description: str) -> dict[str, Any]:
         """REAL AI code generation - NO MOCKS"""
         if not hasattr(self, 'real_ai'):
             self._setup_real_ai_provider()
-        
+
         if self.real_ai:
             try:
                 prompt = f"Generate Python code for: {description}"
@@ -1310,12 +1480,12 @@ class SonaUnifiedInterpreter:
                 'timestamp': time.time(),
                 'ready_to_execute': False
             }
-    
+
     def _real_ai_complete_function(self, signature: str, description: str = "") -> dict[str, Any]:
         """REAL AI function completion - NO MOCKS"""
         if not hasattr(self, 'real_ai'):
             self._setup_real_ai_provider()
-        
+
         if self.real_ai:
             try:
                 prompt = f"Complete this Python function:\n{signature}\n# {description}"
@@ -1346,12 +1516,12 @@ class SonaUnifiedInterpreter:
                 'source': 'error',
                 'timestamp': time.time()
             }
-    
+
     def _real_ai_explain_code(self, code: str, level: str = "intermediate") -> dict[str, Any]:
         """REAL AI code explanation - NO MOCKS"""
         if not hasattr(self, 'real_ai'):
             self._setup_real_ai_provider()
-        
+
         if self.real_ai:
             try:
                 response = self.real_ai.ai_explain(code, level)
@@ -1381,12 +1551,12 @@ class SonaUnifiedInterpreter:
                 'source': 'error',
                 'timestamp': time.time()
             }
-    
+
     def _real_ai_suggest_improvements(self, code: str) -> dict[str, Any]:
         """REAL AI code improvement suggestions - NO MOCKS"""
         if not hasattr(self, 'real_ai'):
             self._setup_real_ai_provider()
-        
+
         if self.real_ai:
             try:
                 prompt = f"Suggest improvements for this Python code:\n{code}"
@@ -1420,7 +1590,7 @@ class SonaUnifiedInterpreter:
         """REAL AI multi-step reasoning - NO MOCKS"""
         if not hasattr(self, 'real_ai'):
             self._setup_real_ai_provider()
-        
+
         if self.real_ai:
             try:
                 response = self.real_ai.ai_reason(problem, steps)
@@ -1434,7 +1604,7 @@ class SonaUnifiedInterpreter:
         """REAL AI code refactoring - NO MOCKS"""
         if not hasattr(self, 'real_ai'):
             self._setup_real_ai_provider()
-        
+
         if self.real_ai:
             try:
                 response = self.real_ai.ai_refactor(code, goal)
@@ -1448,7 +1618,7 @@ class SonaUnifiedInterpreter:
         """REAL AI test generation - NO MOCKS"""
         if not hasattr(self, 'real_ai'):
             self._setup_real_ai_provider()
-        
+
         if self.real_ai:
             try:
                 response = self.real_ai.ai_test(function, test_type)
@@ -1462,7 +1632,7 @@ class SonaUnifiedInterpreter:
         """REAL AI code analysis - NO MOCKS"""
         if not hasattr(self, 'real_ai'):
             self._setup_real_ai_provider()
-        
+
         if self.real_ai:
             try:
                 response = self.real_ai.ai_analyze(code, focus)
@@ -1472,12 +1642,12 @@ class SonaUnifiedInterpreter:
         else:
             return "Real AI not available - check configuration"
 
-    def _real_ai_generate(self, specification: str, 
+    def _real_ai_generate(self, specification: str,
                           language: str = "python") -> str:
         """REAL AI spec-to-code generation - NO MOCKS"""
         if not hasattr(self, 'real_ai'):
             self._setup_real_ai_provider()
-        
+
         if self.real_ai:
             try:
                 response = self.real_ai.ai_generate(specification, language)
@@ -1491,7 +1661,7 @@ class SonaUnifiedInterpreter:
         """REAL AI text simplification - NO MOCKS"""
         if not hasattr(self, 'real_ai'):
             self._setup_real_ai_provider()
-        
+
         if self.real_ai:
             try:
                 response = self.real_ai.ai_simplify(text)
@@ -1506,7 +1676,7 @@ class SonaUnifiedInterpreter:
         """REAL AI code context understanding - NO MOCKS"""
         if not hasattr(self, 'real_ai'):
             self._setup_real_ai_provider()
-        
+
         if self.real_ai:
             try:
                 response = self.real_ai.ai_context(code, file_path)
@@ -1520,7 +1690,7 @@ class SonaUnifiedInterpreter:
         """REAL AI code suggestions - NO MOCKS"""
         if not hasattr(self, 'real_ai'):
             self._setup_real_ai_provider()
-        
+
         if self.real_ai:
             try:
                 response = self.real_ai.ai_suggest(code, cursor_position)
@@ -1534,7 +1704,7 @@ class SonaUnifiedInterpreter:
         """REAL AI documentation generation - NO MOCKS"""
         if not hasattr(self, 'real_ai'):
             self._setup_real_ai_provider()
-        
+
         if self.real_ai:
             try:
                 response = self.real_ai.ai_document(code, style)
@@ -1548,7 +1718,7 @@ class SonaUnifiedInterpreter:
         """REAL AI optimization recommendations - NO MOCKS"""
         if not hasattr(self, 'real_ai'):
             self._setup_real_ai_provider()
-        
+
         if self.real_ai:
             try:
                 response = self.real_ai.ai_optimize(code, focus)
@@ -1562,7 +1732,7 @@ class SonaUnifiedInterpreter:
         """REAL AI security analysis - NO MOCKS"""
         if not hasattr(self, 'real_ai'):
             self._setup_real_ai_provider()
-        
+
         if self.real_ai:
             try:
                 response = self.real_ai.ai_security(code, framework)
@@ -1576,7 +1746,7 @@ class SonaUnifiedInterpreter:
         """REAL AI mentoring assistance - NO MOCKS"""
         if not hasattr(self, 'real_ai'):
             self._setup_real_ai_provider()
-        
+
         if self.real_ai:
             try:
                 response = self.real_ai.ai_mentor(question, level)
@@ -1596,13 +1766,13 @@ class SonaUnifiedInterpreter:
                 generated_code = self.cognitive_assistant.gpt2.\
                     generate_completion(prompt, max_new_tokens=100,
                                         temperature=0.3)
-                
+
                 # Ensure generated_code is a string
                 if isinstance(generated_code, list):
                     generated_code = ' '.join(str(x) for x in generated_code)
                 elif not isinstance(generated_code, str):
                     generated_code = str(generated_code)
-                
+
                 # Clean up the generated code
                 lines = generated_code.split('\n')
                 code_lines = []
@@ -1611,14 +1781,14 @@ class SonaUnifiedInterpreter:
                         code_lines.append(line)
                     if len(code_lines) >= 10:  # Limit output length
                         break
-                
+
                 generated_code = '\n'.join(code_lines)
             else:
                 # Fallback for when AI is not available
                 generated_code = f"# Generated code for: {description}\n" \
                                  f"# TODO: Implement {description.lower()}\n" \
                                  f"pass"
-            
+
             return {
                 'description': description,
                 'generated_code': generated_code,
@@ -1627,7 +1797,7 @@ class SonaUnifiedInterpreter:
                 'timestamp': time.time(),
                 'ready_to_execute': True
             }
-            
+
         except Exception as e:
             return {
                 'description': description,
@@ -1638,7 +1808,7 @@ class SonaUnifiedInterpreter:
                 'timestamp': time.time(),
                 'ready_to_execute': False
             }
-    
+
     def _ai_complete_function(self, signature: str,
                               description: str = "") -> dict[str, Any]:
         """AI-powered function completion"""
@@ -1650,13 +1820,13 @@ class SonaUnifiedInterpreter:
                 completion = self.cognitive_assistant.gpt2.\
                     generate_completion(prompt, max_new_tokens=80,
                                         temperature=0.2)
-                
+
                 # Ensure completion is a string
                 if isinstance(completion, list):
                     completion = ' '.join(str(x) for x in completion)
                 elif not isinstance(completion, str):
                     completion = str(completion)
-                
+
                 # Clean and format the completion
                 lines = completion.split('\n')
                 body_lines = []
@@ -1665,13 +1835,13 @@ class SonaUnifiedInterpreter:
                         body_lines.append(f"    {line.strip()}")
                     if len(body_lines) >= 8:
                         break
-                
+
                 complete_function = f"{signature}\n" + '\n'.join(body_lines)
             else:
                 complete_function = f"{signature}\n    # {description}\n" \
                                    f"    # TODO: Implement function body\n" \
                                    f"    pass"
-            
+
             return {
                 'signature': signature,
                 'description': description,
@@ -1680,7 +1850,7 @@ class SonaUnifiedInterpreter:
                           else 'template',
                 'timestamp': time.time()
             }
-            
+
         except Exception as e:
             return {
                 'signature': signature,
@@ -1691,7 +1861,7 @@ class SonaUnifiedInterpreter:
                 'error': str(e),
                 'timestamp': time.time()
             }
-    
+
     def _ai_explain_code(self, code: str) -> dict[str, Any]:
         """AI-powered code explanation in natural language"""
         try:
@@ -1702,13 +1872,13 @@ class SonaUnifiedInterpreter:
                 explanation = self.cognitive_assistant.gpt2.\
                     generate_completion(prompt, max_new_tokens=80,
                                         temperature=0.3)
-                
+
                 # Ensure explanation is a string
                 if isinstance(explanation, list):
                     explanation = ' '.join(str(x) for x in explanation)
                 elif not isinstance(explanation, str):
                     explanation = str(explanation)
-                
+
                 # Clean up explanation
                 explanation = explanation.strip()
                 if len(explanation) > 200:
@@ -1727,12 +1897,12 @@ class SonaUnifiedInterpreter:
                         elements.append("checks a condition")
                     elif '=' in line and not line.startswith('#'):
                         elements.append("assigns a value")
-                
+
                 explanation = f"This code {', '.join(elements[:3])}"
                 if len(elements) > 3:
                     explanation += " and more"
                 explanation += "."
-            
+
             return {
                 'code': code,
                 'explanation': explanation,
@@ -1741,7 +1911,7 @@ class SonaUnifiedInterpreter:
                 'timestamp': time.time(),
                 'clarity_level': 'beginner'
             }
-            
+
         except Exception as e:
             return {
                 'code': code,
@@ -1751,12 +1921,12 @@ class SonaUnifiedInterpreter:
                 'timestamp': time.time(),
                 'clarity_level': 'unknown'
             }
-    
+
     def _ai_suggest_improvements(self, code: str) -> dict[str, Any]:
         """AI-powered code improvement suggestions"""
         try:
             suggestions = []
-            
+
             # Basic pattern-based suggestions (always available)
             lines = code.split('\n')
             for i, line in enumerate(lines):
@@ -1769,7 +1939,7 @@ class SonaUnifiedInterpreter:
                 if line.count('(') != line.count(')'):
                     suggestions.append(f"Line {i+1}: Check parentheses "
                                      f"balance")
-            
+
             # AI-powered suggestions if available
             if hasattr(self.cognitive_assistant, 'gpt2') and \
                self.cognitive_assistant.gpt2:
@@ -1778,19 +1948,19 @@ class SonaUnifiedInterpreter:
                 ai_suggestions = self.cognitive_assistant.gpt2.\
                     generate_completion(prompt, max_new_tokens=60,
                                         temperature=0.4)
-                
+
                 # Ensure ai_suggestions is a string
                 if isinstance(ai_suggestions, list):
                     ai_suggestions = ' '.join(str(x) for x in ai_suggestions)
                 elif not isinstance(ai_suggestions, str):
                     ai_suggestions = str(ai_suggestions)
-                
+
                 # Parse AI suggestions
                 ai_lines = ai_suggestions.strip().split('\n')
                 for line in ai_lines[:3]:  # Limit to 3 AI suggestions
                     if line.strip() and len(line.strip()) > 10:
                         suggestions.append(f"AI: {line.strip()}")
-            
+
             return {
                 'code': code,
                 'suggestions': suggestions[:5],  # Limit total suggestions
@@ -1799,7 +1969,7 @@ class SonaUnifiedInterpreter:
                 'timestamp': time.time(),
                 'priority': 'medium'
             }
-            
+
         except Exception as e:
             return {
                 'code': code,
@@ -1810,9 +1980,9 @@ class SonaUnifiedInterpreter:
                 'timestamp': time.time(),
                 'priority': 'low'
             }
-    
+
     # Cognitive Programming Constructs (Day 3B)
-    
+
     def _cognitive_when_confused(self, explanation: str) -> dict[str, Any]:
         """Cognitive clarity assistance when confused"""
         try:
@@ -1822,7 +1992,7 @@ class SonaUnifiedInterpreter:
                 'assistance_provided': [],
                 'next_steps': []
             }
-            
+
             # Analyze the confusion and provide assistance
             if hasattr(self.cognitive_assistant, 'gpt2') and \
                self.cognitive_assistant.gpt2:
@@ -1833,7 +2003,7 @@ class SonaUnifiedInterpreter:
                                         temperature=0.3)
                 clarity_response['assistance_provided'].append(
                     f"AI: {clarification.strip()}")
-            
+
             # Provide structured next steps
             clarity_response['next_steps'] = [
                 "Break down the problem into smaller parts",
@@ -1841,7 +2011,7 @@ class SonaUnifiedInterpreter:
                 "Try explaining the problem out loud",
                 "Consider asking for help or reviewing documentation"
             ]
-            
+
             # Log confusion for learning
             confusion_key = f"_confusion_{int(time.time())}"
             self.memory.set_variable(confusion_key, {
@@ -1849,9 +2019,9 @@ class SonaUnifiedInterpreter:
                 'timestamp': time.time(),
                 'context': self.current_context
             }, global_scope=True)
-            
+
             return clarity_response
-            
+
         except Exception as e:
             return {
                 'confusion_noted': explanation,
@@ -1860,20 +2030,20 @@ class SonaUnifiedInterpreter:
                 'timestamp': time.time(),
                 'error': str(e)
             }
-    
+
     def _cognitive_break_if_overwhelmed(self) -> dict[str, Any]:
         """Automatic cognitive load management and break suggestion"""
         try:
             # Analyze current cognitive load
             load_analysis = self._cognitive_analyze_load()
-            
+
             current_load = load_analysis['cognitive_load']
             session_duration = load_analysis['session_metrics']['duration']
-            
+
             # Determine if a break is needed
             break_needed = False
             break_reason = ""
-            
+
             if current_load in ['high', 'very_high']:
                 break_needed = True
                 break_reason = "High cognitive load detected"
@@ -1883,7 +2053,7 @@ class SonaUnifiedInterpreter:
             elif len(self.memory.global_scope) > 50:
                 break_needed = True
                 break_reason = "High memory complexity"
-            
+
             response = {
                 'break_recommended': break_needed,
                 'reason': break_reason,
@@ -1891,7 +2061,7 @@ class SonaUnifiedInterpreter:
                 'session_duration_minutes': session_duration / 60,
                 'timestamp': time.time()
             }
-            
+
             if break_needed:
                 # Get break suggestions from cognitive assistant
                 break_suggestions = self.cognitive_assistant.\
@@ -1899,13 +2069,13 @@ class SonaUnifiedInterpreter:
                 response['break_suggestions'] = break_suggestions
                 response['recommended_break_duration'] = \
                     break_suggestions.get('recommended_duration', 15)
-                
+
                 print(f"🧠 Break recommended: {break_reason}")
                 activities = break_suggestions.get('suggested_activities', [])
                 print(f"💡 Suggested activities: {', '.join(activities[:2])}")
-            
+
             return response
-            
+
         except Exception as e:
             return {
                 'break_recommended': True,
@@ -1916,7 +2086,7 @@ class SonaUnifiedInterpreter:
                 'timestamp': time.time(),
                 'error': str(e)
             }
-    
+
     def _cognitive_simplify_task(self,
                                  complex_operation: str) -> dict[str, Any]:
         """AI-powered task decomposition and simplification"""
@@ -1928,7 +2098,7 @@ class SonaUnifiedInterpreter:
                 'complexity_reduction': 'medium',
                 'timestamp': time.time()
             }
-            
+
             # Use cognitive assistant for task breakdown
             try:
                 breakdown = self.cognitive_assistant.\
@@ -1966,12 +2136,12 @@ class SonaUnifiedInterpreter:
                         "4. Combine and test",
                         "5. Refactor if needed"
                     ])
-                
+
                 simplified_response['simplified_steps'] = steps
                 simplified_response['estimated_time'] = len(steps) * 10
-            
+
             return simplified_response
-            
+
         except Exception as e:
             return {
                 'original_task': complex_operation,
@@ -1984,12 +2154,12 @@ class SonaUnifiedInterpreter:
                 'timestamp': time.time(),
                 'error': str(e)
             }
-    
+
     def _cognitive_review_progress(self) -> dict[str, Any]:
         """Review session progress and provide insights"""
         try:
             session_duration = time.time() - self.session_start_time
-            
+
             # Gather session statistics
             stats = {
                 'session_duration_minutes': session_duration / 60,
@@ -2001,7 +2171,7 @@ class SonaUnifiedInterpreter:
                 'confusion_instances': len([k for k in self.memory.global_scope
                                              if k.startswith('_confusion_')])
             }
-            
+
             # Generate insights
             insights = []
             if stats['session_duration_minutes'] > 60:
@@ -2014,7 +2184,7 @@ class SonaUnifiedInterpreter:
                 insights.append("Clear coding session - great focus!")
             elif stats['confusion_instances'] > 3:
                 insights.append("Several confusion points - consider simpler approach")
-            
+
             # AI-powered insights if available
             if hasattr(self.cognitive_assistant, 'gpt2') and \
                self.cognitive_assistant.gpt2:
@@ -2027,7 +2197,7 @@ class SonaUnifiedInterpreter:
                                         temperature=0.4)
                 if ai_insight.strip():
                     insights.append(f"AI: {ai_insight.strip()}")
-            
+
             return {
                 'session_stats': stats,
                 'insights': insights,
@@ -2042,7 +2212,7 @@ class SonaUnifiedInterpreter:
                     "Use the think() function for complex problems"
                 ]
             }
-            
+
         except Exception as e:
             return {
                 'session_stats': {'error': str(e)},
@@ -2066,7 +2236,7 @@ class SonaUnifiedInterpreter:
                 'fallback_action': 'feedback_noted'
             }
 
-    def _ai_meta_cognition(self, 
+    def _ai_meta_cognition(self,
                            task_description: str = "current_task") -> dict[str, Any]:
         """AI-powered meta-cognitive self-assessment"""
         try:

@@ -441,6 +441,156 @@ def pointer_set(value: Any, pointer: str, new_value: Any) -> Any:
     return clone
 
 
+def pointer_delete(value: Any, pointer: str) -> Any:
+    """Return a copy of *value* with *pointer* removed."""
+
+    if pointer == "":
+        raise ValueError("Cannot delete root value")
+
+    clone = copy.deepcopy(value)
+    parts = pointer.lstrip("/").split("/") if pointer else []
+    if not parts:
+        return clone
+
+    current = clone
+    for raw in parts[:-1]:
+        key = _decode_pointer_token(raw)
+        if isinstance(current, MutableMapping):
+            current = current[key]
+        elif isinstance(current, MutableSequence):
+            current = current[int(key)]
+        else:
+            raise KeyError
+
+    last_token = _decode_pointer_token(parts[-1])
+    if isinstance(current, MutableMapping):
+        if last_token in current:
+            del current[last_token]
+    elif isinstance(current, MutableSequence):
+        index = int(last_token)
+        if 0 <= index < len(current):
+            del current[index]
+    else:
+        raise KeyError
+
+    return clone
+
+
+def pointer_exists(value: Any, pointer: str) -> bool:
+    """Check if *pointer* exists in *value*."""
+
+    try:
+        pointer_get(value, pointer)
+        return True
+    except (KeyError, IndexError, ValueError):
+        return False
+
+
+def flatten(obj: Any, separator: str = ".", parent_key: str = "") -> dict:
+    """Flatten nested JSON object into dot-notation keys.
+
+    Args:
+        obj: Object to flatten (dict or list)
+        separator: Key separator (default: '.')
+        parent_key: Parent key prefix
+
+    Returns:
+        Flattened dictionary
+
+    Example:
+        flatten({'a': {'b': 1, 'c': 2}}) → {'a.b': 1, 'a.c': 2}
+    """
+
+    items: list[tuple[str, Any]] = []
+
+    if isinstance(obj, MutableMapping):
+        for key, value in obj.items():
+            new_key = f"{parent_key}{separator}{key}" if parent_key else key
+            if isinstance(value, (MutableMapping, list)):
+                items.extend(flatten(value, separator, new_key).items())
+            else:
+                items.append((new_key, value))
+    elif isinstance(obj, list):
+        for idx, value in enumerate(obj):
+            new_key = f"{parent_key}{separator}{idx}" if parent_key else str(idx)
+            if isinstance(value, (MutableMapping, list)):
+                items.extend(flatten(value, separator, new_key).items())
+            else:
+                items.append((new_key, value))
+    else:
+        return {parent_key: obj} if parent_key else {}
+
+    return dict(items)
+
+
+def unflatten(obj: dict, separator: str = ".") -> Any:
+    """Unflatten dot-notation keys into nested structure.
+
+    Args:
+        obj: Flattened dictionary
+        separator: Key separator (default: '.')
+
+    Returns:
+        Nested structure
+
+    Example:
+        unflatten({'a.b': 1, 'a.c': 2}) → {'a': {'b': 1, 'c': 2}}
+    """
+
+    result: dict[str, Any] = {}
+
+    for key, value in obj.items():
+        parts = key.split(separator)
+        current = result
+
+        for part in parts[:-1]:
+            if part not in current:
+                current[part] = {}
+            current = current[part]
+
+        current[parts[-1]] = value
+
+    return result
+
+
+def diff(obj1: Any, obj2: Any) -> dict[str, Any]:
+    """Find differences between two JSON objects.
+
+    Returns:
+        Dictionary with 'added', 'removed', 'changed' keys
+    """
+
+    added = {}
+    removed = {}
+    changed = {}
+
+    if isinstance(obj1, MutableMapping) and isinstance(obj2, MutableMapping):
+        # Keys in obj2 but not obj1 (added)
+        for key in obj2:
+            if key not in obj1:
+                added[key] = obj2[key]
+
+        # Keys in obj1 but not obj2 (removed)
+        for key in obj1:
+            if key not in obj2:
+                removed[key] = obj1[key]
+
+        # Keys in both but different values (changed)
+        for key in obj1:
+            if key in obj2 and obj1[key] != obj2[key]:
+                if isinstance(obj1[key], (MutableMapping, list)) and \
+                   isinstance(obj2[key], (MutableMapping, list)):
+                    changed[key] = diff(obj1[key], obj2[key])
+                else:
+                    changed[key] = {'old': obj1[key], 'new': obj2[key]}
+
+    return {
+        'added': added,
+        'removed': removed,
+        'changed': changed
+    }
+
+
 __all__ = [
     "loads",
     "load",
@@ -455,4 +605,9 @@ __all__ = [
     "deep_update",
     "pointer_get",
     "pointer_set",
+    "pointer_delete",
+    "pointer_exists",
+    "flatten",
+    "unflatten",
+    "diff",
 ]

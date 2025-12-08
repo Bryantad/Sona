@@ -5,7 +5,7 @@ If you discover a security vulnerability in Sona, thank you for reporting it res
 Please follow these steps:
 
 1. Do not publicly disclose the issue.
-2. Email security@sona.local (replace with a real contact) with:
+2. Email security@sona-lang.dev with:
    - A short description of the issue
    - Steps to reproduce
    - Any PoC code or sample inputs
@@ -15,7 +15,7 @@ If you cannot use email, open a private support ticket with the project maintain
 
 ## Supported Versions
 
-We will respond to security reports for the current release (v0.9.6) and the prior minor release.
+We will respond to security reports for the current release (v0.9.8) and the prior minor release (v0.9.7).
 
 ## Disclosure Policy
 
