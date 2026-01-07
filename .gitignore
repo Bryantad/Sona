@@ -47,3 +47,12 @@ sona_cache/
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Local artifacts
+.spm_tmp/
+reports/
+_test_output_*.txt
+coverage.xml
+tmp_*.sona
+*.vsix
+SonaMinimal.code-workspace
