@@ -1,7 +1,7 @@
-# Sona 0.9.6 - Time and Date Modules Test
+# Sona 0.10.0 - Time and Date Modules Test
 # Tests: time, date, timer, random
 
-print("=== Sona 0.9.6 Time & Random Test ===");
+print("=== Sona 0.10.0 Time & Random Test ===");
 print("");
 
 # ===== TIME MODULE =====
@@ -77,3 +77,4 @@ print("Shuffled [1, 2, 3, 4, 5]: " + str(shuffled));
 print("");
 
 print("=== All Time & Random Tests Complete! ===");
+

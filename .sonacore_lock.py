@@ -12,8 +12,8 @@ CORE_LOCK = {
         "sona/__init__.py",
         "sona/interpreter.py",
         "sona/parser_v090.py",
-        "sona/ast_nodes_v090.py",
-        "sona/grammar_v090.lark",
+        "sona/ast_nodes.py",
+        "sona/grammar.lark",
         "sona/cli.py",
     ],
     

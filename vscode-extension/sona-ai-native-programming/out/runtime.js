@@ -35,9 +35,13 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.verifyRuntime = verifyRuntime;
 exports.openRepl = openRepl;
+exports.runFile = runFile;
+exports.runFileInDebug = runFileInDebug;
+exports.exportCognitiveReport = exportCognitiveReport;
 const cp = __importStar(require("child_process"));
 const path = __importStar(require("path"));
 const vscode = __importStar(require("vscode"));
+const fs = __importStar(require("fs"));
 function tryExec(cmd, args) {
     try {
         cp.execFileSync(cmd, args, { stdio: "ignore" });
@@ -52,6 +56,16 @@ function resolvePython() {
     const user = cfg.get("pythonPath");
     if (user)
         return user;
+    // Check workspace .venv first
+    const workspace = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    if (workspace) {
+        const winVenv = path.join(workspace, '.venv', 'Scripts', 'python.exe');
+        const posixVenv = path.join(workspace, '.venv', 'bin', 'python');
+        if (process.platform === 'win32' && fs.existsSync(winVenv))
+            return winVenv;
+        if (process.platform !== 'win32' && fs.existsSync(posixVenv))
+            return posixVenv;
+    }
     if (process.platform === "win32") {
         if (tryExec("py", ["-3", "-V"]))
             return "py";
@@ -65,6 +79,33 @@ function resolvePython() {
             return "python";
     }
     return process.platform === "win32" ? "python" : "python3";
+}
+function resolveDevRunnerPath() {
+    const cfg = vscode.workspace.getConfiguration("sona");
+    const configured = cfg.get("runtime.devRunnerPath");
+    const workspace = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    if (configured) {
+        const candidate = path.isAbsolute(configured) || !workspace
+            ? configured
+            : path.join(workspace, configured);
+        if (fs.existsSync(candidate))
+            return candidate;
+    }
+    if (!workspace)
+        return null;
+    const quickRun = path.join(workspace, "quick_run.py");
+    if (fs.existsSync(quickRun))
+        return quickRun;
+    const runSona = path.join(workspace, "run_sona.py");
+    if (fs.existsSync(runSona))
+        return runSona;
+    return null;
+}
+function buildPythonCommand(py, runnerPath, args) {
+    if (py === "py") {
+        return { command: "py", args: ["-3", runnerPath, ...args] };
+    }
+    return { command: py, args: [runnerPath, ...args] };
 }
 function runtimeEnv(extPath) {
     const env = { ...process.env };
@@ -103,5 +144,126 @@ async function openRepl() {
         ? `$env:PYTHONPATH="${env.PYTHONPATH}"; ${pyCmd} ${quotedScript}`
         : `export PYTHONPATH="${env.PYTHONPATH}"; ${pyCmd} ${quotedScript}`;
     term.sendText(exportCmd);
+}
+async function runFile() {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+        vscode.window.showWarningMessage("No active editor. Open a .sona file first.");
+        return;
+    }
+    const doc = editor.document;
+    if (doc.languageId !== "sona" && !doc.fileName.toLowerCase().endsWith(".sona")) {
+        vscode.window.showWarningMessage("Current file is not a Sona file.");
+        return;
+    }
+    // Save if dirty
+    if (doc.isDirty) {
+        await doc.save();
+    }
+    const filePath = doc.uri.fsPath;
+    const py = resolvePython();
+    // Check if workspace has a dev runner (development mode)
+    const workspace = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    const devRunner = resolveDevRunnerPath();
+    const hasSonaDir = workspace ? fs.existsSync(path.join(workspace, "sona")) : false;
+    const term = vscode.window.createTerminal({ name: "Sona Run" });
+    term.show();
+    const pyCmd = py === "py" ? "py -3" : py;
+    const quotedFile = `"${filePath}"`;
+    let cmd;
+    if (devRunner) {
+        // Development mode: use dev runner (run_sona.py or quick_run.py)
+        const quotedScript = `"${devRunner}"`;
+        cmd = `${pyCmd} ${quotedScript} ${quotedFile}`;
+    }
+    else if (hasSonaDir && workspace) {
+        // Workspace has sona package: use python -m sona.cli run
+        if (process.platform === "win32") {
+            cmd = `$env:PYTHONPATH="${workspace}"; ${pyCmd} -m sona.cli run ${quotedFile}`;
+        }
+        else {
+            cmd = `PYTHONPATH="${workspace}" ${pyCmd} -m sona.cli run ${quotedFile}`;
+        }
+    }
+    else {
+        // Installed sona: use python -m sona.cli run
+        cmd = `${pyCmd} -m sona.cli run ${quotedFile}`;
+    }
+    term.sendText(cmd);
+}
+async function runFileInDebug() {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+        vscode.window.showWarningMessage("No active editor. Open a .sona file first.");
+        return;
+    }
+    const doc = editor.document;
+    if (doc.languageId !== "sona" && !doc.fileName.toLowerCase().endsWith(".sona")) {
+        vscode.window.showWarningMessage("Current file is not a Sona file.");
+        return;
+    }
+    if (doc.isDirty) {
+        await doc.save();
+    }
+    const filePath = doc.uri.fsPath;
+    const py = resolvePython();
+    const workspace = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    const devRunner = resolveDevRunnerPath();
+    const hasSonaDir = workspace ? fs.existsSync(path.join(workspace, "sona")) : false;
+    const term = vscode.window.createTerminal({ name: "Sona Debug" });
+    term.show();
+    const pyCmd = py === "py" ? "py -3" : py;
+    const quotedFile = `"${filePath}"`;
+    let cmd;
+    if (devRunner) {
+        // Development mode: use dev runner with --debug
+        const quotedScript = `"${devRunner}"`;
+        cmd = `${pyCmd} ${quotedScript} --debug ${quotedFile}`;
+    }
+    else if (hasSonaDir && workspace) {
+        // Workspace has sona package: use python -m sona.cli run --debug
+        if (process.platform === "win32") {
+            cmd = `$env:PYTHONPATH="${workspace}"; ${pyCmd} -m sona.cli run --debug ${quotedFile}`;
+        }
+        else {
+            cmd = `PYTHONPATH="${workspace}" ${pyCmd} -m sona.cli run --debug ${quotedFile}`;
+        }
+    }
+    else {
+        // Installed sona: use python -m sona.cli run --debug
+        cmd = `${pyCmd} -m sona.cli run --debug ${quotedFile}`;
+    }
+    term.sendText(cmd);
+}
+async function exportCognitiveReport(filePath, format, outPath, outputChannel) {
+    const py = resolvePython();
+    const devRunner = resolveDevRunnerPath();
+    if (!devRunner) {
+        vscode.window.showErrorMessage("Sona dev runner not found. Configure sona.runtime.devRunnerPath or add run_sona.py.");
+        return;
+    }
+    const workspace = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    const { command, args } = buildPythonCommand(py, devRunner, [
+        "report",
+        filePath,
+        "--format",
+        format,
+        "--out",
+        outPath,
+    ]);
+    outputChannel?.appendLine(`[sona] export report: ${command} ${args.join(" ")}`);
+    await new Promise((resolve, reject) => {
+        cp.execFile(command, args, { cwd: workspace ?? undefined }, (err, stdout, stderr) => {
+            if (stdout)
+                outputChannel?.appendLine(stdout.trim());
+            if (stderr)
+                outputChannel?.appendLine(stderr.trim());
+            if (err) {
+                reject(err);
+                return;
+            }
+            resolve();
+        });
+    });
 }
 //# sourceMappingURL=runtime.js.map

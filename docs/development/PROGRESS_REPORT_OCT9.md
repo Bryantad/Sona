@@ -259,7 +259,7 @@ def expr_list(self, children):
 - `LiteralExpression`
 - `ListExpression`
 
-**Look for** in `ast_nodes_v090.py` or create if missing.
+**Look for** in `ast_nodes.py` or create if missing.
 
 ### Step 3: Test
 

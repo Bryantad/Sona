@@ -19,11 +19,11 @@ func __options(value) {
     return value
 }
 
-func compile(pattern, options) {
+func compile(pattern, options=nil) {
     return __native__.regex_compile(pattern, __options(options))
 }
 
-func match(pattern, text, options) {
+func match(pattern, text, options=nil) {
     return __native__.regex_match(
         pattern,
         text,
@@ -31,7 +31,7 @@ func match(pattern, text, options) {
     )
 }
 
-func search(pattern, text, options) {
+func search(pattern, text, options=nil) {
     return __native__.regex_search(
         pattern,
         text,
@@ -39,7 +39,7 @@ func search(pattern, text, options) {
     )
 }
 
-func test(pattern, text, options) {
+func test(pattern, text, options=nil) {
     return __native__.regex_test(
         pattern,
         text,
@@ -47,7 +47,7 @@ func test(pattern, text, options) {
     )
 }
 
-func find_all(pattern, text, options) {
+func find_all(pattern, text, options=nil) {
     return __native__.regex_find_all(
         pattern,
         text,
@@ -55,24 +55,20 @@ func find_all(pattern, text, options) {
     )
 }
 
-func replace(pattern, text, replacement, options) {
-    let opts = __options(options)
+func replace(pattern, text, replacement, options=nil) {
     return __native__.regex_replace(
         pattern,
         text,
         replacement,
-        count=__default(opts["count"], nil),
-        options=opts
+        options=__options(options)
     )
 }
 
-func split(pattern, text, options) {
-    let opts = __options(options)
+func split(pattern, text, options=nil) {
     return __native__.regex_split(
         pattern,
         text,
-        maxsplit=__default(opts["maxsplit"], nil),
-        options=opts
+        options=__options(options)
     )
 }
 

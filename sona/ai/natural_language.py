@@ -8,7 +8,7 @@ AI-powered explanations and documentation generation.
 import re
 from typing import Dict, List
 
-from .gpt2_integration import get_gpt2_instance
+from .ai_backend import get_ai_backend
 
 
 class NaturalLanguageProcessor:
@@ -16,7 +16,7 @@ class NaturalLanguageProcessor:
     
     def __init__(self):
         """Initialize natural language processor"""
-        self.gpt2 = get_gpt2_instance()
+        self.gpt2 = get_ai_backend()
         self.code_patterns = {
             'create_function': r'create|make|build.*function',
             'process_data': r'process|handle|work with.*data',
@@ -349,6 +349,12 @@ class NaturalLanguageProcessor:
         
         if 'focus(' in code:
             explanation += "• Using 'focus()' to highlight critical parts\n"
+        if '@intent' in code:
+            explanation += "• Declaring intent annotations to preserve context\n"
+
+        if 'focus {' in code or 'focus{' in code:
+            explanation += "• Using focus blocks to reduce noise during execution\n"
+
         
         if 'function' in code:
             explanation += "• Breaking work into manageable functions\n"

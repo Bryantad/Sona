@@ -31,11 +31,11 @@ def run_sona(filename):
     # Read
     with open(filename, 'r', encoding='utf-8') as f:
         source = f.read()
-    
+
     # Parse
     parser = SonaParserv090()
     ast_nodes = parser.parse(source, filename)
-    
+
     # Execute
     if ast_nodes:
         interpreter = SonaUnifiedInterpreter()
@@ -50,6 +50,7 @@ if __name__ == "__main__":
 ```
 
 **Usage:**
+
 ```powershell
 cd F:\Sona
 python run_program.py test.sona
@@ -71,6 +72,7 @@ print("Sum:", sum)
 ```
 
 **Run it:**
+
 ```powershell
 sona run test.sona
 ```
@@ -81,9 +83,9 @@ sona run test.sona
 
 **To understand how Sona works**, read these files in order:
 
-1. **`sona/grammar_v091_fixed.lark`** - Language syntax rules
+1. **`sona/grammar.lark`** - Language syntax rules
 2. **`sona/parser_v090.py`** - Converts source code → AST
-3. **`sona/ast_nodes_v090.py`** - AST node definitions
+3. **`sona/ast_nodes.py`** - AST node definitions
 4. **`sona/interpreter.py`** - Executes AST nodes
 5. **`stdlib/*.smod`** - Standard library module interfaces
 

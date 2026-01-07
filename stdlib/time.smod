@@ -11,11 +11,11 @@ func __default(value, fallback) {
 	return value
 }
 
-func now(timespec, tz) {
+func now(timespec=nil, tz=nil) {
 	return __native__.time_now(__default(timespec, nil), __default(tz, nil))
 }
 
-func utcnow(timespec) {
+func utcnow(timespec=nil) {
 	return __native__.time_utcnow(__default(timespec, nil))
 }
 
@@ -23,7 +23,7 @@ func timestamp() {
 	return __native__.time_timestamp()
 }
 
-func from_timestamp(value, timespec, tz) {
+func from_timestamp(value, timespec=nil, tz=nil) {
 	return __native__.time_from_timestamp(
 		value,
 		__default(timespec, nil),
@@ -31,11 +31,11 @@ func from_timestamp(value, timespec, tz) {
 	)
 }
 
-func to_timestamp(value, tz) {
+func to_timestamp(value, tz=nil) {
 	return __native__.time_to_timestamp(value, __default(tz, nil))
 }
 
-func parse(value, tz, timespec) {
+func parse(value, tz=nil, timespec=nil) {
 	return __native__.time_parse(
 		value,
 		__default(tz, nil),
@@ -43,7 +43,7 @@ func parse(value, tz, timespec) {
 	)
 }
 
-func format_iso(value, timespec, tz) {
+func format_iso(value, timespec=nil, tz=nil) {
 	return __native__.time_format_iso(
 		value,
 		__default(timespec, nil),
@@ -51,7 +51,7 @@ func format_iso(value, timespec, tz) {
 	)
 }
 
-func format(value, pattern, tz) {
+func format(value, pattern, tz=nil) {
 	return __native__.time_format_pattern(
 		value,
 		pattern,
@@ -59,7 +59,7 @@ func format(value, pattern, tz) {
 	)
 }
 
-func diff(start, end, unit, absolute) {
+func diff(start, end, unit=nil, absolute=nil) {
 	if absolute == nil {
 		absolute = true
 	}
@@ -71,7 +71,7 @@ func diff(start, end, unit, absolute) {
 	)
 }
 
-func shift(value, options) {
+func shift(value, options=nil) {
 	if options == nil {
 		options = {}
 	}

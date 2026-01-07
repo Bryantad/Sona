@@ -100,7 +100,7 @@
 
 1. **Classes** (`class Name { ... }`)
 
-   - Grammar: ✅ Defined in grammar_v091_fixed.lark
+   - Grammar: ✅ Defined in grammar.lark
    - Parser: ✅ Transformer present
    - Runtime: ❓ No test files found
    - **Action:** Create `test_classes.sona` to verify

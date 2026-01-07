@@ -1,12 +1,13 @@
-# Sona 0.9.6 - Filesystem and I/O Test
+# Sona 0.10.0 - Filesystem and I/O Test
 # Tests: fs, path, io, env
 
-print("=== Sona 0.9.6 Filesystem & I/O Test ===");
+print("=== Sona 0.10.0 Filesystem & I/O Test ===");
 print("");
 
 # ===== PATH MODULE =====
 print("--- Path Module ---");
 import path;
+import assert;
 
 file_path = "/home/user/documents/report.txt";
 print("Path: " + file_path);
@@ -16,6 +17,7 @@ print("Extension: " + path.extension(file_path));
 
 joined = path.join("/home/user", "projects", "sona");
 print("Joined path: " + joined);
+assert.not_none(joined);
 
 normalized = path.normalize("/home/user/../user/./projects");
 print("Normalized: " + normalized);
@@ -41,18 +43,20 @@ print("");
 # ===== IO MODULE =====
 print("--- I/O Module ---");
 import io;
+import collection;
 
 # Write to file
 test_file = "test_output_096.txt";
 print("Writing to file: " + test_file);
-io.write_file(test_file, "Sona 0.9.6 Test Output\nLine 2\nLine 3");
+io.write_file(test_file, "Sona 0.10.0 Test Output\nLine 2\nLine 3");
 print("File written successfully");
 
 # Read from file
 print("Reading file...");
 content = io.read_file(test_file);
 print("Content read: " + str(len(content)) + " characters");
-print("First line: " + content.split("\n")[0]);
+lines = content.split("\n");
+print("First line: " + str(collection.first(lines, "")));
 
 # Append to file
 io.append_file(test_file, "\nAppended line");
@@ -66,6 +70,7 @@ print("");
 # ===== FS MODULE =====
 print("--- Filesystem Module ---");
 import fs;
+import collection;
 
 # Create directory
 test_dir = "test_dir_096";
@@ -81,7 +86,7 @@ print("Directory exists: " + str(dir_exists));
 print("Listing current directory...");
 items = fs.listdir(".");
 print("Found " + str(len(items)) + " items");
-print("First 3 items: " + str(items[:3]));
+print("First 3 items: " + str(collection.take(items, 3)));
 
 # Check if path is directory
 is_dir = fs.is_dir(test_dir);
@@ -99,3 +104,4 @@ print("Cleanup complete");
 print("");
 
 print("=== All Filesystem & I/O Tests Complete! ===");
+

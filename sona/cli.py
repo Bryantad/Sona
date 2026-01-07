@@ -1,5 +1,5 @@
 """
-Sona v0.9.6 Command Line Interface with AI Integration
+Sona v0.10.1 Command Line Interface with AI Integration
 
 Enhanced CLI with profile, benchmark, suggest, and explain commands
 powered by GPT-2 and cognitive assistance features.
@@ -8,6 +8,7 @@ powered by GPT-2 and cognitive assistance features.
 import argparse
 import os
 import sys
+import traceback
 from dataclasses import dataclass
 from pathlib import Path
 from time import perf_counter
@@ -20,8 +21,13 @@ from .type_config import configure_types, get_type_logger, get_type_config
 if sys.platform == "win32":  # pragma: no cover - platform specific
     try:
         import ctypes  # type: ignore
-        # Just set the console code page, don't rewrap stdout/stderr
+        # Set console code page and reconfigure stdout/stderr to UTF-8.
         ctypes.windll.kernel32.SetConsoleOutputCP(65001)
+        # Ensure Python stdout/stderr can emit UTF-8 safely.
+        if hasattr(sys.stdout, "reconfigure"):
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        if hasattr(sys.stderr, "reconfigure"):
+            sys.stderr.reconfigure(encoding="utf-8", errors="replace")
     except Exception:
         pass
 
@@ -103,36 +109,47 @@ print("Insights demo complete.");
 """,
 }
 
+KNOWN_COMMANDS = {
+    'run',
+    'profile',
+    'benchmark',
+    'suggest',
+    'explain',
+    'info',
+    'ai-plan',
+    'ai-review',
+    'probe',
+    'doctor',
+    'build-info',
+    'help',
+    'version',
+    'repl',
+    'check',
+    'format',
+    'transpile',
+    'keys',
+    'lock',
+    'verify',
+    'demo',
+    'ai-model',
+    'ai-mode',
+    'setup',
+    'perf-log',
+}
+
 
 def _load_default_interpreter():
     """Instantiate the preferred interpreter with graceful fallback."""
-    # Try advanced interpreter first for richer cognitive features
     try:
-        from test_advanced_cognitive_functions import (
-            AdvancedSonaInterpreter,
-        )
-        _update_interpreter_status("advanced", message=None, fallback_reason=None, hint=None)
-        safe_print("[INFO] Advanced Sona interpreter enabled")
-        return AdvancedSonaInterpreter()
-    except Exception as advanced_error:
-        fallback_reason = _summarize_interpreter_error(advanced_error)
-        _update_interpreter_status(
-            "core",
-            fallback_reason=fallback_reason,
-            hint='Install optional extras via: python -m pip install "sona-lang[advanced]"',
-            message=(
-                "[INFO] Core runtime active. Advanced interpreter is optional "
-                "and can be enabled when the cognitive bundle is installed."
-            ),
-            announce=True,
-        )
-        try:
-            from sona.interpreter import SonaInterpreter
-            return SonaInterpreter()
-        except Exception as core_error:  # pragma: no cover - defensive
-            raise RuntimeError(
-                f"Interpreter unavailable: {fallback_reason}"
-            ) from core_error
+        from sona.interpreter import SonaInterpreter
+        _update_interpreter_status("cognitive", message=None, fallback_reason=None, hint=None)
+        safe_print("[INFO] Cognitive runtime enabled")
+        return SonaInterpreter()
+    except Exception as core_error:  # pragma: no cover - defensive
+        fallback_reason = _summarize_interpreter_error(core_error)
+        raise RuntimeError(
+            f"Interpreter unavailable: {fallback_reason}"
+        ) from core_error
 
 
 def _to_str_safe(x):
@@ -305,7 +322,7 @@ def _print_structured_summary(
         f"interpreter: {stats.interpreter_variant} ({stats.interpreter_name or 'unknown'})",
         f"safe mode: {'on' if stats.safe_mode else 'off'}",
         f"duration: {_format_duration(stats.duration_ms)}",
-        f"statements: {stats.statements} (python blocks: {stats.python_blocks}, inline python: {stats.python_invocations})",
+        f"statements: {stats.statements} (python blocks: {stats.python_blocks}, python exports: {stats.python_invocations})",
     ]
 
     if stats.fallback_reason:
@@ -347,6 +364,41 @@ def _emit_type_logger_summary(logger, args) -> dict:
     return stats
 
 
+ERROR_MODES = {'explain', 'trace', 'both'}
+
+
+def _resolve_error_mode(args) -> str:
+    mode = getattr(args, 'errors', None)
+    if mode in ERROR_MODES:
+        return mode
+    return 'explain'
+
+
+def _select_trace_exception(exc: Exception) -> Exception:
+    try:
+        from .interpreter import SonaRuntimeError
+    except Exception:
+        SonaRuntimeError = None  # type: ignore
+
+    if SonaRuntimeError and isinstance(exc, SonaRuntimeError):
+        return exc.__cause__ or exc
+    return exc
+
+
+def _render_execution_error(exc: Exception, *, mode: str, debug: bool) -> None:
+    if mode == 'trace':
+        trace_exc = _select_trace_exception(exc)
+        traceback.print_exception(type(trace_exc), trace_exc, trace_exc.__traceback__)
+        return
+
+    safe_print("[ERROR] Execution error:")
+    safe_print(str(exc))
+
+    if mode == 'both' or debug:
+        trace_exc = _select_trace_exception(exc)
+        traceback.print_exception(type(trace_exc), trace_exc, trace_exc.__traceback__)
+
+
 def read_text_safe(path: str) -> str:
     """Robust text loader with multi-encoding fallback.
 
@@ -365,12 +417,75 @@ def read_text_safe(path: str) -> str:
     return p.read_text(encoding="utf-8", errors="replace")
 
 
+def _run_python_script(path: Path, args: list[str], *, debug: bool = False) -> int:
+    """Execute a Python script using the current interpreter."""
+    import runpy
+
+    original_argv = sys.argv[:]
+    sys.argv = [str(path)] + list(args)
+    try:
+        runpy.run_path(str(path), run_name="__main__")
+        return 0
+    except SystemExit as exc:
+        code = exc.code
+        if code is None:
+            return 0
+        if isinstance(code, int):
+            return code
+        safe_print(code)
+        return 1
+    except Exception as exc:
+        safe_print(f"[ERROR] Python execution error: {exc}")
+        if debug:
+            import traceback
+
+            traceback.print_exc()
+        return 1
+    finally:
+        sys.argv = original_argv
+
+
+def _handle_direct_file_invocation(argv: list[str]) -> int | None:
+    """Handle 'sona <file>' before argparse so direct file usage works."""
+    if len(argv) < 2:
+        return None
+    candidate = argv[1]
+    if candidate.startswith('-'):
+        return None
+    if candidate in KNOWN_COMMANDS:
+        return None
+    path = Path(candidate)
+    if not path.exists():
+        return None
+
+    if path.suffix.lower() == '.py':
+        return _run_python_script(path, argv[2:])
+
+    if len(argv) > 2:
+        safe_print(
+            "[ERROR] Extra arguments detected. "
+            "Use 'sona run <file.sona>' for flags/options."
+        )
+        return 2
+
+    class DirectArgs:
+        file = str(path)
+        safe = False
+        debug = False
+        types = None
+        types_log = 'all'
+        summary = False
+
+    return handle_run_command(DirectArgs())
+
+
 def execute_sona(
     code: str,
     safe_mode: bool = False,
     file_path: str | None = None,
+    debug: bool = False,
 ) -> any:
-    """Execute Sona code using the default interpreter"""
+    """Execute Sona code using the default interpreter."""
     global default_interpreter
     if default_interpreter is None:
         default_interpreter = _load_default_interpreter()
@@ -391,55 +506,58 @@ def execute_sona(
     except Exception:
         pass
 
+    # Toggle interpreter debug mode if supported.
+    try:
+        if debug:
+            interpreter.enable_debug()
+        else:
+            interpreter.disable_debug()
+    except Exception:
+        pass
+
     for python_block in python_blocks:
         try:
             compiled = compile(python_block, file_path or '<embedded>', 'exec')
             exec(compiled, exec_globals, exec_globals)
+        except TypeCheckAbort:
+            raise
         except Exception as e:
-            safe_print(f"[ERROR] Python block execution error: {e}")
+            raise RuntimeError(f"Python block execution error: {e}") from e
 
-    # Now execute remaining (Sona) lines
-    lines = '\n'.join(remaining_lines).strip().split('\n') if remaining_lines else []
+    python_exports = _register_python_exports(exec_globals, interpreter)
+
+    remaining_code = '\n'.join(remaining_lines)
+    executed_statements = sum(
+        1
+        for line in remaining_lines
+        if line.strip() and not line.strip().startswith('#')
+    )
     result = None
-    executed_statements = 0
-    python_invocations = 0
     start_time = perf_counter()
 
-    for raw_line in lines:
-        line = raw_line.strip()
-        if not line or line.startswith('#'):
-            continue
-
-        # Simple detection: contains '(' and a known function name
-        is_python = False
-        for name, obj in exec_globals.items():
-            if callable(obj) and name in line and '(' in line:
-                is_python = True
-                break
-
-        if is_python:
-            try:
-                exec(line, exec_globals, exec_globals)
-            except TypeCheckAbort:
-                raise
-            except Exception as e:
-                safe_print(f"[ERROR] Python exec error: {e}")
-            executed_statements += 1
-            python_invocations += 1
-            continue
-
+    if remaining_code.strip():
         try:
-            result = interpreter.interpret(line)
+            result = interpreter.interpret(
+                remaining_code,
+                filename=file_path or '<string>',
+            )
             if result is not None:
                 result = _to_str_safe(result)
+        except TypeCheckAbort:
+            raise
         except Exception as e:
-            safe_print(f"[ERROR] Interpretation error: {e}")
-        executed_statements += 1
+            try:
+                from .interpreter import SonaRuntimeError
+            except Exception:
+                SonaRuntimeError = None
+            if SonaRuntimeError and isinstance(e, SonaRuntimeError):
+                raise
+            raise RuntimeError(f"Interpretation error: {e}") from e
 
     end_time = perf_counter()
     stats.result = result
     stats.statements = executed_statements
-    stats.python_invocations = python_invocations
+    stats.python_invocations = python_exports
     stats.duration_ms = max(0.0, (end_time - start_time) * 1000)
     stats.interpreter_name = interpreter.__class__.__name__
     snapshot = _snapshot_interpreter_status()
@@ -451,7 +569,7 @@ def execute_sona(
 
 
 def _extract_python_blocks(code: str):
-    """Enhanced Python block extraction with multi-decorator support"""
+    """Enhanced Python block extraction with multi-decorator support."""
     lines = code.split('\n')
     python_blocks = []
     remaining_lines = []
@@ -520,6 +638,8 @@ def _extract_python_blocks(code: str):
                         break
 
                 python_blocks.append('\n'.join(block_lines))
+                # Preserve line numbers by keeping blank placeholders.
+                remaining_lines.extend([''] * (body_end - i))
                 i = body_end
                 continue
 
@@ -530,11 +650,36 @@ def _extract_python_blocks(code: str):
     return python_blocks, remaining_lines
 
 
+def _register_python_exports(exec_globals: dict, interpreter) -> int:
+    """Expose Python symbols from embedded blocks to the Sona interpreter."""
+    exported = 0
+    for name, value in exec_globals.items():
+        if name.startswith('__'):
+            continue
+        if name in {'check_types'}:
+            continue
+        try:
+            if hasattr(interpreter, 'has_variable') and interpreter.has_variable(name):
+                continue
+        except Exception:
+            pass
+        try:
+            if hasattr(interpreter, 'set_variable'):
+                interpreter.set_variable(name, value, global_scope=True)
+                exported += 1
+            elif hasattr(interpreter, 'memory'):
+                interpreter.memory.set_variable(name, value, global_scope=True)
+                exported += 1
+        except Exception:
+            continue
+    return exported
+
+
 ENHANCED_COMMANDS = None  # lazy-loaded mapping
 
 
 # Version information
-SONA_VERSION = "0.9.8"
+SONA_VERSION = "0.10.1"
 AI_FEATURES_VERSION = "1.0.0"
 DEFAULT_OFFLINE_MODEL = "qwen2.5-coder:7b"
 
@@ -553,7 +698,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
     """Create the main argument parser for Sona CLI"""
     parser = argparse.ArgumentParser(
         prog='sona',
-        description='Sona Cognitive Programming Language v0.9.8',
+        description='Sona Cognitive Programming Language v0.10.1',
         epilog='For more information, visit: https://github.com/Bryantad/Sona'
     )
 
@@ -589,6 +734,12 @@ def create_argument_parser() -> argparse.ArgumentParser:
         help='Enable debug output',
     )
     run_parser.add_argument(
+        '--errors',
+        choices=['explain', 'trace', 'both'],
+        default='explain',
+        help='Error output mode (explain|trace|both)',
+    )
+    run_parser.add_argument(
         '--types',
         choices=['off', 'warn', 'on'],
         help='Type checking mode (off|warn|on). Overrides SONA_TYPES env var',
@@ -603,6 +754,17 @@ def create_argument_parser() -> argparse.ArgumentParser:
         '--summary',
         action='store_true',
         help='Print a structured execution summary after completion',
+    )
+    run_parser.add_argument(
+        '--receipt',
+        dest='receipt_path',
+        help='Write an execution receipt JSON to this path',
+    )
+    run_parser.add_argument(
+        '--receipt-env',
+        action='append',
+        default=[],
+        help='Environment variable key to include in receipt (repeatable)',
     )
 
     demo_parser = subparsers.add_parser(
@@ -747,6 +909,30 @@ def create_argument_parser() -> argparse.ArgumentParser:
         default=None,
     )
 
+    # Package command (v0.10 platform bridge)
+    pkg_parser = subparsers.add_parser(
+        'pkg',
+        help='Package/project helpers (manifest + local modules)',
+    )
+    pkg_sub = pkg_parser.add_subparsers(
+        dest='pkg_cmd',
+        help='Package commands',
+    )
+    pkg_init = pkg_sub.add_parser(
+        'init',
+        help='Create sona.json manifest in current directory',
+    )
+    pkg_init.add_argument(
+        '--name',
+        default=None,
+        help='Project name (defaults to folder name)',
+    )
+    pkg_init.add_argument(
+        '--version',
+        default=SONA_VERSION,
+        help='Project version (defaults to Sona version)',
+    )
+
     # Format command
     format_parser = subparsers.add_parser('format', help='Format Sona code')
     format_parser.add_argument('file', help='Sona file to format')
@@ -758,6 +944,11 @@ def create_argument_parser() -> argparse.ArgumentParser:
     )
     transpile_parser.add_argument('file', help='Sona file to transpile')
     transpile_parser.add_argument('--output', help='Output file path')
+    transpile_parser.add_argument(
+        '--core-only',
+        action='store_true',
+        help='Emit core syntax only (skip cognitive/AI helpers)',
+    )
 
     # REPL command
     repl_parser = subparsers.add_parser(
@@ -962,16 +1153,25 @@ def handle_run_command(args) -> int:
     # Import here to avoid circular imports
     from sona.type_system.runtime_checker import TypeCheckAbort
 
-    if not Path(args.file).exists():
+    file_path = Path(args.file)
+    if not file_path.exists():
         safe_print(f"[ERROR] File '{args.file}' not found.")
         return 1
 
+    if file_path.suffix.lower() == '.py':
+        return _run_python_script(file_path, [], debug=getattr(args, 'debug', False))
+
     exit_code = 0
+    error_text = None
+    start = None
     logger = None
     execution = None
     type_stats = {'errors': 0, 'warnings': 0}
 
     try:
+        import time as _time
+        start = _time.perf_counter()
+
         # Configure type checking based on CLI argument
         if hasattr(args, 'types'):
             configure_types(cli_mode=args.types)
@@ -991,6 +1191,7 @@ def handle_run_command(args) -> int:
             code,
             safe_mode=args.safe,
             file_path=args.file,
+            debug=args.debug,
         )
 
         if args.debug:
@@ -999,12 +1200,12 @@ def handle_run_command(args) -> int:
 
     except TypeCheckAbort:
         # Type checking failure in ON mode - exit code handled below
+        error_text = 'TypeCheckAbort'
         pass
     except Exception as e:
-        safe_print(f"[ERROR] Execution error: {e}")
-        if args.debug:
-            import traceback
-            traceback.print_exc()
+        mode = _resolve_error_mode(args)
+        _render_execution_error(e, mode=mode, debug=getattr(args, 'debug', False))
+        error_text = f"{type(e).__name__}: {e}"
         exit_code = 1
     finally:
         type_stats = _emit_type_logger_summary(logger, args)
@@ -1015,6 +1216,36 @@ def handle_run_command(args) -> int:
             and logger.should_exit_with_error()
         ):
             exit_code = 2
+
+        duration_ms = None
+        if start is not None:
+            try:
+                import time as _time
+                duration_ms = int((_time.perf_counter() - start) * 1000)
+            except Exception:
+                duration_ms = None
+
+        receipt_path = getattr(args, 'receipt_path', None)
+        if receipt_path and duration_ms is not None:
+            try:
+                import sys
+                from sona import __version__ as _sona_version
+                from sona.receipts import ReceiptConfig, build_receipt, write_receipt_json
+
+                cfg = ReceiptConfig(env_allowlist=tuple(getattr(args, 'receipt_env', []) or ()))
+                receipt = build_receipt(
+                    sona_version=str(_sona_version),
+                    entry_file=file_path,
+                    project_root=file_path.resolve().parent,
+                    argv=list(getattr(sys, 'argv', []) or []),
+                    exit_code=exit_code,
+                    duration_ms=duration_ms,
+                    error_text=error_text,
+                    config=cfg,
+                )
+                write_receipt_json(receipt, Path(receipt_path))
+            except Exception as exc:
+                safe_print(f"[WARN] Failed to write receipt: {exc}")
 
     type_mode = 'off'
     if logger:
@@ -1063,6 +1294,7 @@ def handle_demo_command(args) -> int:
             code,
             safe_mode=False,
             file_path=f"<demo:{scenario}>",
+            debug=False,
         )
     except Exception as exc:
         safe_print(f"[ERROR] Demo execution failed: {exc}")
@@ -1337,9 +1569,9 @@ def handle_info_command(args) -> int:
     if args.ai_status:
         safe_print("\n[AI] AI Feature Status:")
         try:
-            from sona.ai.gpt2_integration import get_gpt2_instance
-            get_gpt2_instance()
-            safe_print("   [OK] GPT-2 Integration: Available")
+            from sona.ai.ai_backend import get_ai_backend
+            backend = get_ai_backend()
+            safe_print(f"   [OK] AI Backend: {backend.__class__.__name__}")
             safe_print("   [OK] Code Completion: Available")
             safe_print("   [OK] Cognitive Assistant: Available")
             safe_print("   [OK] Natural Language Processing: Available")
@@ -1349,12 +1581,33 @@ def handle_info_command(args) -> int:
             safe_print(f"   [WARN] AI Features: Error ({e})")
 
     safe_print("\n[HELP] Commands:")
-    safe_print("   run       - Execute Sona code")
-    safe_print("   profile   - Profile code execution")
-    safe_print("   benchmark - Performance benchmarking")
-    safe_print("   suggest   - AI code suggestions")
-    safe_print("   explain   - AI code explanations")
-    safe_print("   info      - System information")
+    commands = [
+        ("run", "Execute a Sona file"),
+        ("demo", "Run built-in demo"),
+        ("profile", "Profile code execution"),
+        ("benchmark", "Benchmark performance"),
+        ("suggest", "AI code suggestions"),
+        ("explain", "AI code explanations"),
+        ("check", "Validate syntax"),
+        ("format", "Format Sona code"),
+        ("transpile", "Transpile Sona to Python"),
+        ("repl", "Start interactive REPL"),
+        ("lock", "Generate sona.lock.json"),
+        ("verify", "Verify sona.lock.json"),
+        ("setup", "Configure AI providers"),
+        ("keys", "Manage API credentials"),
+        ("ai-plan", "Generate deterministic plan JSON"),
+        ("ai-review", "Review artifact text"),
+        ("ai-model", "Manage offline AI models"),
+        ("ai-mode", "Enable cache/breaker for local AI"),
+        ("probe", "Run policy probe / stdlib inspection"),
+        ("doctor", "Diagnose environment readiness"),
+        ("build-info", "Show build and feature info"),
+        ("perf-log", "Emit a perf event"),
+        ("info", "System information"),
+    ]
+    for name, desc in commands:
+        safe_print(f"   {name:<10} - {desc}")
 
     return 0
 
@@ -1367,29 +1620,42 @@ def handle_check_command(args) -> int:
 
     try:
         code = read_text_safe(args.file)
-
-        # Basic syntax checking - try to parse each line
-        lines = code.strip().split('\n')
-        errors = 0
-
-        for i, line in enumerate(lines, 1):
-            line = line.strip()
-            if line and not line.startswith('#'):
-                # Basic syntax checks
-                if '=' in line and not line.startswith('let '):
-                    safe_print(f"[ERROR] Line {i}: Assignment should use 'let' keyword")
-                    errors += 1
-
-        if errors == 0:
-            safe_print(f"[OK] Syntax check passed for {args.file}")
-            return 0
-        else:
-            safe_print(f"[ERROR] Found {errors} syntax errors")
-            return 1
-
+        from .parser_v090 import create_parser
     except Exception as e:
-        safe_print(f"[ERROR] Check error: {e}")
+        safe_print(f"[ERROR] Failed to load parser: {e}")
         return 1
+
+    try:
+        parser = create_parser()
+        result = parser.validate_syntax(code)
+    except Exception as e:
+        safe_print(f"[ERROR] Syntax check failed: {e}")
+        return 1
+
+    errors = result.get('errors', []) if isinstance(result, dict) else []
+    warnings = result.get('warnings', []) if isinstance(result, dict) else []
+    suggestions = result.get('suggestions', []) if isinstance(result, dict) else []
+
+    if errors:
+        safe_print(f"[ERROR] Syntax check failed for {args.file}")
+        for err in errors:
+            safe_print(f"  - {err}")
+        if suggestions:
+            safe_print("[HINT] Suggestions:")
+            for hint in suggestions:
+                safe_print(f"  - {hint}")
+        return 1
+
+    safe_print(f"[OK] Syntax check passed for {args.file}")
+    if warnings:
+        safe_print("[WARN] Warnings:")
+        for warn in warnings:
+            safe_print(f"  - {warn}")
+    if suggestions:
+        safe_print("[HINT] Suggestions:")
+        for hint in suggestions:
+            safe_print(f"  - {hint}")
+    return 0
 
 
 def handle_format_command(args) -> int:
@@ -1401,23 +1667,44 @@ def handle_format_command(args) -> int:
     try:
         code = read_text_safe(args.file)
 
-        # Basic formatting - ensure proper spacing
-        lines = code.strip().split('\n')
-        formatted_lines = []
+        # Basic formatting - preserve whitespace and adjust simple assignments.
+        lines = code.splitlines(keepends=True)
+        formatted_lines: list[str] = []
 
         for line in lines:
-            line = line.strip()
-            if line:
-                # Add consistent spacing around operators
-                if '=' in line and 'let ' in line:
-                    parts = line.split('=', 1)
-                    if len(parts) == 2:
-                        line = f"{parts[0].strip()} = {parts[1].strip()}"
-                formatted_lines.append(line)
+            line_ending = ""
+            content = line
+            if line.endswith("\r\n"):
+                line_ending = "\r\n"
+                content = line[:-2]
+            elif line.endswith("\n") or line.endswith("\r"):
+                line_ending = line[-1]
+                content = line[:-1]
 
-        # Write back formatted code
+            stripped = content.lstrip()
+            if not stripped or stripped.startswith('#'):
+                formatted_lines.append(content + line_ending)
+                continue
+
+            # Keep inline comments untouched to avoid breaking them.
+            if '//' in stripped or '#' in stripped:
+                formatted_lines.append(content + line_ending)
+                continue
+
+            if stripped.startswith(('let ', 'const ')) and '=' in stripped:
+                left, right = stripped.split('=', 1)
+                normalized = f"{left.rstrip()} = {right.lstrip()}"
+                content = content[: len(content) - len(stripped)] + normalized
+
+            formatted_lines.append(content + line_ending)
+
+        formatted_text = ''.join(formatted_lines)
+        if formatted_text == code:
+            safe_print(f"[OK] Already formatted: {args.file}")
+            return 0
+
         with open(args.file, 'w', encoding='utf-8') as f:
-            f.write('\n'.join(formatted_lines) + '\n')
+            f.write(formatted_text)
 
         safe_print(f"[OK] Formatted {args.file}")
         return 0
@@ -1432,36 +1719,31 @@ def handle_transpile_command(args) -> int:
     if not Path(args.file).exists():
         safe_print(f"[ERROR] File '{args.file}' not found.")
         return 1
-        return 1
 
     try:
-        code = read_text_safe(args.file)
+        from .sona_transpiler import SonaTranspiler, TranspileOptions
 
-        # Basic transpilation to Python
-        lines = code.strip().split('\n')
-        python_lines = []
+        transpiler = SonaTranspiler(
+            TranspileOptions(include_cognitive_blocks=not args.core_only)
+        )
+        result = transpiler.transpile_file(args.file)
+        if not result.ok:
+            safe_print("[ERROR] Transpilation failed:")
+            for err in result.errors:
+                safe_print(f"  - {err}")
+            return 1
 
-        for line in lines:
-            line = line.strip()
-            if line and not line.startswith('#'):
-                # Convert Sona syntax to Python
-                if line.startswith('let '):
-                    # let x = 5 -> x = 5
-                    python_lines.append(line[4:])
-                elif line.startswith('print('):
-                    python_lines.append(line)
-                else:
-                    python_lines.append(f"# {line}")  # Comment unknown syntax
+        if result.warnings:
+            safe_print("[WARN] Transpilation warnings:")
+            for warn in result.warnings:
+                safe_print(f"  - {warn}")
 
         # Determine output file
-        output_file = (
-            args.output
-            if args.output
-            else args.file.replace('.sona', '.py')
-        )
+        src_path = Path(args.file)
+        output_file = Path(args.output) if args.output else src_path.with_suffix('.py')
 
         with open(output_file, 'w', encoding='utf-8') as f:
-            f.write('\n'.join(python_lines) + '\n')
+            f.write(result.code)
 
         safe_print(f"[OK] Transpiled {args.file} to {output_file}")
         return 0
@@ -1476,12 +1758,16 @@ def handle_repl_command(args) -> int:
     safe_print("[INFO] Starting Sona REPL...")
 
     try:
-        from test_advanced_cognitive_functions import AdvancedSonaInterpreter
-        interpreter = AdvancedSonaInterpreter()
+        from sona.interpreter import SonaInterpreter
+        interpreter = SonaInterpreter()
 
-        safe_print("Sona REPL v0.9.8 - Type 'exit' to quit")
+        safe_print("Sona REPL v0.10.1 - Type 'exit' to quit")
         if args.ai:
-            safe_print("[AI] AI assistance enabled")
+            try:
+                interpreter.enable_ai()
+                safe_print("[AI] AI assistance enabled")
+            except Exception as e:
+                safe_print(f"[WARN] Failed to enable AI assistance: {e}")
 
         while True:
             try:
@@ -1490,9 +1776,12 @@ def handle_repl_command(args) -> int:
                     break
 
                 if user_input.strip():
-                    result = interpreter.interpret(user_input)
-                    if result is not None:
-                        safe_print(f"=> {result}")
+                    try:
+                        result = interpreter.interpret(user_input, filename="<repl>")
+                        if result is not None:
+                            safe_print(f"=> {result}")
+                    except Exception as e:
+                        safe_print(f"[ERROR] {e}")
 
             except KeyboardInterrupt:
                 safe_print("\n[BYE] Goodbye!")
@@ -1544,8 +1833,8 @@ def handle_enhanced_command(command: str, args) -> int:
         elif command == 'explain' and hasattr(args, 'style'):
             arg_list.extend(['--style', args.style])
 
-        cmds[command](arg_list)  # type: ignore[index]
-        return 0
+        result = cmds[command](arg_list)  # type: ignore[index]
+        return result if isinstance(result, int) else 0
     except Exception as e:  # pragma: no cover - defensive
         safe_print(f"[ERROR] Command failed: {e}")
         return 1
@@ -2039,6 +2328,10 @@ def handle_verify_command(args) -> int:
 
 def main() -> int:
     """Main CLI entry point"""
+    direct_result = _handle_direct_file_invocation(sys.argv)
+    if direct_result is not None:
+        return direct_result
+
     parser = create_argument_parser()
 
     # Parse arguments first to check for global options
@@ -2050,41 +2343,34 @@ def main() -> int:
 
     # Handle case where no arguments are provided
     if len(sys.argv) == 1:
-        safe_print("[SONA] Sona Cognitive Programming Language v0.9.8")
+        safe_print("[SONA] Sona Cognitive Programming Language v0.10.1")
         safe_print("\nUsage: sona <command> [options]")
         safe_print("\nCommands:")
-        safe_print("  run <file>       Execute a Sona file")
-        safe_print("  profile <file>   Profile code execution")
-        safe_print("  benchmark <file> Benchmark performance")
-        safe_print("  suggest <file>   Get AI suggestions")
-        safe_print("  explain <file>   Get AI explanations")
-        safe_print("  lock             Generate sona.lock.json")
-        safe_print("  verify           Verify sona.lock.json")
-        safe_print("  demo             Run the built-in feature demo")
-        safe_print("  ai-model         Manage offline AI models")
-        safe_print("  ai-mode          Enable cache/breaker for local AI")
-        safe_print("  info             Show system info")
+        safe_print("  run <file>         Execute a Sona file")
+        safe_print("  demo               Run the built-in feature demo")
+        safe_print("  profile <file>     Profile code execution")
+        safe_print("  benchmark <file>   Benchmark performance")
+        safe_print("  suggest <file>     Get AI suggestions")
+        safe_print("  explain <file>     Get AI explanations")
+        safe_print("  check <file>       Validate syntax")
+        safe_print("  format <file>      Format Sona code")
+        safe_print("  transpile <file>   Transpile to Python")
+        safe_print("  repl               Start interactive REPL")
+        safe_print("  lock               Generate sona.lock.json")
+        safe_print("  verify             Verify sona.lock.json")
+        safe_print("  setup <target>     Configure AI providers")
+        safe_print("  keys <cmd>         Manage API credentials")
+        safe_print("  ai-plan <goal>     Generate deterministic plan JSON")
+        safe_print("  ai-review <file>   Review artifact text")
+        safe_print("  ai-model <cmd>     Manage offline AI models")
+        safe_print("  ai-mode <action>   Enable cache/breaker for local AI")
+        safe_print("  probe [stdlib]     Run policy probe / stdlib inspection")
+        safe_print("  doctor             Diagnose environment readiness")
+        safe_print("  build-info         Show build and feature info")
+        safe_print("  perf-log <event>   Emit a perf event")
+        safe_print("  info               Show system info")
         safe_print("\nUse 'sona <command> --help' for more information.")
         return 0
-
-    # Handle direct file execution (legacy mode)
-    if (
-        len(sys.argv) == 2
-        and not sys.argv[1].startswith('-')
-        and sys.argv[1] not in [
-            'run', 'profile', 'benchmark', 'suggest', 'explain', 'info',
-            'ai-plan', 'ai-review', 'probe', 'doctor', 'build-info',
-            'help', 'version', 'repl', 'check', 'format', 'transpile', 'keys',
-            'lock', 'verify', 'demo', 'ai-model', 'ai-mode'
-        ]
-    ):
-        # Treat as direct file execution
-        class DirectArgs:
-            file = sys.argv[1]
-            safe = False
-            debug = False
-
-        return handle_run_command(DirectArgs())
 
     # Handle commands
     if args.command == 'run' or args.command is None:
@@ -2155,6 +2441,9 @@ def main() -> int:
     elif args.command == 'repl':
         return handle_repl_command(args)
 
+    elif args.command in ('profile', 'benchmark', 'suggest', 'explain'):
+        return handle_enhanced_command(args.command, args)
+
     elif args.command == 'keys':
         return handle_keys_command(args)
     elif args.command == 'ai-plan':
@@ -2167,6 +2456,26 @@ def main() -> int:
         return handle_doctor_command(args)
     elif args.command == 'build-info':
         return handle_build_info_command(args)
+
+    elif args.command == 'pkg':
+        if getattr(args, 'pkg_cmd', None) == 'init':
+            try:
+                from .spm import init_project
+                from pathlib import Path
+            except Exception as e:
+                safe_print(f"[ERROR] Package tooling unavailable: {e}")
+                return 1
+
+            try:
+                path = init_project(Path.cwd(), name=getattr(args, 'name', None), version=getattr(args, 'version', SONA_VERSION))
+            except Exception as e:
+                safe_print(f"[ERROR] Failed to init manifest: {e}")
+                return 1
+            safe_print(f"[OK] Initialized {path}")
+            return 0
+
+        safe_print("[ERROR] Missing or unknown pkg command. Try: sona pkg init")
+        return 1
     elif args.command == 'perf-log':
         return handle_perf_log_command(args)
 
@@ -2184,3 +2493,4 @@ def main() -> int:
 if __name__ == '__main__':
     exit_code = main()
     sys.exit(exit_code)
+

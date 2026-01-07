@@ -11,7 +11,7 @@ func __default_encoding(value) {
     return value
 }
 
-func read(path, encoding) {
+func read(path, encoding=nil) {
     return __native__.fs_read(path, __default_encoding(encoding))
 }
 
@@ -19,7 +19,7 @@ func read_bytes(path) {
     return __native__.fs_read_bytes(path)
 }
 
-func write(path, content, encoding) {
+func write(path, content, encoding=nil) {
     return __native__.fs_write(path, content, __default_encoding(encoding))
 }
 
@@ -27,7 +27,7 @@ func write_bytes(path, data) {
     return __native__.fs_write_bytes(path, data)
 }
 
-func append(path, content, encoding) {
+func append(path, content, encoding=nil) {
     return __native__.fs_append(path, content, __default_encoding(encoding))
 }
 
@@ -51,7 +51,7 @@ func list_all(path) {
     return __native__.fs_list_dir(path, true)
 }
 
-func mkdir(path, parents, exist_ok) {
+func mkdir(path, parents=nil, exist_ok=nil) {
     if parents == nil {
         parents = true
     }
@@ -61,28 +61,28 @@ func mkdir(path, parents, exist_ok) {
     return __native__.fs_mkdir(path, parents, exist_ok)
 }
 
-func remove(path, recursive) {
+func remove(path, recursive=nil) {
     if recursive == nil {
         recursive = true
     }
     return __native__.fs_remove(path, recursive)
 }
 
-func copy(src, dst, overwrite) {
+func copy(src, dst, overwrite=nil) {
     if overwrite == nil {
         overwrite = true
     }
     return __native__.fs_copy(src, dst, overwrite)
 }
 
-func move(src, dst, overwrite) {
+func move(src, dst, overwrite=nil) {
     if overwrite == nil {
         overwrite = true
     }
     return __native__.fs_move(src, dst, overwrite)
 }
 
-func touch(path, exist_ok) {
+func touch(path, exist_ok=nil) {
     if exist_ok == nil {
         exist_ok = true
     }
@@ -97,7 +97,7 @@ func stat(path) {
     return __native__.fs_stat(path)
 }
 
-func symlink(target, link_path, exist_ok) {
+func symlink(target, link_path, exist_ok=nil) {
     if exist_ok == nil {
         exist_ok = false
     }
@@ -108,7 +108,7 @@ func readlink(path) {
     return __native__.fs_readlink(path)
 }
 
-func watch(path, timeout_ms, interval_ms) {
+func watch(path, timeout_ms=nil, interval_ms=nil) {
     if timeout_ms == nil {
         timeout_ms = 1000
     }

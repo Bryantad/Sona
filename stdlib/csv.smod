@@ -5,32 +5,32 @@
 # Errors: Returns structured error maps with type and message information.
 
 # Parses a CSV string into an array of records.
-func parse(csv_data, options) {
+func parse(csv_data, options=nil) {
     return __native__.csv_parse(csv_data, options)
 }
 
 # Parses a CSV file into an array of records.
-func parse_file(file_path, options) {
+func parse_file(file_path, options=nil) {
     return __native__.csv_parse_file(file_path, options)
 }
 
 # Converts an array of records into a CSV string.
-func stringify(records, options) {
+func stringify(records, options=nil) {
     return __native__.csv_stringify(records, options)
 }
 
 # Writes an array of records to a CSV file.
-func write_file(file_path, records, options) {
+func write_file(file_path, records, options=nil) {
     return __native__.csv_write_file(file_path, records, options)
 }
 
 # Validates CSV structure and returns any parsing errors.
-func validate(csv_data, options) {
+func validate(csv_data, options=nil) {
     return __native__.csv_validate(csv_data, options)
 }
 
 # Streams CSV data for processing large files line by line.
-func stream(file_path, callback, options) {
+func stream(file_path, callback, options=nil) {
     return __native__.csv_stream(file_path, callback, options)
 }
 
@@ -40,6 +40,6 @@ func extract_fields(records, field_names) {
 }
 
 # Transforms CSV records using a mapping function.
-func transform(records, transformer, options) {
+func transform(records, transformer, options=nil) {
     return __native__.csv_transform(records, transformer, options)
 }

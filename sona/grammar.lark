@@ -1,161 +1,254 @@
 //
-// Sona Language Grammar v0.9.0
-// Unified Grammar supporting both classic syntax and documented cognitive syntax
+// Sona Language Grammar v1.0.0 - CRITICAL PARSER FIXES
+// Fixed multi-parameter support, string escaping, and expression handling
 //
 
-start: statement+
+start: statement_list
 
-?statement: expr
-     | import_stmt
-     | var_assignment
-     | bare_assignment
-     | destructuring_assignment
-     | print_stmt
-     | show_stmt
-     | think_stmt
-     | calculate_stmt
-     | if_stmt
-     | when_stmt
-     | match_stmt
-     | while_stmt
-     | for_stmt
-     | repeat_stmt
-     | func_def
-     | class_def
-     | try_stmt
-     | return_stmt
-     | break_stmt
-     | continue_stmt
+// FIXED: Block statements don't need semicolons, simple statements do
+statement_list: _statement_item*
 
-// ======== Classic Assignment ========
-var_assignment: ("let" | "const") NAME "=" expr -> var_assign
+_statement_item: block_stmt
+              | simple_stmt ";"?
+              | ";"  // Allow standalone semicolons
 
-// ======== Cognitive Syntax ========
-// Bare assignment (documented style)
-bare_assignment: NAME "=" expr -> bare_assign
+// Block statements - no semicolon required after closing brace
+?block_stmt: enhanced_if_stmt
+           | enhanced_while_stmt
+           | enhanced_for_stmt
+           | repeat_stmt
+           | func_def
+           | class_def
+           | enhanced_try_stmt
+           | match_stmt
+           | when_stmt
+           | focus_block_stmt
 
-// Destructuring assignment (for arrays/objects)
-destructuring_assignment: "[" NAME ("," NAME)* "]" "=" expr -> destructure_assign
+// Simple statements - semicolon optional (recommended)
+?simple_stmt: cognitive_stmt
+            | expr
+            | import_stmt
+            | export_stmt
+            | var_assignment
+            | bare_assignment
+            | destructuring_assignment
+            | print_stmt
+            | show_stmt
+            | think_stmt
+            | calculate_stmt
+            | return_stmt
+            | break_stmt
+            | continue_stmt
+            | cognitive_stmt
 
-// Output statements
-print_stmt: "print" "(" expr ")" -> print_stmt
-show_stmt: "show" expr -> show_stmt
+// ======== Enhanced Control Flow (v1.0.0) ========
 
-// Cognitive comments
-think_stmt: "think" STRING -> think_stmt
+// Enhanced if/else/elif with complete support
+enhanced_if_stmt: "if" expr "{" statement_list? "}" elif_clause* else_clause? -> enhanced_if_stmt
+elif_clause: "else" "if" expr "{" statement_list? "}" -> elif_clause
+else_clause: "else" "{" statement_list? "}" -> else_clause
 
-// Cognitive assignment
-calculate_stmt: "calculate" NAME "=" expr -> calculate_assign
+// Enhanced loops with break/continue support
+enhanced_for_stmt: "for" NAME "in" expr "{" statement_list? "}" -> enhanced_for_stmt
+enhanced_while_stmt: "while" expr "{" statement_list? "}" -> enhanced_while_stmt
 
-// Cognitive conditionals
-when_stmt: "when" expr ":" _NEWLINE _INDENT statement+ _DEDENT ["else" ":" _NEWLINE _INDENT statement+ _DEDENT] -> when_stmt
+// Enhanced try/catch/finally with exception type matching
+enhanced_try_stmt: "try" "{" statement_list? "}" catch_clause+ finally_clause? -> enhanced_try_stmt
+// Support both: catch Exception as e { } AND catch e { } (catch-all)
+catch_clause: "catch" exception_type "as" NAME "{" statement_list? "}" -> catch_clause
+            | "catch" NAME "{" statement_list? "}" -> catch_clause_simple
+finally_clause: "finally" "{" statement_list? "}" -> finally_clause
+exception_type: NAME | STRING
 
-// Classic conditionals
-if_stmt: "if" expr "{" statement* "}" ["else" "{" statement* "}"] -> if_stmt
-match_stmt: "match" expr "{" match_case+ "}" -> match_stmt
-match_case: (expr | "_") "=>" (expr | "{" statement* "}") -> match_case
-
-// ======== Classic Loops ========
-while_stmt: "while" expr "{" statement* "}" -> while_stmt
-for_stmt: "for" NAME "in" expr "{" statement* "}" -> for_stmt
-
-// ======== Cognitive Loops ========
-// Basic repeat loop: repeat 5 times:
-repeat_stmt: "repeat" expr "times" ":" _NEWLINE _INDENT statement+ _DEDENT -> repeat_times
-           // List iteration: repeat for each item in items:
-           | "repeat" "for" "each" NAME "in" expr ":" _NEWLINE _INDENT statement+ _DEDENT -> repeat_for_each
-           // Range iteration: repeat for i from 1 to 10:
-           | "repeat" "for" NAME "from" expr "to" expr ":" _NEWLINE _INDENT statement+ _DEDENT -> repeat_for_range
-           // Range with step: repeat for i from 1 to 10 step 2:
-           | "repeat" "for" NAME "from" expr "to" expr "step" expr ":" _NEWLINE _INDENT statement+ _DEDENT -> repeat_for_range_step
-
-// ======== Function Definition ========
-func_def: "func" NAME "(" [param_list] ")" "{" statement* "}" -> func_def
-param_list: NAME ("," NAME)*
-
-// ======== Class Definition ========
-class_def: "class" NAME ["(" NAME ")"] "{" class_body "}" -> class_def
-class_body: (method_def | property_def)*
-method_def: "method" NAME "(" [param_list] ")" "{" statement* "}" -> method_def
-property_def: "property" NAME ["=" expr] -> property_def
-
-// ======== Other Statements ========
-return_stmt: "return" expr -> return_stmt
+// Return, break, continue
+return_stmt: "return" [expr] -> return_stmt
 break_stmt: "break" -> break_stmt
 continue_stmt: "continue" -> continue_stmt
-try_stmt: "try" "{" statement* "}" "catch" NAME "{" statement* "}" ["finally" "{" statement* "}"] -> try_stmt
-import_stmt: "import" NAME ["." NAME]* ["as" NAME] -> import_stmt
 
-// ======== Expressions ========
+// REMOVED: AI functions now use regular function_call syntax instead of special statements
+// This allows proper runtime parameter validation instead of parse-time errors
+
+// Cognitive programming statements - FIXED to support function call syntax  
+cognitive_stmt: cognitive_check_stmt
+                    | focus_mode_stmt
+                    | working_memory_stmt
+                    | intent_stmt
+                    | intent_annotation_stmt
+                    | decision_stmt
+                    | cognitive_scope_stmt
+                    | cognitive_trace_stmt
+                    | explain_step_stmt
+                    | profile_stmt
+
+// FIXED: Use proper function call syntax instead of block syntax
+cognitive_check_stmt: "cognitive_check" "(" [arguments] ")" -> cognitive_check_stmt
+focus_mode_stmt: "focus_mode" "(" [arguments] ")" -> focus_mode_stmt
+working_memory_stmt: "working_memory" "(" [arguments] ")" -> working_memory_stmt
+intent_stmt: "intent" "(" [arguments] ")" -> intent_stmt
+intent_annotation_stmt: "@intent" STRING -> intent_annotation_stmt
+                     | "@intent" "(" [arguments] ")" -> intent_annotation_stmt
+decision_stmt: "decision" "(" [arguments] ")" -> decision_stmt
+cognitive_trace_stmt: "cognitive_trace" "(" [arguments] ")" -> cognitive_trace_stmt
+explain_step_stmt: "explain_step" "(" [arguments] ")" -> explain_step_stmt
+cognitive_scope_stmt: "cognitive_scope" "(" [arguments] ")" "{" statement_list? "}" -> cognitive_scope_stmt
+profile_stmt: "profile" "(" [arguments] ")" -> profile_stmt
+focus_block_stmt: "focus" ["(" [arguments] ")"] "{" statement_list? "}" -> focus_block_stmt
+
+// ======== Variable Assignments ========
+var_assignment: ("let" | "const") NAME "=" expr -> var_assignment
+bare_assignment: NAME "=" expr -> bare_assignment
+
+// FIXED: Support destructuring with proper expression handling
+destructuring_assignment: ("let" | "const") destructuring_pattern "=" expr -> destructuring_assignment
+destructuring_pattern: "{" destructuring_list "}"
+                                  | "[" destructuring_list "]"
+destructuring_list: NAME ("," NAME)*
+
+// ======== Enhanced Expressions (v1.0.0) ========
+// FIXED: Proper operator precedence and complex expression support
+// Support both symbol (&&, ||) and keyword (and, or) forms
+
 ?expr: or_expr
 
-?or_expr: and_expr
-        | or_expr "||" and_expr -> or_op
+?or_expr: and_expr (OR_OP and_expr)*
+?and_expr: equality_expr (AND_OP equality_expr)*
+?equality_expr: comparison_expr (EQUALITY_OP comparison_expr)*
+?comparison_expr: additive_expr (COMPARISON_OP additive_expr)*
+?additive_expr: multiplicative_expr (ADDITIVE_OP multiplicative_expr)*
+?multiplicative_expr: power_expr (MULTIPLICATIVE_OP power_expr)*
+?power_expr: unary_expr (POW_OP unary_expr)*
+?unary_expr: (UNARY_OP | ADDITIVE_OP) unary_expr | postfix_expr
+?postfix_expr: atom_expr (call_suffix | index_suffix | prop_suffix)*
 
-?and_expr: comparison
-         | and_expr "&&" comparison -> and_op
+call_suffix: "(" [arguments] ")"
+index_suffix: "[" expr "]"
+prop_suffix: "." prop_name
 
-?comparison: sum
-           | comparison "==" sum -> eq
-           | comparison "!=" sum -> neq
-           | comparison ">" sum -> gt
-           | comparison "<" sum -> lt
-           | comparison ">=" sum -> gte
-           | comparison "<=" sum -> lte
+prop_name: NAME
+        | MATCH
+        | REPEAT
+        | AND_OP
+        | OR_OP
+        | UNARY_OP
 
-?sum: product
-    | sum "+" product -> add
-    | sum "-" product -> sub
+// FIXED: Enhanced atom expressions with proper function call support
+?atom_expr: atom
 
-?product: unary
-        | product "*" unary -> mul
-        | product "/" unary -> div
-        | product "%" unary -> mod
+?atom: NUMBER
+        | STRING
+        | TEMPLATE_STRING
+        | "true" -> true
+        | "True" -> true
+        | "false" -> false
+        | "False" -> false
+        | "null" -> null
+        | "None" -> null
+        | NAME -> variable
+        | "(" expr ")"
+        | when_expr
+        | list_literal
+        | dict_literal
+        | function_call
+        | method_call
 
-?unary: atom
-      | "-" unary -> neg
-      | "!" unary -> not
+// When expression
+when_expr: "when" "{" when_expr_cases "}" -> when_expr
+when_expr_cases: when_expr_case (";" when_expr_case)* [";"]
+when_expr_case: expr "=>" expr -> when_expr_case
 
-// ======== Atom-level Expressions ========
-?atom: "(" expr ")"
-     | NUMBER         -> number
-     | STRING         -> string
-     | "true"         -> true_val
-     | "false"        -> false_val
-     | array_literal  -> array
-     | dict_literal   -> dict
-     | func_call
-     | method_call
-     | property_access
-     | index_access
-     | NAME           -> var
+// ======== Function and Method Calls (FIXED) ========
+function_call: NAME "(" [arguments] ")" -> func_call
+method_call: atom "." prop_name "(" [arguments] ")" -> method_call
+property_access: atom "." prop_name -> prop_access
 
-// ======== Data Structures ========
-array_literal: "[" [expr ("," expr)*] "]"
-dict_literal: "{" [dict_item ("," dict_item)*] "}"
-dict_item: (STRING | NAME) ":" expr
+// REMOVED: AI functions now use regular function_call syntax
 
-// ======== Object Access ========
-func_call: NAME "(" [args] ")" -> func_call
-method_call: expr "." NAME "(" [args] ")" -> method_call
-property_access: expr "." NAME -> property_access
-index_access: expr "[" expr "]" -> index_access
+// Enhanced: keyword args + spread args
+arguments: argument ("," argument)* -> arg_list
+?argument: NAME "=" expr -> kw_arg
+        | "..." expr     -> spread_arg
+        | expr           -> pos_arg
 
-// ======== Arguments ========
-args: expr ("," expr)*
+// ======== Collections ========
+list_literal: "[" [list_elements] "]" -> list_literal
+list_elements: expr ("," expr)*
 
-// ======== Terminals ========
-STRING: /("(?:[^"\\]|\\.)*")|('(?:[^'\\]|\\.)*')/
-NUMBER: /[0-9]+(\.[0-9]+)?/
+dict_literal: "{" [dict_elements] "}" -> dict_literal
+dict_elements: dict_pair ("," dict_pair)*
+dict_pair: (NAME | STRING) ":" expr
+
+// ======== Other Statements ========
+import_stmt: "import" import_path ["as" NAME] -> import_stmt
+export_stmt: "export" (func_def | class_def | var_assignment) -> export_stmt
+import_path: NAME ("." NAME)*
+
+print_stmt: "print" "(" [arguments] ")" -> print_stmt
+show_stmt: "show" "(" [arguments] ")" -> show_stmt
+think_stmt: "think" "(" [arguments] ")" -> think_stmt
+calculate_stmt: "calculate" "(" [arguments] ")" -> calculate_stmt
+
+// When and match statements
+when_stmt: "when" expr "{" when_cases "}" -> when_stmt
+when_cases: when_case+
+when_case: expr "=>" statement_list -> when_case
+
+match_stmt: MATCH expr "{" match_cases "}" -> match_stmt
+        | MATCH expr "{" match_block_cases default_case? "}" -> match_stmt
+match_cases: match_case+
+match_case: pattern "=>" statement_list -> match_case
+pattern: expr | NAME
+
+// Legacy/nested match form (used by some tests)
+match_block_cases: match_block_case+
+match_block_case: "when" expr "{" statement_list? "}" -> match_block_case
+default_case: "default" "{" statement_list? "}" -> default_case
+
+repeat_stmt: REPEAT NUMBER "{" statement_list "}" -> repeat_stmt
+
+// ======== Function and Class Definitions ========
+func_def: "func" (NAME | MATCH | REPEAT) "(" [func_params] ")" "{" statement_list "}" -> func_def
+        | "def" (NAME | MATCH | REPEAT) "(" [func_params] ")" "{" statement_list "}" -> func_def
+
+func_params: func_param ("," func_param)*
+?func_param: "..." NAME ["=" expr] -> vararg_param
+                | NAME ["=" expr] -> normal_param
+
+class_def: "class" NAME ["(" NAME ")"] "{" class_body "}" -> class_def
+class_body: _class_member_item*
+_class_member_item: func_def ";"?
+                  | var_assignment ";"?
+                  | ";"  // Allow standalone semicolons
+
+// ======== FIXED Terminals (v1.0.0) ========
+MATCH.5: /match(?![a-zA-Z0-9_])/ 
+REPEAT.5: /repeat(?![a-zA-Z0-9_])/
 NAME: /[a-zA-Z_][a-zA-Z0-9_]*/
+NUMBER: /\d+(\.\d+)?/
 
-// ======== Indentation Handling ========
-_NEWLINE: /\n/
-_INDENT: /  +/
-_DEDENT: /  -/
+// Operator terminals (with priorities to avoid conflicts)
+// Boolean operators - support both symbol and keyword forms
+OR_OP.3: "||" | /or(?![a-zA-Z0-9_])/
+AND_OP.3: "&&" | /and(?![a-zA-Z0-9_])/
+EQUALITY_OP.4: "==" | "!="
+POW_OP.2: "**"
+COMPARISON_OP.1: "<=" | ">=" | "<" | ">"
+ADDITIVE_OP: "+" | "-"
+MULTIPLICATIVE_OP: "*" | "/" | "%"
+UNARY_OP.2: "!" | /not(?![a-zA-Z0-9_])/
 
-// ======== Whitespace and Comments ========
-COMMENT: /\/\/[^\n]*/
-%import common.WS_INLINE
-%ignore WS_INLINE
+// FIXED: Enhanced string support with proper escaping - HIGHEST PRIORITY
+STRING.10: /"(\\.|[^"\\])*"/ | /'(\\.|[^'\\])*'/
+TEMPLATE_STRING.10: /`(\\.|[^`\\])*`/
+
+// ======== Whitespace and Comments (FIXED) ========
+%import common.WS
+%import common.NEWLINE
+%ignore WS
+%ignore NEWLINE
+
+// FIXED: Proper comment support
+COMMENT: "//" /[^\r\n]*/
 %ignore COMMENT
+
+HASH_COMMENT: /#[^\r\n]*/
+%ignore HASH_COMMENT

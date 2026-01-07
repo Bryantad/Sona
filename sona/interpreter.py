@@ -1,5 +1,5 @@
 """
-Sona v0.9.7 - Enhanced Interpreter with Full Loop Support
+Sona v0.10.1 - Enhanced Interpreter with Full Loop Support
 ========================================================
 
 Production-grade interpreter with complete language feature support.
@@ -18,10 +18,12 @@ Features:
 """
 
 import ast
+import json
 import sys
 import time
 import traceback
 from pathlib import Path
+from types import ModuleType, SimpleNamespace
 from typing import Any  # Ruff UP035: will migrate away from Dict/List
 
 
@@ -41,7 +43,7 @@ except ImportError:
 
 # Import AST nodes
 try:
-    from .ast_nodes_v090 import (
+    from .ast_nodes import (
         AICompleteStatement,
         AIDebugStatement,
         AIExplainStatement,
@@ -50,7 +52,7 @@ try:
     )
 except ImportError:
     try:
-        from ast_nodes_v090 import (
+        from ast_nodes import (
             AICompleteStatement,
             AIDebugStatement,
             AIExplainStatement,
@@ -96,13 +98,31 @@ except ImportError:
                 return {'task_breakdown': [], 'support_strategies': []}
 
 
+# Import structured error system (v0.10.1)
+from .errors import (
+    SonaError,
+    SonaSyntaxError,
+    SonaImportError,
+    SonaNameError,
+    SonaTypeError,
+    SonaValueError,
+    SonaIndexError,
+    SonaKeyError,
+    SonaDivisionError,
+    SourceLocation,
+    ErrorCode,
+    get_source_line,
+    format_error_simple,
+)
+
+
 class SonaInterpreterError(Exception):
-    """Base class for Sona interpreter errors"""
+    """Base class for Sona interpreter errors (legacy compat)"""
     pass
 
 
-class SonaRuntimeError(Exception):
-    """Runtime error in Sona interpretation"""
+class SonaRuntimeError(SonaError):
+    """Runtime error in Sona interpretation (v0.10.1: extends SonaError)"""
     pass
 
 
@@ -119,113 +139,349 @@ class ContinueException(Exception):
 class SimpleModuleSystem:
     """Simple module system for loading stdlib modules"""
 
-    def __init__(self, interpreter):
+    def __init__(self, interpreter, *, project_root: str | Path | None = None):
         self.interpreter = interpreter
         self.loaded_modules = {}
+        self.loaded_by_path = {}
+        self.project_root = Path(project_root) if project_root else Path.cwd()
+        self.modules_path = self.project_root / ".sona_modules"
         self.stdlib_path = Path(__file__).parent / "stdlib"
+        self.smod_path = Path(__file__).resolve().parents[1] / "stdlib"
+        self.stdlib_namespace = SimpleNamespace()
+        self.stdlib_errors = {}
+        self._register_stdlib_root()
+
+    def _register_stdlib_root(self) -> None:
+        if "stdlib" in self.interpreter.memory.global_scope:
+            return
+        self.interpreter.memory.set_variable(
+            "stdlib",
+            self.stdlib_namespace,
+            global_scope=True
+        )
+
+    def _expose_native_aliases(self, module_obj, module_name_for_prefix: str) -> None:
+        prefix = f"{module_name_for_prefix}_"
+        for attr_name in dir(module_obj):
+            if not attr_name.startswith(prefix):
+                continue
+            alias_name = attr_name[len(prefix):]
+            if not hasattr(module_obj, alias_name):
+                try:
+                    setattr(module_obj, alias_name, getattr(module_obj, attr_name))
+                except Exception:
+                    # If the module uses unusual descriptors, skip aliasing.
+                    pass
+
+    def _attach_cognitive_metadata(self, module_obj) -> None:
+        monitor = getattr(self.interpreter, "cognitive_monitor", None)
+        if not monitor:
+            return
+        try:
+            setattr(module_obj, "__sona_profile__", monitor.profile)
+            setattr(
+                module_obj,
+                "__sona_intent__",
+                monitor.intent_stack[-1] if monitor.intent_stack else None
+            )
+            setattr(module_obj, "__sona_decisions__", monitor.decision_log[-5:])
+        except Exception:
+            pass
+
+    def _load_module_from_file(
+        self,
+        module_id: str,
+        module_file: Path,
+        *,
+        native_prefix: str | None = None
+    ):
+        if not module_file.exists():
+            raise ImportError(f"Module file not found: {module_file}")
+
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location(module_id, module_file)
+        if not spec or not spec.loader:
+            raise ImportError(f"Could not load module spec for {module_id}")
+
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        if native_prefix:
+            self._expose_native_aliases(module, native_prefix)
+
+        self._attach_cognitive_metadata(module)
+        return module
+
+    def _resolve_smod_path(self, module_path: str) -> Path:
+        parts = module_path.split(".")
+        # Prefer project-local installed packages first.
+        local = self.modules_path.joinpath(*parts).with_suffix(".smod")
+        if local.exists():
+            return local
+        local_pkg = self.modules_path.joinpath(*parts) / "__init__.smod"
+        if local_pkg.exists():
+            return local_pkg
+
+        return self.smod_path.joinpath(*parts).with_suffix(".smod")
+
+    def _load_smod_module(
+        self,
+        module_path: str,
+        module_file: Path,
+        *,
+        allow_missing_native: bool = False,
+    ):
+        if not module_file.exists():
+            raise ImportError(f"Module file not found: {module_file}")
+
+        from .stdlib.native_bridge import NativeBridge
+
+        module_name = module_path.split(".")[-1]
+        raw_source = module_file.read_text(encoding="utf-8-sig")
+        source_lines = []
+        for line in raw_source.splitlines():
+            if line.lstrip().startswith("#"):
+                continue
+            source_lines.append(line)
+        source = "\n".join(source_lines)
+
+        original_globals = self.interpreter.memory.global_scope
+        original_functions = self.interpreter.functions
+        module_globals = dict(original_globals)
+
+        class _NullNativeBridge:
+            def __getattr__(self, name: str):
+                raise AttributeError(name)
+
+        try:
+            native_bridge = NativeBridge(module_name)
+        except Exception:
+            if allow_missing_native:
+                native_bridge = _NullNativeBridge()
+            else:
+                raise
+
+        module_globals["__native__"] = native_bridge
+
+        previous_context = getattr(self.interpreter, "_module_context", None)
+        self.interpreter.memory.global_scope = module_globals
+        self.interpreter.functions = dict(original_functions)
+        self.interpreter._module_context = module_globals
+
+        try:
+            self.interpreter._execute_sona_code(source, filename=str(module_file))
+        finally:
+            self.interpreter._module_context = previous_context
+            self.interpreter.memory.global_scope = original_globals
+            self.interpreter.functions = original_functions
+
+        exports = {
+            name: value
+            for name, value in module_globals.items()
+            if name not in original_globals or original_globals[name] is not value
+        }
+        exports = {
+            name: value
+            for name, value in exports.items()
+            if not name.startswith("__")
+        }
+
+        module = ModuleType(f"sona.smod.{module_path}")
+        for name, value in exports.items():
+            setattr(module, name, value)
+        def _module_getattr(attr_name: str, _bridge=native_bridge):
+            try:
+                return getattr(_bridge, attr_name)
+            except AttributeError as exc:
+                raise AttributeError(attr_name) from exc
+
+        setattr(module, "__getattr__", _module_getattr)
+        return module
+
+    def _load_module(self, module_path: str, *, force_smod: bool = False):
+        if module_path in self.loaded_by_path:
+            return self.loaded_by_path[module_path]
+
+        parts = module_path.split(".")
+        smod_file = self._resolve_smod_path(module_path)
+
+        if module_path.startswith("native_"):
+            module_file = self.stdlib_path / f"{module_path}.py"
+            module = self._load_module_from_file(
+                f"sona.stdlib.{module_path}",
+                module_file
+            )
+        elif force_smod:
+            allow_missing_native = False
+            try:
+                allow_missing_native = smod_file.is_relative_to(self.modules_path)
+            except Exception:
+                allow_missing_native = str(smod_file).startswith(str(self.modules_path))
+            module = self._load_smod_module(module_path, smod_file, allow_missing_native=allow_missing_native)
+        elif smod_file.exists():
+            allow_missing_native = False
+            try:
+                allow_missing_native = smod_file.is_relative_to(self.modules_path)
+            except Exception:
+                allow_missing_native = str(smod_file).startswith(str(self.modules_path))
+            module = self._load_smod_module(module_path, smod_file, allow_missing_native=allow_missing_native)
+        elif len(parts) > 1:
+            module_file = self.stdlib_path.joinpath(*parts).with_suffix(".py")
+            module = self._load_module_from_file(
+                f"sona.stdlib.{module_path}",
+                module_file
+            )
+        else:
+            native_module_path = self.stdlib_path / f"native_{module_path}.py"
+            if native_module_path.exists():
+                module = self._load_module_from_file(
+                    f"sona.stdlib.native_{module_path}",
+                    native_module_path,
+                    native_prefix=module_path
+                )
+            else:
+                regular_module_path = self.stdlib_path / f"{module_path}.py"
+                module = self._load_module_from_file(
+                    f"sona.stdlib.{module_path}",
+                    regular_module_path
+                )
+
+        self.loaded_by_path[module_path] = module
+        return module
+
+    def _register_stdlib_namespace(self, module_path: str, module_obj) -> None:
+        parts = module_path.split(".")
+        root: Any = self.stdlib_namespace
+
+        for part in parts[:-1]:
+            child = getattr(root, part, None)
+            if child is None:
+                child = SimpleNamespace()
+                setattr(root, part, child)
+            root = child
+
+        final_name = parts[-1]
+        existing = getattr(root, final_name, None)
+        if isinstance(existing, SimpleNamespace) and isinstance(module_obj, ModuleType):
+            for key, value in existing.__dict__.items():
+                setattr(module_obj, key, value)
+        if isinstance(root, ModuleType):
+            submodules = getattr(root, "__sona_submodules__", None)
+            if submodules is None:
+                submodules = {}
+                setattr(root, "__sona_submodules__", submodules)
+            submodules[final_name] = module_obj
+        else:
+            setattr(root, final_name, module_obj)
+
+    def _expose_global_module(
+        self,
+        module_name: str,
+        module_obj,
+        *,
+        force: bool = False
+    ) -> bool:
+        if not force:
+            if "." in module_name:
+                return False
+            if module_name in self.interpreter.memory.global_scope:
+                return False
+
+        self.interpreter.memory.set_variable(
+            module_name,
+            module_obj,
+            global_scope=True
+        )
+        self.interpreter.modules[module_name] = module_obj
+        return True
+
+    def _load_manifest_modules(self) -> list[str]:
+        manifest_path = self.stdlib_path / "MANIFEST.json"
+        if not manifest_path.exists():
+            return []
+        try:
+            payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except Exception:
+            return []
+        modules = payload.get("modules", [])
+        return [name for name in modules if isinstance(name, str)]
+
+    def _scan_stdlib_modules(self) -> list[str]:
+        modules: list[str] = []
+        if not self.stdlib_path.exists():
+            return modules
+        for path in self.stdlib_path.rglob("*.py"):
+            if path.name == "__init__.py":
+                continue
+            rel = path.relative_to(self.stdlib_path)
+            if "__pycache__" in rel.parts:
+                continue
+            modules.append(".".join(rel.with_suffix("").parts))
+        return modules
+
+    def _sorted_stdlib_modules(self, modules: list[str]) -> list[str]:
+        unique: list[str] = []
+        seen: set[str] = set()
+        for name in modules:
+            if name in seen:
+                continue
+            seen.add(name)
+            unique.append(name)
+        unique.sort(key=lambda name: name.count("."))
+        return unique
+
+    def load_stdlib_modules(self) -> dict[str, Any]:
+        modules = self._load_manifest_modules()
+        if not modules:
+            modules = self._scan_stdlib_modules()
+        modules = self._sorted_stdlib_modules(modules)
+
+        loaded: list[str] = []
+        errors: dict[str, str] = {}
+
+        for module_path in modules:
+            try:
+                module_obj = self._load_module(module_path)
+            except Exception as exc:
+                errors[module_path] = str(exc)
+                continue
+
+            self.loaded_modules.setdefault(module_path, module_obj)
+            self._register_stdlib_namespace(module_path, module_obj)
+            self._expose_global_module(module_path, module_obj, force=False)
+            loaded.append(module_path)
+
+        self.stdlib_errors = errors
+        return {"loaded": loaded, "errors": errors}
 
     def import_module(self, module_path: str, alias: str | None = None):
         """Import a module and make it available in the interpreter
 
         Supports nested namespaces like 'collection.list':
-        - collection.list → sona/stdlib/collection/list.py
-        - http → sona/stdlib/http.py or native_http.py
+        - collection.list -> sona/stdlib/collection/list.py
+        - http -> sona/stdlib/http.py or native_http.py
         """
+        force_smod = False
+        if module_path.endswith(".smod"):
+            module_path = module_path[:-5]
+            force_smod = True
+
         module_name = alias if alias else module_path
 
-        # Check if already loaded
-        if module_name in self.loaded_modules:
-            return self.loaded_modules[module_name]
+        module_obj = self.loaded_by_path.get(module_path)
+        if not module_obj:
+            module_obj = self.loaded_modules.get(module_path)
+        if not module_obj:
+            module_obj = self._load_module(module_path, force_smod=force_smod)
 
-        # Handle nested namespaces (e.g., collection.list)
-        parts = module_path.split('.')
+        self.loaded_modules[module_name] = module_obj
+        self.loaded_by_path[module_path] = module_obj
+        self.loaded_modules.setdefault(module_path, module_obj)
 
-        if len(parts) > 1:
-            # Nested namespace: collection.list
-            # Build path: sona/stdlib/collection/list.py
-            namespace_dir = self.stdlib_path / parts[0]
-            module_file = namespace_dir / f"{parts[1]}.py"
-
-            if module_file.exists():
-                import importlib.util
-                spec = importlib.util.spec_from_file_location(
-                    f"sona.stdlib.{module_path}",
-                    module_file
-                )
-                if spec and spec.loader:
-                    module = importlib.util.module_from_spec(spec)
-                    spec.loader.exec_module(module)
-
-                    # Store module object
-                    self.loaded_modules[module_name] = module
-
-                    # Make module available as a variable
-                    self.interpreter.memory.set_variable(
-                        module_name,
-                        module,
-                        global_scope=True
-                    )
-
-                    return module
-
-            raise ImportError(
-                f"Nested module '{module_path}' not found at {module_file}"
-            )
-
-        # Single-level module: try native first, then regular
-        # Try native module first (native_{module}.py)
-        native_module_path = self.stdlib_path / f"native_{module_path}.py"
-
-        if native_module_path.exists():
-            # Load native Python module
-            import importlib.util
-            spec = importlib.util.spec_from_file_location(
-                f"sona.stdlib.native_{module_path}",
-                native_module_path
-            )
-            if spec and spec.loader:
-                module = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(module)
-
-                # Store module object
-                self.loaded_modules[module_name] = module
-
-                # Make module available as a variable
-                self.interpreter.memory.set_variable(
-                    module_name,
-                    module,
-                    global_scope=True
-                )
-
-                return module
-
-        # Try regular module (module.py)
-        regular_module_path = self.stdlib_path / f"{module_path}.py"
-
-        if regular_module_path.exists():
-            # Load regular Python module
-            import importlib.util
-            spec = importlib.util.spec_from_file_location(
-                f"sona.stdlib.{module_path}",
-                regular_module_path
-            )
-            if spec and spec.loader:
-                module = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(module)
-
-                # Store module object
-                self.loaded_modules[module_name] = module
-
-                # Make module available as a variable
-                self.interpreter.memory.set_variable(
-                    module_name,
-                    module,
-                    global_scope=True
-                )
-
-                return module
-
-        raise ImportError(f"Module '{module_path}' not found")
+        self._register_stdlib_namespace(module_path, module_obj)
+        self._expose_global_module(module_name, module_obj, force=True)
+        return module_obj
 
 
 class SonaMemoryManager:
@@ -279,6 +535,344 @@ class SonaMemoryManager:
             return False
 
 
+class CognitiveMonitor:
+    """Lightweight cognitive runtime used by cognitive_* statements and helpers."""
+
+    def __init__(self, interpreter, assistant=None):
+        self.interpreter = interpreter
+        self.assistant = assistant
+        self.working_memory: dict[str, Any] = {}
+        self.focus_sessions: list[dict[str, Any]] = []
+        self.last_analysis: dict[str, Any] | None = None
+        self.intent_stack: list[dict[str, Any]] = []
+        self.scope_stack: list[dict[str, Any]] = []
+        self.decision_log: list[dict[str, Any]] = []
+        self.trace_enabled: bool = False
+        self.trace_log: list[dict[str, Any]] = []
+        self.lint_warnings: list[dict[str, Any]] = []
+        self.profile: str | None = None
+        self.last_attention_alerts: list[str] = []
+
+    def _basic_analysis(self, task: str, context: str) -> dict[str, Any]:
+        """Deterministic fallback cognitive load analysis (no AI required)."""
+        context_text = str(context or "")
+        length = len(context_text)
+        if length < 200:
+            load = "low"
+        elif length < 800:
+            load = "medium"
+        else:
+            load = "high"
+
+        suggestions: list[str] = []
+        if load != "low":
+            suggestions.append("Break work into smaller steps")
+        if load == "high":
+            suggestions.append("Schedule a short break and resume with a plan")
+
+        return {
+            "task": task or "",
+            "cognitive_load": load,
+            "context_preview": context_text[:160],
+            "suggestions": suggestions,
+        }
+
+    def check_cognitive_load(self, params: dict[str, Any]) -> dict[str, Any]:
+        """Analyze current cognitive load using the assistant when available."""
+        task = str(params.get('task') or params.get('arg0') or "")
+        context = params.get('context') or params.get('code') or params.get('arg1') or ""
+
+        if self.assistant and hasattr(self.assistant, 'analyze_working_memory'):
+            try:
+                analysis = self.assistant.analyze_working_memory(task, str(context))
+            except Exception:
+                analysis = self._basic_analysis(task, str(context))
+        else:
+            analysis = self._basic_analysis(task, str(context))
+
+        # Intent drift heuristic
+        intent = self.intent_stack[-1] if self.intent_stack else {}
+        goal = str(intent.get("goal") or intent.get("intent") or intent.get("arg0") or "")
+        drift_score = self._compute_intent_overlap(goal, str(task or context))
+        analysis["intent_goal"] = goal
+        analysis["intent_drift_score"] = drift_score
+        analysis["intent_drift"] = drift_score < 0.4 if goal else False
+        analysis["confidence"] = "high" if analysis["cognitive_load"] == "low" else "medium"
+        analysis["attention_alerts"] = self._attention_alerts(analysis["cognitive_load"])
+
+        self.last_analysis = analysis
+        self._record_trace("cognitive_check", analysis)
+        return analysis
+
+    def configure_focus_mode(self, params: dict[str, Any]) -> dict[str, Any]:
+        """Configure or check focus mode settings."""
+        action = params.get('action', 'start')
+        description = str(params.get('task') or params.get('mode') or params.get('arg0') or "focus")
+        minutes = params.get('minutes') or params.get('duration') or params.get('arg1') or 25
+        try:
+            minutes = int(minutes)
+        except Exception:
+            minutes = 25
+
+        if action == 'status':
+            return {
+                "status": "ok",
+                "active_sessions": len(self.focus_sessions),
+                "last_session": self.focus_sessions[-1] if self.focus_sessions else None,
+            }
+
+        session = {
+            "description": description,
+            "minutes": minutes,
+            "state": "active",
+            "started_at": time.time(),
+        }
+        self.focus_sessions.append(session)
+        self._record_trace("focus_mode", {"description": description, "minutes": minutes})
+        return {
+            "status": "ok",
+            "message": f"Focus mode started for {minutes} minutes",
+            "session": session,
+        }
+
+    def manage_working_memory(self, params: dict[str, Any]) -> dict[str, Any]:
+        """Handle working_memory(...) operations."""
+        action = (params.get('action') or '').lower() or 'store'
+        key = params.get('key') or params.get('name') or params.get('arg0')
+        value = params.get('value') if 'value' in params else params.get('arg1')
+
+        if action in ('store', 'remember'):
+            if key is None:
+                return {"status": "error", "message": "working_memory: key is required for store"}
+            self.working_memory[str(key)] = value
+            return {"status": "ok", "stored": True, "key": key, "value": value}
+
+        if action in ('recall', 'get'):
+            if key is None:
+                return {"status": "error", "message": "working_memory: key is required for recall"}
+            return {"status": "ok", "key": key, "value": self.working_memory.get(str(key))}
+
+        if action in ('clear',):
+            self.working_memory.clear()
+            self._record_trace("working_memory", {"action": "clear"})
+            return {"status": "ok", "cleared": True}
+
+        # Default: status
+        status = {
+            "status": "ok",
+            "size": len(self.working_memory),
+            "keys": list(self.working_memory.keys())[:20],
+        }
+        self._record_trace("working_memory", status)
+        return status
+
+    def record_intent(self, params: dict[str, Any]) -> dict[str, Any]:
+        """Record or update the current intent metadata."""
+        intent = {
+            "goal": params.get("goal") or params.get("arg0"),
+            "constraints": params.get("constraints"),
+            "success": params.get("success") or params.get("definition_of_done"),
+            "tags": params.get("tags"),
+        }
+        # Keep raw params for completeness
+        intent["meta"] = params
+        self.intent_stack.append(intent)
+        self._record_trace("intent", intent)
+        return {"status": "ok", "intent": intent, "stack_depth": len(self.intent_stack)}
+
+    def record_decision(self, params: dict[str, Any]) -> dict[str, Any]:
+        """Record a decision for traceability."""
+        decision = {
+            "label": params.get("label") or params.get("arg0"),
+            "rationale": params.get("rationale") or params.get("why") or params.get("arg1"),
+            "option": params.get("option"),
+            "timestamp": time.time(),
+        }
+        self.decision_log.append(decision)
+        self._record_trace("decision", decision)
+        return {"status": "ok", "decision": decision, "count": len(self.decision_log)}
+
+    def set_profile(self, params: dict[str, Any]) -> dict[str, Any]:
+        """Set the active cognitive accessibility profile."""
+        profile = params.get("profile") or params.get("arg0") or params.get("name")
+        if profile is None:
+            return {"status": "error", "message": "profile name is required"}
+        self.profile = str(profile).lower()
+        self._record_trace("profile", {"profile": self.profile})
+        return {"status": "ok", "profile": self.profile}
+
+    def push_scope(self, name: str | None, meta: dict[str, Any]) -> None:
+        """Enter a cognitive scope boundary."""
+        scope = {"name": name or f"scope_{len(self.scope_stack)}", "meta": meta}
+        self.scope_stack.append(scope)
+        self._record_trace("scope_enter", scope)
+
+    def pop_scope(self) -> None:
+        """Exit the current cognitive scope boundary."""
+        if self.scope_stack:
+            scope = self.scope_stack.pop()
+            self._record_trace("scope_exit", scope)
+
+    def toggle_trace(self, params: dict[str, Any]) -> dict[str, Any]:
+        """Turn reasoning trace on or off."""
+        # Accept on/off/bool
+        if "enabled" in params:
+            enabled = bool(params["enabled"])
+        elif "arg0" in params:
+            enabled = str(params["arg0"]).lower() in ("1", "true", "on", "yes")
+        else:
+            enabled = True
+        self.trace_enabled = enabled
+        return {"status": "ok", "trace_enabled": self.trace_enabled}
+
+    def explain_step(self, params: dict[str, Any]) -> dict[str, Any]:
+        """Provide an explainability snapshot using recorded traces and intents."""
+        summary = {
+            "profile": self.profile,
+            "intents": self.intent_stack[-3:],
+            "decisions": self.decision_log[-5:],
+            "last_analysis": self.last_analysis,
+            "lint_warnings": self.lint_warnings[-3:],
+            "current_scope": self.scope_stack[-1] if self.scope_stack else None,
+            "trace_tail": self.trace_log[-10:] if self.trace_enabled else [],
+        }
+        self._record_trace("explain_step", {"requested": True})
+        return summary
+
+    def _compute_intent_overlap(self, goal: str, activity: str) -> float:
+        """Simple token-overlap heuristic for intent drift detection."""
+        if not goal or not activity:
+            return 1.0 if not goal else 0.0
+        goal_tokens = set(goal.lower().split())
+        act_tokens = set(activity.lower().split())
+        if not goal_tokens:
+            return 0.0
+        return len(goal_tokens & act_tokens) / len(goal_tokens)
+
+    def _record_trace(self, event_type: str, payload: dict[str, Any]) -> None:
+        """Record an event if tracing is enabled."""
+        if not self.trace_enabled:
+            return
+        self.trace_log.append(
+            {
+                "type": event_type,
+                "payload": payload,
+                "timestamp": time.time(),
+            }
+        )
+
+    def lint_context(self, params: dict[str, Any]) -> dict[str, Any]:
+        """Run deterministic cognitive lint checks on a provided context."""
+        context = str(params.get("context") or params.get("code") or params.get("arg0") or "")
+        warnings: list[str] = []
+
+        if self.intent_stack and "cognitive_check(" not in context and "explain_step(" not in context:
+            warnings.append("Intent declared without drift checks (add cognitive_check or explain_step)")
+
+        risky_tokens = ("delete", "drop", "truncate", "rm ", "remove", "wipe")
+        if any(tok in context.lower() for tok in risky_tokens) and not self.decision_log:
+            warnings.append("Risky operation detected without decision rationale")
+
+        lines = [line for line in context.splitlines() if line.strip()]
+        if len(lines) > 200:
+            warnings.append("High line count (200+): consider cognitive_scope or refactor")
+
+        lint_report = {"warnings": warnings, "warning_count": len(warnings)}
+        if warnings:
+            self.lint_warnings.append(lint_report)
+        return lint_report
+
+    def export_trace(self, params: dict[str, Any]) -> dict[str, Any]:
+        """Export trace/logs to JSON file or return payload."""
+        payload = self._report_payload()
+        path = params.get("path") or params.get("file") or params.get("arg0")
+        if not path:
+            return {"status": "ok", "payload": payload}
+        try:
+            import json
+            with open(str(path), "w", encoding="utf-8") as handle:
+                json.dump(payload, handle, indent=2)
+            return {"status": "ok", "path": str(path)}
+        except Exception as exc:
+            return {"status": "error", "message": str(exc)}
+
+    def report(self, params: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Return a snapshot suitable for docs or explainability output."""
+        return self._report_payload()
+
+    def evaluate_scope_budget(self, meta: dict[str, Any], body: list[Any]) -> list[str]:
+        """Evaluate scope complexity against budget metadata."""
+        budget = meta.get("budget") or meta.get("max_complexity") or meta.get("max_statements")
+        if budget is None:
+            return []
+        try:
+            budget_val = int(budget)
+        except Exception:
+            return []
+
+        complexity = self._estimate_complexity(body)
+        if complexity <= budget_val:
+            return []
+        warning = f"Scope complexity {complexity} exceeds budget {budget_val}"
+        self.lint_warnings.append({"warnings": [warning], "warning_count": 1})
+        return [warning]
+
+    def _estimate_complexity(self, body: list[Any]) -> int:
+        """Estimate complexity by walking statement nodes."""
+        if not body:
+            return 0
+        total = 0
+        for stmt in body:
+            total += 1
+            total += self._nested_complexity(stmt)
+        return total
+
+    def _nested_complexity(self, stmt: Any) -> int:
+        """Recursively count nested statements for complexity."""
+        nested = 0
+        for attr in ("body", "if_body", "else_body", "try_body", "finally_body"):
+            block = getattr(stmt, attr, None)
+            if isinstance(block, list):
+                nested += len(block)
+                for child in block:
+                    nested += self._nested_complexity(child)
+        for attr in ("elif_clauses", "catch_clauses"):
+            block = getattr(stmt, attr, None)
+            if isinstance(block, list):
+                for child in block:
+                    nested += self._nested_complexity(child)
+        return nested
+
+    def _attention_alerts(self, load: str) -> list[str]:
+        """Compute attention alerts based on active focus sessions."""
+        alerts: list[str] = []
+        if not self.focus_sessions:
+            return alerts
+        if load == "high":
+            alerts.append("High cognitive load during focus session: consider a short break")
+        now = time.time()
+        for session in self.focus_sessions:
+            started_at = session.get("started_at")
+            minutes = session.get("minutes")
+            if started_at and minutes and (now - started_at) > (minutes * 60):
+                alerts.append("Focus session exceeded planned duration")
+        self.last_attention_alerts = alerts
+        return alerts
+
+    def _report_payload(self) -> dict[str, Any]:
+        return {
+            "profile": self.profile,
+            "intents": self.intent_stack[-5:],
+            "decisions": self.decision_log[-10:],
+            "last_analysis": self.last_analysis,
+            "lint_warnings": self.lint_warnings[-5:],
+            "scope": self.scope_stack[-1] if self.scope_stack else None,
+            "attention_alerts": self.last_attention_alerts,
+            "trace_enabled": self.trace_enabled,
+            "trace": self.trace_log[-20:] if self.trace_enabled else [],
+        }
+
+
 class SonaFunction:
     """Represents a function in Sona"""
 
@@ -286,32 +880,102 @@ class SonaFunction:
         self,
         name: str,
         parameters: list[str],
+        varargs_param: str | None,
+        default_values: dict[str, Any] | None,
         body: Any,
-        interpreter
+        interpreter,
+        cognitive_context: dict[str, Any] | None = None,
+        closure: dict[str, Any] | None = None
     ):
         self.name = name
         self.parameters = parameters
+        self.varargs_param = varargs_param
+        self.default_values = default_values or {}
         self.body = body
         self.interpreter = interpreter
+        self.cognitive_context = cognitive_context or {}
+        self.closure = closure
 
     def call(
         self,
-        arguments: list[Any]
+        arguments: list[Any],
+        keyword_arguments: dict[str, Any] | None = None
     ) -> Any:
         """Call the function with given arguments"""
-        if len(arguments) != len(self.parameters):
+        keyword_arguments = keyword_arguments or {}
+
+        bound: dict[str, Any] = {}
+        extra_positional: list[Any] = []
+
+        # Bind positional arguments
+        for i, value in enumerate(arguments):
+            if i < len(self.parameters):
+                bound[self.parameters[i]] = value
+            else:
+                extra_positional.append(value)
+
+        if extra_positional and not self.varargs_param:
             raise ValueError(
                 f"Function '{self.name}' expects {len(self.parameters)} "
                 f"arguments, got {len(arguments)}"
             )
 
+        # Bind keyword arguments
+        for key, value in keyword_arguments.items():
+            if key in bound:
+                raise ValueError(
+                    f"Function '{self.name}' got multiple values for argument '{key}'"
+                )
+            if key in self.parameters:
+                bound[key] = value
+            else:
+                raise ValueError(
+                    f"Function '{self.name}' got an unexpected keyword argument '{key}'"
+                )
+
+        # Fill missing parameters from defaults
+        for param in self.parameters:
+            if param in bound:
+                continue
+            if param not in self.default_values:
+                raise ValueError(
+                    f"Function '{self.name}' missing required argument: {param}"
+                )
+
+            default_expr = self.default_values[param]
+            # Defaults are stored as AST Expressions; evaluate in caller context
+            if hasattr(default_expr, 'evaluate'):
+                bound[param] = default_expr.evaluate(self.interpreter)
+            else:
+                bound[param] = default_expr
+
+        # Bind varargs
+        if self.varargs_param:
+            bound[self.varargs_param] = extra_positional
+
         # Push new scope for function execution
+        closure_active = False
+        if self.closure:
+            self.interpreter.memory.push_scope(f"closure:{self.name}")
+            closure_active = True
+            global_scope = self.interpreter.memory.global_scope
+            for key, value in self.closure.items():
+                if key in global_scope:
+                    continue
+                self.interpreter.memory.set_variable(key, value)
+
         self.interpreter.memory.push_scope(f"function:{self.name}")
 
         try:
             # Set parameters as local variables
-            for param, arg in zip(self.parameters, arguments, strict=False):
-                self.interpreter.memory.set_variable(param, arg)
+            for param in self.parameters:
+                self.interpreter.memory.set_variable(param, bound[param])
+
+            if self.varargs_param:
+                self.interpreter.memory.set_variable(
+                    self.varargs_param,
+                    bound.get(self.varargs_param, [])
+                )
 
             # Execute function body
             result = self.interpreter.execute_block(self.body)
@@ -319,6 +983,8 @@ class SonaFunction:
         finally:
             # Always pop the function scope
             self.interpreter.memory.pop_scope()
+            if closure_active:
+                self.interpreter.memory.pop_scope()
 
 
 class SonaUnifiedInterpreter:
@@ -327,7 +993,7 @@ class SonaUnifiedInterpreter:
     Supports cognitive programming, AI assistance, and enhanced control flow.
     """
 
-    def __init__(self):
+    def __init__(self, *, project_root: str | Path | None = None):
         """Initialize the interpreter with all necessary components"""
         self.memory = SonaMemoryManager()
         self.functions = {}
@@ -335,17 +1001,27 @@ class SonaUnifiedInterpreter:
         self.ai_enabled = False
         self.debug_mode = False
         self.execution_stack = []
+        self.focus_block_stack = []
+        self.focus_block_active = False
+        self.suppress_diagnostics = False
+        self.auto_ai_suggestions_enabled = True
+        self._pending_focus_restore = None
 
         # Initialize module system
-        self.module_system = SimpleModuleSystem(self)
+        self.project_root = Path(project_root) if project_root else Path.cwd()
+        self.module_system = SimpleModuleSystem(self, project_root=self.project_root)
 
         # Initialize cognitive assistant
         self.cognitive_assistant = CognitiveAssistant()
+        self.cognitive_monitor = CognitiveMonitor(self, self.cognitive_assistant)
         self.session_start_time = time.time()
         self.current_context = ""
 
         # Initialize built-in functions
         self._setup_builtins()
+
+        # Preload stdlib modules into the core runtime namespace
+        self.stdlib_status = self.module_system.load_stdlib_modules()
 
     def _setup_builtins(self):
         """Setup built-in functions and variables"""
@@ -360,6 +1036,7 @@ class SonaUnifiedInterpreter:
         gv('bool', self._builtin_bool, global_scope=True)
         gv('list', self._builtin_list, global_scope=True)
         gv('dict', self._builtin_dict, global_scope=True)
+        gv('set', self._builtin_set, global_scope=True)
         gv('range', self._builtin_range, global_scope=True)
         gv('sum', self._builtin_sum, global_scope=True)
         gv('max', self._builtin_max, global_scope=True)
@@ -373,6 +1050,32 @@ class SonaUnifiedInterpreter:
         self.memory.set_variable('focus', self._cognitive_focus,
                                  global_scope=True)
         self.memory.set_variable('analyze_load', self._cognitive_analyze_load,
+                                 global_scope=True)
+        self.memory.set_variable('cognitive_check', self._builtin_cognitive_check,
+                                 global_scope=True)
+        self.memory.set_variable('focus_mode', self._builtin_focus_mode,
+                                 global_scope=True)
+        self.memory.set_variable('working_memory', self._builtin_working_memory,
+                                 global_scope=True)
+        self.memory.set_variable('cognitive_load', self._cognitive_analyze_load,
+                                 global_scope=True)
+        self.memory.set_variable('check_focus', self._builtin_check_focus,
+                                 global_scope=True)
+        self.memory.set_variable('intent', self._builtin_intent,
+                                 global_scope=True)
+        self.memory.set_variable('decision', self._builtin_decision,
+                                 global_scope=True)
+        self.memory.set_variable('cognitive_trace', self._builtin_cognitive_trace,
+                                 global_scope=True)
+        self.memory.set_variable('explain_step', self._builtin_explain_step,
+                                 global_scope=True)
+        self.memory.set_variable('profile', self._builtin_profile,
+                                 global_scope=True)
+        self.memory.set_variable('cognitive_lint', self._builtin_cognitive_lint,
+                                 global_scope=True)
+        self.memory.set_variable('cognitive_report', self._builtin_cognitive_report,
+                                 global_scope=True)
+        self.memory.set_variable('cognitive_export', self._builtin_cognitive_export,
                                  global_scope=True)
 
         # REAL AI-Native Language Features - NO MOCKS
@@ -446,11 +1149,12 @@ class SonaUnifiedInterpreter:
                                  global_scope=True)
 
         # Built-in variables
-        self.memory.set_variable('__version__', '0.9.7', global_scope=True)
+        self.memory.set_variable('__version__', '0.10.1', global_scope=True)
         self.memory.set_variable('__sona__', True, global_scope=True)
         self.memory.set_variable('True', True, global_scope=True)
         self.memory.set_variable('False', False, global_scope=True)
         self.memory.set_variable('None', None, global_scope=True)
+        self.memory.set_variable('nil', None, global_scope=True)
 
     def _builtin_print(self, *args):
         """Built-in print function"""
@@ -491,6 +1195,16 @@ class SonaUnifiedInterpreter:
         """Built-in dict function"""
         return dict(*args, **kwargs)
 
+    def _builtin_set(self, obj=None):
+        """Built-in set function"""
+        if obj is None:
+            return set()
+        if isinstance(obj, set):
+            return set(obj)
+        if isinstance(obj, dict):
+            return set(obj.keys())
+        return set(obj)
+
     def _builtin_range(self, *args):
         """Built-in range function"""
         return list(range(*args))
@@ -511,22 +1225,163 @@ class SonaUnifiedInterpreter:
             return min(args[0])
         return min(args)
 
+    def _builtin_cognitive_check(self, *args, **kwargs):
+        """Built-in cognitive_check(...) function that routes to the monitor."""
+        return self._call_cognitive_monitor('check_cognitive_load', args, kwargs)
+
+    def _builtin_focus_mode(self, *args, **kwargs):
+        """Built-in focus_mode(...) helper."""
+        return self._call_cognitive_monitor('configure_focus_mode', args, kwargs)
+
+    def _builtin_working_memory(self, *args, **kwargs):
+        """Built-in working_memory(...) helper for storing/recalling values."""
+        kw = dict(kwargs)
+        if 'action' not in kw and not args:
+            kw['action'] = 'status'
+        return self._call_cognitive_monitor('manage_working_memory', args, kw)
+
+    def _builtin_check_focus(self, *args, **kwargs):
+        """Check current focus session status."""
+        return self._call_cognitive_monitor('configure_focus_mode', (), {'action': 'status'})
+
+    def _builtin_intent(self, *args, **kwargs):
+        """Record intent metadata."""
+        return self._call_cognitive_monitor('record_intent', args, kwargs)
+
+    def _builtin_decision(self, *args, **kwargs):
+        """Record a decision/rationale."""
+        return self._call_cognitive_monitor('record_decision', args, kwargs)
+
+    def _builtin_cognitive_trace(self, *args, **kwargs):
+        """Toggle reasoning trace on/off."""
+        return self._call_cognitive_monitor('toggle_trace', args, kwargs)
+
+    def _builtin_explain_step(self, *args, **kwargs):
+        """Return an explainability snapshot."""
+        return self._call_cognitive_monitor('explain_step', args, kwargs)
+
+    def _builtin_profile(self, *args, **kwargs):
+        """Set or declare a cognitive accessibility profile."""
+        return self._call_cognitive_monitor('set_profile', args, kwargs)
+
+    def _builtin_cognitive_lint(self, *args, **kwargs):
+        """Run cognitive lint checks on provided context."""
+        return self._call_cognitive_monitor('lint_context', args, kwargs)
+
+    def _builtin_cognitive_report(self, *args, **kwargs):
+        """Return a structured cognitive report."""
+        return self._call_cognitive_monitor('report', args, kwargs)
+
+    def _builtin_cognitive_export(self, *args, **kwargs):
+        """Export trace/report to a JSON file."""
+        return self._call_cognitive_monitor('export_trace', args, kwargs)
+
+    def _call_cognitive_monitor(self, method_name: str, args, kwargs):
+        """Normalize arguments and dispatch to the cognitive monitor."""
+        monitor = getattr(self, 'cognitive_monitor', None)
+        if not monitor:
+            raise RuntimeError("Cognitive monitor is not available")
+        payload = self._build_cognitive_payload(args, kwargs)
+        method = getattr(monitor, method_name)
+        return method(payload)
+
+    def _build_cognitive_payload(self, args, kwargs):
+        """Convert positional/keyword args to a payload map for the monitor."""
+        payload = {f'arg{i}': arg for i, arg in enumerate(args or [])}
+        payload.update(kwargs)
+        return payload
+
+    def _format_cognitive_context(self) -> str | None:
+        monitor = getattr(self, 'cognitive_monitor', None)
+        if not monitor:
+            return None
+        intent = monitor.intent_stack[-1] if monitor.intent_stack else {}
+        goal = intent.get("goal") or intent.get("intent") or intent.get("arg0")
+        drift = None
+        if monitor.last_analysis:
+            drift = monitor.last_analysis.get("intent_drift_score")
+        parts = []
+        if monitor.profile:
+            parts.append(f"profile={monitor.profile}")
+        if goal:
+            parts.append(f"intent={goal}")
+        if drift is not None:
+            parts.append(f"drift={drift:.2f}")
+        if monitor.decision_log:
+            parts.append(f"decisions={len(monitor.decision_log)}")
+        return " ".join(parts) if parts else None
+
+    def _explain_exception(
+        self,
+        exc: Exception,
+        code: str | None = None,
+        filename: str | None = None,
+    ) -> str:
+        """Return a cognitive-first explanation for an exception."""
+        if isinstance(exc, SonaRuntimeError) and getattr(exc, "_sona_explained", False):
+            return str(exc)
+        try:
+            from .utils.error_explainer import explain_error
+        except Exception:
+            return str(exc)
+
+        monitor = getattr(self, 'cognitive_monitor', None)
+        intent = None
+        if monitor and monitor.intent_stack:
+            intent = (
+                monitor.intent_stack[-1].get("goal")
+                or monitor.intent_stack[-1].get("intent")
+                or monitor.intent_stack[-1].get("arg0")
+            )
+        return explain_error(
+            exc,
+            filename=filename,
+            source=code,
+            intent=intent,
+            suppress_details=self.suppress_diagnostics,
+        )
+
+    @property
+    def current_scope(self):
+        """Return the current active scope (top-most local or global)."""
+        if self.memory.local_scopes:
+            return self.memory.local_scopes[-1]
+        return self.memory.global_scope
+
     # ========================================================================
     # FUNCTION MANAGEMENT (v0.9.6)
     # ========================================================================
 
     def define_function(self, name: str, func_def):
         """Define a user function"""
+        monitor = getattr(self, 'cognitive_monitor', None)
+        cognitive_context = None
+        module_context = getattr(self, "_module_context", None)
+        if monitor:
+            cognitive_context = {
+                "profile": monitor.profile,
+                "intent": monitor.intent_stack[-1] if monitor.intent_stack else None,
+                "decisions": monitor.decision_log[-3:],
+            }
         self.functions[name] = SonaFunction(
             name=name,
             parameters=func_def.parameters,
+            varargs_param=getattr(func_def, 'varargs_param', None),
+            default_values=getattr(func_def, 'default_values', None),
             body=func_def.body,
-            interpreter=self
+            interpreter=self,
+            cognitive_context=cognitive_context,
+            closure=module_context
         )
         # Also register in variable scope for calling
         self.memory.set_variable(name, self.functions[name], global_scope=True)
 
-    def call_function(self, name: str, arguments: list[Any]) -> Any:
+    def call_function(
+        self,
+        name: str,
+        arguments: list[Any],
+        keyword_arguments: dict[str, Any] | None = None
+    ) -> Any:
         """Call a user-defined or built-in function"""
         # Check built-in functions first
         if name == "range":
@@ -558,7 +1413,7 @@ class SonaUnifiedInterpreter:
             raise NameError(f"Function '{name}' is not defined")
 
         func = self.functions[name]
-        return func.call(arguments)
+        return func.call(arguments, keyword_arguments)
 
     def execute_block(self, statements: list) -> Any:
         """Execute a block of Sona AST statements"""
@@ -614,7 +1469,11 @@ class SonaUnifiedInterpreter:
         except Exception as e:
             if self.debug_mode:
                 traceback.print_exc()
-            raise SonaRuntimeError(f"Interpretation error: {e}") from e
+            message = self._explain_exception(e, code=code, filename=filename)
+            self._restore_focus_after_error()
+            err = SonaRuntimeError(message)
+            err._sona_explained = True
+            raise err from e
 
     def _is_sona_syntax(self, code: str) -> bool:
         """Detect if code contains Sona-specific syntax"""
@@ -639,7 +1498,11 @@ class SonaUnifiedInterpreter:
             'let', 'const', 'func', 'function', '=>',
             'if', 'else', 'while', 'for', 'match', 'case',
             'class', 'extends', 'import', 'export',
-            'true', 'false', 'null', 'undefined'
+            'true', 'false', 'null', 'undefined',
+            'intent', 'decision', 'cognitive_scope', 'cognitive_trace',
+            'cognitive_check', 'focus_mode', 'working_memory', 'explain_step',
+            'profile', 'cognitive_lint', 'cognitive_report', 'cognitive_export',
+            'focus'
         ]
 
         # Check for Sona keywords
@@ -663,7 +1526,13 @@ class SonaUnifiedInterpreter:
         """Convert Sona C-style syntax to Python for compatibility"""
         import re
 
-        # First, handle line-by-line conversion of keywords
+        # First, convert boolean/null literals throughout the code
+        # Use word boundaries to avoid matching inside other words
+        code = re.sub(r'\btrue\b', 'True', code)
+        code = re.sub(r'\bfalse\b', 'False', code)
+        code = re.sub(r'\bnull\b', 'None', code)
+
+        # Handle line-by-line conversion of keywords
         lines = code.split('\n')
         result_lines = []
         i = 0
@@ -683,9 +1552,43 @@ class SonaUnifiedInterpreter:
             if stripped.endswith(';'):
                 stripped = stripped[:-1]
 
-            # Handle closing braces
+            # Handle "} else {" on same line
+            if stripped == '} else {':
+                indent_level = max(0, indent_level - 1)
+                result_lines.append('    ' * indent_level + 'else:')
+                indent_level += 1
+                i += 1
+                continue
+
+            # Handle "} else if (condition) {" on same line
+            match = re.match(r'\}\s*else\s+if\s*\((.+?)\)\s*\{', stripped)
+            if match:
+                indent_level = max(0, indent_level - 1)
+                condition = match.group(1).strip()
+                result_lines.append('    ' * indent_level + f'elif {condition}:')
+                indent_level += 1
+                i += 1
+                continue
+
+            # Handle closing braces (including "} else" split across lines)
             if stripped.startswith('}'):
                 indent_level = max(0, indent_level - 1)
+                i += 1
+                continue
+
+            # Handle standalone "else {"
+            if stripped == 'else {' or re.match(r'^else\s*\{$', stripped):
+                result_lines.append('    ' * indent_level + 'else:')
+                indent_level += 1
+                i += 1
+                continue
+
+            # Handle "else if (condition) {" (elif)
+            match = re.match(r'^else\s+if\s*\((.+?)\)\s*\{', stripped)
+            if match:
+                condition = match.group(1).strip()
+                result_lines.append('    ' * indent_level + f'elif {condition}:')
+                indent_level += 1
                 i += 1
                 continue
 
@@ -706,9 +1609,9 @@ class SonaUnifiedInterpreter:
                     continue
 
             # Convert if (condition) { to if condition:
-            if 'if' in stripped and '{' in stripped:
+            if stripped.startswith('if') and '{' in stripped:
                 match = re.search(
-                    r'if\s*\(?\s*(.+?)\s*\)?\s*\{',
+                    r'if\s*\((.+?)\)\s*\{',
                     stripped
                 )
                 if match:
@@ -774,34 +1677,12 @@ class SonaUnifiedInterpreter:
 
     def _execute_sona_code(self, code: str, filename: str = "<string>") -> Any:
         """Execute Sona code using the proper Sona parser"""
-        try:
-            # Create parser instance
-            parser = SonaParserv090()
+        # Create parser instance
+        parser = SonaParserv090()
 
-            # Parse Sona code into AST nodes
-            ast_nodes = parser.parse(code, filename)
-
-            if ast_nodes is None:
-                raise SonaRuntimeError(
-                    f"Failed to parse Sona code in {filename}"
-                )
-
-            # Execute AST nodes
-            result = None
-            for node in ast_nodes:
-                if hasattr(node, 'execute'):
-                    result = node.execute(self)
-                elif hasattr(node, 'evaluate'):
-                    result = node.evaluate(self)
-                else:
-                    # Handle raw values or simple nodes
-                    result = self._handle_simple_node(node)
-
-            return result
-
-        except Exception as e:
-            print(f"DEBUG: Exception in _execute_sona_code: {e}")
-            print(f"DEBUG: Exception type: {type(e)}")
+        def _fallback(parse_error: Exception):
+            print(f"DEBUG: Exception in _execute_sona_code: {parse_error}")
+            print(f"DEBUG: Exception type: {type(parse_error)}")
 
             # If Sona parsing fails, try converting to Python
             has_braces = '{' in code
@@ -830,9 +1711,31 @@ class SonaUnifiedInterpreter:
                     traceback.print_exc()
 
             # If Sona parsing fails, try Python compatibility mode
-            print(f"⚠️  Sona parsing failed: {e}")
+            print(f"⚠️  Sona parsing failed: {parse_error}")
             print("   Falling back to Python compatibility mode")
             return self.execute_python_like(code, filename)
+
+        # Parse Sona code into AST nodes
+        try:
+            ast_nodes = parser.parse(code, filename)
+        except Exception as e:
+            return _fallback(e)
+
+        if ast_nodes is None:
+            return _fallback(SonaRuntimeError(f"Failed to parse Sona code in {filename}"))
+
+        # Execute AST nodes (runtime errors should NOT trigger Python fallback)
+        result = None
+        for node in ast_nodes:
+            if hasattr(node, 'execute'):
+                result = node.execute(self)
+            elif hasattr(node, 'evaluate'):
+                result = node.evaluate(self)
+            else:
+                # Handle raw values or simple nodes
+                result = self._handle_simple_node(node)
+
+        return result
 
     def _handle_simple_node(self, node) -> Any:
         """Handle simple AST nodes that don't have execute/evaluate methods"""
@@ -879,7 +1782,11 @@ class SonaUnifiedInterpreter:
         except Exception as e:
             if self.debug_mode:
                 traceback.print_exc()
-            raise SonaRuntimeError(f"Execution error: {e}") from e
+            message = self._explain_exception(e)
+            self._restore_focus_after_error()
+            err = SonaRuntimeError(message)
+            err._sona_explained = True
+            raise err from e
 
     def execute_ast_node(
         self,
@@ -926,16 +1833,37 @@ class SonaUnifiedInterpreter:
             right = self.execute_ast_node(node.right)
             return self._execute_binary_op(node.op, left, right)
 
+        elif isinstance(node, ast.BoolOp):
+            # Handle 'and' / 'or' boolean operations
+            if isinstance(node.op, ast.And):
+                result = True
+                for value in node.values:
+                    result = self.execute_ast_node(value)
+                    if not result:
+                        return result  # Short-circuit
+                return result
+            elif isinstance(node.op, ast.Or):
+                result = False
+                for value in node.values:
+                    result = self.execute_ast_node(value)
+                    if result:
+                        return result  # Short-circuit
+                return result
+            else:
+                raise SonaRuntimeError(f"Unsupported BoolOp: {type(node.op)}")
+
         elif isinstance(node, ast.Compare):
             left = self.execute_ast_node(node.left)
-            result = left
+            # For chained comparisons like a < b < c, we need to check each pair
+            # and track both the boolean result AND the right operand
+            current_left = left
             for op, comparator in zip(node.ops, node.comparators, strict=False):
                 right = self.execute_ast_node(comparator)
-                result = self._execute_compare_op(op, result, right)
-                if not result:
-                    break
-                result = right  # For chained comparisons
-            return bool(result)
+                cmp_result = self._execute_compare_op(op, current_left, right)
+                if not cmp_result:
+                    return False  # Short-circuit: comparison failed
+                current_left = right  # For chained comparisons: a < b < c
+            return True  # All comparisons passed
 
         elif isinstance(node, ast.List):
             return [self.execute_ast_node(elt) for elt in node.elts]
@@ -1022,7 +1950,7 @@ class SonaUnifiedInterpreter:
 
         elif isinstance(node, ast.FunctionDef):
             params = [arg.arg for arg in node.args.args]
-            func = SonaFunction(node.name, params, node.body, self)
+            func = SonaFunction(node.name, params, None, None, node.body, self)
             self.functions[node.name] = func
             self.memory.set_variable(node.name, func)
             return func
@@ -1033,6 +1961,8 @@ class SonaUnifiedInterpreter:
             lambda_func = SonaFunction(
                 name=f"<lambda_{id(node)}>",
                 parameters=params,
+                varargs_param=None,
+                default_values=None,
                 body=[ast.Return(value=node.body)],  # Wrap lambda body in return
                 interpreter=self
             )
@@ -1239,6 +2169,68 @@ class SonaUnifiedInterpreter:
     def disable_debug(self):
         """Disable debug mode"""
         self.debug_mode = False
+
+    def _enter_focus_block(self, meta: dict[str, Any]) -> dict[str, Any]:
+        """Enter a focus block, tightening diagnostics and enabling trace."""
+        monitor = getattr(self, 'cognitive_monitor', None)
+        state = {
+            "suppress_diagnostics": self.suppress_diagnostics,
+            "auto_ai_suggestions_enabled": self.auto_ai_suggestions_enabled,
+            "focus_block_active": self.focus_block_active,
+            "trace_enabled": monitor.trace_enabled if monitor else None,
+            "pushed_scope": False,
+        }
+        self.focus_block_stack.append(state)
+        self.focus_block_active = True
+        self.suppress_diagnostics = True
+        self.auto_ai_suggestions_enabled = False
+
+        if monitor:
+            monitor.trace_enabled = True
+            name = (
+                meta.get("task")
+                or meta.get("name")
+                or meta.get("goal")
+                or "focus"
+            )
+            scope_meta = dict(meta)
+            scope_meta.setdefault("focus", True)
+            monitor.push_scope(name=name, meta=scope_meta)
+            state["pushed_scope"] = True
+
+        return state
+
+    def _exit_focus_block(self, state: dict[str, Any], *, error: bool = False) -> None:
+        """Exit a focus block and restore prior runtime settings."""
+        monitor = getattr(self, 'cognitive_monitor', None)
+        if self.focus_block_stack:
+            if self.focus_block_stack[-1] is state:
+                self.focus_block_stack.pop()
+            else:
+                try:
+                    self.focus_block_stack.remove(state)
+                except ValueError:
+                    pass
+        if monitor and state.get("pushed_scope"):
+            monitor.pop_scope()
+        if state.get("trace_enabled") is not None and monitor:
+            monitor.trace_enabled = state["trace_enabled"]
+        if error:
+            self._pending_focus_restore = state
+            return
+        self.suppress_diagnostics = state.get("suppress_diagnostics", False)
+        self.auto_ai_suggestions_enabled = state.get("auto_ai_suggestions_enabled", True)
+        self.focus_block_active = state.get("focus_block_active", False)
+
+    def _restore_focus_after_error(self) -> None:
+        """Restore focus block settings after an error is explained."""
+        state = self._pending_focus_restore
+        if not state:
+            return
+        self.suppress_diagnostics = state.get("suppress_diagnostics", False)
+        self.auto_ai_suggestions_enabled = state.get("auto_ai_suggestions_enabled", True)
+        self.focus_block_active = state.get("focus_block_active", False)
+        self._pending_focus_restore = None
 
     def reset(self):
         """Reset the interpreter state"""

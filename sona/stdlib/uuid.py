@@ -17,15 +17,27 @@ def v4():
     """Generate a random UUID (version 4)."""
     return str(_uuid.uuid4())
 
+
+def uuid4():
+    return v4()
+
 def v5(namespace, name):
     """Generate a deterministic UUID (version 5) from namespace and name."""
     if isinstance(namespace, str):
         namespace = _uuid.UUID(namespace)
     return str(_uuid.uuid5(namespace, name))
 
+
+def uuid5(namespace, name):
+    return v5(namespace, name)
+
 def v1():
     """Generate a time-based UUID (version 1)."""
     return str(_uuid.uuid1())
+
+
+def uuid1():
+    return v1()
 
 def is_valid(uuid_string):
     """Validate a UUID string."""
@@ -125,7 +137,7 @@ NAMESPACE_X500 = str(_uuid.NAMESPACE_X500)
 
 
 __all__ = [
-    'v4', 'v5', 'v1', 'v3', 'is_valid', 'generate',
+    'v4', 'v5', 'v1', 'uuid4', 'uuid5', 'uuid1', 'v3', 'is_valid', 'generate',
     'nil', 'to_bytes', 'from_bytes', 'short',
     'NAMESPACE_DNS', 'NAMESPACE_URL', 'NAMESPACE_OID', 'NAMESPACE_X500'
 ]

@@ -1,9 +1,13 @@
 # Sona: AI-Native Programming with Cognitive Accessibility
 
-[![Version](https://img.shields.io/badge/version-0.9.6-blue.svg)](https://github.com/Bryantad/Sona/releases/tag/v0.9.6)
+[![Version](https://img.shields.io/badge/version-0.10-blue.svg)](https://github.com/Bryantad/Sona/releases/tag/v0.9.9)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/Waycoreinc.sona-ai-native-programming)](https://marketplace.visualstudio.com/items?itemName=Waycoreinc.sona-ai-native-programming)
+[![Python](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://python.org)
+[![Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/Waycoreinc.sona-ai-native-programming?label=VS%20Code%20Installs)](https://marketplace.visualstudio.com/items?itemName=Waycoreinc.sona-ai-native-programming)
+[![Marketplace Rating](https://img.shields.io/visual-studio-marketplace/r/Waycoreinc.sona-ai-native-programming?label=VS%20Code%20Rating)](https://marketplace.visualstudio.com/items?itemName=Waycoreinc.sona-ai-native-programming)
 [![GitHub Stars](https://img.shields.io/github/stars/Bryantad/Sona?style=social)](https://github.com/Bryantad/Sona/stargazers)
+[![YouTube](https://img.shields.io/youtube/channel/subscribers/UCFWuiQHiQPrJSAeAVi5raZA?style=social)](https://www.youtube.com/channel/UCFWuiQHiQPrJSAeAVi5raZA)
+[![X (Twitter) Follow](https://img.shields.io/twitter/follow/sona_org?style=social)](https://x.com/sona_org)
 
 ---
 
@@ -33,6 +37,13 @@ Sona is built for:
 - **Focus Mode** — reduce distraction and visual noise for deep work.
 - **Working Memory** — record short-term notes, goals, or decisions directly in your code context.
 - **Cognitive Check** — evaluate code complexity or task load inline.
+- **Intent** — declare goals and constraints that the runtime can track and explain.
+- **Decision Records** — capture rationale and options alongside code.
+- **Cognitive Trace / Explain Step** — produce deterministic explainability snapshots.
+- **Cognitive Scope** — create boundaries for intent, decisions, and working memory.
+- **Cognitive Scope Budgets** — warn when scope complexity exceeds a budget.
+- **Profile Annotations** — set ADHD/dyslexia profiles at the language level.
+- **Cognitive Lint / Report** — deterministic lint checks and exportable reports.
 
 ### AI-Native Commands
 
@@ -125,15 +136,16 @@ Developers can embed `.sona` snippets or AI Explain comments directly in noteboo
 
 ## Useful Commands
 
-| Command                          | Description                                       |
-| -------------------------------- | ------------------------------------------------- |
-| **Sona: Welcome & Setup**        | Initializes extension and configuration wizard.   |
-| **Sona: Explain Code**           | AI-powered code explanation for selected code.    |
-| **Sona: Optimize Code**          | Suggests performance or readability improvements. |
-| **Sona: Toggle Focus Mode**      | Enables or disables distraction-free Focus Mode.  |
-| **Sona: Clear Cognitive Memory** | Clears stored working-memory context.             |
-| **Sona: Verify Runtime**         | Checks local environment and interpreter path.    |
-| **Sona: Open REPL**              | Launches interactive Sona shell.                  |
+| Command                           | Description                                       |
+| --------------------------------- | ------------------------------------------------- |
+| **Sona: Welcome & Setup**         | Initializes extension and configuration wizard.   |
+| **Sona: Explain Code**            | AI-powered code explanation for selected code.    |
+| **Sona: Optimize Code**           | Suggests performance or readability improvements. |
+| **Sona: Toggle Focus Mode**       | Enables or disables distraction-free Focus Mode.  |
+| **Sona: Clear Cognitive Memory**  | Clears stored working-memory context.             |
+| **Sona: Export Cognitive Report** | Exports a cognitive report for the active file.   |
+| **Sona: Verify Runtime**          | Checks local environment and interpreter path.    |
+| **Sona: Open REPL**               | Launches interactive Sona shell.                  |
 
 To view all Sona commands, open the Command Palette (`Ctrl + Shift + P` / `Cmd + Shift + P`) and type **Sona**.
 
@@ -141,14 +153,14 @@ To view all Sona commands, open the Command Palette (`Ctrl + Shift + P` / `Cmd +
 
 ## Feature Details
 
-| Feature Area                | Description                                               |
-| --------------------------- | --------------------------------------------------------- |
-| **IntelliSense**            | AI-aware completions for `.sona` and `.smod`.             |
-| **Cognitive Accessibility** | Focus Mode, Working Memory, and Simplify Code helpers.    |
-| **Debugging**               | Debug `.sona` scripts using the integrated Sona Runtime.  |
-| **Transpilation**           | Generate equivalent code in Python, JS, TS, C#, Go, Rust. |
-| **Testing**                 | Built-in `sona test` command for behavioral validation.   |
-| **Docs Integration**        | Inline links to Sona documentation and wiki.              |
+| Feature Area                | Description                                                                                |
+| --------------------------- | ------------------------------------------------------------------------------------------ |
+| **IntelliSense**            | AI-aware completions for `.sona` and `.smod`.                                              |
+| **Cognitive Accessibility** | Focus Mode, Working Memory, Intent, Decision Records, Trace/Explain, Profile, Lint/Report. |
+| **Debugging**               | Debug `.sona` scripts using the integrated Sona Runtime.                                   |
+| **Transpilation**           | Generate equivalent code in Python, JS, TS, C#, Go, Rust.                                  |
+| **Testing**                 | Built-in `sona test` command for behavioral validation.                                    |
+| **Docs Integration**        | Inline links to Sona documentation and wiki.                                               |
 
 ---
 

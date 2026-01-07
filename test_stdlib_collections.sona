@@ -1,7 +1,7 @@
-# Sona 0.9.6 - Collections and Data Structures Test
+# Sona 0.10.0 - Collections and Data Structures Test
 # Tests: collection, queue, stack, sort, search, statistics
 
-print("=== Sona 0.9.6 Collections Test ===");
+print("=== Sona 0.10.0 Collections Test ===");
 print("");
 
 # ===== COLLECTION MODULE =====
@@ -17,13 +17,25 @@ print("Contains 3: " + str(collection.contains(items, 3)));
 print("Is empty: " + str(collection.is_empty(items)));
 
 # Map and filter
-doubled = collection.map(items, lambda x: x * 2);
+func double(x) {
+	return x * 2;
+};
+
+doubled = collection.map(items, double);
 print("Doubled: " + str(doubled));
 
-evens = collection.filter(items, lambda x: x % 2 == 0);
+func is_even(x) {
+	return x % 2 == 0;
+};
+
+evens = collection.filter(items, is_even);
 print("Evens: " + str(evens));
 
-sum = collection.reduce(items, lambda acc, x: acc + x, 0);
+func sum_reducer(acc, x) {
+	return acc + x;
+};
+
+sum = collection.reduce(items, sum_reducer, 0);
 print("Sum: " + str(sum));
 print("");
 
@@ -115,3 +127,4 @@ print("Min: " + str(min_val) + ", Max: " + str(max_val));
 print("");
 
 print("=== All Collections Tests Complete! ===");
+

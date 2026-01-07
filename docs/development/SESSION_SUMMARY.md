@@ -60,7 +60,7 @@
 
 4. Simplified `ContinueStatement` to raise `ContinueException` directly
 
-5. Added try/except to `EnhancedWhileLoop` and `EnhancedForLoop`1. **`sona/grammar_v090.lark`**
+5. Added try/except to `EnhancedWhileLoop` and `EnhancedForLoop`1. **`sona/grammar.lark`**
 
 **Test Results**: All 4 test cases passing ✅ - Moved COMMENT and MULTILINE_COMMENT to top (before other terminals)
 
@@ -206,7 +206,7 @@ def expr_list(self, children): ...
 
 - `sona/interpreter.py` - Updated exception handling
 
-- `sona/ast_nodes_v090.py` - Updated 4 classes---
+- `sona/ast_nodes.py` - Updated 4 classes---
 
 - `sona/stdlib/MANIFEST.json` - Reorganized module listing
 

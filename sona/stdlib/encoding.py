@@ -23,6 +23,23 @@ def b64decode(value: str) -> bytes:
     return base64.b64decode(value.encode("ascii"))
 
 
+def base64_encode(value: BytesLike) -> str:
+    return b64encode(value)
+
+
+def base64_decode(
+    value: str,
+    *,
+    encoding: str = "utf-8",
+    errors: str = "strict",
+    return_bytes: bool = False,
+) -> str | bytes:
+    data = b64decode(value)
+    if return_bytes:
+        return data
+    return data.decode(encoding, errors)
+
+
 def urlsafe_b64encode(value: BytesLike) -> str:
     """
     URL-safe base64 encoding.
@@ -103,7 +120,13 @@ def hex_encode(value: BytesLike) -> str:
     return _ensure_bytes(value).hex()
 
 
-def hex_decode(value: str) -> bytes:
+def hex_decode(
+    value: str,
+    *,
+    encoding: str = "utf-8",
+    errors: str = "strict",
+    return_bytes: bool = False,
+) -> str | bytes:
     """
     Hexadecimal decoding.
     
@@ -116,7 +139,10 @@ def hex_decode(value: str) -> bytes:
     Example:
         data = encoding.hex_decode("010203")
     """
-    return bytes.fromhex(value)
+    data = bytes.fromhex(value)
+    if return_bytes:
+        return data
+    return data.decode(encoding, errors)
 
 
 def url_encode(value: str) -> str:

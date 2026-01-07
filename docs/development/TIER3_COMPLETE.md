@@ -73,7 +73,7 @@ Binary operators (`<`, `>`, `<=`, `>=`, `==`, `!=`, `+`, `-`, `*`, `/`, `%`) wer
 
 ### The Solution
 
-**1. Created Terminal Tokens** (grammar_v091_fixed.lark)
+**1. Created Terminal Tokens** (grammar.lark)
 
 ```lark
 // Operator terminals (with priorities to avoid conflicts)
@@ -239,7 +239,7 @@ Comprehensive test of all Tier 1, 2, and 3 features with complex combinations:
 
 ### Modified Files
 
-1. **sona/grammar_v091_fixed.lark** (190 lines)
+1. **sona/grammar.lark**
    - Added operator terminal tokens with priorities
    - Updated expression grammar to use terminals
    - Changed `unary_expr` to use terminals
@@ -249,7 +249,7 @@ Comprehensive test of all Tier 1, 2, and 3 features with complex combinations:
    - Updated `additive_expr()` to handle terminal tokens
    - Updated `multiplicative_expr()` to handle terminal tokens
    - Removed debug output
-3. **sona/ast_nodes_v090.py** (1072 lines)
+3. **sona/ast_nodes.py** (1072 lines)
    - Removed debug output from `BinaryOperatorExpression.evaluate()`
    - All AST nodes working correctly
 

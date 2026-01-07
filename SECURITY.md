@@ -15,7 +15,7 @@ If you cannot use email, open a private support ticket with the project maintain
 
 ## Supported Versions
 
-We will respond to security reports for the current release (v0.9.8) and the prior minor release (v0.9.7).
+We will respond to security reports for the current release (v0.9.9) and the prior minor release (v0.9.8).
 
 ## Disclosure Policy
 

@@ -15,6 +15,8 @@ PI = _math.pi
 TAU = _math.tau
 E = _math.e
 PHI = (1 + _math.sqrt(5.0)) / 2.0
+INF = _math.inf
+NAN = _math.nan
 
 
 def _ensure_float(value: Number) -> float:
@@ -134,6 +136,14 @@ def sigmoid(x: Number) -> float:
     return 1.0 / (1.0 + _math.exp(-value))
 
 
+def fma(a: Number, b: Number, c: Number) -> float:
+    """Compute fused multiply-add where available, else fall back."""
+    try:
+        return _math.fma(_ensure_float(a), _ensure_float(b), _ensure_float(c))
+    except AttributeError:  # pragma: no cover - Py<3.9 fallback
+        return _ensure_float(a) * _ensure_float(b) + _ensure_float(c)
+
+
 def clamp(value: Number, lower: Number, upper: Number) -> float:
     low = _ensure_float(lower)
     high = _ensure_float(upper)
@@ -198,6 +208,18 @@ def trunc(x: Number) -> int:
 
 def abs(x: Number) -> float:  # noqa: A002 - align with stdlib math naming
     return _math.fabs(_ensure_float(x))
+
+
+def is_nan(value: Number) -> bool:
+    return _math.isnan(_ensure_float(value))
+
+
+def is_inf(value: Number) -> bool:
+    return _math.isinf(_ensure_float(value))
+
+
+def is_finite(value: Number) -> bool:
+    return _math.isfinite(_ensure_float(value))
 
 
 # noqa: A001 - compatibility helper
@@ -325,6 +347,98 @@ def permute(n: Number, k: Number) -> int:
     return _math.perm(n_int, k_int)
 
 
+def mode(values: Iterable[Number]) -> float:
+    """Most frequently occurring value."""
+    from collections import Counter
+    list_vals = list(values)
+    if not list_vals:
+        raise ValueError("cannot compute mode of empty sequence")
+    counts = Counter(list_vals)
+    return float(counts.most_common(1)[0][0])
+
+
+def range_of(values: Iterable[Number]) -> float:
+    """Difference between maximum and minimum."""
+    list_vals = list(values)
+    if not list_vals:
+        raise ValueError("cannot compute range of empty sequence")
+    return maximum(list_vals) - minimum(list_vals)
+
+
+def percentile(values: Iterable[Number], p: Number) -> float:
+    """Compute percentile (0-100)."""
+    list_vals = sorted(values)
+    if not list_vals:
+        raise ValueError("cannot compute percentile of empty sequence")
+    k = (len(list_vals) - 1) * (float(p) / 100.0)
+    f = _math.floor(k)
+    c = _math.ceil(k)
+    if f == c:
+        return float(list_vals[int(k)])
+    d0 = float(list_vals[int(f)]) * (c - k)
+    d1 = float(list_vals[int(c)]) * (k - f)
+    return d0 + d1
+
+
+def sign(x: Number) -> int:
+    """Return sign of number: -1, 0, or 1."""
+    val = _ensure_float(x)
+    if val > 0:
+        return 1
+    elif val < 0:
+        return -1
+    else:
+        return 0
+
+
+def is_even(n: Number) -> bool:
+    """Check if number is even."""
+    return int(_ensure_float(n)) % 2 == 0
+
+
+def is_odd(n: Number) -> bool:
+    """Check if number is odd."""
+    return int(_ensure_float(n)) % 2 != 0
+
+
+def is_prime(n: Number) -> bool:
+    """Check if number is prime."""
+    num = int(_ensure_float(n))
+    if num < 2:
+        return False
+    if num == 2:
+        return True
+    if num % 2 == 0:
+        return False
+    for i in range(3, int(_math.sqrt(num)) + 1, 2):
+        if num % i == 0:
+            return False
+    return True
+
+
+def prod(values: Iterable[Number]) -> float:
+    """Alias for product to match stdlib naming."""
+    return product(values)
+
+
+def fibonacci(n: Number) -> int:
+    """Compute nth Fibonacci number."""
+    num = int(_ensure_float(n))
+    if num < 0:
+        raise ValueError("fibonacci not defined for negative numbers")
+    if num <= 1:
+        return num
+    a, b = 0, 1
+    for _ in range(2, num + 1):
+        a, b = b, a + b
+    return b
+
+
+def average(*values: Number) -> float:
+    """Compute average (alias for mean)."""
+    return mean(values)
+
+
 __all__ = [
     "PI",
     "TAU",
@@ -380,4 +494,13 @@ __all__ = [
     "factorial",
     "choose",
     "permute",
+    "mode",
+    "range_of",
+    "percentile",
+    "sign",
+    "is_even",
+    "is_odd",
+    "is_prime",
+    "fibonacci",
+    "average",
 ]

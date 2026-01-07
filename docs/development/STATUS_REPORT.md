@@ -125,8 +125,8 @@ F:\SonaMinimal\
 │   ├── __init__.py                 # Version: 0.9.6 ✅
 │   ├── interpreter.py              # Main interpreter
 │   ├── parser_v090.py              # Parser (banner fixed ✅)
-│   ├── ast_nodes_v090.py           # AST nodes
-│   ├── grammar_v090.lark           # Grammar
+│   ├── ast_nodes.py           # AST nodes
+│   ├── grammar.lark                # Grammar
 │   ├── cli.py                      # CLI interface
 │   └── stdlib/                     # Standard library
 │       ├── __init__.py             # ✅ NEW

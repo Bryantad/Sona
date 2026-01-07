@@ -147,6 +147,7 @@ export class SonaAIIntegration {
     }
 
     private registerCommands(): void {
+        if (!this.context) return;
         const disposables = [
             vscode.commands.registerCommand('sona.checkAIConnection', () => this.checkAIConnection()),
             vscode.commands.registerCommand('sona.generateCode', () => this.generateCode()),
@@ -161,7 +162,7 @@ export class SonaAIIntegration {
             vscode.commands.registerCommand('sona.showOnboarding', () => this.showOnboarding())
         ];
         disposables.forEach(disposable => {
-            vscode.context.subscriptions.push(disposable);
+            this.context!.subscriptions.push(disposable);
         });
     }
 

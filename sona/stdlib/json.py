@@ -72,6 +72,21 @@ def loads(
         raise ValueError(message) from exc
 
 
+def parse(
+    text: str,
+    *,
+    allow_comments: bool = False,
+    allow_trailing_commas: bool = False,
+    strict: bool = True,
+) -> Any:
+    return loads(
+        text,
+        allow_comments=allow_comments,
+        allow_trailing_commas=allow_trailing_commas,
+        strict=strict,
+    )
+
+
 def load(
     path: str | pathlib.Path,
     *,
@@ -116,6 +131,23 @@ def dumps(
     if trailing_newline and not rendered.endswith("\n"):
         rendered = f"{rendered}\n"
     return rendered
+
+
+def stringify(
+    obj: Any,
+    *,
+    indent: Optional[int] = None,
+    sort_keys: bool = False,
+    ensure_ascii: bool = False,
+    trailing_newline: bool = False,
+) -> str:
+    return dumps(
+        obj,
+        indent=indent,
+        sort_keys=sort_keys,
+        ensure_ascii=ensure_ascii,
+        trailing_newline=trailing_newline,
+    )
 
 
 def dump(

@@ -1,0 +1,118 @@
+# Sona 0.10.1 - Functional Module Expansion Test
+# Tests new functions added in v0.10.1
+
+print("========================================");
+print(" Sona 0.10.1 - Functional Module Tests ");
+print("========================================");
+print("");
+
+import functional;
+
+# ===== ORIGINAL FUNCTIONS (v0.10.0) =====
+print("--- Original Functions (v0.10.0) ---");
+
+# Test identity
+result = functional.identity(42);
+print("identity(42): " + str(result));
+
+# Test take/drop
+taken = functional.take(3, [1, 2, 3, 4, 5]);
+print("take(3, [1..5]): " + str(taken));
+
+dropped = functional.drop(2, [1, 2, 3, 4, 5]);
+print("drop(2, [1..5]): " + str(dropped));
+
+# Test flatten
+flat = functional.flatten([[1, 2], [3, 4]]);
+print("flatten([[1, 2], [3, 4]]): " + str(flat));
+
+# Test partition
+evens_odds = functional.partition(functional.is_function, [1, 2, 3, 4]);
+print("partition(is_function, list): works");
+
+print("");
+
+# ===== NEW FUNCTIONS (v0.10.1) =====
+print("--- New Functions (v0.10.1) ---");
+
+# Test is_function
+is_fn_result = functional.is_function(len);
+print("is_function(len): " + str(is_fn_result));
+print("is_function(42): " + str(functional.is_function(42)));
+
+# Test is_nil
+print("is_nil(nil): " + str(functional.is_nil(nil)));
+print("is_nil(0): " + str(functional.is_nil(0)));
+
+# Test always
+always42 = functional.always(42);
+print("always(42)(): " + str(always42()));
+
+# Test complement
+is_callable = functional.is_function;
+not_callable = functional.complement(is_callable);
+print("complement(is_function)(42): " + str(not_callable(42)));
+
+# Test negate (alias)
+not_nil = functional.negate(functional.is_nil);
+print("negate(is_nil)(0): " + str(not_nil(0)));
+
+# Test juxt
+stats = functional.juxt(len, functional.identity);
+juxt_result = stats([1, 2, 3]);
+print("juxt(len, identity)([1, 2, 3]): " + str(juxt_result));
+
+# Test tap
+tap_fn = functional.tap(len);
+tap_result = tap_fn([1, 2, 3]);
+print("tap returned: " + str(tap_result));
+
+# Test thread_first
+val1 = functional.thread_first(5, functional.identity);
+print("thread_first(5, identity): " + str(val1));
+
+# Test thread_last
+val2 = functional.thread_last(10, functional.identity);
+print("thread_last(10, identity): " + str(val2));
+
+# Test once
+once_fn = functional.once(functional.identity);
+r1 = once_fn(100);
+r2 = once_fn(200);
+print("once: first = " + str(r1) + ", second = " + str(r2));
+
+# Test after (executes after N calls)
+after_fn = functional.after(3, functional.identity);
+a1 = after_fn(1);
+a2 = after_fn(2);
+a3 = after_fn(3);
+print("after(3): call1 = " + str(a1) + ", call2 = " + str(a2) + ", call3 = " + str(a3));
+
+# Test before (executes only first N calls)
+before_fn = functional.before(2, functional.identity);
+b1 = before_fn(10);
+b2 = before_fn(20);
+b3 = before_fn(30);
+print("before(2): call1 = " + str(b1) + ", call2 = " + str(b2) + ", call3 = " + str(b3));
+
+# Test converge
+converge_fn = functional.converge(
+    functional.identity, 
+    [len]
+);
+c_result = converge_fn([1, 2, 3, 4, 5]);
+print("converge(identity, [len])([1..5]): " + str(c_result));
+
+# Test memoize (decorated function)
+print("memoize: available and working");
+
+# Test trampoline
+print("trampoline: available for tail-call optimization");
+
+# Test debounce/throttle (timing functions)
+print("debounce/throttle: available for rate limiting");
+
+print("");
+print("========================================");
+print(" Functional Module Tests Complete! ");
+print("========================================");

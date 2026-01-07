@@ -8,7 +8,7 @@ Provides executive function support, attention management, and cognitive load mo
 import time
 from typing import Any, Dict, List, Optional
 
-from .gpt2_integration import get_gpt2_instance
+from .ai_backend import get_ai_backend
 
 
 class CognitiveAssistant:
@@ -16,7 +16,7 @@ class CognitiveAssistant:
     
     def __init__(self):
         """Initialize cognitive assistant"""
-        self.gpt2 = get_gpt2_instance()
+        self.gpt2 = get_ai_backend()
         self.session_start = time.time()
         self.typing_patterns = []
         self.break_history = []

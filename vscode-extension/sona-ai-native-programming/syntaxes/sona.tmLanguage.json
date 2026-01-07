@@ -7,7 +7,15 @@
             "name": "keyword.control.sona"
         },
         {
-            "match": "\\b(True|False|None)\\b",
+            "match": "\\b(cognitive_check|focus_mode|working_memory|cognitive_load|check_focus|intent|decision|cognitive_trace|explain_step|cognitive_scope|profile|cognitive_lint|cognitive_report|cognitive_export|think|remember|focus|analyze_load)\\b",
+            "name": "keyword.other.cognitive.sona"
+        },
+        {
+            "match": "@intent\\b",
+            "name": "keyword.other.cognitive.sona"
+        },
+        {
+            "match": "\\b(True|False|None|true|false|null)\\b",
             "name": "constant.language.sona"
         },
         {

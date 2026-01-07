@@ -115,7 +115,7 @@ print(x);
 
 ## 🔧 Grammar Changes Made
 
-###File: `sona/grammar_v090.lark`
+###File: `sona/grammar.lark`
 
 1. **Moved Comments to Top** (Line 8-17)
 
@@ -226,7 +226,7 @@ let result = add(1, 2);
 
 ### Modified Files
 
-- ✅ `sona/grammar_v090.lark` - Grammar enhancements
+- ✅ `sona/grammar.lark` - Grammar enhancements
 - ✅ `run_sona.py` - Smart file execution
 - ✅ Test files - Comprehensive testing
 

@@ -116,6 +116,8 @@ class SonaAIIntegration {
         };
     }
     registerCommands() {
+        if (!this.context)
+            return;
         const disposables = [
             vscode.commands.registerCommand('sona.checkAIConnection', () => this.checkAIConnection()),
             vscode.commands.registerCommand('sona.generateCode', () => this.generateCode()),
@@ -130,9 +132,7 @@ class SonaAIIntegration {
             vscode.commands.registerCommand('sona.showOnboarding', () => this.showOnboarding())
         ];
         disposables.forEach(disposable => {
-            if (this.context) {
-                this.context.subscriptions.push(disposable);
-            }
+            this.context.subscriptions.push(disposable);
         });
     }
     handleStatusBarClick() {

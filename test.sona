@@ -1,4 +1,4 @@
-print("=== Sona 0.9.6 Test ===");
+print("=== Sona 0.10.0 Test ===");
 x = 42;
 y = 10;
 print("x = " + str(x));
@@ -6,3 +6,4 @@ print("y = " + str(y));
 sum = x + y;
 print("Sum = " + str(sum));
 print("=== Test Complete ===");
+

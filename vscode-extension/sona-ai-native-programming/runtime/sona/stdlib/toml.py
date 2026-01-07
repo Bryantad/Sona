@@ -94,3 +94,195 @@ def dumps(obj, **kwargs):
         return _tomli_w.dumps(obj, **kwargs)
     except (TypeError, ValueError) as e:
         raise TypeError(f"Cannot serialize to TOML: {e}")
+
+
+def load(filepath):
+    """
+    Load TOML from file.
+    
+    Args:
+        filepath: Path to TOML file
+    
+    Returns:
+        dict: Parsed TOML data
+    
+    Example:
+        >>> data = toml.load("config.toml")
+    """
+    with open(filepath, 'r', encoding='utf-8') as f:
+        return loads(f.read())
+
+
+def dump(obj, filepath):
+    """
+    Write TOML to file.
+    
+    Args:
+        obj: Python dict to serialize
+        filepath: Path to output file
+    
+    Example:
+        >>> toml.dump({"key": "value"}, "config.toml")
+    """
+    with open(filepath, 'w', encoding='utf-8') as f:
+        f.write(dumps(obj))
+
+
+def get(data, key, default=None):
+    """
+    Get value from TOML data with dot notation.
+    
+    Args:
+        data: TOML dict
+        key: Key with dot notation (e.g., "section.subsection.key")
+        default: Default value if not found
+    
+    Returns:
+        Value or default
+    
+    Example:
+        >>> toml.get(data, "database.host", "localhost")
+    """
+    keys = key.split('.')
+    value = data
+    
+    for k in keys:
+        if isinstance(value, dict) and k in value:
+            value = value[k]
+        else:
+            return default
+    
+    return value
+
+
+def set_value(data, key, value):
+    """
+    Set value in TOML data with dot notation.
+    
+    Args:
+        data: TOML dict
+        key: Key with dot notation
+        value: Value to set
+    
+    Example:
+        >>> toml.set_value(data, "database.port", 5432)
+    """
+    keys = key.split('.')
+    current = data
+    
+    for k in keys[:-1]:
+        if k not in current:
+            current[k] = {}
+        current = current[k]
+    
+    current[keys[-1]] = value
+
+
+def has(data, key):
+    """
+    Check if key exists in TOML data.
+    
+    Args:
+        data: TOML dict
+        key: Key with dot notation
+    
+    Returns:
+        bool: True if exists
+    
+    Example:
+        >>> toml.has(data, "database.host")
+    """
+    keys = key.split('.')
+    value = data
+    
+    for k in keys:
+        if isinstance(value, dict) and k in value:
+            value = value[k]
+        else:
+            return False
+    
+    return True
+
+
+def merge(base, override):
+    """
+    Merge two TOML dicts.
+    
+    Args:
+        base: Base dict
+        override: Override dict
+    
+    Returns:
+        Merged dict
+    
+    Example:
+        >>> merged = toml.merge(config1, config2)
+    """
+    result = base.copy()
+    
+    for key, value in override.items():
+        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            result[key] = merge(result[key], value)
+        else:
+            result[key] = value
+    
+    return result
+
+
+def validate(toml_string):
+    """
+    Validate TOML string.
+    
+    Args:
+        toml_string: TOML string to validate
+    
+    Returns:
+        bool: True if valid
+    
+    Example:
+        >>> toml.validate('key = "value"')
+        True
+    """
+    try:
+        loads(toml_string)
+        return True
+    except Exception:
+        return False
+
+
+def to_dict(toml_string):
+    """
+    Parse TOML to dict (alias for loads).
+    
+    Args:
+        toml_string: TOML string
+    
+    Returns:
+        dict: Parsed data
+    
+    Example:
+        >>> data = toml.to_dict(toml_str)
+    """
+    return loads(toml_string)
+
+
+def from_dict(obj):
+    """
+    Convert dict to TOML (alias for dumps).
+    
+    Args:
+        obj: Python dict
+    
+    Returns:
+        str: TOML string
+    
+    Example:
+        >>> toml_str = toml.from_dict(data)
+    """
+    return dumps(obj)
+
+
+__all__ = [
+    'loads', 'dumps', 'load', 'dump', 'get', 'set_value',
+    'has', 'merge', 'validate', 'to_dict', 'from_dict'
+]

@@ -55,7 +55,7 @@ Available stdlib modules:
 ```
 Source Code (.sona)
     ↓
-Lark Parser (grammar_v091_fixed.lark)
+Lark Parser (grammar.lark)
     ↓
 Parse Tree
     ↓
@@ -70,7 +70,7 @@ Execution & Output
 
 ### Key Components
 
-#### 1. Grammar (grammar_v091_fixed.lark)
+#### 1. Grammar (grammar.lark)
 
 - Fixed dictionary literal closing bracket (} instead of ])
 - Changed try/catch to use statement_list? for consistency
@@ -91,7 +91,7 @@ Added 40+ transformer methods:
 - `additive_expr`, `multiplicative_expr` - Binary operations
 - `str` - String literals with escape sequence handling (using ast.literal_eval)
 
-#### 3. AST Nodes (ast_nodes_v090.py)
+#### 3. AST Nodes (ast_nodes.py)
 
 Created 10 new AST node classes:
 

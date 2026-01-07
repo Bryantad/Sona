@@ -8,7 +8,8 @@ Stability: stable
 Version: 0.9.6
 """
 
-__all__ = ['and_', 'or_', 'not_', 'xor', 'coerce', 'is_truthy', 'is_falsy']
+__all__ = ['and_', 'or_', 'not_', 'xor', 'coerce', 'is_truthy', 'is_falsy',
+           'nand', 'nor', 'implies', 'all_true', 'any_true']
 
 def coerce(x):
     """
@@ -151,3 +152,116 @@ def xor(a, b):
         True
     """
     return coerce(a) != coerce(b)
+
+
+def nand(a, b):
+    """
+    Logical NAND (NOT AND) operation.
+    
+    Returns True unless both operands are truthy.
+    
+    Args:
+        a: First operand (will be coerced to bool)
+        b: Second operand (will be coerced to bool)
+        
+    Returns:
+        bool: NOT (a AND b)
+        
+    Example:
+        >>> nand(True, True)
+        False
+        >>> nand(True, False)
+        True
+    """
+    return not (coerce(a) and coerce(b))
+
+
+def nor(a, b):
+    """
+    Logical NOR (NOT OR) operation.
+    
+    Returns True only if both operands are falsy.
+    
+    Args:
+        a: First operand (will be coerced to bool)
+        b: Second operand (will be coerced to bool)
+        
+    Returns:
+        bool: NOT (a OR b)
+        
+    Example:
+        >>> nor(False, False)
+        True
+        >>> nor(True, False)
+        False
+    """
+    return not (coerce(a) or coerce(b))
+
+
+def implies(a, b):
+    """
+    Logical implication operation (a → b).
+    
+    Returns False only when a is true and b is false.
+    Equivalent to: NOT a OR b
+    
+    Args:
+        a: Antecedent (will be coerced to bool)
+        b: Consequent (will be coerced to bool)
+        
+    Returns:
+        bool: True unless a is true and b is false
+        
+    Example:
+        >>> implies(True, True)
+        True
+        >>> implies(True, False)
+        False
+        >>> implies(False, False)
+        True
+    """
+    return not coerce(a) or coerce(b)
+
+
+def all_true(*args):
+    """
+    Check if all arguments are truthy.
+    
+    Args:
+        *args: Variable number of arguments
+        
+    Returns:
+        bool: True if all arguments are truthy
+        
+    Example:
+        >>> all_true(1, "yes", [1])
+        True
+        >>> all_true(1, 0, "yes")
+        False
+    """
+    return all(coerce(x) for x in args)
+
+
+def any_true(*args):
+    """
+    Check if any argument is truthy.
+    
+    Args:
+        *args: Variable number of arguments
+        
+    Returns:
+        bool: True if at least one argument is truthy
+        
+    Example:
+        >>> any_true(0, "", 1)
+        True
+        >>> any_true(0, "", [])
+        False
+    """
+    return any(coerce(x) for x in args)
+
+
+# Sona-facing aliases (can't use `def and(...)` / `def not(...)` in Python)
+globals().setdefault('and', and_)
+globals().setdefault('or', or_)
+globals().setdefault('not', not_)

@@ -1,3 +1,58 @@
+## [0.10.0] - 2025-12-30
+
+### Cognitive Preview (Intent-Native)
+
+**Added**
+
+- New command: `Sona: Export Cognitive Report` (Command Palette + editor context).
+- Profile detection prompts for `profile("adhd|dyslexia|neurotypical")` and `# profile:` comments.
+- Snippets for cognitive keywords (`intent`, `decision`, `cognitive_trace`, `explain_step`, `profile`, `cognitive_scope`, `focus`, `@intent`).
+
+**Changed**
+
+- Grammar updated to recognize cognitive statements and `focus` blocks.
+- Packaged runtime/stdlib aligned to 0.10.0.
+
+---
+
+## [0.9.9] - 2025-12-23
+
+### IDE and Correctness Release
+
+**Added**
+
+- Run Sona File (F5 / Ctrl+F5).
+- 30+ snippets, navigation (Go to Definition / Find References), Document Symbols, formatting, and stable stdio LSP integration.
+
+**Fixed**
+
+- Packaging fixes: corrected language-client import path and bundled transitive dependencies.
+- Added `sona/__main__.py` so `python -m sona` works in extension workflows.
+
+---
+
+## [0.9.8] - 2025-12-08
+
+### Parser and Security Hardening
+
+**Highlights**
+
+- Extension aligned with parser hardening and documentation refresh.
+- No extension-breaking changes in this release.
+
+---
+
+## [0.9.7] - 2025-10-30
+
+### RC Hardening (Phase A)
+
+**Highlights**
+
+- Extension aligned with the stabilized stdlib inventory and RC validation runs.
+- LSP features were not yet available in this phase.
+
+---
+
 ## [0.9.6] — 2025-10-13
 
 ### Truth-First Stabilization (Zero-Red Tests + 40 Percent Coverage)

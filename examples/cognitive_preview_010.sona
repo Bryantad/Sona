@@ -1,0 +1,29 @@
+// examples/cognitive_preview_010.sona
+// Minimal end-to-end cognitive preview sample for v0.10.0
+
+profile("adhd");
+intent(
+    goal="Summarize a short task list",
+    constraints="Keep output brief and clear",
+    success="Print prioritized list"
+);
+
+decision(
+    label="Ordering strategy",
+    rationale="Manual ordering keeps the summary predictable",
+    option="fixed-list"
+);
+
+cognitive_trace(enabled=true);
+
+cognitive_scope("task-summary", budget=8) {
+    let tasks = ["Pay bills", "Email team", "Write summary"];
+    print("Task summary:");
+
+    for task in tasks {
+        print("- " + task);
+    }
+
+    cognitive_check(task="Summarize tasks", context="Short list output for clarity");
+    explain_step();
+}

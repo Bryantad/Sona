@@ -84,7 +84,8 @@ Results from testing previously untested grammar features.
 **Features Tested:**
 
 - ✅ Export statements
-- ⚠️ Match expressions
+- ✅ Match statements
+- ✅ When expressions
 - ❌ When guards
 - ⚠️ Repeat-N loops
 - ❌ Class methods

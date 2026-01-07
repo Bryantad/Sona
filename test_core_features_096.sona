@@ -2,7 +2,7 @@
 # Tests core language features without module imports
 
 print("╔════════════════════════════════════════════════════════════╗");
-print("║     Sona 0.9.6 - Core Language Features Test              ║");
+print("║ Sona 0.9.6 - Core Language Features Test ║");
 print("╚════════════════════════════════════════════════════════════╝");
 print("");
 
@@ -51,7 +51,7 @@ full = lang + " " + ver;
 print("Full version: " + full);
 print("");
 
-# ===== COMPARISON OPERATIONS =====
+# ===== COMPARISON OPERATIONS ===== 
 print("=== Comparison Operations ===");
 a = 15;
 b = 20;
@@ -141,5 +141,5 @@ print("════════════════════════�
 print("✓ All core language features tested successfully!");
 print("════════════════════════════════════════════════════════════");
 print("");
-print("Sona 0.9.6 - Core language is operational");
+print("Sona 0.10 - Core language is operational");
 print("Standard library imports require separate module system");

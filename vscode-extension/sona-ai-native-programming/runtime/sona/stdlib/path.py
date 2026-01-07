@@ -91,6 +91,148 @@ def _clean_segments(path: str) -> list[str]:
     return [str(part) for part in pure.parts]
 
 
+def stem(path: str) -> str:
+    """Return filename without extension.
+    
+    Args:
+        path: File path
+    
+    Returns:
+        Filename stem
+    
+    Example:
+        stem('/path/to/file.txt')  # 'file'
+    """
+    return PurePath(path).stem
+
+
+def with_extension(path: str, new_ext: str) -> str:
+    """Replace file extension.
+    
+    Args:
+        path: File path
+        new_ext: New extension (with or without dot)
+    
+    Returns:
+        Path with new extension
+    
+    Example:
+        with_extension('file.txt', '.md')  # 'file.md'
+    """
+    if not new_ext.startswith('.'):
+        new_ext = '.' + new_ext
+    pure = PurePath(path)
+    return str(pure.with_suffix(new_ext))
+
+
+def with_suffix(path: str, suffix: str) -> str:
+    """Add suffix to filename before extension.
+    
+    Args:
+        path: File path
+        suffix: Suffix to add
+    
+    Returns:
+        Path with suffix
+    
+    Example:
+        with_suffix('file.txt', '_backup')  # 'file_backup.txt'
+    """
+    pure = PurePath(path)
+    new_name = pure.stem + suffix + pure.suffix
+    return str(pure.with_name(new_name))
+
+
+def relative_to(path: str, base: str) -> str:
+    """Compute relative path from base to path.
+    
+    Args:
+        path: Target path
+        base: Base path
+    
+    Returns:
+        Relative path
+    
+    Example:
+        relative_to('/a/b/c', '/a')  # 'b/c'
+    """
+    pure_path = PurePath(path)
+    pure_base = PurePath(base)
+    try:
+        return str(pure_path.relative_to(pure_base))
+    except ValueError:
+        return path
+
+
+def is_child_of(path: str, parent: str) -> bool:
+    """Check if path is child of parent.
+    
+    Args:
+        path: Child path
+        parent: Parent path
+    
+    Returns:
+        True if path is under parent
+    
+    Example:
+        is_child_of('/a/b/c', '/a')  # True
+    """
+    try:
+        PurePath(path).relative_to(parent)
+        return True
+    except ValueError:
+        return False
+
+
+def common_prefix(paths: Sequence[str]) -> str:
+    """Find common prefix of multiple paths.
+    
+    Args:
+        paths: List of paths
+    
+    Returns:
+        Common prefix path
+    
+    Example:
+        common_prefix(['/a/b/c', '/a/b/d'])  # '/a/b'
+    """
+    if not paths:
+        return ""
+    
+    common = os.path.commonpath(paths)
+    return normalize(common)
+
+
+def expanduser(path: str) -> str:
+    """Expand ~ and ~user in path.
+    
+    Args:
+        path: Path with ~ prefix
+    
+    Returns:
+        Expanded path
+    
+    Example:
+        expanduser('~/documents')  # '/home/user/documents'
+    """
+    return os.path.expanduser(path)
+
+
+def expandvars(path: str) -> str:
+    """Expand environment variables in path.
+    
+    Args:
+        path: Path with $VAR or %VAR% syntax
+    
+    Returns:
+        Expanded path
+    
+    Example:
+        expandvars('$HOME/docs')  # '/home/user/docs'
+    """
+    return os.path.expandvars(path)
+
+
 __all__ = [
     "join",
     "normalize",
@@ -101,4 +243,13 @@ __all__ = [
     "is_absolute",
     "is_relative",
     "resolve",
+    # advanced
+    "stem",
+    "with_extension",
+    "with_suffix",
+    "relative_to",
+    "is_child_of",
+    "common_prefix",
+    "expanduser",
+    "expandvars",
 ]

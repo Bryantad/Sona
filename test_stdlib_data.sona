@@ -1,14 +1,14 @@
-# Sona 0.9.6 - Data Processing Modules Test
+# Sona 0.10.0 - Data Processing Modules Test
 # Tests: json, csv, encoding, hashing, uuid
 
-print("=== Sona 0.9.6 Data Processing Test ===");
+print("=== Sona 0.10.0 Data Processing Test ===");
 print("");
 
 # ===== JSON MODULE =====
 print("--- JSON Module ---");
 import json;
 
-json_text = '{"name": "Sona", "version": "0.9.6", "count": 42}';
+json_text = '{"name": "Sona", "version": "0.10.0", "count": 42}';
 print("Parsing JSON: " + json_text);
 parsed = json.parse(json_text);
 print("Parsed successfully!");
@@ -42,7 +42,7 @@ print("");
 print("--- Hashing Module ---");
 import hashing;
 
-data = "Sona 0.9.6";
+data = "Sona 0.10.0";
 print("Data to hash: " + data);
 
 md5_hash = hashing.md5(data);
@@ -78,3 +78,4 @@ print("Is valid URL: " + str(validation.is_url(url)));
 print("");
 
 print("=== All Data Processing Tests Complete! ===");
+

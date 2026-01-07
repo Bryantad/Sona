@@ -86,6 +86,10 @@ def remove(path: str, *, recursive: bool = True) -> bool:
         return False
 
 
+def rmdir(path: str) -> bool:
+    return remove(path, recursive=False)
+
+
 def copy(src: str, dst: str, *, overwrite: bool = True) -> str:
     source = Path(src)
     target = Path(dst)

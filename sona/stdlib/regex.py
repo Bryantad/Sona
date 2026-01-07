@@ -61,6 +61,7 @@ from concurrent.futures import (
 )
 from dataclasses import dataclass
 import os
+import codecs
 from typing import Any, Callable, Iterable, Mapping, TypeVar
 
 import re as _re
@@ -152,7 +153,7 @@ def compile(
     pattern: Any,
     options: Mapping[str, Any] | None = None,
 ) -> RegexHandle:
-    pattern_text = _ensure_text(pattern, "pattern")
+    pattern_text = _normalize_pattern_text(_ensure_text(pattern, "pattern"))
     parsed = _parse_options(options)
 
     try:
@@ -171,7 +172,7 @@ def match(
     compiled, resolved = _resolve_pattern(pattern, options)
     text_s = _ensure_text(text, "text")
     if resolved.timeout_ms is None:
-        return _format_match(compiled.fullmatch(text_s))
+        return _format_match(compiled.match(text_s))
     result = _run_with_timeout_mode(
         op="match",
         pattern_text=compiled.pattern,
@@ -279,7 +280,7 @@ def replace(
             raise TypeError("callable replacement is not supported when a timeout is requested")
         return compiled.sub(replacement, text_s, count=replace_count)
 
-    repl_s = _ensure_text(replacement, "replacement")
+    repl_s = _normalize_replacement_text(_ensure_text(replacement, "replacement"))
     if resolved.timeout_ms is None:
         return compiled.sub(repl_s, text_s, count=replace_count)
     return _run_with_timeout_mode(
@@ -369,7 +370,7 @@ def _re_worker(
 ) -> Any:
     comp = _re.compile(pattern_text, flags)  # pragma: no cover (runs in separate process)
     if op == "match":
-        return _format_match(comp.fullmatch(text))
+        return _format_match(comp.match(text))
     if op == "search":
         return _format_match(comp.search(text))
     if op == "test":
@@ -456,7 +457,7 @@ def _run_with_timeout_mode(
     if mode == "none":
         # Timeouts are disabled; run inline without protection
         if op == "match":
-            return _format_match(_re.compile(pattern_text, flags).fullmatch(text))
+            return _format_match(_re.compile(pattern_text, flags).match(text))
         if op == "search":
             return _format_match(_re.compile(pattern_text, flags).search(text))
         if op == "test":
@@ -500,7 +501,7 @@ def _resolve_pattern(
     if isinstance(pattern, RegexHandle):
         return pattern.with_options(override)
 
-    pattern_text = _ensure_text(pattern, "pattern")
+    pattern_text = _normalize_pattern_text(_ensure_text(pattern, "pattern"))
     try:
         compiled = _re.compile(pattern_text, override.flags)
     except _re.error as exc:
@@ -517,6 +518,23 @@ def _ensure_text(value: Any, label: str) -> str:
     if isinstance(value, (bytes, bytearray, memoryview)):
         raise TypeError(f"{label} must be a string")
     return str(value)
+
+
+def _normalize_pattern_text(value: str) -> str:
+    return _decode_escapes(value)
+
+
+def _normalize_replacement_text(value: str) -> str:
+    return _decode_escapes(value)
+
+
+def _decode_escapes(value: str) -> str:
+    if "\\" not in value:
+        return value
+    try:
+        return codecs.decode(value, "unicode_escape")
+    except Exception:
+        return value
 
 
 def _ensure_count(value: Any) -> int:

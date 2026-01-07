@@ -8,6 +8,7 @@
 ## ❌ Reality Check: Full CLI Has Too Many Dependencies
 
 After attempting minimal extraction, we discovered that `sona/cli.py` requires:
+
 - `sona/type_system/` (entire directory)
 - `sona/type_config.py`
 - `sona/ai/` (for AI commands)
@@ -33,6 +34,7 @@ sona run test.sona
 ```
 
 Or if you have dependencies:
+
 ```powershell
 cd F:\Sona
 python -m sona.cli run test.sona
@@ -54,10 +56,9 @@ If you want to extract **just** the core parsing + execution logic for study:
 sona/
   __init__.py           # Package marker
   parser_v090.py        # Parser (converts text → AST)
-  ast_nodes_v090.py     # AST node definitions
+  ast_nodes.py     # AST node definitions
   interpreter.py        # Executes AST nodes
-  grammar_v090.lark     # Lark grammar rules
-  grammar_v091_fixed.lark  # Fixed grammar (multi-param)
+  grammar.lark  # Lark grammar rules
 ```
 
 ### Stdlib (Tier B - Only if Programs Import Them)
@@ -79,6 +80,7 @@ stdlib/
 **Location:** `F:\SonaMinimal`
 
 **Files Copied:**
+
 ```
 F:\SonaMinimal\
   sona/
@@ -87,9 +89,8 @@ F:\SonaMinimal\
     interpreter.py
     grammar.lark
     parser_v090.py
-    ast_nodes_v090.py
-    grammar_v090.lark
-    grammar_v091_fixed.lark
+    ast_nodes.py
+    grammar.lark
   stdlib/
     math.smod
     math.py
@@ -102,8 +103,9 @@ F:\SonaMinimal\
 ```
 
 **Issues Encountered:**
+
 1. ✅ `cli.py` needs `type_system/` → Too many dependencies
-2. ✅ Parser needs `ast_nodes_v090.py` → Copied
+2. ✅ Parser needs `ast_nodes.py` → Copied
 3. ✅ Parser needs grammar files → Copied
 4. ❌ Unicode encoding issues on Windows → Need to fix
 
@@ -138,6 +140,7 @@ if ast_nodes:
 ```
 
 **Usage:**
+
 ```powershell
 cd F:\Sona
 python quick_test.py
@@ -155,11 +158,10 @@ If you really want a standalone extraction, you'd need to copy these additional 
 sona/
   __init__.py
   parser_v090.py
-  ast_nodes_v090.py
+  ast_nodes.py
   interpreter.py
-  grammar_v090.lark
-  grammar_v091_fixed.lark
-  
+  grammar.lark
+
   # Additional dependencies
   type_system/          # Type checking system (entire dir)
   type_config.py        # Type configuration
@@ -171,7 +173,7 @@ sona/
   core/                 # Core utilities
   utils/                # Utility functions
   vm/                   # Virtual machine components
-  
+
 stdlib/
   *.smod               # All module interfaces
   *.py                 # All Python implementations
@@ -201,19 +203,22 @@ from sona.interpreter import SonaUnifiedInterpreter
 ## 🚀 Best Practices
 
 ### For Development
+
 - **Stay in F:\Sona** workspace
 - Use `sona run file.sona` or `python -m sona.cli run file.sona`
 - All dependencies available
 
 ### For Distribution
+
 - Package with `pip install -e .`
 - Creates `sona` command globally
 - Proper Python package structure
 
 ### For Learning the Core
+
 - Read `sona/parser_v090.py` - see how parsing works
 - Read `sona/interpreter.py` - see how execution works
-- Read `sona/grammar_v091_fixed.lark` - see language syntax
+- Read `sona/grammar.lark` - see language syntax
 - Don't try to extract - too many interdependencies
 
 ---
@@ -237,6 +242,7 @@ Copy-Item "$src\sona\type_system\*" "$dst\sona\type_system\" -Recurse -Force
 ### Step 2: Fix Unicode Issues
 
 Edit `sona/parser_v090.py` and replace emoji with plain text:
+
 ```python
 # Change:
 print("\u2705 Sona v0.9.0 parser initialized successfully")
@@ -252,12 +258,12 @@ Don't use `cli.py` - use the custom `run_sona.py` that's already in `F:\SonaMini
 
 ## 📊 Complexity Summary
 
-| Approach | Files Needed | Complexity | Works? |
-|----------|--------------|------------|--------|
-| **Stay in F:\Sona** | 0 (use existing) | ✅ Simple | ✅ Yes |
-| **Minimal extraction** | 6-10 core files | ⚠️ Medium | ⚠️ Partial |
-| **Full extraction** | 50+ files + dirs | ❌ Complex | ❌ Not worth it |
-| **Install package** | 0 (pip handles it) | ✅ Simple | ✅ Yes |
+| Approach               | Files Needed       | Complexity | Works?          |
+| ---------------------- | ------------------ | ---------- | --------------- |
+| **Stay in F:\Sona**    | 0 (use existing)   | ✅ Simple  | ✅ Yes          |
+| **Minimal extraction** | 6-10 core files    | ⚠️ Medium  | ⚠️ Partial      |
+| **Full extraction**    | 50+ files + dirs   | ❌ Complex | ❌ Not worth it |
+| **Install package**    | 0 (pip handles it) | ✅ Simple  | ✅ Yes          |
 
 ---
 

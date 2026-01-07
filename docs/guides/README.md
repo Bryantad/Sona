@@ -389,7 +389,7 @@ Want to build something? Check out:
 
 - Module not found? → [../troubleshooting/MODULE_LOADER_FIX.md](../troubleshooting/MODULE_LOADER_FIX.md)
 - Break/continue not working? → [../troubleshooting/BREAK_CONTINUE_FIX.md](../troubleshooting/BREAK_CONTINUE_FIX.md)
-- Syntax errors? → Check grammar in `sona/grammar_v091_fixed.lark`
+- Syntax errors? → Check grammar in `sona/grammar.lark`
 
 ---
 

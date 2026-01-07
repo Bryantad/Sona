@@ -61,6 +61,7 @@ from concurrent.futures import (
 )
 from dataclasses import dataclass
 import os
+import codecs
 from typing import Any, Callable, Iterable, Mapping, TypeVar
 
 import re as _re
@@ -152,7 +153,7 @@ def compile(
     pattern: Any,
     options: Mapping[str, Any] | None = None,
 ) -> RegexHandle:
-    pattern_text = _ensure_text(pattern, "pattern")
+    pattern_text = _normalize_pattern_text(_ensure_text(pattern, "pattern"))
     parsed = _parse_options(options)
 
     try:
@@ -171,7 +172,7 @@ def match(
     compiled, resolved = _resolve_pattern(pattern, options)
     text_s = _ensure_text(text, "text")
     if resolved.timeout_ms is None:
-        return _format_match(compiled.fullmatch(text_s))
+        return _format_match(compiled.match(text_s))
     result = _run_with_timeout_mode(
         op="match",
         pattern_text=compiled.pattern,
@@ -181,6 +182,15 @@ def match(
         options=resolved,
     )
     return result
+
+
+def fullmatch(
+    pattern: RegexHandle | Any,
+    text: Any,
+    options: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Explicit full-string match convenience wrapper."""
+    return match(pattern, text, options=options)
 
 
 def search(
@@ -270,7 +280,7 @@ def replace(
             raise TypeError("callable replacement is not supported when a timeout is requested")
         return compiled.sub(replacement, text_s, count=replace_count)
 
-    repl_s = _ensure_text(replacement, "replacement")
+    repl_s = _normalize_replacement_text(_ensure_text(replacement, "replacement"))
     if resolved.timeout_ms is None:
         return compiled.sub(repl_s, text_s, count=replace_count)
     return _run_with_timeout_mode(
@@ -360,7 +370,7 @@ def _re_worker(
 ) -> Any:
     comp = _re.compile(pattern_text, flags)  # pragma: no cover (runs in separate process)
     if op == "match":
-        return _format_match(comp.fullmatch(text))
+        return _format_match(comp.match(text))
     if op == "search":
         return _format_match(comp.search(text))
     if op == "test":
@@ -447,7 +457,7 @@ def _run_with_timeout_mode(
     if mode == "none":
         # Timeouts are disabled; run inline without protection
         if op == "match":
-            return _format_match(_re.compile(pattern_text, flags).fullmatch(text))
+            return _format_match(_re.compile(pattern_text, flags).match(text))
         if op == "search":
             return _format_match(_re.compile(pattern_text, flags).search(text))
         if op == "test":
@@ -491,7 +501,7 @@ def _resolve_pattern(
     if isinstance(pattern, RegexHandle):
         return pattern.with_options(override)
 
-    pattern_text = _ensure_text(pattern, "pattern")
+    pattern_text = _normalize_pattern_text(_ensure_text(pattern, "pattern"))
     try:
         compiled = _re.compile(pattern_text, override.flags)
     except _re.error as exc:
@@ -508,6 +518,23 @@ def _ensure_text(value: Any, label: str) -> str:
     if isinstance(value, (bytes, bytearray, memoryview)):
         raise TypeError(f"{label} must be a string")
     return str(value)
+
+
+def _normalize_pattern_text(value: str) -> str:
+    return _decode_escapes(value)
+
+
+def _normalize_replacement_text(value: str) -> str:
+    return _decode_escapes(value)
+
+
+def _decode_escapes(value: str) -> str:
+    if "\\" not in value:
+        return value
+    try:
+        return codecs.decode(value, "unicode_escape")
+    except Exception:
+        return value
 
 
 def _ensure_count(value: Any) -> int:
@@ -662,6 +689,106 @@ def _maybe_pop_int_option(
     return remaining, value
 
 
+def finditer(
+    pattern: RegexHandle | Any,
+    text: Any,
+    options: Mapping[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """Find all matches and return iterator results as list of match dicts."""
+
+    compiled, resolved = _resolve_pattern(pattern, options)
+    text_s = _ensure_text(text, "text")
+
+    results = []
+    for match in compiled.finditer(text_s):
+        results.append(_format_match(match))
+
+    return results
+
+
+def extract_groups(
+    pattern: RegexHandle | Any,
+    text: Any,
+    options: Mapping[str, Any] | None = None,
+) -> list[tuple]:
+    """Extract all captured groups from matches."""
+
+    compiled, resolved = _resolve_pattern(pattern, options)
+    text_s = _ensure_text(text, "text")
+
+    return [match.groups() for match in compiled.finditer(text_s)]
+
+
+def extract_named_groups(
+    pattern: RegexHandle | Any,
+    text: Any,
+    options: Mapping[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """Extract all named groups from matches."""
+
+    compiled, resolved = _resolve_pattern(pattern, options)
+    text_s = _ensure_text(text, "text")
+
+    return [match.groupdict() for match in compiled.finditer(text_s)]
+
+
+def validate_pattern(pattern: Any) -> dict[str, Any]:
+    """Validate regex pattern and return diagnostic info."""
+
+    pattern_text = _ensure_text(pattern, "pattern")
+
+    try:
+        _re.compile(pattern_text)
+        return {
+            "valid": True,
+            "error": None,
+            "pattern": pattern_text
+        }
+    except _re.error as exc:
+        return {
+            "valid": False,
+            "error": str(exc),
+            "pattern": pattern_text
+        }
+
+
+def is_valid_pattern(pattern: Any) -> bool:
+    """Check if pattern is valid regex."""
+
+    return validate_pattern(pattern)["valid"]
+
+
+def replace_callback(
+    pattern: RegexHandle | Any,
+    text: Any,
+    callback: Callable[[_re.Match], str],
+    options: Mapping[str, Any] | None = None,
+) -> str:
+    """Replace matches using callback function."""
+    compiled, resolved = _resolve_pattern(pattern, options)
+    text_s = _ensure_text(text, "text")
+
+    if resolved.timeout_ms is not None:
+        raise TypeError("callback replacement is not supported when a timeout is requested")
+
+    max_count = resolved.max_matches if resolved.max_matches else 0
+
+    return compiled.sub(callback, text_s, count=max_count)
+
+
+def count_matches(
+    pattern: RegexHandle | Any,
+    text: Any,
+    options: Mapping[str, Any] | None = None,
+) -> int:
+    """Count number of matches in text."""
+
+    compiled, resolved = _resolve_pattern(pattern, options)
+    text_s = _ensure_text(text, "text")
+
+    return len(compiled.findall(text_s))
+
+
 __all__ = [
     "RegexHandle",
     "RegexError",
@@ -670,10 +797,18 @@ __all__ = [
     "RegexTimeoutUnsupported",
     "compile",
     "match",
+    "fullmatch",
     "search",
     "test",
     "find_all",
     "replace",
     "split",
     "escape",
+    "finditer",
+    "extract_groups",
+    "extract_named_groups",
+    "validate_pattern",
+    "is_valid_pattern",
+    "replace_callback",
+    "count_matches",
 ]

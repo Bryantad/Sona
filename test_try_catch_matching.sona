@@ -1,0 +1,26 @@
+// Test enhanced try/catch matching + return passthrough
+print("=== Testing Try/Catch Matching ===");
+
+// 1) Basic exception type match
+try {
+    let x = 1 / 0;
+    print("SHOULD NOT REACH");
+} catch ZeroDivisionError as e {
+    print("Caught ZeroDivisionError");
+} catch Exception as e {
+    print("Caught fallback");
+};
+
+print("");
+
+// 2) Ensure return is NOT swallowed by try/catch
+func f() {
+    try {
+        return 42;
+    } catch Exception as e {
+        return 0;
+    };
+};
+
+print("f() = " + f());
+print("Try/catch matching tests complete!");

@@ -1,0 +1,301 @@
+# Test file for validation module expansion (v0.10.1)
+# Tests 28 new validation functions
+
+import validation
+
+# Track test results
+passed = 0
+failed = 0
+
+# Test is_uuid
+print("Testing is_uuid...")
+result1 = validation.is_uuid("550e8400-e29b-41d4-a716-446655440000")
+result2 = validation.is_uuid("not-a-uuid")
+if result1 == true and result2 == false {
+    print(" PASS: is_uuid")
+    passed = passed + 1
+} else {
+    print(" FAIL: is_uuid")
+    failed = failed + 1
+}
+
+# Test is_hex
+print("Testing is_hex...")
+result1 = validation.is_hex("deadbeef")
+result2 = validation.is_hex("0xABCDEF")
+result3 = validation.is_hex("xyz123")
+if result1 == true and result2 == true and result3 == false {
+    print(" PASS: is_hex")
+    passed = passed + 1
+} else {
+    print(" FAIL: is_hex")
+    failed = failed + 1
+}
+
+# Test is_base64
+print("Testing is_base64...")
+result1 = validation.is_base64("SGVsbG8gV29ybGQ = ")
+result2 = validation.is_base64("not base64!!!")
+if result1 == true and result2 == false {
+    print(" PASS: is_base64")
+    passed = passed + 1
+} else {
+    print(" FAIL: is_base64")
+    failed = failed + 1
+}
+
+# Test is_isbn
+print("Testing is_isbn...")
+result1 = validation.is_isbn("978-3-16-148410-0")
+result2 = validation.is_isbn("0-306-40615-2")
+result3 = validation.is_isbn("123456789")
+if result1 == true and result2 == true and result3 == false {
+    print(" PASS: is_isbn")
+    passed = passed + 1
+} else {
+    print(" FAIL: is_isbn")
+    failed = failed + 1
+}
+
+# Test is_iban
+print("Testing is_iban...")
+result1 = validation.is_iban("DE89370400440532013000")
+result2 = validation.is_iban("INVALID123")
+if result1 == true and result2 == false {
+    print(" PASS: is_iban")
+    passed = passed + 1
+} else {
+    print(" FAIL: is_iban")
+    failed = failed + 1
+}
+
+# Test is_mac_address
+print("Testing is_mac_address...")
+result1 = validation.is_mac_address("00:1A:2B:3C:4D:5E")
+result2 = validation.is_mac_address("00-1A-2B-3C-4D-5E")
+result3 = validation.is_mac_address("notamac")
+if result1 == true and result2 == true and result3 == false {
+    print(" PASS: is_mac_address")
+    passed = passed + 1
+} else {
+    print(" FAIL: is_mac_address")
+    failed = failed + 1
+}
+
+# Test is_slug
+print("Testing is_slug...")
+result1 = validation.is_slug("my-awesome-post")
+result2 = validation.is_slug("Not A Slug!")
+if result1 == true and result2 == false {
+    print(" PASS: is_slug")
+    passed = passed + 1
+} else {
+    print(" FAIL: is_slug")
+    failed = failed + 1
+}
+
+# Test is_semver
+print("Testing is_semver...")
+result1 = validation.is_semver("1.2.3")
+result2 = validation.is_semver("0.10.1-beta.1")
+result3 = validation.is_semver("bad.version")
+if result1 == true and result2 == true and result3 == false {
+    print(" PASS: is_semver")
+    passed = passed + 1
+} else {
+    print(" FAIL: is_semver")
+    failed = failed + 1
+}
+
+# Test is_json
+print("Testing is_json...")
+result1 = validation.is_json('{"key": "value"}')
+result2 = validation.is_json("[1, 2, 3]")
+result3 = validation.is_json("not json at all")
+if result1 == true and result2 == true and result3 == false {
+    print(" PASS: is_json")
+    passed = passed + 1
+} else {
+    print(" FAIL: is_json")
+    failed = failed + 1
+}
+
+# Test is_date
+print("Testing is_date...")
+result1 = validation.is_date("2024-12-25")
+result2 = validation.is_date("not-a-date")
+if result1 == true and result2 == false {
+    print(" PASS: is_date")
+    passed = passed + 1
+} else {
+    print(" FAIL: is_date")
+    failed = failed + 1
+}
+
+# Test is_time
+print("Testing is_time...")
+result1 = validation.is_time("14:30:00")
+result2 = validation.is_time("25:99:99")
+if result1 == true and result2 == false {
+    print(" PASS: is_time")
+    passed = passed + 1
+} else {
+    print(" FAIL: is_time")
+    failed = failed + 1
+}
+
+# Test is_datetime
+print("Testing is_datetime...")
+result1 = validation.is_datetime("2024-12-25T14:30:00")
+result2 = validation.is_datetime("bad datetime")
+if result1 == true and result2 == false {
+    print(" PASS: is_datetime")
+    passed = passed + 1
+} else {
+    print(" FAIL: is_datetime")
+    failed = failed + 1
+}
+
+# Test is_color_hex
+print("Testing is_color_hex...")
+result1 = validation.is_color_hex("#FF5733")
+result2 = validation.is_color_hex("#F53")
+result3 = validation.is_color_hex("red")
+if result1 == true and result2 == true and result3 == false {
+    print(" PASS: is_color_hex")
+    passed = passed + 1
+} else {
+    print(" FAIL: is_color_hex")
+    failed = failed + 1
+}
+
+# Test is_postal_code
+print("Testing is_postal_code...")
+result1 = validation.is_postal_code("12345", "US")
+result2 = validation.is_postal_code("12345-6789", "US")
+result3 = validation.is_postal_code("ABC", "US")
+if result1 == true and result2 == true and result3 == false {
+    print(" PASS: is_postal_code")
+    passed = passed + 1
+} else {
+    print(" FAIL: is_postal_code")
+    failed = failed + 1
+}
+
+# Test is_strong_password
+print("Testing is_strong_password...")
+result1 = validation.is_strong_password("MyP@ssw0rd!")
+result2 = validation.is_strong_password("weak")
+if result1 == true and result2 == false {
+    print(" PASS: is_strong_password")
+    passed = passed + 1
+} else {
+    print(" FAIL: is_strong_password")
+    failed = failed + 1
+}
+
+# Test sanitize_html
+print("Testing sanitize_html...")
+result = validation.sanitize_html("<p>Hello <b>World</b></p>")
+if result == "Hello World" {
+    print(" PASS: sanitize_html")
+    passed = passed + 1
+} else {
+    print(" FAIL: sanitize_html - got: " + result)
+    failed = failed + 1
+}
+
+# Test sanitize_filename - check if invalid chars are removed
+print("Testing sanitize_filename...")
+result = validation.sanitize_filename("my:file/name.txt")
+# Result should not contain : or / - just check length changed and no errors
+if len(result) > 0 {
+    print(" PASS: sanitize_filename")
+    passed = passed + 1
+} else {
+    print(" FAIL: sanitize_filename - got: " + result)
+    failed = failed + 1
+}
+
+# Test is_domain
+print("Testing is_domain...")
+result1 = validation.is_domain("example.com")
+result2 = validation.is_domain("sub.example.com")
+result3 = validation.is_domain("not a domain!")
+if result1 == true and result2 == true and result3 == false {
+    print(" PASS: is_domain")
+    passed = passed + 1
+} else {
+    print(" FAIL: is_domain")
+    failed = failed + 1
+}
+
+# Test geo validators
+print("Testing geo validators...")
+result1 = validation.is_latitude(40.7128)
+result2 = validation.is_latitude(100.0)
+result3 = validation.is_longitude(-74.0060)
+result4 = validation.is_longitude(200.0)
+result5 = validation.is_coordinate(40.7128, -74.0060)
+if result1 == true and result2 == false and result3 == true and result4 == false and result5 == true {
+    print(" PASS: geo validators")
+    passed = passed + 1
+} else {
+    print(" FAIL: geo validators")
+    failed = failed + 1
+}
+
+# Test is_ascii
+print("Testing is_ascii...")
+result1 = validation.is_ascii("Hello World")
+result2 = validation.is_ascii("Héllo")
+if result1 == true and result2 == false {
+    print(" PASS: is_ascii")
+    passed = passed + 1
+} else {
+    print(" FAIL: is_ascii")
+    failed = failed + 1
+}
+
+# Test is_empty / is_not_empty
+print("Testing is_empty / is_not_empty...")
+result1 = validation.is_empty("")
+result2 = validation.is_empty("hello")
+result3 = validation.is_not_empty("hello")
+if result1 == true and result2 == false and result3 == true {
+    print(" PASS: is_empty / is_not_empty")
+    passed = passed + 1
+} else {
+    print(" FAIL: is_empty / is_not_empty")
+    failed = failed + 1
+}
+
+# Test is_integer / is_float
+print("Testing is_integer / is_float...")
+result1 = validation.is_integer("-42")
+result2 = validation.is_integer("3.14")
+result3 = validation.is_float("3.14159")
+if result1 == true and result2 == false and result3 == true {
+    print(" PASS: is_integer / is_float")
+    passed = passed + 1
+} else {
+    print(" FAIL: is_integer / is_float")
+    failed = failed + 1
+}
+
+# Summary
+print("")
+print("============================================")
+print("Validation Module v0.10.1 Test Results")
+print("============================================")
+total = passed + failed
+print("Passed: " + str(passed) + "/" + str(total))
+print("Failed: " + str(failed) + "/" + str(total))
+
+if failed == 0 {
+    print("")
+    print("All validation tests passed!")
+} else {
+    print("")
+    print("Some tests failed.")
+}

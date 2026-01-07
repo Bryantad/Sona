@@ -64,7 +64,7 @@ def execute_block(self, statements: list) -> Any:
     return result
 ```
 
-### Fix 3: Simplified Break/Continue Statements (ast_nodes_v090.py)
+### Fix 3: Simplified Break/Continue Statements (ast_nodes.py)
 
 ```python
 class BreakStatement(Statement):
@@ -80,7 +80,7 @@ class ContinueStatement(Statement):
         raise ContinueException()
 ```
 
-### Fix 4: Added Exception Handling to Loops (ast_nodes_v090.py)
+### Fix 4: Added Exception Handling to Loops (ast_nodes.py)
 
 **EnhancedWhileLoop:**
 
@@ -163,7 +163,7 @@ Final i after break: 5  ← Correct! Loop stopped
 
 1. **sona/parser_v090.py** - Added break_stmt and continue_stmt transformers
 2. **sona/interpreter.py** - Updated execute_block to re-raise break/continue exceptions
-3. **sona/ast_nodes_v090.py** - Updated BreakStatement, ContinueStatement, EnhancedWhileLoop, EnhancedForLoop
+3. **sona/ast_nodes.py** - Updated BreakStatement, ContinueStatement, EnhancedWhileLoop, EnhancedForLoop
 
 ## Verification
 

@@ -8,9 +8,10 @@ Stability: stable
 Version: 0.9.6
 """
 
-__all__ = ['eq', 'neq', 'lt', 'lte', 'gt', 'gte', 'cmp', 'deep_equal',
-           'in_range', 'between', 'closest', 'compare_with', 'min_by', 
-           'max_by', 'clamp']
+__all__ = ['eq', 'neq', 'lt', 'lte', 'gt', 'gte',
+           'equals', 'greater_than', 'less_than',
+           'cmp', 'deep_equal', 'in_range', 'between', 'closest',
+           'compare_with', 'min_by', 'max_by', 'clamp']
 
 def eq(a, b):
     """
@@ -34,6 +35,10 @@ def eq(a, b):
         False
     """
     return a == b
+
+
+def equals(a, b):
+    return eq(a, b)
 
 def neq(a, b):
     """
@@ -78,6 +83,10 @@ def lt(a, b):
         return a < b
     except TypeError as e:
         raise TypeError(f"Cannot compare {type(a).__name__} with {type(b).__name__}: {e}")
+
+
+def less_than(a, b):
+    return lt(a, b)
 
 def lte(a, b):
     """
@@ -130,6 +139,10 @@ def gt(a, b):
         return a > b
     except TypeError as e:
         raise TypeError(f"Cannot compare {type(a).__name__} with {type(b).__name__}: {e}")
+
+
+def greater_than(a, b):
+    return gt(a, b)
 
 def gte(a, b):
     """

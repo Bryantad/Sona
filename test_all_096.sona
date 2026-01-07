@@ -1,8 +1,8 @@
-# Sona 0.9.6 - Comprehensive Test Suite Runner
-# This file imports and tests all 30 standard library modules
+# Sona 0.10.0 - Comprehensive Test Suite Runner
+# This file imports and tests all 91 standard library modules
 
 print("╔════════════════════════════════════════════════════════════╗");
-print("║        Sona 0.9.6 - Complete Standard Library Test        ║");
+print("║        Sona 0.10.0 - Complete Standard Library Test        ║");
 print("╚════════════════════════════════════════════════════════════╝");
 print("");
 
@@ -10,114 +10,132 @@ print("");
 tests_passed = 0;
 tests_failed = 0;
 
-# Helper function to test module import
-test_module(module_name) {
-    try {
-        print("✓ " + module_name + " - OK");
-        tests_passed = tests_passed + 1;
-    } catch (e) {
-        print("✗ " + module_name + " - FAILED: " + str(e));
-        tests_failed = tests_failed + 1;
-    }
-}
+print("=== Standard Library Modules ===");
 
-print("=== Core Modules ===");
-import string;
-test_module("string");
-import math;
-test_module("math");
-import numbers;
-test_module("numbers");
-import boolean;
-test_module("boolean");
-import type;
-test_module("type");
-import comparison;
-test_module("comparison");
-import operators;
-test_module("operators");
+try { import assert; print("✓ assert - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ assert - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import async; print("✓ async - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ async - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import benchmark; print("✓ benchmark - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ benchmark - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import bitwise; print("✓ bitwise - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ bitwise - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import boolean; print("✓ boolean - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ boolean - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import cache; print("✓ cache - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ cache - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import cli; print("✓ cli - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ cli - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import collection; print("✓ collection - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ collection - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import color; print("✓ color - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ color - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import comparison; print("✓ comparison - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ comparison - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import compression; print("✓ compression - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ compression - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import config; print("✓ config - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ config - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import cookies; print("✓ cookies - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ cookies - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import crypto; print("✓ crypto - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ crypto - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import csv; print("✓ csv - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ csv - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import date; print("✓ date - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ date - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import decorator; print("✓ decorator - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ decorator - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import dns; print("✓ dns - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ dns - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import encoding; print("✓ encoding - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ encoding - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import env; print("✓ env - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ env - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import fs; print("✓ fs - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ fs - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import ftp; print("✓ ftp - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ ftp - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import functional; print("✓ functional - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ functional - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import graph; print("✓ graph - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ graph - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import hashing; print("✓ hashing - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ hashing - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import heap; print("✓ heap - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ heap - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import http; print("✓ http - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ http - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import io; print("✓ io - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ io - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import iterator; print("✓ iterator - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ iterator - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import json; print("✓ json - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ json - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import jwt; print("✓ jwt - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ jwt - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import logging; print("✓ logging - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ logging - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import markdown; print("✓ markdown - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ markdown - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import math; print("✓ math - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ math - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import matrix; print("✓ matrix - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ matrix - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import migration; print("✓ migration - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ migration - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import mock; print("✓ mock - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ mock - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import numbers; print("✓ numbers - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ numbers - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import oauth; print("✓ oauth - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ oauth - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import operators; print("✓ operators - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ operators - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import orm; print("✓ orm - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ orm - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import password; print("✓ password - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ password - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import path; print("✓ path - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ path - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import permissions; print("✓ permissions - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ permissions - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import pool; print("✓ pool - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ pool - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import process; print("✓ process - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ process - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import profiler; print("✓ profiler - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ profiler - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import promise; print("✓ promise - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ promise - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import proxy; print("✓ proxy - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ proxy - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import query; print("✓ query - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ query - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import queue; print("✓ queue - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ queue - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import random; print("✓ random - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ random - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import redis; print("✓ redis - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ redis - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import regex; print("✓ regex - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ regex - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import scheduler; print("✓ scheduler - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ scheduler - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import search; print("✓ search - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ search - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import secrets; print("✓ secrets - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ secrets - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import session; print("✓ session - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ session - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import shell; print("✓ shell - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ shell - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import signal; print("✓ signal - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ signal - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import smtp; print("✓ smtp - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ smtp - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import sort; print("✓ sort - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ sort - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import sqlite; print("✓ sqlite - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ sqlite - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import stack; print("✓ stack - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ stack - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import statistics; print("✓ statistics - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ statistics - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import string; print("✓ string - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ string - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import template; print("✓ template - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ template - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import test; print("✓ test - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ test - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import thread; print("✓ thread - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ thread - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import time; print("✓ time - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ time - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import timer; print("✓ timer - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ timer - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import toml; print("✓ toml - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ toml - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import tree; print("✓ tree - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ tree - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import type; print("✓ type - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ type - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import url; print("✓ url - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ url - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import uuid; print("✓ uuid - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ uuid - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import validation; print("✓ validation - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ validation - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import websocket; print("✓ websocket - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ websocket - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import xml; print("✓ xml - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ xml - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import yaml; print("✓ yaml - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ yaml - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+
 print("");
-
-print("=== Data Processing ===");
-import json;
-test_module("json");
-import csv;
-test_module("csv");
-import encoding;
-test_module("encoding");
-import hashing;
-test_module("hashing");
-import uuid;
-test_module("uuid");
-import validation;
-test_module("validation");
-import toml;
-test_module("toml");
-import yaml;
-test_module("yaml");
-print("");
-
-print("=== Collections & Algorithms ===");
-import collection;
-test_module("collection");
-import queue;
-test_module("queue");
-import stack;
-test_module("stack");
-import sort;
-test_module("sort");
-import search;
-test_module("search");
-import statistics;
-test_module("statistics");
-print("");
-
-print("=== Time & Random ===");
-import time;
-test_module("time");
-import date;
-test_module("date");
-import timer;
-test_module("timer");
-import random;
-test_module("random");
-print("");
-
-print("=== Filesystem & I/O ===");
-import fs;
-test_module("fs");
-import path;
-test_module("path");
-import io;
-test_module("io");
-import env;
-test_module("env");
-print("");
-
-print("=== Text Processing ===");
-import regex;
-test_module("regex");
+print("=== Native Glue Modules (internal) ===");
+try { import native_csv; print("✓ native_csv - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ native_csv - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import native_date; print("✓ native_date - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ native_date - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import native_env; print("✓ native_env - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ native_env - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import native_fs; print("✓ native_fs - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ native_fs - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import native_io; print("✓ native_io - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ native_io - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import native_json; print("✓ native_json - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ native_json - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import native_math; print("✓ native_math - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ native_math - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import native_path; print("✓ native_path - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ native_path - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import native_regex; print("✓ native_regex - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ native_regex - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import native_string; print("✓ native_string - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ native_string - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
+try { import native_time; print("✓ native_time - OK"); tests_passed = tests_passed + 1; } catch Exception as e { print("✗ native_time - FAILED: " + str(e)); tests_failed = tests_failed + 1; };
 print("");
 
 print("════════════════════════════════════════════════════════════");
-print("Total Modules: 30");
+print("Total Modules: 91");
 print("Passed: " + str(tests_passed));
 print("Failed: " + str(tests_failed));
 
 if (tests_failed == 0) {
     print("");
-    print("🎉 ALL TESTS PASSED! Sona 0.9.6 is fully operational!");
+    print("🎉 ALL TESTS PASSED! Sona 0.10.0 is fully operational!");
     print("");
 } else {
     print("");
     print("⚠️  Some tests failed. Please check the output above.");
     print("");
-}
+};
 
 print("════════════════════════════════════════════════════════════");
 print("");
 print("Quick functionality tests:");
 print("");
+
+// Re-import core modules needed below (guard against any scoping quirks)
+import string;
+import math;
+import collection;
+import random;
+import time;
+import type;
+import encoding;
 
 # String operations
 print("String reverse: " + string.reverse("Sona"));
@@ -144,5 +162,18 @@ print("Type of 42: " + type.type_of(42));
 encoded = encoding.base64_encode("Hello");
 print("Base64('Hello'): " + encoded);
 
+print("=== Sanity Assertions ===");
+import assert;
+import regex;
+
+assert.equal(string.reverse("Sona"), "anoS");
+assert.equal(math.sqrt(25), 5.0);
+assert.equal(collection.length(items), 5);
+assert.equal(encoding.base64_decode(encoded), "Hello");
+match_result = regex.search("fox", "the fox");
+assert.equal(match_result.matched, true);
+print("Sanity assertions passed");
+
 print("");
-print("✓ Sona 0.9.6 Standard Library verification complete!");
+print("✓ Sona 0.10.0 Standard Library verification complete!");
+

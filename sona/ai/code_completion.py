@@ -7,7 +7,7 @@ Provides intelligent suggestions based on context and coding patterns.
 
 from typing import Dict, List
 
-from .gpt2_integration import get_gpt2_instance
+from .ai_backend import get_ai_backend
 
 
 class CodeCompletion:
@@ -15,7 +15,7 @@ class CodeCompletion:
     
     def __init__(self):
         """Initialize code completion engine"""
-        self.gpt2 = get_gpt2_instance()
+        self.gpt2 = get_ai_backend()
         self.completion_cache = {}
         self.cognitive_patterns = {
             'think': 'cognitive reflection and planning',

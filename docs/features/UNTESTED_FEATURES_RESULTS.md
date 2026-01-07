@@ -76,9 +76,9 @@ Expected one of:
 
 **Analysis:**
 
-- ❌ Parser rejects `when` as an expression (expected statement context only?)
-- **Issue**: `when` may be defined as a statement keyword, not an expression keyword
-- **Recommendation**: Mark as NOT IMPLEMENTED - requires grammar refactoring for expression context
+- ✅ `when { ... }` is now supported as an expression in v0.9.9 (returns a value).
+- ✅ `when` statement form remains supported.
+- **Note**: This section is outdated for `release/v0.9.9`.
 
 ---
 

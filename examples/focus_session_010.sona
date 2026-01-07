@@ -1,0 +1,64 @@
+// examples/focus_session_010.sona
+// Sona 0.10 focus session planner with intent, focus blocks, and explain steps
+
+profile("adhd");
+
+intent(
+    goal = "Plan a 60-minute focus session", 
+    constraints = "Clear steps, short output", 
+    success = "Print a prioritized plan with totals"
+);
+
+decision(
+    label = "Selection rule", 
+    rationale = "Keep the first tasks that fit in the time box", 
+    option = "sequential-fit"
+);
+
+let tasks = [
+    {"name": "Warmup notes", "minutes": 5, "impact": 2}, 
+    {"name": "Core build", "minutes": 25, "impact": 5}, 
+    {"name": "Review tests", "minutes": 15, "impact": 4}, 
+    {"name": "Release checklist", "minutes": 10, "impact": 3}, 
+    {"name": "Cooldown log", "minutes": 5, "impact": 1}
+];
+
+cognitive_trace(enabled = true);
+
+print("=== Focus Session Plan ===");
+print("All tasks:");
+for task in tasks {
+    print("- " + task["name"] + " (" + str(task["minutes"]) + "m)");
+}
+
+cognitive_scope("plan", budget = 10) {
+    focus {
+        @intent "Select tasks within 60 minutes and compute totals"
+        let plan = [];
+        let minutes = 0;
+        let score = 0;
+
+        for task in tasks {
+            let next = minutes + task["minutes"];
+            if next <= 60 {
+                plan = plan + [task];
+                minutes = next;
+                score = score + task["impact"];
+                explain_step(note = "Added " + task["name"]);
+            } else {
+                explain_step(note = "Skipped " + task["name"]);
+            }
+        }
+
+        print("");
+        print("Plan:");
+        for task in plan {
+            print("* " + task["name"] + " (" + str(task["minutes"]) + "m)");
+        }
+
+        print("");
+        print("Total minutes: " + str(minutes));
+        print("Impact score: " + str(score));
+        print("Buffer minutes: " + str(60 - minutes));
+    }
+}

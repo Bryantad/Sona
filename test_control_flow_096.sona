@@ -2,7 +2,7 @@
 # Tests if statements, loops, and control structures
 
 print("╔════════════════════════════════════════════════════════════╗");
-print("║       Sona 0.9.6 - Control Flow Test                      ║");
+print("║ Sona 0.9.6 - Control Flow Test ║");
 print("╚════════════════════════════════════════════════════════════╝");
 print("");
 
@@ -102,7 +102,7 @@ counter = 0;
 print("Counting to 5:");
 while (counter < 5) {
     counter = counter + 1;
-    print("  " + str(counter));
+    print(" " + str(counter));
 }
 print("✓ While loop complete");
 print("");
@@ -137,7 +137,7 @@ while (i < 10) {
     if (i % 2 != 0) {
         continue;
     }
-    print("  " + str(i));
+    print(" " + str(i));
 }
 print("");
 

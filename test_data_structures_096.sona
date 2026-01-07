@@ -1,8 +1,8 @@
-# Sona 0.9.6 - Data Structures Test
+# Sona 0.9.9 - Data Structures Test
 # Tests lists, dictionaries, and other built-in data structures
 
 print("╔════════════════════════════════════════════════════════════╗");
-print("║      Sona 0.9.6 - Data Structures Test                    ║");
+print("║      Sona 0.9.9 - Data Structures Test                     ║");
 print("╚════════════════════════════════════════════════════════════╝");
 print("");
 
@@ -62,7 +62,7 @@ print("");
 print("=== Nested Structures ===");
 nested = {
     "name": "Sona",
-    "version": "0.9.6",
+    "version": "0.9.9",
     "features": ["AI-native", "Fast", "Modern"],
     "config": {"debug": false, "level": 3}
 };
@@ -125,16 +125,27 @@ print("");
 # ===== TUPLES (if supported) =====
 print("=== Tuples ===");
 # Note: Tuple syntax may vary or not be implemented
-coordinates = (10, 20);
+coordinates = [10, 20];
 print("Coordinates: " + str(coordinates));
 print("");
 
-# ===== SETS (if supported) =====
+# ===== SETS (stdlib) =====
+import collection.set as set_ops;
 print("=== Sets ===");
-# Note: Set syntax may vary or not be implemented
-# unique = {1, 2, 3, 2, 1};
-# print("Set: " + str(unique));
-print("Sets may require stdlib module");
+set_a = set([1, 2, 3, 3, 4]);
+set_b = set([3, 4, 5, 6]);
+print("Set A: " + str(set_a));
+print("Set B: " + str(set_b));
+print("Union (list): " + str(set_ops.union(set_a, set_b)));
+print("Intersection (list): " + str(set_ops.intersect(set_a, set_b)));
+print("Difference (list): " + str(set_ops.diff(set_a, set_b)));
+print("");
+
+# ===== ADVANCED OPERATIONS =====
+import collection.list as list_ops;
+print("=== Advanced Operations ===");
+print("Unique scores: " + str(list_ops.unique(scores)));
+print("Score chunks: " + str(list_ops.chunk(scores, 2)));
 print("");
 
 print("════════════════════════════════════════════════════════════");

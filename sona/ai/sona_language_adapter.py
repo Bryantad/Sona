@@ -266,7 +266,13 @@ Generate Sona code that follows these patterns:"""
         
         elif line.startswith('focus_mode('):
             return "Sets attention mode to help with concentration"
-        
+
+        elif line.startswith('@intent'):
+            return "Declares intent for the next block to preserve context"
+
+        elif line.startswith('focus') and '{' in line:
+            return "Starts a focus block to reduce noise and increase trace detail"
+
         elif line.startswith('working_memory'):
             return "Opens a structured thinking block for complex operations"
         

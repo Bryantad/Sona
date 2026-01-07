@@ -29,6 +29,20 @@ def mean(data: Iterable[float | int]) -> float:
     return float(sum(values)) / len(values)
 
 
+def min(data: Iterable[float | int]) -> float | int:
+    values = _as_sequence(data)
+    if not values:
+        raise ValueError("min() requires at least one data point")
+    return __builtins__["min"](values)
+
+
+def max(data: Iterable[float | int]) -> float | int:
+    values = _as_sequence(data)
+    if not values:
+        raise ValueError("max() requires at least one data point")
+    return __builtins__["max"](values)
+
+
 def median(data: Iterable[float | int]) -> float:
     values = sorted(_as_sequence(data))
     length = len(values)
