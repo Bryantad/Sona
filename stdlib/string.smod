@@ -5,6 +5,13 @@ func __default(value, fallback) {
     return value
 }
 
+func __option(options, key, fallback) {
+    if options == nil {
+        return fallback
+    }
+    return __default(options.get(key), fallback)
+}
+
 func upper(value) {
     return __native__.string_upper(value)
 }
@@ -33,15 +40,15 @@ func repeat(value, count) {
     return __native__.string_repeat(value, count)
 }
 
-func trim(value, chars) {
+func trim(value, chars=nil) {
     return __native__.string_trim(value, __default(chars, nil))
 }
 
-func ltrim(value, chars) {
+func ltrim(value, chars=nil) {
     return __native__.string_ltrim(value, __default(chars, nil))
 }
 
-func rtrim(value, chars) {
+func rtrim(value, chars=nil) {
     return __native__.string_rtrim(value, __default(chars, nil))
 }
 
@@ -61,89 +68,89 @@ func remove_suffix(value, suffix) {
     return __native__.string_remove_suffix(value, suffix)
 }
 
-func contains(value, substring, options) {
+func contains(value, substring, options=nil) {
     if options == nil {
         options = {}
     }
     return __native__.string_contains(
         value,
         substring,
-        __default(options["ignore_case"], false)
+        __option(options, "ignore_case", false)
     )
 }
 
-func starts_with(value, prefix, options) {
+func starts_with(value, prefix, options=nil) {
     if options == nil {
         options = {}
     }
     return __native__.string_startswith(
         value,
         prefix,
-        ignore_case=__default(options["ignore_case"], false)
+        ignore_case=__option(options, "ignore_case", false)
     )
 }
 
-func ends_with(value, suffix, options) {
+func ends_with(value, suffix, options=nil) {
     if options == nil {
         options = {}
     }
     return __native__.string_endswith(
         value,
         suffix,
-        ignore_case=__default(options["ignore_case"], false)
+        ignore_case=__option(options, "ignore_case", false)
     )
 }
 
-func count(value, substring, options) {
+func count(value, substring, options=nil) {
     if options == nil {
         options = {}
     }
     return __native__.string_count(
         value,
         substring,
-        ignore_case=__default(options["ignore_case"], false)
+        ignore_case=__option(options, "ignore_case", false)
     )
 }
 
-func split(value, delimiter, options) {
+func split(value, delimiter=nil, options=nil) {
     if options == nil {
         options = {}
     }
     return __native__.string_split(
         value,
         __default(delimiter, nil),
-        maxsplit=__default(options["maxsplit"], -1),
-        keep_empty=__default(options["keep_empty"], true)
+        maxsplit=__option(options, "maxsplit", -1),
+        keep_empty=__option(options, "keep_empty", true)
     )
 }
 
-func rsplit(value, delimiter, options) {
+func rsplit(value, delimiter=nil, options=nil) {
     if options == nil {
         options = {}
     }
     return __native__.string_rsplit(
         value,
         __default(delimiter, nil),
-        maxsplit=__default(options["maxsplit"], -1)
+        maxsplit=__option(options, "maxsplit", -1)
     )
 }
 
-func lines(value, options) {
+func lines(value, options=nil) {
     if options == nil {
         options = {}
     }
-    return __native__.string_lines(value, __default(options["keepends"], false))
+    return __native__.string_lines(value, __option(options, "keepends", false))
 }
 
 func words(value) {
     return __native__.string_words(value)
 }
 
-func join(parts, delimiter) {
+func join(parts, delimiter=nil) {
     return __native__.string_join(parts, __default(delimiter, ""))
 }
 
-func replace(value, old, new, options) {
+func replace(value, old, new, options=nil) {
     if options == nil {
         options = {}
     }
@@ -151,18 +158,18 @@ func replace(value, old, new, options) {
         value,
         old,
         new,
-        count=__default(options["count"], nil)
+        count=__option(options, "count", nil)
     )
 }
 
-func replace_many(value, replacements, options) {
+func replace_many(value, replacements, options=nil) {
     if options == nil {
         options = {}
     }
     return __native__.string_replace_many(
         value,
         replacements,
-        ignore_case=__default(options["ignore_case"], false)
+        ignore_case=__option(options, "ignore_case", false)
     )
 }
 
@@ -170,26 +177,26 @@ func collapse_whitespace(value) {
     return __native__.string_collapse_whitespace(value)
 }
 
-func pad_left(value, width, fill) {
+func pad_left(value, width, fill=nil) {
     return __native__.string_pad_left(value, width, __default(fill, " "))
 }
 
-func pad_right(value, width, fill) {
+func pad_right(value, width, fill=nil) {
     return __native__.string_pad_right(value, width, __default(fill, " "))
 }
 
-func pad_center(value, width, fill) {
+func pad_center(value, width, fill=nil) {
     return __native__.string_pad_center(value, width, __default(fill, " "))
 }
 
-func truncate(value, length, options) {
+func truncate(value, length, options=nil) {
     if options == nil {
         options = {}
     }
     return __native__.string_truncate(
         value,
         length,
-        suffix=__default(options["suffix"], "…")
+        suffix=__option(options, "suffix", "…")
     )
 }
 
@@ -197,7 +204,7 @@ func is_blank(value) {
     return __native__.string_is_blank(value)
 }
 
-func slugify(value, separator) {
+func slugify(value, separator=nil) {
     return __native__.string_slugify(value, __default(separator, "-"))
 }
 
@@ -217,14 +224,14 @@ func pascal_case(value) {
     return __native__.string_pascal_case(value)
 }
 
-func format(template, options) {
+func format(template, options=nil) {
     if options == nil {
         options = {}
     }
     return __native__.string_format(
         template,
-        __default(options["args"], []),
-        __default(options["kwargs"], {})
+        __option(options, "args", []),
+        __option(options, "kwargs", {})
     )
 }
 
@@ -240,10 +247,10 @@ func __regex_flags(options) {
     if options == nil {
         return nil
     }
-    return __default(options["flags"], nil)
+    return __option(options, "flags", nil)
 }
 
-func regex_test(value, pattern, options) {
+func regex_test(value, pattern, options=nil) {
     return __native__.string_regex_test(
         value,
         pattern,
@@ -251,7 +258,7 @@ func regex_test(value, pattern, options) {
     )
 }
 
-func regex_match(value, pattern, options) {
+func regex_match(value, pattern, options=nil) {
     return __native__.string_regex_match(
         value,
         pattern,
@@ -259,7 +266,7 @@ func regex_match(value, pattern, options) {
     )
 }
 
-func regex_search(value, pattern, options) {
+func regex_search(value, pattern, options=nil) {
     return __native__.string_regex_search(
         value,
         pattern,
@@ -267,7 +274,7 @@ func regex_search(value, pattern, options) {
     )
 }
 
-func regex_findall(value, pattern, options) {
+func regex_findall(value, pattern, options=nil) {
     return __native__.string_regex_findall(
         value,
         pattern,
@@ -275,7 +282,7 @@ func regex_findall(value, pattern, options) {
     )
 }
 
-func regex_replace(value, pattern, replacement, options) {
+func regex_replace(value, pattern, replacement, options=nil) {
     if options == nil {
         options = {}
     }
@@ -283,19 +290,19 @@ func regex_replace(value, pattern, replacement, options) {
         value,
         pattern,
         replacement,
-        count=__default(options["count"], 0),
+        count=__option(options, "count", 0),
         flags=__regex_flags(options)
     )
 }
 
-func regex_split(value, pattern, options) {
+func regex_split(value, pattern, options=nil) {
     if options == nil {
         options = {}
     }
     return __native__.string_regex_split(
         value,
         pattern,
-        maxsplit=__default(options["maxsplit"], 0),
+        maxsplit=__option(options, "maxsplit", 0),
         flags=__regex_flags(options)
     )
 }

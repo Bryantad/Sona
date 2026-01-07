@@ -8,10 +8,12 @@ on:
 
 jobs:
   test:
-    runs-on: windows-latest
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        python-version: [3.12]
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        python-version: ["3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
@@ -22,10 +24,23 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-      - name: Run unit tests (quick)
+      - name: Install package (editable)
         run: |
-          python -m pip install -r requirements.txt
-          python run_sona.py test_all_30_imports.sona
-      - name: Lint (optional)
+          pip install -e .
+
+      - name: Run Sona integration tests
         run: |
-          echo "Lint step placeholder - add linters if desired"
+          python run_sona.py test_all_096.sona
+          python run_sona.py test_stdlib_basics.sona
+          python run_sona.py test_stdlib_data.sona
+          python run_sona.py test_stdlib_collections.sona
+          python run_sona.py test_stdlib_time.sona
+          python run_sona.py test_stdlib_filesystem.sona
+          python run_sona.py test_stdlib_regex.sona
+          python run_sona.py test.sona
+
+      - name: Run Windows PowerShell runner
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          powershell -ExecutionPolicy Bypass -File .\run_all_tests.ps1

@@ -134,6 +134,31 @@ def today(tz: Optional[str] = None) -> str:
     return _current_datetime(tz).date().isoformat()
 
 
+def year(value: str, tz: Optional[str] = None) -> int:
+    return _coerce_date(value, tz).year
+
+
+def month(value: str, tz: Optional[str] = None) -> int:
+    return _coerce_date(value, tz).month
+
+
+def day(value: str, tz: Optional[str] = None) -> int:
+    return _coerce_date(value, tz).day
+
+
+def weekday(value: str, tz: Optional[str] = None) -> str:
+    target = _coerce_date(value, tz)
+    return calendar.day_name[target.weekday()]
+
+
+def add_days(value: str, days: int, tz: Optional[str] = None) -> str:
+    return shift(value, days=int(days), tz=tz)
+
+
+def subtract_days(value: str, days: int, tz: Optional[str] = None) -> str:
+    return shift(value, days=-int(days), tz=tz)
+
+
 def yesterday(tz: Optional[str] = None) -> str:
     """Return yesterday's date relative to *tz*."""
 
@@ -356,6 +381,110 @@ def sleep(seconds: float) -> None:
     _time.sleep(float(seconds))
 
 
+def is_weekend(value: str, tz: Optional[str] = None) -> bool:
+    """
+    Check if date falls on weekend (Saturday or Sunday).
+    
+    Args:
+        value: ISO date string
+        tz: Timezone
+    
+    Returns:
+        True if weekend
+    
+    Example:
+        if date.is_weekend("2024-01-06"):
+            print("It's the weekend!")
+    """
+    dt = _coerce_date(value, tz)
+    return dt.weekday() in (5, 6)
+
+
+def is_weekday(value: str, tz: Optional[str] = None) -> bool:
+    """
+    Check if date falls on weekday (Monday-Friday).
+    
+    Args:
+        value: ISO date string
+        tz: Timezone
+    
+    Returns:
+        True if weekday
+    
+    Example:
+        if date.is_weekday("2024-01-08"):
+            print("It's a weekday")
+    """
+    dt = _coerce_date(value, tz)
+    return dt.weekday() < 5
+
+
+def days_until(target: str, from_date: Optional[str] = None,
+               tz: Optional[str] = None) -> int:
+    """
+    Calculate days until target date.
+    
+    Args:
+        target: Target ISO date
+        from_date: Start date (None = today)
+        tz: Timezone
+    
+    Returns:
+        Number of days (negative if past)
+    
+    Example:
+        days = date.days_until("2024-12-25")
+    """
+    target_dt = _coerce_date(target, tz)
+    if from_date is None:
+        start_dt = _current_datetime(tz).date()
+    else:
+        start_dt = _coerce_date(from_date, tz)
+    return (target_dt - start_dt).days
+
+
+def age(birthdate: str, tz: Optional[str] = None) -> int:
+    """
+    Calculate age in years from birthdate.
+    
+    Args:
+        birthdate: ISO date of birth
+        tz: Timezone
+    
+    Returns:
+        Age in years
+    
+    Example:
+        years = date.age("1990-05-15")
+    """
+    birth = _coerce_date(birthdate, tz)
+    today_dt = _current_datetime(tz).date()
+    
+    years = today_dt.year - birth.year
+    if (today_dt.month, today_dt.day) < (birth.month, birth.day):
+        years -= 1
+    
+    return years
+
+
+def quarter(value: str, tz: Optional[str] = None) -> int:
+    """
+    Get quarter (1-4) for a date.
+    
+    Args:
+        value: ISO date string
+        tz: Timezone
+    
+    Returns:
+        Quarter number 1-4
+    
+    Example:
+        q = date.quarter("2024-03-15")  # 1
+    """
+    dt = _coerce_date(value, tz)
+    return (dt.month - 1) // 3 + 1
+
+
 __all__ = [
     "today",
     "yesterday",
@@ -374,6 +503,11 @@ __all__ = [
     "range",
     "closest",
     "sleep",
+    "is_weekend",
+    "is_weekday",
+    "days_until",
+    "age",
+    "quarter",
     "ISO_DATE",
 ]
 

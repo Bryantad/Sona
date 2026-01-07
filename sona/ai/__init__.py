@@ -8,15 +8,19 @@ This module provides AI-powered features for cognitive programming including:
 - AI-powered debugging and optimization
 """
 
+from .ai_backend import get_ai_backend
 from .code_completion import CodeCompletion
 from .cognitive_assistant import CognitiveAssistant
 from .gpt2_integration import GPT2Integration
 from .natural_language import NaturalLanguageProcessor
+from .ollama_integration import OllamaIntegration
 
 
 __version__ = "0.8.2"
 __all__ = [
     "GPT2Integration",
+    "OllamaIntegration",
+    "get_ai_backend",
     "CodeCompletion", 
     "CognitiveAssistant",
     "NaturalLanguageProcessor"

@@ -134,6 +134,31 @@ def today(tz: Optional[str] = None) -> str:
     return _current_datetime(tz).date().isoformat()
 
 
+def year(value: str, tz: Optional[str] = None) -> int:
+    return _coerce_date(value, tz).year
+
+
+def month(value: str, tz: Optional[str] = None) -> int:
+    return _coerce_date(value, tz).month
+
+
+def day(value: str, tz: Optional[str] = None) -> int:
+    return _coerce_date(value, tz).day
+
+
+def weekday(value: str, tz: Optional[str] = None) -> str:
+    target = _coerce_date(value, tz)
+    return calendar.day_name[target.weekday()]
+
+
+def add_days(value: str, days: int, tz: Optional[str] = None) -> str:
+    return shift(value, days=int(days), tz=tz)
+
+
+def subtract_days(value: str, days: int, tz: Optional[str] = None) -> str:
+    return shift(value, days=-int(days), tz=tz)
+
+
 def yesterday(tz: Optional[str] = None) -> str:
     """Return yesterday's date relative to *tz*."""
 

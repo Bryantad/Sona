@@ -28,7 +28,7 @@ except ImportError:
 # Import our AST nodes when available
 AST_NODES_AVAILABLE = False
 try:
-    from .ast_nodes_v090 import *
+    from .ast_nodes import *
     AST_NODES_AVAILABLE = True
 except ImportError:
     # Fallback for development - define minimal placeholder classes
@@ -83,19 +83,14 @@ class SonaParserv090:
     def _get_default_grammar(self) -> str:
         """Get the default grammar file path"""
         current_dir = Path(__file__).parent
-        # Use the FIXED grammar with multi-parameter support
-        grammar_path = current_dir / "grammar_v091_fixed.lark"
-        
+        # Canonical grammar (single source of truth)
+        grammar_path = current_dir / "grammar.lark"
+
         if grammar_path.exists():
             return str(grammar_path)
-        else:
-            # Fallback to original if fixed version not found
-            fallback_path = current_dir / "grammar_v090.lark"
-            if fallback_path.exists():
-                return str(fallback_path)
-            else:
-                # Final fallback to embedded grammar
-                return self._get_embedded_grammar()
+
+        # Final fallback to embedded grammar
+        return self._get_embedded_grammar()
     
     def _get_embedded_grammar(self) -> str:
         """Get embedded grammar as fallback"""
@@ -190,7 +185,7 @@ class SonaParserv090:
             # Initialize the transformer
             self.transformer = SonaASTTransformer(self.features_enabled)
             
-            print("✅ Sona v0.9.6 parser initialized successfully")
+            print("✅ Sona - parser initialized successfully")
             
         except Exception as e:
             print(f"❌ Failed to initialize parser: {e}")
@@ -470,14 +465,209 @@ class SonaASTTransformer(Transformer):
                 result.extend(stmt)
             else:
                 result.append(stmt)
-        return result
-    
+        return self._normalize_statement_sequence(result)
+
+    def _normalize_statement_sequence(self, statements):
+        """Fix ambiguous splits caused by optional separators."""
+        from .ast_nodes import (
+            BinaryOperatorExpression,
+            CallExpression,
+            Expression,
+            IndexExpression,
+            ListExpression,
+            MethodCallExpression,
+            PositionalArgument,
+            PropertyAccessExpression,
+            ReturnStatement,
+            UnaryOperatorExpression,
+            VariableAssignment,
+            VariableExpression,
+        )
+
+        def _make_call(callee, arg):
+            if isinstance(callee, PropertyAccessExpression):
+                return MethodCallExpression(
+                    object=callee.object,
+                    method_name=callee.property_name,
+                    arguments=[PositionalArgument(arg)],
+                    line_number=getattr(callee, "line_number", None),
+                )
+            return CallExpression(
+                callee=callee,
+                arguments=[PositionalArgument(arg)],
+                line_number=getattr(callee, "line_number", None),
+            )
+
+        normalized = []
+        i = 0
+        while i < len(statements):
+            stmt = statements[i]
+            if (
+                isinstance(stmt, VariableAssignment)
+                and i + 1 < len(statements)
+                and isinstance(statements[i + 1], UnaryOperatorExpression)
+                and statements[i + 1].operator in ("+", "-")
+            ):
+                unary = statements[i + 1]
+                operand = unary.operand
+                skip_extra = 0
+
+                # Handle cases like "+ scores [1]" parsed as two statements.
+                if (
+                    i + 2 < len(statements)
+                    and isinstance(statements[i + 2], ListExpression)
+                    and len(statements[i + 2].elements) == 1
+                ):
+                    operand = IndexExpression(
+                        object=operand,
+                        index=statements[i + 2].elements[0],
+                        line_number=getattr(unary, "line_number", None),
+                    )
+                    skip_extra = 1
+
+                merged_expr = BinaryOperatorExpression(
+                    left=stmt.value,
+                    operator=unary.operator,
+                    right=operand,
+                    line_number=getattr(stmt, "line_number", None),
+                )
+                normalized.append(
+                    VariableAssignment(
+                        name=stmt.name,
+                        value=merged_expr,
+                        is_const=stmt.is_const,
+                        line_number=stmt.line_number,
+                    )
+                )
+                i += 2 + skip_extra
+                continue
+
+            if (
+                isinstance(stmt, VariableAssignment)
+                and isinstance(stmt.value, BinaryOperatorExpression)
+                and stmt.value.operator in ("+", "-")
+                and i + 1 < len(statements)
+                and isinstance(statements[i + 1], ListExpression)
+                and len(statements[i + 1].elements) == 1
+            ):
+                list_expr = statements[i + 1]
+                indexed = IndexExpression(
+                    object=stmt.value.right,
+                    index=list_expr.elements[0],
+                    line_number=getattr(stmt.value, "line_number", None),
+                )
+                merged_expr = BinaryOperatorExpression(
+                    left=stmt.value.left,
+                    operator=stmt.value.operator,
+                    right=indexed,
+                    line_number=getattr(stmt.value, "line_number", None),
+                )
+                normalized.append(
+                    VariableAssignment(
+                        name=stmt.name,
+                        value=merged_expr,
+                        is_const=stmt.is_const,
+                        line_number=stmt.line_number,
+                    )
+                )
+                i += 2
+                continue
+
+            if (
+                isinstance(stmt, ReturnStatement)
+                and stmt.expression is None
+                and i + 1 < len(statements)
+                and isinstance(statements[i + 1], Expression)
+            ):
+                normalized.append(
+                    ReturnStatement(
+                        statements[i + 1],
+                        line_number=getattr(stmt, "line_number", None),
+                    )
+                )
+                i += 2
+                continue
+
+            if (
+                isinstance(stmt, Expression)
+                and i + 1 < len(statements)
+                and isinstance(statements[i + 1], UnaryOperatorExpression)
+                and statements[i + 1].operator in ("+", "-")
+            ):
+                unary = statements[i + 1]
+                operand = unary.operand
+                skip_extra = 0
+
+                # Handle cases like "x + scores [1]" parsed as two statements.
+                if (
+                    i + 2 < len(statements)
+                    and isinstance(statements[i + 2], ListExpression)
+                    and len(statements[i + 2].elements) == 1
+                ):
+                    operand = IndexExpression(
+                        object=operand,
+                        index=statements[i + 2].elements[0],
+                        line_number=getattr(unary, "line_number", None),
+                    )
+                    skip_extra = 1
+
+                normalized.append(
+                    BinaryOperatorExpression(
+                        left=stmt,
+                        operator=unary.operator,
+                        right=operand,
+                        line_number=getattr(stmt, "line_number", None),
+                    )
+                )
+                i += 2 + skip_extra
+                continue
+
+            if (
+                isinstance(stmt, VariableAssignment)
+                and isinstance(stmt.value, (PropertyAccessExpression, VariableExpression))
+                and i + 1 < len(statements)
+                and isinstance(statements[i + 1], Expression)
+            ):
+                call_expr = _make_call(stmt.value, statements[i + 1])
+                normalized.append(
+                    VariableAssignment(
+                        name=stmt.name,
+                        value=call_expr,
+                        is_const=stmt.is_const,
+                        line_number=stmt.line_number,
+                    )
+                )
+                i += 2
+                continue
+
+            if (
+                isinstance(stmt, (PropertyAccessExpression, VariableExpression))
+                and i + 1 < len(statements)
+                and isinstance(statements[i + 1], Expression)
+            ):
+                normalized.append(_make_call(stmt, statements[i + 1]))
+                i += 2
+                continue
+
+            normalized.append(stmt)
+            i += 1
+
+        return normalized
+
+    def cognitive_stmt(self, items):
+        """Flatten cognitive_stmt wrapper."""
+        if not items:
+            return None
+        if len(items) == 1:
+            return items[0]
+        return items
+
     def statement(self, children):
         """Transform a statement"""
         if len(children) == 1:
             return children[0]
         return None
-    
+
     # ========================================================================
     # ENHANCED CONTROL FLOW
     # ========================================================================
@@ -566,9 +756,18 @@ class SonaASTTransformer(Transformer):
     
     @v_args(inline=True)
     def catch_clause(self, exception_type, var_name, body):
-        """Transform catch clause"""
+        """Transform catch clause with exception type"""
         return CatchClause(
             exception_type=str(exception_type) if exception_type else "Exception",
+            var_name=str(var_name) if var_name else None,
+            body=body
+        )
+    
+    @v_args(inline=True)
+    def catch_clause_simple(self, var_name, body):
+        """Transform simple catch clause (catch-all with variable)"""
+        return CatchClause(
+            exception_type="Exception",  # Catch-all
             var_name=str(var_name) if var_name else None,
             body=body
         )
@@ -624,9 +823,10 @@ class SonaASTTransformer(Transformer):
         
         # Handle both single and multi-parameter calls
         if isinstance(arguments, list):
-            prompt = str(arguments[0]) if arguments else ""
+            args = self._normalize_call_arguments(arguments)
+            prompt = str(args[0]) if args else ""
             # Additional parameters: language, level, etc.
-            options = arguments[1:] if len(arguments) > 1 else []
+            options = args[1:] if len(args) > 1 else []
         else:
             prompt = str(arguments)
             options = []
@@ -644,9 +844,10 @@ class SonaASTTransformer(Transformer):
             
         # Handle both single and multi-parameter calls
         if isinstance(arguments, list):
-            target = arguments[0] if arguments else ""
+            args = self._normalize_call_arguments(arguments)
+            target = args[0] if args else ""
             # Additional parameters: level, audience, etc.
-            options = arguments[1:] if len(arguments) > 1 else []
+            options = args[1:] if len(args) > 1 else []
         else:
             target = arguments
             options = []
@@ -666,8 +867,9 @@ class SonaASTTransformer(Transformer):
             code = ""
             options = []
         elif isinstance(arguments, list):
-            code = arguments[0] if arguments else ""
-            options = arguments[1:] if len(arguments) > 1 else []
+            args = self._normalize_call_arguments(arguments)
+            code = args[0] if args else ""
+            options = args[1:] if len(args) > 1 else []
         else:
             code = arguments
             options = []
@@ -684,16 +886,142 @@ class SonaASTTransformer(Transformer):
             return None
             
         if isinstance(arguments, list):
-            code = arguments[0] if arguments else ""
-            options = arguments[1:] if len(arguments) > 1 else []
+            args = self._normalize_call_arguments(arguments)
+            code = args[0] if args else ""
+            options = args[1:] if len(args) > 1 else []
         else:
             code = arguments
             options = []
-            
+
         return AIOptimizeStatement(
             code=code,
             options=options,
             line_number=self.current_line
+        )
+
+    def _normalize_call_arguments(self, arguments):
+        """Normalize parsed call arguments for non-runtime statement nodes."""
+        try:
+            from .ast_nodes import PositionalArgument, KeywordArgument, SpreadArgument
+        except Exception:
+            return arguments
+
+        normalized = []
+        for arg in arguments:
+            if isinstance(arg, PositionalArgument):
+                normalized.append(arg.value)
+            elif isinstance(arg, KeywordArgument):
+                normalized.append((arg.name, arg.value))
+            elif isinstance(arg, SpreadArgument):
+                normalized.append(arg.value)
+            else:
+                normalized.append(arg)
+        return normalized
+
+    def _arguments_to_mapping(self, arguments) -> dict[str, Any]:
+        """Convert parsed arguments into a name->expression mapping for cognitive statements."""
+        try:
+            from .ast_nodes import PositionalArgument, KeywordArgument, SpreadArgument
+        except Exception:
+            PositionalArgument = KeywordArgument = SpreadArgument = None  # type: ignore
+
+        if arguments is None:
+            return {}
+        if isinstance(arguments, list) and len(arguments) == 1 and isinstance(arguments[0], list):
+            arguments = arguments[0]
+        if not isinstance(arguments, list):
+            return {"arg0": arguments}
+
+        mapping: dict[str, Any] = {}
+        for idx, arg in enumerate(arguments):
+            if KeywordArgument and isinstance(arg, KeywordArgument):
+                mapping[arg.name] = arg.value
+            elif PositionalArgument and isinstance(arg, PositionalArgument):
+                mapping[f"arg{idx}"] = arg.value
+            elif SpreadArgument and isinstance(arg, SpreadArgument):
+                mapping[f"spread{idx}"] = arg.value
+            else:
+                mapping[f"arg{idx}"] = arg
+        return mapping
+
+    def _build_cognitive_statement(self, cls, arguments):
+        """Shared builder for cognitive_* statements."""
+        if not self.features_enabled.get('cognitive_programming', True):
+            return None
+        body = self._arguments_to_mapping(arguments)
+        return cls(body=body, line_number=self.current_line)
+
+    def cognitive_check_stmt(self, arguments=None):
+        """Transform cognitive_check(...) into AST."""
+        return self._build_cognitive_statement(CognitiveCheckStatement, arguments)
+
+    def focus_mode_stmt(self, arguments=None):
+        """Transform focus_mode(...) into AST."""
+        return self._build_cognitive_statement(FocusModeStatement, arguments)
+
+    def working_memory_stmt(self, arguments=None):
+        """Transform working_memory(...) into AST."""
+        return self._build_cognitive_statement(WorkingMemoryStatement, arguments)
+
+    def intent_stmt(self, arguments=None):
+        """Transform intent(...) into AST."""
+        return self._build_cognitive_statement(IntentStatement, arguments)
+
+    def intent_annotation_stmt(self, arguments=None):
+        """Transform @intent ... into AST."""
+        if not self.features_enabled.get('cognitive_programming', True):
+            return None
+        body = self._arguments_to_mapping(arguments)
+        if "goal" not in body and "intent" not in body and "arg0" in body:
+            body["goal"] = body["arg0"]
+        body.setdefault("annotation", LiteralExpression(True))
+        return IntentStatement(body=body, line_number=self.current_line)
+
+    def decision_stmt(self, arguments=None):
+        """Transform decision(...) into AST."""
+        return self._build_cognitive_statement(DecisionStatement, arguments)
+
+    def cognitive_trace_stmt(self, arguments=None):
+        """Transform cognitive_trace(on/off) into AST."""
+        return self._build_cognitive_statement(CognitiveTraceStatement, arguments)
+
+    def explain_step_stmt(self, arguments=None):
+        """Transform explain_step(...) into AST."""
+        return self._build_cognitive_statement(ExplainStepStatement, arguments)
+
+    def profile_stmt(self, arguments=None):
+        """Transform profile(...) into AST."""
+        return self._build_cognitive_statement(ProfileStatement, arguments)
+
+    def cognitive_scope_stmt(self, items):
+        """Transform cognitive_scope(name) { ... } into AST."""
+        args = items[0] if items else None
+        body = items[1] if len(items) > 1 else None
+        body = body or []
+        mapping = self._arguments_to_mapping(args)
+        name_expr = mapping.get("name") or mapping.get("arg0")
+        return CognitiveScopeStatement(
+            name=name_expr,
+            meta=mapping,
+            body=body,
+            line_number=self.current_line,
+        )
+
+    def focus_block_stmt(self, items):
+        """Transform focus { ... } into AST."""
+        args = None
+        body = []
+        if items:
+            if len(items) == 1:
+                body = items[0] or []
+            else:
+                args = items[0]
+                body = items[1] or []
+        mapping = self._arguments_to_mapping(args)
+        return FocusBlockStatement(
+            meta=mapping,
+            body=body,
+            line_number=self.current_line,
         )
     
     # ========================================================================
@@ -725,7 +1053,7 @@ class SonaASTTransformer(Transformer):
         if len(items) == 2:
             var_name, value = items
             # Create a variable assignment AST node
-            from .ast_nodes_v090 import VariableAssignment
+            from .ast_nodes import VariableAssignment
             return VariableAssignment(
                 name=str(var_name),
                 value=value,
@@ -738,7 +1066,7 @@ class SonaASTTransformer(Transformer):
         """Transform bare assignment: x = value"""
         if len(items) == 2:
             var_name, value = items
-            from .ast_nodes_v090 import VariableAssignment
+            from .ast_nodes import VariableAssignment
             return VariableAssignment(
                 name=str(var_name),
                 value=value,
@@ -833,7 +1161,7 @@ class SonaASTTransformer(Transformer):
                     result.extend(stmt)
                 else:
                     result.append(stmt)
-        return result
+        return self._normalize_statement_sequence(result)
     
     def print_stmt(self, children):
         """Transform print statement"""
@@ -842,20 +1170,19 @@ class SonaASTTransformer(Transformer):
             # Get the expression (may be nested in lists)
             expr = children[0]
             if isinstance(expr, list) and len(expr) > 0:
-                expr = expr[0]
-                if isinstance(expr, list) and len(expr) > 0:
-                    expr = expr[0]
+                args = self._normalize_call_arguments(expr)
+                expr = args[0] if args else None
         else:
             expr = None
         
-        from .ast_nodes_v090 import PrintStatement
+        from .ast_nodes import PrintStatement
         return PrintStatement(expr, line_number=self.current_line)
     
     def let_assign(self, children):
         """Transform let assignment"""
         name_token = children[0]
         value_expr = children[1]
-        from .ast_nodes_v090 import VariableAssignment
+        from .ast_nodes import VariableAssignment
         return VariableAssignment(
             name=str(name_token),
             value=value_expr,
@@ -867,7 +1194,7 @@ class SonaASTTransformer(Transformer):
         """Transform const assignment"""
         name_token = children[0]
         value_expr = children[1]
-        from .ast_nodes_v090 import VariableAssignment
+        from .ast_nodes import VariableAssignment
         return VariableAssignment(
             name=str(name_token),
             value=value_expr,
@@ -878,14 +1205,15 @@ class SonaASTTransformer(Transformer):
     def variable(self, children):
         """Transform variable reference"""
         name_token = children[0]
-        from .ast_nodes_v090 import VariableExpression
+        from .ast_nodes import VariableExpression
         return VariableExpression(str(name_token))
     
     def postfix_expr(self, children):
         """Transform postfix expressions (calls, indexing, props)"""
-        from .ast_nodes_v090 import (
+        from .ast_nodes import (
             VariableExpression,
             FunctionCallExpression,
+            CallExpression,
             PropertyAccessExpression,
             MethodCallExpression
         )
@@ -900,13 +1228,7 @@ class SonaASTTransformer(Transformer):
                 if suffix_type == "call":
                     # Function call
                     args = suffix_data if suffix_data else []
-                    if isinstance(base, VariableExpression):
-                        base = FunctionCallExpression(
-                            name=base.name,
-                            arguments=args,
-                            line_number=self.current_line
-                        )
-                    elif isinstance(base, PropertyAccessExpression):
+                    if isinstance(base, PropertyAccessExpression):
                         # Method call: obj.method()
                         base = MethodCallExpression(
                             object=base.object,
@@ -915,14 +1237,16 @@ class SonaASTTransformer(Transformer):
                             line_number=self.current_line
                         )
                     else:
-                        raise NotImplementedError(
-                            "Function calls on expressions not supported"
+                        base = CallExpression(
+                            callee=base,
+                            arguments=args,
+                            line_number=self.current_line
                         )
                         
                 elif suffix_type == "index":
                     # Array/dict indexing
                     index_expr = suffix_data
-                    from .ast_nodes_v090 import IndexExpression
+                    from .ast_nodes import IndexExpression
                     base = IndexExpression(
                         object=base,
                         index=index_expr,
@@ -955,10 +1279,39 @@ class SonaASTTransformer(Transformer):
         """Transform property access suffix"""
         prop_name = str(children[0])
         return ("prop", prop_name)
+
+    def prop_name(self, children):
+        """Normalize dotted property names (including keyword literals) to strings."""
+        if not children:
+            return ""
+        child = children[0]
+        if isinstance(child, Token):
+            return str(child.value)
+        return str(child)
     
     def arguments(self, children):
         """Transform function call arguments"""
         return children  # Already a list of expressions
+
+    def unary_expr(self, children):
+        """Transform unary expression (+x, -x, !x, not x)"""
+        if len(children) == 1:
+            return children[0]
+
+        op_token = children[0]
+        operand = children[1]
+
+        if isinstance(op_token, Token):
+            operator = str(op_token.value)
+        else:
+            operator = str(op_token)
+
+        from .ast_nodes import UnaryOperatorExpression
+        return UnaryOperatorExpression(
+            operator=operator,
+            operand=operand,
+            line_number=self.current_line
+        )
     
     def additive_expr(self, children):
         """Transform additive expression (+ or -)"""
@@ -966,7 +1319,7 @@ class SonaASTTransformer(Transformer):
         if len(children) == 1:
             return children[0]
         
-        from .ast_nodes_v090 import BinaryOperatorExpression
+        from .ast_nodes import BinaryOperatorExpression
         
         result = children[0]
         i = 1
@@ -994,7 +1347,7 @@ class SonaASTTransformer(Transformer):
         if len(children) == 1:
             return children[0]
         
-        from .ast_nodes_v090 import BinaryOperatorExpression
+        from .ast_nodes import BinaryOperatorExpression
         
         result = children[0]
         i = 1
@@ -1024,7 +1377,7 @@ class SonaASTTransformer(Transformer):
             return children[0]
         
         # Build left-to-right: expr OP expr OP expr => (expr OP expr) OP expr
-        from .ast_nodes_v090 import BinaryOperatorExpression
+        from .ast_nodes import BinaryOperatorExpression
         
         result = children[0]
         i = 1
@@ -1054,13 +1407,75 @@ class SonaASTTransformer(Transformer):
     # are no longer used since operators are now extracted directly
     # from terminal tokens in the expression transformers above
     
+    def or_expr(self, children):
+        """Transform or expression (|| or 'or')"""
+        # Grammar: and_expr (OR_OP and_expr)*
+        if len(children) == 1:
+            return children[0]
+        
+        from .ast_nodes import BinaryOperatorExpression
+        
+        result = children[0]
+        i = 1
+        while i < len(children):
+            op_token = children[i]
+            if isinstance(op_token, Token):
+                operator = str(op_token.value)
+            else:
+                operator = str(op_token)
+            # Normalize 'or' to '||' for consistent handling
+            if operator == 'or':
+                operator = '||'
+            right = children[i + 1]
+            
+            result = BinaryOperatorExpression(
+                left=result,
+                operator=operator,
+                right=right,
+                line_number=self.current_line
+            )
+            i += 2
+        
+        return result
+    
+    def and_expr(self, children):
+        """Transform and expression (&& or 'and')"""
+        # Grammar: equality_expr (AND_OP equality_expr)*
+        if len(children) == 1:
+            return children[0]
+        
+        from .ast_nodes import BinaryOperatorExpression
+        
+        result = children[0]
+        i = 1
+        while i < len(children):
+            op_token = children[i]
+            if isinstance(op_token, Token):
+                operator = str(op_token.value)
+            else:
+                operator = str(op_token)
+            # Normalize 'and' to '&&' for consistent handling
+            if operator == 'and':
+                operator = '&&'
+            right = children[i + 1]
+            
+            result = BinaryOperatorExpression(
+                left=result,
+                operator=operator,
+                right=right,
+                line_number=self.current_line
+            )
+            i += 2
+        
+        return result
+    
     def equality_expr(self, children):
         """Transform equality expression (== !=)"""
         # Grammar: comparison_expr (EQUALITY_OP comparison_expr)*
         if len(children) == 1:
             return children[0]
         
-        from .ast_nodes_v090 import BinaryOperatorExpression
+        from .ast_nodes import BinaryOperatorExpression
         
         result = children[0]
         i = 1
@@ -1103,6 +1518,23 @@ class SonaASTTransformer(Transformer):
     def arg_list(self, children):
         """Transform argument list (from arguments rule)"""
         return children  # Return flat list of expressions
+
+    def pos_arg(self, children):
+        """Transform positional argument"""
+        from .ast_nodes import PositionalArgument
+        return PositionalArgument(children[0])
+
+    def kw_arg(self, children):
+        """Transform keyword argument"""
+        name_token = children[0]
+        value_expr = children[1]
+        from .ast_nodes import KeywordArgument
+        return KeywordArgument(str(name_token), value_expr)
+
+    def spread_arg(self, children):
+        """Transform spread argument"""
+        from .ast_nodes import SpreadArgument
+        return SpreadArgument(children[0])
     
     def func_call(self, children):
         """Transform function call"""
@@ -1110,9 +1542,9 @@ class SonaASTTransformer(Transformer):
         args = children[1] if len(children) > 1 else []
         if args and not isinstance(args, list):
             args = [args]
-        from .ast_nodes_v090 import FunctionCallExpression
-        return FunctionCallExpression(
-            name=str(name_token),
+        from .ast_nodes import VariableExpression, CallExpression
+        return CallExpression(
+            callee=VariableExpression(str(name_token), line_number=self.current_line),
             arguments=args,
             line_number=self.current_line
         )
@@ -1120,22 +1552,53 @@ class SonaASTTransformer(Transformer):
     def func_def(self, children):
         """Transform function definition"""
         name_token = children[0]
-        params = children[1] if len(children) > 1 else []
-        body = children[2] if len(children) > 2 else []
+
+        params = []
+        body = []
+        if len(children) == 2:
+            # No params provided; children[1] is the body
+            body = children[1] or []
+        elif len(children) >= 3:
+            # Params (optional) + body
+            params = children[1] or []
+            body = children[2] or []
         
         # Extract parameter names
         if params and not isinstance(params, list):
             params = [params]
-        param_names = [str(p) for p in params]
+
+        default_values = {}
+        param_names = []
+        varargs_param = None
+        for param in params:
+            if isinstance(param, tuple) and len(param) == 3:
+                param_name, default_expr, is_varargs = param
+                if is_varargs:
+                    if varargs_param is not None:
+                        raise ValueError("Only one varargs parameter is allowed")
+                    varargs_param = str(param_name)
+                else:
+                    param_names.append(str(param_name))
+                    if default_expr is not None:
+                        default_values[str(param_name)] = default_expr
+            elif isinstance(param, tuple) and len(param) == 2:
+                param_name, default_expr = param
+                param_names.append(str(param_name))
+                if default_expr is not None:
+                    default_values[str(param_name)] = default_expr
+            else:
+                param_names.append(str(param))
         
         # Ensure body is a list
         if body and not isinstance(body, list):
             body = [body]
         
-        from .ast_nodes_v090 import FunctionDefinition
+        from .ast_nodes import FunctionDefinition
         return FunctionDefinition(
             name=str(name_token),
             parameters=param_names,
+            default_values=default_values,
+            varargs_param=varargs_param,
             body=body,
             line_number=self.current_line
         )
@@ -1148,28 +1611,32 @@ class SonaASTTransformer(Transformer):
         """Transform function parameters (v091 grammar)"""
         return children  # List of func_param results (already strings)
     
-    def func_param(self, children):
-        """Transform single function parameter"""
-        param_name = str(children[0])  # NAME token
-        # default_value = children[1] if len(children) > 1 else None
-        # For now, just return the parameter name
-        # TODO: Handle default values
-        return param_name
+    def normal_param(self, children):
+        """Transform a normal function parameter"""
+        param_name = str(children[0])
+        default_expr = children[1] if len(children) > 1 else None
+        return (param_name, default_expr, False)
+
+    def vararg_param(self, children):
+        """Transform a varargs function parameter (e.g., ...rest)"""
+        param_name = str(children[0])
+        default_expr = children[1] if len(children) > 1 else None
+        return (param_name, default_expr, True)
     
     def return_stmt(self, children):
         """Transform return statement"""
         expr = children[0] if children else None
-        from .ast_nodes_v090 import ReturnStatement
+        from .ast_nodes import ReturnStatement
         return ReturnStatement(expr, line_number=self.current_line)
     
     def break_stmt(self, children):
         """Transform break statement"""
-        from .ast_nodes_v090 import BreakStatement
+        from .ast_nodes import BreakStatement
         return BreakStatement(line_number=self.current_line)
     
     def continue_stmt(self, children):
         """Transform continue statement"""
-        from .ast_nodes_v090 import ContinueStatement
+        from .ast_nodes import ContinueStatement
         return ContinueStatement(line_number=self.current_line)
     
     def num(self, children):
@@ -1177,7 +1644,7 @@ class SonaASTTransformer(Transformer):
         value = float(children[0])
         if value.is_integer():
             value = int(value)
-        from .ast_nodes_v090 import LiteralExpression
+        from .ast_nodes import LiteralExpression
         return LiteralExpression(value, line_number=self.current_line)
     
     def str(self, children):
@@ -1191,22 +1658,22 @@ class SonaASTTransformer(Transformer):
         except Exception as e:
             # Fallback to simple quote removal
             string_value = token_str[1:-1]
-        from .ast_nodes_v090 import LiteralExpression
+        from .ast_nodes import LiteralExpression
         return LiteralExpression(string_value, line_number=self.current_line)
     
     def true(self, children):
         """Transform true literal"""
-        from .ast_nodes_v090 import LiteralExpression
+        from .ast_nodes import LiteralExpression
         return LiteralExpression(True, line_number=self.current_line)
     
     def false(self, children):
         """Transform false literal"""
-        from .ast_nodes_v090 import LiteralExpression
+        from .ast_nodes import LiteralExpression
         return LiteralExpression(False, line_number=self.current_line)
     
     def null(self, children):
         """Transform null literal"""
-        from .ast_nodes_v090 import LiteralExpression
+        from .ast_nodes import LiteralExpression
         return LiteralExpression(None, line_number=self.current_line)
     
     def array(self, children):
@@ -1214,7 +1681,7 @@ class SonaASTTransformer(Transformer):
         elements = children[0] if children else []
         if not isinstance(elements, list):
             elements = [elements] if elements else []
-        from .ast_nodes_v090 import ListExpression
+        from .ast_nodes import ListExpression
         return ListExpression(elements, line_number=self.current_line)
     
     def list_literal(self, children):
@@ -1230,7 +1697,7 @@ class SonaASTTransformer(Transformer):
         pairs = children[0] if children else []
         if not isinstance(pairs, list):
             pairs = [pairs] if pairs else []
-        from .ast_nodes_v090 import DictionaryExpression
+        from .ast_nodes import DictionaryExpression
         return DictionaryExpression(pairs, line_number=self.current_line)
     
     def dict_elements(self, children):
@@ -1246,7 +1713,7 @@ class SonaASTTransformer(Transformer):
         # print(f"DEBUG dict_pair: key_item={key_item}, type={type(key_item)}")
         
         # Extract key string from token or expression
-        from .ast_nodes_v090 import LiteralExpression
+        from .ast_nodes import LiteralExpression
         if isinstance(key_item, LiteralExpression):
             key = str(key_item.value)
         elif hasattr(key_item, 'type'):
@@ -1267,7 +1734,7 @@ class SonaASTTransformer(Transformer):
         """Transform import statement"""
         module_path = children[0]
         alias = children[1] if len(children) > 1 else None
-        from .ast_nodes_v090 import ImportStatement
+        from .ast_nodes import ImportStatement
         return ImportStatement(
             module_path=str(module_path),
             alias=str(alias) if alias else None,
@@ -1292,7 +1759,7 @@ class SonaASTTransformer(Transformer):
         if body and not isinstance(body, list):
             body = [body]
         
-        from .ast_nodes_v090 import EnhancedForLoop
+        from .ast_nodes import EnhancedForLoop
         return EnhancedForLoop(
             iterator_var=iterator_var,
             iterable=iterable_expr,
@@ -1329,7 +1796,7 @@ class SonaASTTransformer(Transformer):
                 if child.__class__.__name__ == 'ElifClause':
                     elif_clauses.append(child)
         
-        from .ast_nodes_v090 import EnhancedIfStatement
+        from .ast_nodes import EnhancedIfStatement
         return EnhancedIfStatement(
             condition=condition,
             if_body=if_body,
@@ -1347,7 +1814,7 @@ class SonaASTTransformer(Transformer):
         if body and not isinstance(body, list):
             body = [body]
         
-        from .ast_nodes_v090 import ElifClause
+        from .ast_nodes import ElifClause
         return ElifClause(
             condition=condition,
             body=body
@@ -1370,7 +1837,7 @@ class SonaASTTransformer(Transformer):
         if body and not isinstance(body, list):
             body = [body]
         
-        from .ast_nodes_v090 import EnhancedWhileLoop
+        from .ast_nodes import EnhancedWhileLoop
         return EnhancedWhileLoop(
             condition=condition,
             body=body,
@@ -1386,7 +1853,7 @@ class SonaASTTransformer(Transformer):
         # Process remaining children (catch/finally clauses)
         for child in children[1:]:
             if hasattr(child, '__class__'):
-                from .ast_nodes_v090 import CatchClause
+                from .ast_nodes import CatchClause
                 if child.__class__.__name__ == 'CatchClause':
                     catch_clauses.append(child)
                 elif isinstance(child, list):
@@ -1400,7 +1867,7 @@ class SonaASTTransformer(Transformer):
         if try_body and not isinstance(try_body, list):
             try_body = [try_body]
         
-        from .ast_nodes_v090 import EnhancedTryStatement
+        from .ast_nodes import EnhancedTryStatement
         return EnhancedTryStatement(
             try_body=try_body,
             catch_clauses=catch_clauses,
@@ -1427,12 +1894,16 @@ class SonaASTTransformer(Transformer):
         if body and not isinstance(body, list):
             body = [body]
         
-        from .ast_nodes_v090 import CatchClause
+        from .ast_nodes import CatchClause
         return CatchClause(
             exception_type=exception_type,
             var_name=var_name,
             body=body
         )
+
+    def exception_type(self, children):
+        """Transform exception_type (NAME | STRING) into a plain string"""
+        return str(children[0]) if children else ""
     
     def finally_clause(self, children):
         """Transform finally clause"""
@@ -1440,6 +1911,137 @@ class SonaASTTransformer(Transformer):
         if body and not isinstance(body, list):
             body = [body]
         return body  # Just return the body list
+
+    # ========================================================================
+    # MATCH / WHEN (v0.9.9)
+    # ========================================================================
+
+    def when_stmt(self, children):
+        """Transform when statement"""
+        test_expr = children[0] if children else None
+        cases = children[1] if len(children) > 1 else []
+
+        if cases and not isinstance(cases, list):
+            cases = [cases]
+
+        from .ast_nodes import WhenStatement
+        return WhenStatement(
+            test_expr=test_expr,
+            cases=cases,
+            line_number=self.current_line
+        )
+
+    def when_cases(self, children):
+        return list(children)
+
+    def when_case(self, children):
+        condition = children[0] if children else None
+        body = children[1] if len(children) > 1 else []
+        if body and not isinstance(body, list):
+            body = [body]
+
+        from .ast_nodes import WhenCase
+        return WhenCase(condition=condition, body=body)
+
+    def match_stmt(self, children):
+        """Transform match statement"""
+        target = children[0] if children else None
+
+        cases = []
+        if len(children) > 1:
+            # Arrow-form: match expr { match_cases }
+            # Block-form: match expr { match_block_cases default_case? }
+            for child in children[1:]:
+                if child is None:
+                    continue
+                if isinstance(child, list):
+                    cases.extend(child)
+                else:
+                    cases.append(child)
+
+        from .ast_nodes import MatchStatement
+        return MatchStatement(
+            target=target,
+            cases=cases,
+            line_number=self.current_line
+        )
+
+    def match_cases(self, children):
+        return list(children)
+
+    def match_case(self, children):
+        pattern = children[0] if children else None
+        body = children[1] if len(children) > 1 else []
+        if body and not isinstance(body, list):
+            body = [body]
+
+        from .ast_nodes import MatchCase
+        return MatchCase(pattern=pattern, body=body)
+
+    def match_block_cases(self, children):
+        return list(children)
+
+    def match_block_case(self, children):
+        pattern_expr = children[0] if children else None
+        body = children[1] if len(children) > 1 else []
+        if body and not isinstance(body, list):
+            body = [body]
+
+        from .ast_nodes import MatchCase
+        return MatchCase(pattern=pattern_expr, body=body)
+
+    def default_case(self, children):
+        body = children[0] if children else []
+        if body and not isinstance(body, list):
+            body = [body]
+
+        from .ast_nodes import MatchCase, PatternWildcard
+        return MatchCase(pattern=PatternWildcard(), body=body)
+
+    def pattern(self, children):
+        # pattern: expr | NAME
+        if not children:
+            from .ast_nodes import PatternWildcard
+            return PatternWildcard()
+
+        node = children[0]
+
+        # NAME token comes through as Token; allow '_' wildcard and capture bindings
+        if hasattr(node, 'type') and str(getattr(node, 'type', '')) == 'NAME':
+            name = str(node)
+            from .ast_nodes import PatternWildcard, PatternBinding
+            if name == '_':
+                return PatternWildcard()
+            return PatternBinding(name=name)
+
+        # Otherwise treat as expression
+        return node
+
+    def when_expr(self, children):
+        cases = children[0] if children else []
+        if cases and not isinstance(cases, list):
+            cases = [cases]
+
+        from .ast_nodes import WhenExpression
+        return WhenExpression(
+            cases=cases,
+            line_number=self.current_line
+        )
+
+    def when_expr_cases(self, children):
+        # Filter out separator tokens like ';'
+        cases = []
+        for child in children:
+            if hasattr(child, 'type') and str(getattr(child, 'type', '')) == 'SEMICOLON':
+                continue
+            cases.append(child)
+        return cases
+
+    def when_expr_case(self, children):
+        condition = children[0]
+        value = children[1] if len(children) > 1 else None
+        from .ast_nodes import WhenExprCase
+        return WhenExprCase(condition=condition, value=value)
     
     # ========================================================================
     # FALLBACK METHODS

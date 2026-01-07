@@ -1,4 +1,4 @@
-func input(prompt) {
+func input(prompt=nil) {
     return __native__.io.input(prompt)
 }
 

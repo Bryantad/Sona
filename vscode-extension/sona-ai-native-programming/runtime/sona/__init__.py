@@ -5,7 +5,7 @@ that don't require the full interpreter or parser stack. Heavy
 interpreter components are loaded lazily on first access.
 """
 
-__version__ = "0.9.6"
+__version__ = "0.10.1"
 __author__ = "Sona Development Team"
 
 _LAZY_SYMBOLS = {

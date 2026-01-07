@@ -86,6 +86,10 @@ def remove(path: str, *, recursive: bool = True) -> bool:
         return False
 
 
+def rmdir(path: str) -> bool:
+    return remove(path, recursive=False)
+
+
 def copy(src: str, dst: str, *, overwrite: bool = True) -> str:
     source = Path(src)
     target = Path(dst)
@@ -256,6 +260,243 @@ def set_times(
         return False
 
 
+def glob(pattern: str, *, recursive: bool = False) -> List[str]:
+    """Find files matching glob pattern.
+
+    Args:
+        pattern: Glob pattern (e.g., '*.txt', '**/*.py')
+        recursive: Enable recursive globbing
+
+    Returns:
+        List of matching file paths
+
+    Example:
+        files = glob('*.txt')
+        py_files = glob('**/*.py', recursive=True)
+    """
+    from glob import glob as _glob
+    return [str(p) for p in _glob(pattern, recursive=recursive)]
+
+
+def find_files(
+    path: str,
+    pattern: str = "*",
+    *,
+    recursive: bool = True,
+) -> List[str]:
+    """Find files in directory matching pattern.
+
+    Args:
+        path: Directory to search
+        pattern: Filename pattern
+        recursive: Search subdirectories
+
+    Returns:
+        List of matching file paths
+
+    Example:
+        txt_files = find_files('/data', '*.txt')
+    """
+    root = Path(path)
+    if not root.exists():
+        return []
+
+    if recursive:
+        matches = root.rglob(pattern)
+    else:
+        matches = root.glob(pattern)
+
+    return [str(p) for p in matches if p.is_file()]
+
+
+def disk_usage(path: str) -> Dict[str, int]:
+    """Get disk usage statistics.
+
+    Args:
+        path: Path to check
+
+    Returns:
+        Dict with 'total', 'used', 'free' in bytes
+
+    Example:
+        usage = disk_usage('/')
+        print(usage['free'])
+    """
+    usage = shutil.disk_usage(path)
+    return {
+        "total": usage.total,
+        "used": usage.used,
+        "free": usage.free,
+    }
+
+
+def get_size(path: str, *, follow_symlinks: bool = True) -> int:
+    """Get file/directory size in bytes.
+
+    Args:
+        path: File or directory path
+        follow_symlinks: Follow symbolic links
+
+    Returns:
+        Size in bytes
+
+    Example:
+        size = get_size('/path/to/file.txt')
+    """
+    target = Path(path)
+    if not target.exists():
+        return 0
+
+    if target.is_file():
+        return target.stat().st_size
+
+    total = 0
+    for entry in target.rglob("*"):
+        if entry.is_file():
+            total += entry.stat().st_size
+    return total
+
+
+def rename(src: str, dst: str) -> str:
+    """Rename file or directory.
+
+    Args:
+        src: Source path
+        dst: Destination path
+
+    Returns:
+        New path
+
+    Example:
+        new_path = rename('old.txt', 'new.txt')
+    """
+    source = Path(src)
+    target = Path(dst)
+    source.rename(target)
+    return str(target)
+
+
+def read_lines(path: str, encoding: str = "utf-8") -> List[str]:
+    """Read file as list of lines.
+
+    Args:
+        path: File path
+        encoding: Text encoding
+
+    Returns:
+        List of lines (newlines preserved)
+
+    Example:
+        lines = read_lines('data.txt')
+    """
+    with open(path, "r", encoding=encoding) as f:
+        return f.readlines()
+
+
+def write_lines(
+    path: str,
+    lines: List[str],
+    encoding: str = "utf-8",
+) -> int:
+    """Write list of lines to file.
+
+    Args:
+        path: File path
+        lines: List of lines
+        encoding: Text encoding
+
+    Returns:
+        Number of bytes written
+
+    Example:
+        write_lines('data.txt', ['line1\\n', 'line2\\n'])
+    """
+    parent = Path(path).parent
+    if parent and not parent.exists():
+        parent.mkdir(parents=True, exist_ok=True)
+
+    with open(path, "w", encoding=encoding) as f:
+        return f.writelines(lines) or sum(len(line) for line in lines)
+
+
+def is_empty(path: str) -> bool:
+    """Check if file/directory is empty.
+
+    Args:
+        path: Path to check
+
+    Returns:
+        True if empty, False otherwise
+
+    Example:
+        if is_empty('/path/to/dir'):
+            print('Directory is empty')
+    """
+    target = Path(path)
+    if not target.exists():
+        return True
+
+    if target.is_file():
+        return target.stat().st_size == 0
+
+    return not any(target.iterdir())
+
+
+def walk(path: str) -> List[Dict[str, object]]:
+    """Walk directory tree.
+
+    Args:
+        path: Root directory
+
+    Returns:
+        List of dicts with 'root', 'dirs', 'files'
+
+    Example:
+        for entry in walk('/path'):
+            print(entry['root'], entry['files'])
+    """
+    result = []
+    for root, dirs, files in os.walk(path):
+        result.append({
+            "root": root,
+            "dirs": dirs,
+            "files": files,
+        })
+    return result
+
+
+def temp_file(
+    suffix: str = "",
+    prefix: str = "tmp",
+    dir: Optional[str] = None,
+) -> str:
+    """Create temporary file.
+
+    Args:
+        suffix: Filename suffix
+        prefix: Filename prefix
+        dir: Directory (default: system temp)
+
+    Returns:
+        Path to temporary file
+
+    Example:
+        tmp = temp_file(suffix='.txt')
+        write(tmp, 'data')
+    """
+    import tempfile
+    fd, path = tempfile.mkstemp(suffix=suffix, prefix=prefix, dir=dir)
+    os.close(fd)
+    return path
+
+
+def temp_dir(prefix: str = "tmp", dir: Optional[str] = None) -> str:
+    """Create a temporary directory and return its path."""
+    import tempfile
+
+    return tempfile.mkdtemp(prefix=prefix, dir=dir)
+
+
 __all__ = [
     "read",
     "read_bytes",
@@ -277,4 +518,16 @@ __all__ = [
     "readlink",
     "watch",
     "set_times",
+    # advanced
+    "glob",
+    "find_files",
+    "disk_usage",
+    "get_size",
+    "rename",
+    "read_lines",
+    "write_lines",
+    "is_empty",
+    "walk",
+    "temp_file",
+    "temp_dir",
 ]

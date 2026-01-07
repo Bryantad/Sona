@@ -254,8 +254,8 @@ try {
 sona/               # Core interpreter & parser
   ├── interpreter.py
   ├── parser_v090.py
-  ├── ast_nodes_v090.py
-  ├── grammar_v091_fixed.lark
+  ├── ast_nodes.py
+    ├── grammar.lark
   └── stdlib/       # Standard library modules
 stdlib/             # .smod module files
 test.sona           # Example test file

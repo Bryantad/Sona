@@ -1,0 +1,606 @@
+{
+  "version": "0.10.0",
+  "generated": "2026-01-05T23:17:29Z",
+  "moduleCount": 84,
+  "categories": [
+    "core",
+    "data_structures",
+    "io",
+    "network",
+    "database",
+    "security",
+    "async",
+    "testing",
+    "utilities",
+    "automation",
+    "functional",
+    "templating",
+    "data_processing"
+  ],
+  "modules": [
+    {
+      "name": "assert",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "testing",
+      "description": "assert - Rich assertions for Sona stdlib"
+    },
+    {
+      "name": "async",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "async",
+      "description": "async - Async/await utilities for Sona stdlib"
+    },
+    {
+      "name": "benchmark",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "testing",
+      "description": "benchmark - Performance benchmarking for Sona stdlib"
+    },
+    {
+      "name": "bitwise",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "functional",
+      "description": "bitwise - Bitwise operations for Sona stdlib"
+    },
+    {
+      "name": "boolean",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "core",
+      "description": "Sona Standard Library - Boolean Operations Module"
+    },
+    {
+      "name": "cache",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "database",
+      "description": "cache - Enhanced caching layer for Sona stdlib"
+    },
+    {
+      "name": "cli",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "automation",
+      "description": "cli - Command-line interface utilities for Sona stdlib"
+    },
+    {
+      "name": "collection",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "data_structures",
+      "description": "Sona standard library: collections helpers."
+    },
+    {
+      "name": "color",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "data_processing",
+      "description": "color - Color manipulation for Sona stdlib"
+    },
+    {
+      "name": "comparison",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "core",
+      "description": "Sona Standard Library - Comparison Operations Module"
+    },
+    {
+      "name": "compression",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "automation",
+      "description": "compression - File compression utilities for Sona stdlib"
+    },
+    {
+      "name": "config",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "automation",
+      "description": "config - Configuration management for Sona stdlib"
+    },
+    {
+      "name": "cookies",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "network",
+      "description": "cookies - HTTP cookie management for Sona stdlib"
+    },
+    {
+      "name": "crypto",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "security",
+      "description": "crypto - Cryptographic operations for Sona stdlib"
+    },
+    {
+      "name": "csv",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "io"
+    },
+    {
+      "name": "date",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "utilities",
+      "description": "Advanced date helpers backing the Sona ``date`` standard library module."
+    },
+    {
+      "name": "decorator",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "functional",
+      "description": "decorator - Decorator utilities for Sona stdlib"
+    },
+    {
+      "name": "dns",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "network",
+      "description": "dns - DNS resolution utilities for Sona stdlib"
+    },
+    {
+      "name": "encoding",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "utilities",
+      "description": "Encoding helpers for base64."
+    },
+    {
+      "name": "env",
+      "type": "stdlib",
+      "status": "stable",
+      "description": "Environment helpers for the Sona standard library ``env`` module."
+    },
+    {
+      "name": "fs",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "io",
+      "description": "File system helpers backing the Sona stdlib ``fs`` module."
+    },
+    {
+      "name": "ftp",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "network",
+      "description": "ftp - FTP client for Sona stdlib"
+    },
+    {
+      "name": "functional",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "functional",
+      "description": "functional - Functional programming utilities for Sona stdlib"
+    },
+    {
+      "name": "graph",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "data_structures",
+      "description": "graph - Graph data structure for Sona stdlib"
+    },
+    {
+      "name": "hashing",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "utilities",
+      "description": "Hash helpers wrapping hashlib for deterministic usage."
+    },
+    {
+      "name": "heap",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "data_structures",
+      "description": "heap - Heap/Priority queue for Sona stdlib"
+    },
+    {
+      "name": "http",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "network",
+      "description": "http - HTTP client operations for Sona stdlib"
+    },
+    {
+      "name": "io",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "io",
+      "description": "Sona standard library: high level file I/O helpers."
+    },
+    {
+      "name": "iterator",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "functional",
+      "description": "iterator - Iterator utilities for Sona stdlib"
+    },
+    {
+      "name": "json",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "io",
+      "description": "Advanced JSON helpers backing the Sona ``json`` standard library module."
+    },
+    {
+      "name": "jwt",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "security",
+      "description": "jwt - JSON Web Token operations for Sona stdlib"
+    },
+    {
+      "name": "logging",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "automation",
+      "description": "logging - Logging utilities for Sona stdlib"
+    },
+    {
+      "name": "markdown",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "templating",
+      "description": "markdown - Markdown processing for Sona stdlib"
+    },
+    {
+      "name": "math",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "core",
+      "description": "Advanced numeric helpers powering the Sona ``math`` module."
+    },
+    {
+      "name": "matrix",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "data_structures",
+      "description": "matrix - Matrix operations for Sona stdlib"
+    },
+    {
+      "name": "migration",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "database",
+      "description": "migration - Enhanced database migration system for Sona stdlib"
+    },
+    {
+      "name": "mock",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "testing",
+      "description": "mock - Mocking utilities for testing in Sona stdlib"
+    },
+    {
+      "name": "numbers",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "core",
+      "description": "Numeric helpers."
+    },
+    {
+      "name": "oauth",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "security",
+      "description": "oauth - OAuth authentication for Sona stdlib"
+    },
+    {
+      "name": "operators",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "core",
+      "description": "Sona Standard Library - Operators Module"
+    },
+    {
+      "name": "orm",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "database",
+      "description": "orm - Enhanced ORM (Object-Relational Mapping) for Sona stdlib"
+    },
+    {
+      "name": "password",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "security",
+      "description": "password - Password hashing and validation for Sona stdlib"
+    },
+    {
+      "name": "path",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "io",
+      "description": "High-level path utilities for the Sona standard library."
+    },
+    {
+      "name": "permissions",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "security",
+      "description": "permissions - Permission/authorization system for Sona stdlib"
+    },
+    {
+      "name": "pool",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "async",
+      "description": "pool - Thread/process pooling for Sona stdlib"
+    },
+    {
+      "name": "process",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "async",
+      "description": "process - Process management for Sona stdlib"
+    },
+    {
+      "name": "profiler",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "testing",
+      "description": "profiler - Code profiling for Sona stdlib"
+    },
+    {
+      "name": "promise",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "async",
+      "description": "promise - Promise/Future pattern for Sona stdlib"
+    },
+    {
+      "name": "proxy",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "network",
+      "description": "proxy - HTTP proxy utilities for Sona stdlib"
+    },
+    {
+      "name": "query",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "database",
+      "description": "query - Enhanced SQL query builder for Sona stdlib"
+    },
+    {
+      "name": "queue",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "data_structures",
+      "description": "Enhanced FIFO queue implementation with priority and advanced operations."
+    },
+    {
+      "name": "random",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "utilities",
+      "description": "Random utilities for Sona programs."
+    },
+    {
+      "name": "redis",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "database",
+      "description": "redis - Comprehensive Redis client for Sona stdlib"
+    },
+    {
+      "name": "regex",
+      "type": "stdlib",
+      "status": "stable"
+    },
+    {
+      "name": "scheduler",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "automation",
+      "description": "scheduler - Task scheduling utilities for Sona stdlib"
+    },
+    {
+      "name": "search",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "data_processing",
+      "description": "Search helpers for Sona programs."
+    },
+    {
+      "name": "secrets",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "security",
+      "description": "secrets - Secure random generation for Sona stdlib"
+    },
+    {
+      "name": "session",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "network",
+      "description": "session - HTTP session management for Sona stdlib"
+    },
+    {
+      "name": "shell",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "automation",
+      "description": "shell - Shell command execution for Sona stdlib"
+    },
+    {
+      "name": "signal",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "automation",
+      "description": "signal - Signal/event system for Sona stdlib"
+    },
+    {
+      "name": "smtp",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "network",
+      "description": "smtp - Email sending via SMTP for Sona stdlib"
+    },
+    {
+      "name": "sort",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "data_processing",
+      "description": "Sorting helpers for Sona programs."
+    },
+    {
+      "name": "sqlite",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "database",
+      "description": "sqlite - SQLite database operations for Sona stdlib"
+    },
+    {
+      "name": "stack",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "data_structures",
+      "description": "Enhanced LIFO stack implementation with advanced operations."
+    },
+    {
+      "name": "statistics",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "data_processing",
+      "description": "Statistical helpers for Sona programs."
+    },
+    {
+      "name": "string",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "core",
+      "description": "Advanced string helpers powering the Sona ``string`` module."
+    },
+    {
+      "name": "template",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "templating",
+      "description": "template - Simple template engine for Sona stdlib"
+    },
+    {
+      "name": "test",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "testing",
+      "description": "test - Test framework for Sona stdlib"
+    },
+    {
+      "name": "thread",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "async",
+      "description": "thread - Threading utilities for Sona stdlib"
+    },
+    {
+      "name": "time",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "utilities",
+      "description": "Advanced time helpers backing the Sona ``time`` standard library module."
+    },
+    {
+      "name": "timer",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "utilities",
+      "description": "Timing helpers for quick measurements."
+    },
+    {
+      "name": "toml",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "io",
+      "description": "Sona Standard Library - TOML Module"
+    },
+    {
+      "name": "tree",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "data_structures",
+      "description": "tree - Tree data structure for Sona stdlib"
+    },
+    {
+      "name": "type",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "core",
+      "description": "Sona Standard Library - Type Inquiry Module"
+    },
+    {
+      "name": "url",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "network",
+      "description": "url - URL parsing and building for Sona stdlib"
+    },
+    {
+      "name": "uuid",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "utilities",
+      "description": "Sona Standard Library - UUID Module"
+    },
+    {
+      "name": "validation",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "utilities",
+      "description": "Input validation helpers."
+    },
+    {
+      "name": "websocket",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "network",
+      "description": "websocket - WebSocket client for Sona stdlib"
+    },
+    {
+      "name": "xml",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "io",
+      "description": "xml - XML parsing and generation for Sona stdlib"
+    },
+    {
+      "name": "yaml",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "io",
+      "description": "Sona Standard Library - YAML Module"
+    },
+    {
+      "name": "collection.list",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "data_structures",
+      "description": "collection.list - Sequence operations for Sona stdlib"
+    },
+    {
+      "name": "collection.dict",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "data_structures",
+      "description": "collection.dict - Dictionary operations for Sona stdlib"
+    },
+    {
+      "name": "collection.set",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "data_structures",
+      "description": "collection.set - Set operations for Sona stdlib"
+    },
+    {
+      "name": "collection.tuple",
+      "type": "stdlib",
+      "status": "stable",
+      "category": "data_structures",
+      "description": "collection.tuple - Tuple operations for Sona stdlib"
+    }
+  ]
+}

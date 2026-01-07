@@ -7,7 +7,7 @@ directly by Sona programs without additional adapters.
 
 from collections import Counter, deque
 from itertools import chain, islice
-from typing import Callable, Dict, Iterable, List, Sequence, TypeVar
+from typing import Any, Callable, Dict, Iterable, List, Sequence, TypeVar
 
 
 T = TypeVar("T")
@@ -17,6 +17,49 @@ def len(obj: Sequence[T]) -> int:
     """Return the length of a sequence (alias for :func:`len`)."""
 
     return __builtins__["len"](obj)
+
+
+def length(obj: Sequence[T]) -> int:
+    return len(obj)
+
+
+def contains(seq: Sequence[T], value: Any) -> bool:
+    return value in seq
+
+
+def is_empty(seq: Sequence[T]) -> bool:
+    return __builtins__["len"](seq) == 0
+
+
+def _call_callback(callback, *args):
+    if hasattr(callback, 'call'):
+        return callback.call(list(args), {})
+    if callable(callback):
+        return callback(*args)
+    raise TypeError(f"Object '{callback}' is not callable")
+
+
+def map(seq: Sequence[T], callback) -> list[Any]:
+    return [_call_callback(callback, item) for item in seq]
+
+
+def filter(seq: Sequence[T], predicate) -> list[T]:
+    return [item for item in seq if _call_callback(predicate, item)]
+
+
+def reduce(seq: Sequence[T], reducer, initial: Any = None) -> Any:
+    iterator = iter(seq)
+    if initial is None:
+        try:
+            result = next(iterator)
+        except StopIteration:
+            return None
+    else:
+        result = initial
+
+    for item in iterator:
+        result = _call_callback(reducer, result, item)
+    return result
 
 
 def range(start: int, end: int | None = None, step: int = 1) -> list[int]:
@@ -125,6 +168,163 @@ def deque_pop(queue: deque[T]) -> T:
     return queue.pop()
 
 
+def partition(iterable: Iterable[T], predicate: Callable[[T], bool]) -> tuple[list[T], list[T]]:
+    """Partition items into two lists based on predicate.
+    
+    Returns (truthy, falsy) tuple of lists.
+    
+    Example:
+        partition([1, 2, 3, 4], lambda x: x % 2 == 0)
+        # Returns ([2, 4], [1, 3])
+    """
+    truthy: list[T] = []
+    falsy: list[T] = []
+    for item in iterable:
+        if predicate(item):
+            truthy.append(item)
+        else:
+            falsy.append(item)
+    return (truthy, falsy)
+
+
+def zip_with(*iterables: Iterable[T]) -> list[tuple]:
+    """Zip multiple iterables into list of tuples.
+    
+    Example:
+        zip_with([1, 2], ['a', 'b'])
+        # Returns [(1, 'a'), (2, 'b')]
+    """
+    return list(zip(*iterables))
+
+
+def interleave(*iterables: Iterable[T]) -> list[T]:
+    """Interleave items from multiple iterables.
+    
+    Example:
+        interleave([1, 2, 3], ['a', 'b', 'c'])
+        # Returns [1, 'a', 2, 'b', 3, 'c']
+    """
+    result: list[T] = []
+    iterators = [iter(it) for it in iterables]
+    while iterators:
+        for it in list(iterators):
+            try:
+                result.append(next(it))
+            except StopIteration:
+                iterators.remove(it)
+    return result
+
+
+def compact(iterable: Iterable[T | None]) -> list[T]:
+    """Remove None values from iterable.
+    
+    Example:
+        compact([1, None, 2, None, 3])
+        # Returns [1, 2, 3]
+    """
+    return [item for item in iterable if item is not None]
+
+
+def pluck(iterable: Iterable[dict], key: str) -> list:
+    """Extract values for a key from list of dicts.
+    
+    Example:
+        pluck([{'name': 'Alice'}, {'name': 'Bob'}], 'name')
+        # Returns ['Alice', 'Bob']
+    """
+    return [item.get(key) for item in iterable if isinstance(item, dict)]
+
+
+def find(iterable: Iterable[T], predicate: Callable[[T], bool]) -> T | None:
+    """Find first item matching predicate.
+    
+    Example:
+        find([1, 2, 3, 4], lambda x: x > 2)
+        # Returns 3
+    """
+    for item in iterable:
+        if predicate(item):
+            return item
+    return None
+
+
+def find_index(seq: Sequence[T], predicate: Callable[[T], bool]) -> int:
+    """Find index of first item matching predicate.
+    
+    Returns -1 if not found.
+    
+    Example:
+        find_index([1, 2, 3, 4], lambda x: x > 2)
+        # Returns 2
+    """
+    for i, item in enumerate(seq):
+        if predicate(item):
+            return i
+    return -1
+
+
+def nth(seq: Sequence[T], index: int, default: T | None = None) -> T | None:
+    """Get nth element with safe bounds checking.
+    
+    Example:
+        nth([1, 2, 3], 1)  # Returns 2
+        nth([1, 2, 3], 10, default=0)  # Returns 0
+    """
+    try:
+        return seq[index]
+    except (IndexError, KeyError):
+        return default
+
+
+def slice_seq(seq: Sequence[T], start: int = 0, end: int | None = None, step: int = 1) -> list[T]:
+    """Slice sequence with explicit parameters.
+    
+    Example:
+        slice_seq([1, 2, 3, 4, 5], 1, 4)
+        # Returns [2, 3, 4]
+    """
+    return list(seq[start:end:step])
+
+
+def rotate(seq: Sequence[T], n: int) -> list[T]:
+    """Rotate sequence n positions.
+    
+    Positive n rotates right, negative rotates left.
+    
+    Example:
+        rotate([1, 2, 3, 4], 1)  # Returns [4, 1, 2, 3]
+        rotate([1, 2, 3, 4], -1)  # Returns [2, 3, 4, 1]
+    """
+    if not seq:
+        return []
+    n = n % len(seq)
+    return list(seq[-n:]) + list(seq[:-n]) if n else list(seq)
+
+
+def shuffle(seq: Sequence[T]) -> list[T]:
+    """Return shuffled copy of sequence.
+    
+    Example:
+        shuffle([1, 2, 3, 4])
+        # Returns randomized list like [3, 1, 4, 2]
+    """
+    import random
+    result = list(seq)
+    random.shuffle(result)
+    return result
+
+
+def sample(seq: Sequence[T], k: int) -> list[T]:
+    """Return k random items from sequence.
+    
+    Example:
+        sample([1, 2, 3, 4, 5], 2)
+        # Returns 2 random items like [3, 1]
+    """
+    import random
+    return random.sample(list(seq), k)
+
+
 __all__ = [
     "len",
     "range",
@@ -144,6 +344,19 @@ __all__ = [
     "deque_push",
     "deque_pop_left",
     "deque_pop",
+    # advanced
+    "partition",
+    "zip_with",
+    "interleave",
+    "compact",
+    "pluck",
+    "find",
+    "find_index",
+    "nth",
+    "slice_seq",
+    "rotate",
+    "shuffle",
+    "sample",
 ]
 
 

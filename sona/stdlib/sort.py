@@ -7,6 +7,11 @@ import heapq
 T = TypeVar("T")
 
 
+def sort(sequence: Iterable[T], order: str = "asc") -> list[T]:
+    reverse = str(order).lower() in {"desc", "descending", "reverse"}
+    return sorted(sequence, reverse=reverse)
+
+
 def quicksort(sequence: Iterable[T], *, key: Optional[Callable[[T], T]] = None) -> list[T]:
     """Return a new list containing *sequence* sorted using quicksort.
 
@@ -206,7 +211,7 @@ def insertion_sort(sequence: Iterable[T]) -> list[T]:
 
 
 __all__ = [
-    "quicksort", "mergesort", "top_k", "bottom_k",
+    "sort", "quicksort", "mergesort", "top_k", "bottom_k",
     "is_sorted", "sort_by_frequency", "stable_sort",
     "natural_sort", "reverse_sort", "insertion_sort"
 ]

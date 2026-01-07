@@ -1,9 +1,6 @@
-"""
-Sona v0.9.6 Standard Library
-30 Stable Modules - Governance Enforced
-"""
+"""Sona v0.10.1 Standard Library."""
 
-__version__ = "0.9.7"
+__version__ = "0.10.1"
 
 # Standard library modules are loaded dynamically
-# See MANIFEST.json for the complete list of 30 modules
+# See MANIFEST.json for the complete list of stdlib modules

@@ -5,116 +5,123 @@ func __default(value, fallback) {
     return value
 }
 
-func loads(text, options) {
+func __option(options, key, fallback) {
+    if options == nil {
+        return fallback
+    }
+    return __default(options.get(key), fallback)
+}
+
+func loads(text, options=nil) {
     if options == nil {
         options = {}
     }
-    return __native__.json.loads(
+    return __native__.json_loads(
         text,
-        allow_comments=__default(options["allow_comments"], false),
-        allow_trailing_commas=__default(options["allow_trailing_commas"], false),
-        strict=__default(options["strict"], true)
+        allow_comments=__option(options, "allow_comments", false),
+        allow_trailing_commas=__option(options, "allow_trailing_commas", false),
+        strict=__option(options, "strict", true)
     )
 }
 
-func load(path, options) {
+func load(path, options=nil) {
     if options == nil {
         options = {}
     }
-    return __native__.json.load(
+    return __native__.json_load(
         path,
-        encoding=__default(options["encoding"], "utf-8"),
-        allow_comments=__default(options["allow_comments"], false),
-        allow_trailing_commas=__default(options["allow_trailing_commas"], false),
-        strict=__default(options["strict"], true)
+        encoding=__option(options, "encoding", "utf-8"),
+        allow_comments=__option(options, "allow_comments", false),
+        allow_trailing_commas=__option(options, "allow_trailing_commas", false),
+        strict=__option(options, "strict", true)
     )
 }
 
-func dumps(value, options) {
+func dumps(value, options=nil) {
     if options == nil {
         options = {}
     }
-    return __native__.json.dumps(
+    return __native__.json_dumps(
         value,
-        indent=__default(options["indent"], nil),
-        sort_keys=__default(options["sort_keys"], false),
-        ensure_ascii=__default(options["ensure_ascii"], false),
-        trailing_newline=__default(options["trailing_newline"], false)
+        indent=__option(options, "indent", nil),
+        sort_keys=__option(options, "sort_keys", false),
+        ensure_ascii=__option(options, "ensure_ascii", false),
+        trailing_newline=__option(options, "trailing_newline", false)
     )
 }
 
-func dump(value, path, options) {
+func dump(value, path, options=nil) {
     if options == nil {
         options = {}
     }
-    return __native__.json.dump(
+    return __native__.json_dump(
         value,
         path,
-        indent=__default(options["indent"], 2),
-        sort_keys=__default(options["sort_keys"], false),
-        ensure_ascii=__default(options["ensure_ascii"], false),
-        encoding=__default(options["encoding"], "utf-8"),
-        newline=__default(options["newline"], "\n"),
-        trailing_newline=__default(options["trailing_newline"], true)
+        indent=__option(options, "indent", 2),
+        sort_keys=__option(options, "sort_keys", false),
+        ensure_ascii=__option(options, "ensure_ascii", false),
+        encoding=__option(options, "encoding", "utf-8"),
+        newline=__option(options, "newline", "\n"),
+        trailing_newline=__option(options, "trailing_newline", true)
     )
 }
 
 func pretty(value) {
-    return __native__.json.pretty(value)
+    return __native__.json_pretty(value)
 }
 
-func normalize(value, options) {
+func normalize(value, options=nil) {
     if options == nil {
         options = {}
     }
-    return __native__.json.normalize(
+    return __native__.json_normalize(
         value,
-        sort_keys=__default(options["sort_keys"], true),
-        ensure_ascii=__default(options["ensure_ascii"], false)
+        sort_keys=__option(options, "sort_keys", true),
+        ensure_ascii=__option(options, "ensure_ascii", false)
     )
 }
 
-func is_valid(text, options) {
+func is_valid(text, options=nil) {
     if options == nil {
         options = {}
     }
-    return __native__.json.is_valid(
+    return __native__.json_is_valid(
         text,
-        allow_comments=__default(options["allow_comments"], false),
-        allow_trailing_commas=__default(options["allow_trailing_commas"], false)
+        allow_comments=__option(options, "allow_comments", false),
+        allow_trailing_commas=__option(options, "allow_trailing_commas", false)
     )
 }
 
-func validate(text, options) {
+func validate(text, options=nil) {
     if options == nil {
         options = {}
     }
-    return __native__.json.validate(
+    return __native__.json_validate(
         text,
-        allow_comments=__default(options["allow_comments"], false),
-        allow_trailing_commas=__default(options["allow_trailing_commas"], false)
+        allow_comments=__option(options, "allow_comments", false),
+        allow_trailing_commas=__option(options, "allow_trailing_commas", false)
     )
 }
 
-func merge(values, deep) {
+func merge(values, deep=nil) {
     if deep == nil {
         deep = true
     }
-    return __native__.json.merge(values..., deep=deep)
+    return __native__.json_merge(...values, deep=deep)
 }
 
-func pointer_get(value, pointer, default) {
-    return __native__.json.pointer_get(value, pointer, __default(default, nil))
+func pointer_get(value, pointer, fallback=nil) {
+    return __native__.json_pointer_get(value, pointer, __default(fallback, nil))
 }
 
 func pointer_set(value, pointer, new_value) {
-    return __native__.json.pointer_set(value, pointer, new_value)
+    return __native__.json_pointer_set(value, pointer, new_value)
 }
 
-func parse(text, options) {
+func parse(text, options=nil) {
     return loads(text, options)
 }
 
-func stringify(value, options) {
+func stringify(value, options=nil) {
     return dumps(value, options)
 }

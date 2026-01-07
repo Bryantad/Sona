@@ -81,6 +81,16 @@ def is_odd(value: int) -> bool:
     return value % 2 != 0
 
 
+def is_positive(value: float) -> bool:
+    """Return True when value > 0."""
+    return value > 0
+
+
+def is_negative(value: float) -> bool:
+    """Return True when value < 0."""
+    return value < 0
+
+
 def gcd(a: int, b: int) -> int:
     """
     Calculate greatest common divisor using Euclidean algorithm.

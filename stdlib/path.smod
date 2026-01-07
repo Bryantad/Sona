@@ -5,8 +5,29 @@
 # Errors: Future Result integration will surface EINVAL for malformed paths and ENOTFOUND for missing segments.
 
 # Combines multiple path segments into a normalised path string.
-func join(parts) {
-    return __native__.path_join(parts)
+func join(a, b=nil, c=nil, d=nil, e=nil, f=nil, g=nil, h=nil) {
+    if b == nil {
+        return __native__.path_join(a)
+    }
+    if h != nil {
+        return __native__.path_join(a, b, c, d, e, f, g, h)
+    }
+    if g != nil {
+        return __native__.path_join(a, b, c, d, e, f, g)
+    }
+    if f != nil {
+        return __native__.path_join(a, b, c, d, e, f)
+    }
+    if e != nil {
+        return __native__.path_join(a, b, c, d, e)
+    }
+    if d != nil {
+        return __native__.path_join(a, b, c, d)
+    }
+    if c != nil {
+        return __native__.path_join(a, b, c)
+    }
+    return __native__.path_join(a, b)
 }
 
 # Normalises a path string (resolves '.', '..', and duplicate separators).

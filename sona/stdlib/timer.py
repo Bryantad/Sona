@@ -192,6 +192,21 @@ class Stopwatch:
         return self._elapsed
 
 
+def start() -> Stopwatch:
+    sw = Stopwatch()
+    sw.start()
+    return sw
+
+
+def elapsed(timer: Stopwatch) -> float:
+    value = getattr(timer, "elapsed")
+    return value() if callable(value) else float(value)
+
+
+def stop(timer: Stopwatch) -> float:
+    return float(timer.stop())
+
+
 __all__ = [
     "Timer",
     "measure",
@@ -200,5 +215,8 @@ __all__ = [
     "benchmark",
     "timeout_after",
     "rate_limit",
-    "Stopwatch"
+    "Stopwatch",
+    "start",
+    "elapsed",
+    "stop",
 ]

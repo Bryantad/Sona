@@ -9,7 +9,7 @@ Version: 0.9.6
 """
 
 __all__ = [
-    'typeof', 'is_int', 'is_float', 'is_number', 'is_string', 
+    'typeof', 'type_of', 'is_int', 'is_float', 'is_number', 'is_string', 
     'is_bool', 'is_list', 'is_dict', 'is_set', 'is_tuple', 'is_none',
     'is_callable', 'is_iterable', 'is_numeric', 'is_empty',
     'get_type_name', 'cast', 'is_sequence'
@@ -57,6 +57,10 @@ def typeof(x):
     """
     python_type = type(x)
     return TYPE_MAP.get(python_type, 'object')
+
+
+def type_of(x):
+    return typeof(x)
 
 def is_int(x):
     """

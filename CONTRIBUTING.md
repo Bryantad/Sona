@@ -247,7 +247,7 @@ def function_name(param1: type, param2: type) -> return_type:
 6. **Environment**:
    - OS: Windows 11 / Linux / macOS
    - Python version: 3.12
-   - Sona version: 0.9.8
+    - Sona version: 0.9.9
 7. **Code Sample** - Minimal reproducible example
 8. **Error Message** - Full error output
 
@@ -294,8 +294,8 @@ Understanding the codebase:
 sona/
 ├── interpreter.py       # Main interpreter logic
 ├── parser_v090.py       # Parser implementation
-├── ast_nodes_v090.py    # AST node definitions
-├── grammar_v091_fixed.lark  # Language grammar
+├── ast_nodes.py    # AST node definitions
+├── grammar.lark  # Language grammar
 ├── stdlib/              # Standard library modules
 │   ├── native_*.py      # Native Python modules
 │   └── *.py             # Regular modules
@@ -309,7 +309,7 @@ sona/
 
 - **interpreter.py** - Executes AST, manages scope, loads modules
 - **parser_v090.py** - Parses Sona code into AST
-- **grammar_v091_fixed.lark** - Defines Sona syntax
+- **grammar.lark** - Defines Sona syntax
 - **stdlib/MANIFEST.json** - Lists all stdlib modules
 
 ---

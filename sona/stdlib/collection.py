@@ -7,7 +7,7 @@ directly by Sona programs without additional adapters.
 
 from collections import Counter, deque
 from itertools import chain, islice
-from typing import Callable, Dict, Iterable, List, Sequence, TypeVar
+from typing import Any, Callable, Dict, Iterable, List, Sequence, TypeVar
 
 
 T = TypeVar("T")
@@ -17,6 +17,49 @@ def len(obj: Sequence[T]) -> int:
     """Return the length of a sequence (alias for :func:`len`)."""
 
     return __builtins__["len"](obj)
+
+
+def length(obj: Sequence[T]) -> int:
+    return len(obj)
+
+
+def contains(seq: Sequence[T], value: Any) -> bool:
+    return value in seq
+
+
+def is_empty(seq: Sequence[T]) -> bool:
+    return __builtins__["len"](seq) == 0
+
+
+def _call_callback(callback, *args):
+    if hasattr(callback, 'call'):
+        return callback.call(list(args), {})
+    if callable(callback):
+        return callback(*args)
+    raise TypeError(f"Object '{callback}' is not callable")
+
+
+def map(seq: Sequence[T], callback) -> list[Any]:
+    return [_call_callback(callback, item) for item in seq]
+
+
+def filter(seq: Sequence[T], predicate) -> list[T]:
+    return [item for item in seq if _call_callback(predicate, item)]
+
+
+def reduce(seq: Sequence[T], reducer, initial: Any = None) -> Any:
+    iterator = iter(seq)
+    if initial is None:
+        try:
+            result = next(iterator)
+        except StopIteration:
+            return None
+    else:
+        result = initial
+
+    for item in iterator:
+        result = _call_callback(reducer, result, item)
+    return result
 
 
 def range(start: int, end: int | None = None, step: int = 1) -> list[int]:

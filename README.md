@@ -1,8 +1,8 @@
-# 🎵 Sona v0.9.8
+# 🎵 Sona v0.10.1
 
-**AI-Native Programming Language with 80-Module Standard Library**
+**AI-Native Programming Language with 91-Module Standard Library**
 
-[![Version](https://img.shields.io/badge/version-0.9.8-blue.svg)](https://github.com/Bryantad/Sona)
+[![Version](https://img.shields.io/badge/version-0.10.1-blue.svg)](https://github.com/Bryantad/Sona)
 [![Python](https://img.shields.io/badge/python-3.11+-green.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 
@@ -10,16 +10,49 @@ Sona is a modern, expressive programming language designed for rapid development
 
 ---
 
-## ⚡ What's New in v0.9.8
+## ?s? What's New in v0.10.1
 
-- 🧭 **Parser & runtime hardening** – BOM/escaped-path handling, stricter Unicode escape parsing, and friendlier error recovery for production runs.
-- 🔒 **Security follow-ups** – Safer defaults for networked modules, HF model pinning guidance, and SQLi/FTP mitigations documented.
-- 🧪 **CI + coverage uplift** – 90%+ coverage target baked into pytest/coverage config with randomized ordering to shake out flakes.
-- 🤖 **Micro-chunked AI workflows** – Smaller, deterministic tasks for IDE assistance to keep focus/resume reliable.
-- 🖥️ **Local/Ollama & offline-friendly** – Documented local endpoints and Ollama setup so you can run without cloud dependencies.
-- 📓 **Docs refresh** – Updated quick start, security policy, and release notes to stay aligned with the new workflows.
+- ?o. **Cognitive Preview** ??" Intent, decision provenance, trace, and cognitive scopes.
+- ?o. **Cognitive reports** ??" Exportable report artifacts and linting (runtime + LSP).
+- ?o. **Profile annotations** ??" ADHD/dyslexia profile metadata surfaced in the editor.
+- dY"" **Version sync** ??" Packaging/runtime/docs aligned on v0.10.1.
 
-[See Full Release Notes →](RELEASE_NOTES_v0.9.8.md)
+[See Full Release Notes ?+'](SONA_0.10.0_RELEASE_NOTES.md)
+
+---
+
+## Cognitive Features
+
+Example 1: Intent anchors
+
+```sona
+@intent "parse user config safely";
+```
+
+Example 2: Focus blocks with validation
+
+```sona
+import json;
+
+func validate(cfg) {
+    return cfg;
+}
+
+@intent "parse user config safely";
+focus {
+    let cfg = json.parse(text);
+    validate(cfg);
+}
+```
+
+Example 3: Explainable checkpoints
+
+```sona
+cognitive_trace(enabled=true);
+explain_step(note="checkpoint before export");
+```
+
+Note: Each `@intent` is recorded as an intent entry in cognitive reports.
 
 ---
 
@@ -50,11 +83,11 @@ Create `hello.sona`:
 
 ```sona
 // Simple greeting
-print("Hello from Sona v0.9.8!");
+print("Hello from Sona v0.10.0!");
 
 // Use stdlib
 import json;
-let data = {"version": "0.9.8", "modules": 80};
+let data = {"version": "0.10.0", "modules": 91};
 print(json.stringify(data));
 ```
 
@@ -85,7 +118,7 @@ python run_sona.py hello.sona
 
 ---
 
-## 📦 Standard Library (80 Modules)
+## 📦 Standard Library (91 Modules)
 
 ### 🔵 Core System (7 modules)
 
@@ -240,7 +273,7 @@ import json;
 
 // Create HTTP session
 let s = session.create();
-s.set_header("User-Agent", "Sona/0.9.8");
+s.set_header("User-Agent", "Sona/0.10.0");
 
 // Make requests
 let response = s.get("https://api.example.com/data");
@@ -383,7 +416,7 @@ print("Triple 7: " + triple(7));  // 21
 
 - **[Quick Start Guide](QUICK_START.md)** - Get up and running in 5 minutes
 - **[API Reference](API.md)** - Complete API documentation
-- **[Release Notes](RELEASE_NOTES_v0.9.8.md)** - What's new in v0.9.8
+- **[Release Notes](SONA_0.10.0_RELEASE_NOTES.md)** - What's new in v0.10.0
 - **[Examples](examples/)** - Sample projects and code snippets
 
 ---
@@ -403,7 +436,7 @@ python run_sona.py test_all_097.sona
 Expected output:
 
 ```
-✅ ALL 80 MODULES VERIFIED SUCCESSFULLY!
+✅ ALL 91 MODULES VERIFIED SUCCESSFULLY!
 
 Module Categories:
   • Core System:        7 modules
@@ -419,7 +452,7 @@ Module Categories:
   • Functional:         4 modules
   • Templates:          3 modules
                       ────────────
-  TOTAL:               80 modules
+    TOTAL:               91 modules
 ```
 
 ---
@@ -480,12 +513,12 @@ Modules are organized into 12 logical categories:
 
 ## 🛣️ Roadmap
 
-### v0.9.9 (Planned)
+### v0.10.x (Cognitive Preview)
 
-- Enhanced error messages with context
-- Performance optimizations
-- Module documentation website
-- Interactive REPL improvements
+- Cognitive report schema stabilization
+- LSP cognitive diagnostics depth
+- Export workflow integrations
+- Runtime coverage consistency
 
 ### v1.0.0 (Target: Q2 2024)
 
@@ -536,7 +569,7 @@ Built with ❤️ using:
 
 <div align="center">
 
-**Sona v0.9.8** - 80 Modules, Zero Dependencies, Infinite Possibilities
+**Sona v0.10.0** - 91 Modules, Zero Dependencies, Infinite Possibilities
 
 Made with 🎵 by the Sona Team
 

@@ -10,6 +10,13 @@ func __default(value, fallback) {
 	return value
 }
 
+func __option(options, key, fallback) {
+	if options == nil {
+		return fallback
+	}
+	return __default(options.get(key), fallback)
+}
+
 func add(a, b) {
 	return __native__.math_add(a, b)
 }
@@ -26,7 +33,7 @@ func divide(a, b) {
 	return __native__.math_divide(a, b)
 }
 
-func safe_divide(a, b, fallback) {
+func safe_divide(a, b, fallback=nil) {
 	return __native__.math_safe_divide(a, b, __default(fallback, 0.0))
 }
 
@@ -74,7 +81,7 @@ func atan2(y, x) {
 	return __native__.math_atan2(y, x)
 }
 
-func log(x, base) {
+func log(x, base=nil) {
 	return __native__.math_log(x, __default(base, nil))
 }
 
@@ -122,7 +129,7 @@ func ceil(value) {
 	return __native__.math_ceil(value)
 }
 
-func round(value, digits) {
+func round(value, digits=nil) {
 	return __native__.math_round(value, __default(digits, nil))
 }
 
@@ -150,23 +157,23 @@ func median(values) {
 	return __native__.math_median(values)
 }
 
-func variance(values, options) {
+func variance(values, options=nil) {
 	if options == nil {
 		options = {}
 	}
 	return __native__.math_variance(
 		values,
-		sample=__default(options["sample"], false)
+		sample=__option(options, "sample", false)
 	)
 }
 
-func stddev(values, options) {
+func stddev(values, options=nil) {
 	if options == nil {
 		options = {}
 	}
 	return __native__.math_stddev(
 		values,
-		sample=__default(options["sample"], false)
+		sample=__option(options, "sample", false)
 	)
 }
 
@@ -194,15 +201,15 @@ func distance(a, b) {
 	return __native__.math_distance(a, b)
 }
 
-func is_close(a, b, options) {
+func is_close(a, b, options=nil) {
 	if options == nil {
 		options = {}
 	}
 	return __native__.math_is_close(
 		a,
 		b,
-		rel_tol=__default(options["rel_tol"], 1e-9),
-		abs_tol=__default(options["abs_tol"], 0.0)
+		rel_tol=__option(options, "rel_tol", 0.000000001),
+		abs_tol=__option(options, "abs_tol", 0.0)
 	)
 }
 

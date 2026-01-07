@@ -18,6 +18,14 @@ def linear_search(sequence: Iterable[T], target: T) -> int:
     return -1
 
 
+def index_of(sequence: Iterable[T], target: T) -> int:
+    return linear_search(sequence, target)
+
+
+def contains(sequence: Iterable[T], target: T) -> bool:
+    return linear_search(sequence, target) != -1
+
+
 def binary_search(sequence: Sequence[T], target: T) -> int:
     """Return the index of *target* in a sorted *sequence*.
 

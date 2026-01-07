@@ -259,3 +259,9 @@ def any_true(*args):
         False
     """
     return any(coerce(x) for x in args)
+
+
+# Sona-facing aliases (can't use `def and(...)` / `def not(...)` in Python)
+globals().setdefault('and', and_)
+globals().setdefault('or', or_)
+globals().setdefault('not', not_)

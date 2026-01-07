@@ -1,5 +1,157 @@
 # CHANGELOG - Sona Programming Language
 
+## [0.10.0] - 2025-12-30 ? Cognitive Preview (Intent-Native)
+
+### Highlights
+
+- Cognitive substrate surfaced: intent, decision provenance, explainability trace, profile annotations, and cognitive scope budgets.
+- Exportable cognitive reports via `python run_sona.py report <file.sona> --format md|json --out <path>` with safe fallbacks.
+- VS Code: new `Sona: Export Cognitive Report` command, profile auto-detect prompt, updated grammar/snippets for cognitive keywords.
+- Version alignment: runtime, stdlib, CLI, docs, and VS Code extension at 0.10.0.
+- Canonical sample: `examples/cognitive_preview_010.sona` demonstrates profile + intent + decision + trace + scope budget.
+- CLI now supports direct `sona <file.py>` invocation for Python helper scripts.
+- Stdlib .smod wrappers are now preferred for imports with native bridge wiring.
+
+### Language & Grammar
+
+- Cognitive statements parsed as first-class constructs: `intent`, `decision`, `cognitive_trace`, `explain_step`, `profile`, `cognitive_scope { ... }`.
+- Cognitive scope budgets accepted via `cognitive_scope(name, budget=...) { ... }`.
+- Added `focus { ... }` blocks for cognitive focus sessions and `@intent "..."` annotations for intent-first code.
+
+### Interpreter & Runtime
+
+- CognitiveMonitor expanded with intent stack, decision log, trace log, profile handling, lint warnings, scope budgets, and attention alerts.
+- Built-ins: `intent`, `decision`, `cognitive_trace`, `explain_step`, `profile`, `cognitive_lint`, `cognitive_report`, `cognitive_export`.
+- Runner now supports `run` and `report` modes with md/json output and auto-created report paths.
+- Explain-first runtime errors now surface deterministic explanations before stack traces.
+- CLI `sona run` supports `--errors=explain|trace|both` (default explain-first).
+- Archived experimental modules under `sona/_attic` and excluded them from coverage scans.
+- Smod module loader prefers `stdlib/*.smod` when present and injects a native bridge for stdlib wrappers.
+- Path join now accepts multi-part segments; regex replace/split use native options mapping to avoid null indexing.
+
+### Tooling ? VS Code Extension
+
+- New command `Sona: Export Cognitive Report` (Command Palette + editor context) targeting the active `.sona` file.
+- Profile detection (`profile("adhd|dyslexia|neurotypical")` or `# profile:`) prompts workspace profile updates.
+- Syntax grammar and snippets updated with cognitive keywords and profile/lint/report helpers.
+
+### Testing
+
+- Pytest now filters upstream Lark deprecation warnings (`sre_parse`, `sre_constants`) on Python 3.13 to keep output clean.
+- Added an smod import verification case to the stdlib test sweep.
+
+### Documentation
+
+- Added `SONA_0.10.0_RELEASE_NOTES.md` and example `examples/cognitive_preview_010.sona`.
+- README and extension README updated for cognitive preview positioning and command list.
+
+### Known Limitations (tracked for 0.10.x)
+
+- `repeat-until` parsing incomplete.
+- Advanced `match` edge cases remain.
+- LSP cognitive diagnostics are heuristic/shallow.
+- Runtime coverage inconsistencies remain under investigation.
+
+---
+
+## [0.9.9] - 2025-12-23 — IDE & Correctness Release
+
+### Highlights
+
+- Language polish: block statements no longer require trailing semicolons; `and` / `or` work alongside `&&` / `||`.
+- Correctness fixes: chained comparisons, boolean short-circuiting, and literal handling (`true`, `false`, `null`).
+- VS Code experience: Run File (F5), snippets, Go to Definition, Find References, Document Symbols, and Formatting working together.
+- Packaging and version alignment: runtime, stdlib, CLI, docs, and VS Code extension synced to v0.9.9.
+- Cognitive groundwork landed: parser/AST/runtime/LSP recognize intent, decision, cognitive_trace, explain_step, profile, and scope boundaries (foundation for 0.10).
+
+### Language & Grammar
+
+- Block statements (`if`, `while`, `for`, `func`, `class`, `try`, `match`, `when`) no longer require a semicolon after the closing brace; semicolons are still accepted for simple statements.
+- Boolean operators support both keyword (`and`, `or`) and symbolic (`&&`, `||`) forms.
+- Class bodies accept function members and variable declarations with optional trailing semicolons.
+- Try/Catch supports typed (`catch Exception as e { ... }`) and shorthand catch-all (`catch e { ... }`).
+
+### Interpreter & Runtime
+
+- `true` → `True`, `false` → `False`, `null` → `None` consistently across the interpreter and converter.
+- Added `ast.BoolOp` evaluation with correct short-circuit semantics for `and` / `or`.
+- Fixed chained comparison evaluation so expressions like `a < b < c` and `x % 2 != 0` behave correctly.
+- Hardened Python-compatibility fallback converter (braces → indentation, optional semicolons, normalized literals).
+
+### Tooling — VS Code Extension
+
+- Waycoreinc.sona-ai-native-programming v0.9.9: Run Sona File (F5 / Ctrl+F5), 30+ snippets, navigation (Go to Definition / Find References), Document Symbols, server-side formatting, and stable stdio LSP integration.
+- Packaging fixes: corrected language-client import path, bundled transitive dependencies, and added `sona/__main__.py` so `python -m sona` works.
+
+### CLI & Packaging
+
+- Added `sona/__main__.py` to support `python -m sona` and aligned version constants across `pyproject.toml`, `setup.py`, `sona/__init__.py`, and manifests.
+
+### Standard Library & Tests
+
+- Verified stdlib imports across test suites and normalized legacy tests that used spaced operators (`> =`, `! =`, `< =`) to `>=`, `!=`, `<=`.
+- Confirmed `test_control_flow_096.sona` runs cleanly under the native parser.
+
+### Documentation
+
+- README updated with v0.9.9 “What’s New”, badges, examples, and links to these release notes. Security and contributing docs reference v0.9.9 as active.
+
+### Known Limitations (tracked for v0.9.10)
+
+- `repeat while` / `repeat until` appear in legacy tests but are not yet fully specified in the canonical grammar.
+- Some advanced `match` patterns may need additional transformer rules.
+
+### Upgrade Notes
+
+- No breaking changes expected from v0.9.8 → v0.9.9; semicolons remain supported.
+
+### Acknowledgements
+
+Thanks to contributors and testers who reported IDE and control-flow issues — this release benefited greatly from that feedback.
+
+
+
+---
+
+## [0.9.8] - 2025-12-08 - Parser and Security Hardening
+
+### Highlights
+
+- Parser and runtime hardening: BOM handling, escaped-path support, stricter Unicode escape parsing, and clearer recovery messages.
+- Security follow-ups: safer defaults for networked modules, FTP cautions, SQL injection notes, and guidance for pinning HuggingFace models.
+- CI and coverage uplift: coverage gate at 90 percent, randomized test ordering, and pytest/coverage config documented in `pyproject.toml`.
+- Micro-chunked AI workflows to reduce context drift during IDE assistance.
+- Local/Ollama guidance for offline endpoints.
+- Docs refresh: README, security policy, and release notes updated for 0.9.8.
+
+### Compatibility
+
+- No breaking changes expected from v0.9.7.
+- Standard library remains at 80 modules.
+
+### Verification
+
+- `.\run_all_tests.ps1`
+- `python run_sona.py test_all_097.sona`
+
+---
+
+## [0.9.7] - 2025-10-30 - RC Hardening (Phase A)
+
+### Highlights
+
+- Standard library inventory stabilized at 84 modules (80 main + 4 collection sub-modules).
+- Interpreter `execute_block` loop fix confirmed during RC hardening.
+- USB compliance suite at 162/162 stdlib tests passing; overall 92.2 percent pass rate.
+- CLI and REPL verified functional for RC workflows.
+
+### Known Gaps
+
+- Parser control-flow edge cases remain (complex nesting limits feature tests).
+- LSP server not yet implemented in this phase.
+
+---
+
 ## [0.9.6] - 2025-10-06 — Truth-First Stabilization (Zero-Red Tests + 40% Coverage) ✅
 
 ### Added

@@ -13,7 +13,7 @@ with open(os.path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name="Sona: AI-Native Programming Language",
-    version="0.9.8",
+    version="0.10.1",
     author="Sona Development Team",
     author_email="sona-dev@hotmail.com",
     description=(
@@ -42,6 +42,7 @@ setup(
     python_requires=">=3.11",
     install_requires=[
         "lark>=1.1.0",
+        "pygls>=1.3.1,<2",
         "openai>=1.0.0",
         "anthropic>=0.9.0",
         "python-dotenv>=0.19.0",
@@ -59,6 +60,7 @@ setup(
         "console_scripts": [
             # Unified modern CLI
             "sona=sona.cli:main",
+            "spm=sona.spm:main",
         ],
     },
     include_package_data=True,
@@ -79,3 +81,4 @@ setup(
         "Documentation": "https://github.com/Bryantad/Sona.wiki.git",
     },
 )
+

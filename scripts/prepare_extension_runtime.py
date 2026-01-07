@@ -95,7 +95,7 @@ def main() -> int:
         print(f"ERROR: Only {count} modules staged (< 22). Aborting.")
         return 3
     print(f"Staged Sona runtime -> {RUNTIME_ROOT}")
-    print(f"Modules (≥22): {count}")
+    print(f"Modules (>=22): {count}")
     # Show a short sample
     preview = "\n".join([f" - {p}" for p in copied[:10]])
     if preview:

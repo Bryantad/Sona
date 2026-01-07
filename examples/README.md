@@ -139,6 +139,27 @@ python run_sona.py examples/control_flow.sona
 
 ---
 
+
+### 7. [cognitive_preview_010.sona](./cognitive_preview_010.sona)
+
+**Difficulty**: ?-??~+?~+?~+?~+ (Beginner)
+
+Minimal cognitive preview sample - intent, decision, trace, and scope budgets.
+
+```bash
+python run_sona.py examples/cognitive_preview_010.sona
+```
+
+**What you'll learn:**
+
+- Profile annotations
+- Intent declarations
+- Decision provenance
+- Cognitive scope budgets
+- Explainability snapshots
+
+---
+
 ## 🚀 Running Examples
 
 ### Run Single Example
