@@ -8,65 +8,65 @@ echo ========================================
 echo.
 
 echo [1/8] Running complete verification test...
-sona test_all_096.sona
+sona tests\sona\test_all_096.sona
 if %errorlevel% neq 0 (
-    echo ERROR: test_all_096.sona failed!
+    echo ERROR: tests\sona\test_all_096.sona failed!
     exit /b 1
 )
 echo.
 
 echo [2/8] Running basic modules test...
-sona test_stdlib_basics.sona
+sona tests\sona\test_stdlib_basics.sona
 if %errorlevel% neq 0 (
-    echo ERROR: test_stdlib_basics.sona failed!
+    echo ERROR: tests\sona\test_stdlib_basics.sona failed!
     exit /b 1
 )
 echo.
 
 echo [3/8] Running data processing test...
-sona test_stdlib_data.sona
+sona tests\sona\test_stdlib_data.sona
 if %errorlevel% neq 0 (
-    echo ERROR: test_stdlib_data.sona failed!
+    echo ERROR: tests\sona\test_stdlib_data.sona failed!
     exit /b 1
 )
 echo.
 
 echo [4/8] Running collections test...
-sona test_stdlib_collections.sona
+sona tests\sona\test_stdlib_collections.sona
 if %errorlevel% neq 0 (
-    echo ERROR: test_stdlib_collections.sona failed!
+    echo ERROR: tests\sona\test_stdlib_collections.sona failed!
     exit /b 1
 )
 echo.
 
 echo [5/8] Running time and random test...
-sona test_stdlib_time.sona
+sona tests\sona\test_stdlib_time.sona
 if %errorlevel% neq 0 (
-    echo ERROR: test_stdlib_time.sona failed!
+    echo ERROR: tests\sona\test_stdlib_time.sona failed!
     exit /b 1
 )
 echo.
 
 echo [6/8] Running filesystem test...
-sona test_stdlib_filesystem.sona
+sona tests\sona\test_stdlib_filesystem.sona
 if %errorlevel% neq 0 (
-    echo ERROR: test_stdlib_filesystem.sona failed!
+    echo ERROR: tests\sona\test_stdlib_filesystem.sona failed!
     exit /b 1
 )
 echo.
 
 echo [7/8] Running regex test...
-sona test_stdlib_regex.sona
+sona tests\sona\test_stdlib_regex.sona
 if %errorlevel% neq 0 (
-    echo ERROR: test_stdlib_regex.sona failed!
+    echo ERROR: tests\sona\test_stdlib_regex.sona failed!
     exit /b 1
 )
 echo.
 
 echo [8/8] Running simple arithmetic test...
-sona test.sona
+sona tests\sona\test.sona
 if %errorlevel% neq 0 (
-    echo ERROR: test.sona failed!
+    echo ERROR: tests\sona\test.sona failed!
     exit /b 1
 )
 echo.

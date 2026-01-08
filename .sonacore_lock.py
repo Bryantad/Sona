@@ -78,10 +78,10 @@ CORE_LOCK = {
     ],
     
     "test_files": [
-        "test.sona",
-        "test_hello.sona",
-        "test_simple_096.sona",
-        "test_demo_simple_096.sona",
+        "tests/sona/test.sona",
+        "tests/sona/test_hello.sona",
+        "tests/sona/test_simple_096.sona",
+        "tests/sona/test_demo_simple_096.sona",
         "test_stdlib_30.py",
     ],
 }
