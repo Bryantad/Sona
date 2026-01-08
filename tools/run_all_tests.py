@@ -14,16 +14,16 @@ import run_sona
 
 
 TEST_PLAN = [
-    ("Running complete verification test", "test_all_096.sona"),
-    ("Running basic modules test", "test_stdlib_basics.sona"),
-    ("Running data processing test", "test_stdlib_data.sona"),
-    ("Running collections test", "test_stdlib_collections.sona"),
-    ("Running time and random test", "test_stdlib_time.sona"),
-    ("Running filesystem test", "test_stdlib_filesystem.sona"),
-    ("Running regex test", "test_stdlib_regex.sona"),
-    ("Running smod imports test", "test_smod_imports_010.sona"),
-    ("Running cognitive focus test", "test_cognitive_focus_010.sona"),
-    ("Running simple arithmetic test", "test.sona"),
+    ("Running complete verification test", "tests/sona/test_all_096.sona"),
+    ("Running basic modules test", "tests/sona/test_stdlib_basics.sona"),
+    ("Running data processing test", "tests/sona/test_stdlib_data.sona"),
+    ("Running collections test", "tests/sona/test_stdlib_collections.sona"),
+    ("Running time and random test", "tests/sona/test_stdlib_time.sona"),
+    ("Running filesystem test", "tests/sona/test_stdlib_filesystem.sona"),
+    ("Running regex test", "tests/sona/test_stdlib_regex.sona"),
+    ("Running smod imports test", "tests/sona/test_smod_imports_010.sona"),
+    ("Running cognitive focus test", "tests/sona/test_cognitive_focus_010.sona"),
+    ("Running simple arithmetic test", "tests/sona/test.sona"),
 ]
 
 
@@ -31,9 +31,9 @@ def _run_receipt_smoke(root: Path) -> int:
     """Basic verification that `--receipt` produces a JSON receipt with expected keys."""
     with tempfile.TemporaryDirectory(prefix="sona_receipt_") as tmp:
         receipt_path = Path(tmp) / "receipt.json"
-        target = root / "test.sona"
+        target = root / "tests" / "sona" / "test.sona"
         if not target.exists():
-            print("ERROR: receipt smoke test requires test.sona")
+            print("ERROR: receipt smoke test requires tests/sona/test.sona")
             return 1
 
         exit_code = run_sona.main(["run", str(target), "--receipt", str(receipt_path)])

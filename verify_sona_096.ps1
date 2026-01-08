@@ -54,13 +54,13 @@ catch {
 Write-Host ""
 
 # Test 2: Hello World
-Test-SonaCommand "Hello World" "python run_sona.py test_hello.sona"
+Test-SonaCommand "Hello World" "python run_sona.py tests/sona/test_hello.sona"
 
 # Test 3: Simple Features
-Test-SonaCommand "Simple Features (0.9.6)" "python run_sona.py test_simple_096.sona"
+Test-SonaCommand "Simple Features (0.9.6)" "python run_sona.py tests/sona/test_simple_096.sona"
 
 # Test 4: Demo Test
-Test-SonaCommand "Demo Test" "python run_sona.py test_demo_simple_096.sona"
+Test-SonaCommand "Demo Test" "python run_sona.py tests/sona/test_demo_simple_096.sona"
 
 # Test 5: Standard Library Imports (Python)
 Test-SonaCommand "Stdlib Module Imports" "python test_stdlib_30.py"

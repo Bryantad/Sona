@@ -18,12 +18,12 @@ Write-Host ""
 
 # Test 3: Hello World
 Write-Host "[3/5] Testing hello world..." -ForegroundColor Yellow
-python run_sona.py test_hello.sona
+python run_sona.py tests/sona/test_hello.sona
 Write-Host ""
 
 # Test 4: Simple Test
 Write-Host "[4/5] Testing simple features..." -ForegroundColor Yellow
-python run_sona.py test_simple_096.sona
+python run_sona.py tests/sona/test_simple_096.sona
 Write-Host ""
 
 # Test 5: Stdlib Imports
