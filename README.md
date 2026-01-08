@@ -13,231 +13,122 @@
 
 ---
 
-## Overview
-
-Sona is an AI-native language and toolchain built with cognitive accessibility in mind. The project prioritizes a reliable, deterministic standard library before provider integrations. AI providers will ship via a separate `sona-ai` package so the core remains stable, testable, and network-free.
-
-This repository includes:
-
-- A pragmatic, network-free standard library with disciplined tests.
-- A VS Code extension that surfaces Sona in the editor.
-- Documentation and a roadmap for future AI provider support.
-
----
-
-## Status (v0.9.4.1)
-
-- Platform used for verification: Windows, Python 3.12
-- Debug signal: `SONA_DEBUG=1` during test runs
-- Tests: PASS (stdlib-only suite)
-- Coverage: ~86% (gate ≥85%), branch coverage enabled
-- Deterministic: no network dependencies in core tests
-- Packaging: stdlib wiring corrected and locked with `sona/stdlib/MANIFEST.json`
-- VS Code Marketplace: Overview, icon, banner, screenshots, keywords, Q&A present
-
-### Maintainer note
-
-The public 0.9.4 package missed proper stdlib wiring and shipped without a Marketplace Overview/icon. 0.9.4.1 corrects the packaging, adds the Overview and visuals, and locks the stdlib set so this does not regress.
-
----
-
-## What’s solid today
-
-### Standard library
-
-- **JSON**
-  - RFC 7396 Merge Patch: `merge_patch(target, patch)` (documented, tested)
-  - JSON Pointer helpers (with “pointer gotchas” documented)
-  - `deep_update(target, patch, *, list_strategy="replace"|"append"|"extend_unique", make_copy=True)`
-    - Dicts recurse; lists replace by default; type conflicts resolve to `patch`
-    - Back-compat shim: legacy `copy=` is still accepted and emits `DeprecationWarning`
-- **Collections**
-  - `chunk`, `unique_by`, `group_by` (order-preserving)
-- **Regex**
-  - Reusable handles, explicit timeout semantics, safe failure modes
-
-### Extension (VS Code)
-
-- Identifier: `Waycoreinc.sona-ai-native-programming`
-- Overview: present
-- Icon/Banner/Screenshots: present
-- Categories/Keywords/Q&A: set for discoverability
-
----
-
-## Installation
-
-### Python toolchain
-
-Requires Python 3.12+
-
-```bash
-pip install sona==0.9.4.1
-# optional extras
-pip install "sona[ai]==0.9.4.1"     # provider package placeholder (separate)
-pip install "sona[dev]==0.9.4.1"    # development tooling
-````
-
-Verify environment:
-
-```bash
-sona build-info
-sona doctor
-```
-
-### VS Code extension
-
-Install from Marketplace:
-[https://marketplace.visualstudio.com/items?itemName=Waycoreinc.sona-ai-native-programming](https://marketplace.visualstudio.com/items?itemName=Waycoreinc.sona-ai-native-programming)
-
----
-
-## Quickstart
-
-REPL:
-
-```bash
-sona repl
-```
-
-Inside the REPL:
-
-```sona
-explain("Learning Sona")
-```
-
-Standard library examples:
-
-```python
-# json.merge_patch
-from sona.stdlib import json as sjson
-
-target = {"title": "Good", "meta": {"a": 1, "b": 2}}
-patch = {"meta": {"b": None, "c": 3}}
-assert sjson.merge_patch(target, patch) == {"title": "Good", "meta": {"a": 1, "c": 3}}
-
-# json.deep_update
-base = {"a": {"x": 1}, "list": [1, 2]}
-upd  = {"a": {"y": 2}, "list": [9]}
-out  = sjson.deep_update(base, upd)  # default replaces lists
-assert out == {"a": {"x": 1, "y": 2}, "list": [9]}
-
-# collections
-from sona.stdlib import collection as col
-assert col.chunk([1,2,3,4,5], 2, last="keep") == [[1,2],[3,4],[5]]
-assert col.unique_by(["aa","ab","ba"], key=lambda s: s[0]) == ["aa","ba"]
-assert col.group_by(["aa","ab","ba"], key=lambda s: s[0]) == {"a":["aa","ab"], "b":["ba"]}
-
-# regex
-from sona.stdlib import regex
-h = regex.compile(r"^[a-z]+$", {"case_insensitive": True})
-assert regex.match(h, "Alpha")["matched"] is True
-```
-
----
-
-## CLI reference (snapshot)
-
-```bash
-sona init <project>           # Create a new project
-sona run <file>               # Execute Sona files
-sona repl                     # Interactive REPL
-sona transpile <file>         # Convert to other languages
-sona format <file>            # Format code
-sona check <file>             # Syntax validation
-sona info                     # Environment information
-sona build-info               # Build metadata + feature flags
-sona doctor                   # Diagnostics
-```
-
----
-
-## Configuration
-
-* `SONA_DEBUG=1` enables verbose stdlib/runtime diagnostics during development and CI.
-
----
-
-## Testing and coverage
-
-The CI focuses on the standard library to keep signals clean and actionable.
-
-* Scope: `sona/stdlib/*` (excludes utils/ai/native\_\*, smod helpers)
-* Commands:
-
-```bash
-# Windows PowerShell
-$env:SONA_DEBUG = "1"
-
-pytest -q
-coverage run -m pytest
-coverage report                # expect ≥85%
-```
-
-* Smoke test gate (excerpt): ensures ≥22 stdlib modules, imports succeed, public API or namespace children exist, and basic JSON/collections/regex probes pass.
-* Deterministic: no network calls in core tests.
-
----
-
-## Packaging integrity
-
-A manifest is generated and version-controlled to prevent drift:
-
-* `sona/stdlib/MANIFEST.json` lists the intended stdlib modules.
-* A smoke test asserts the packaged modules match the manifest and that the count meets the minimum threshold.
-
-Before packaging the VSIX:
-
-```bash
-python scripts/generate_stdlib_manifest.py
-pytest -q && coverage run -m pytest && coverage report
-npx vsce ls
-npx vsce package
-python scripts/check_vsix.py sona-ai-native-programming-0.9.4.1.vsix
-```
-
-The asset check fails if `extension/README.md`, `extension/media/icon.png`, or `extension/package.json` are missing.
-
----
-
-## Roadmap (near term)
-
-* Language Server Protocol (diagnostics, semantic tokens, quick fixes)
-* Transpilation fidelity for a focused subset of constructs
-* Package manager (publish/consume with lockfile and integrity checks)
-* AI provider integrations via `sona-ai` (provider-agnostic, safe by default, tested offline with fakes)
-
-These will not compromise stdlib stability.
-
----
-
-## Release notes
-
-* 0.9.4 — foundation and stdlib improvements (merge\_patch, deep\_update, collections)
-* 0.9.4.1 — hotfix for packaging credibility (stdlib wiring, Marketplace Overview/icon/screenshots, keywords, Q\&A), README alignment, and a back-compat shim for `deep_update(copy=...)`
-
-See releases: [https://github.com/Bryantad/Sona/releases](https://github.com/Bryantad/Sona/releases)
-
----
-
-## Contributing
-
-Contributions are welcome. Please:
-
-1. Open an issue to discuss scope and approach.
-2. Keep changes deterministic and testable.
-3. Maintain the stdlib coverage gate (≥85%) and pass smoke tests.
-4. Avoid introducing network dependencies into core tests.
-
----
-
-## Community
-
-* Issues: [https://github.com/Bryantad/Sona/issues](https://github.com/Bryantad/Sona/issues)
-* Discussions: [https://github.com/Bryantad/Sona/discussions](https://github.com/Bryantad/Sona/discussions)
-
----
-
-## License
-
-MIT — see [LICENSE](LICENSE).
+Overview
+The Sona extension provides full editing, debugging, and AI-assisted capabilities for .sona and .smod files. It includes integrated Focus Mode, Working Memory, and AI Explain / Optimize / Review commands that work seamlessly inside VS Code.
+
+Sona is built for:
+
+Developers who want clarity and focus.
+Educators who need explainable code for students.
+Neurodivergent minds (ADHD, dyslexia, autism) who deserve tools that reduce cognitive overload.
+Teams seeking explainable AI collaboration directly in their IDE.
+Key Features
+Cognitive Programming
+Focus Mode — reduce distraction and visual noise for deep work.
+Working Memory — record short-term notes, goals, or decisions directly in your code context.
+Cognitive Check — evaluate code complexity or task load inline.
+Intent — declare goals and constraints that the runtime can track and explain.
+Decision Records — capture rationale and options alongside code.
+Cognitive Trace / Explain Step — produce deterministic explainability snapshots.
+Cognitive Scope — create boundaries for intent, decisions, and working memory.
+Cognitive Scope Budgets — warn when scope complexity exceeds a budget.
+Profile Annotations — set ADHD/dyslexia profiles at the language level.
+Cognitive Lint / Report — deterministic lint checks and exportable reports.
+AI-Native Commands
+Sona: Explain Code — receive plain-language explanations for selected code.
+Sona: Optimize Code — automatically propose cleaner, faster, or safer code variants.
+Sona: Review Code — context-aware AI review with actionable recommendations.
+Sona: Verify Runtime — ensure your local interpreter matches the expected version.
+All AI features are optional and can be powered by your own OpenAI or Azure OpenAI credentials via the companion sona-ai Python package.
+
+Language Support
+Syntax highlighting for .sona and .smod.
+Code snippets and autocomplete.
+Error diagnostics integrated with Sona’s interpreter.
+Multi-language transpilation (Python, JS, TS, C#, Go, Rust).
+REPL integration for interactive exploration.
+Built-In Stability
+Deterministic standard library (30+ modules, 280 passing tests).
+Verified on Windows 10/11, macOS, and Linux.
+Zero network dependencies required for core functionality.
+Coverage ≥ 40 percent and growing.
+Support for vscode.dev
+The Sona extension includes partial support for the vscode.dev and github.dev environments, enabling syntax highlighting, Focus Mode toggling, and lightweight AI Explain capabilities on open files.
+
+Installed Extensions
+For best results, Sona integrates optionally with:
+
+Sona AI Provider (sona-ai Python package) — enables ai_explain, ai_optimize, ai_review.
+Python Environments Extension — used for interpreter detection and environment setup.
+Pylance — enhances completion, IntelliSense, and hover insights for embedded Python targets.
+All dependencies are optional; Sona remains fully functional offline and without any AI provider configured.
+
+Extensibility
+Sona is designed as an open cognitive platform. Developers can extend its behavior by publishing custom .smod modules or IDE plugins using the provided extension APIs.
+
+Available extension points:
+
+Cognitive Plugins — add new working-memory or focus patterns.
+AI Provider Plugins — connect external LLMs or custom inference endpoints.
+Transpiler Targets — define new output languages via the sona_transpiler interface.
+Documentation: Sona Extension API Guide
+
+Quick Start
+Install a supported version of Python (3.12+) on your system.
+
+Install the Sona extension from the VS Code Marketplace.
+
+Open or create a .sona file.
+
+Run Sona: Welcome & Setup from the Command Palette.
+
+Try Sona: Explain Code or Sona: Toggle Focus Mode.
+
+(Optional) Install the AI Provider:
+
+pip install "sona[ai]"
+Environment Configuration
+Select interpreter via Sona: Verify Runtime or set sona.pythonPath in settings.
+Manage virtual environments with the Python Environments Extension.
+Run the integrated REPL with Sona: Open REPL.
+Jupyter Notebooks
+Sona interoperates with the Jupyter Extension for educational workflows. Developers can embed .sona snippets or AI Explain comments directly in notebook cells for hybrid teaching or analysis.
+
+Useful Commands
+Command	Description
+Sona: Welcome & Setup	Initializes extension and configuration wizard.
+Sona: Explain Code	AI-powered code explanation for selected code.
+Sona: Optimize Code	Suggests performance or readability improvements.
+Sona: Toggle Focus Mode	Enables or disables distraction-free Focus Mode.
+Sona: Clear Cognitive Memory	Clears stored working-memory context.
+Sona: Export Cognitive Report	Exports a cognitive report for the active file.
+Sona: Verify Runtime	Checks local environment and interpreter path.
+Sona: Open REPL	Launches interactive Sona shell.
+To view all Sona commands, open the Command Palette (Ctrl + Shift + P / Cmd + Shift + P) and type Sona.
+
+Feature Details
+Feature Area	Description
+IntelliSense	AI-aware completions for .sona and .smod.
+Cognitive Accessibility	Focus Mode, Working Memory, Intent, Decision Records, Trace/Explain, Profile, Lint/Report.
+Debugging	Debug .sona scripts using the integrated Sona Runtime.
+Transpilation	Generate equivalent code in Python, JS, TS, C#, Go, Rust.
+Testing	Built-in sona test command for behavioral validation.
+Docs Integration	Inline links to Sona documentation and wiki.
+Supported Locales
+The Sona extension is available in: en, fr, es, de, pt-br, ja, ko-kr, zh-cn, zh-tw.
+
+Questions, Issues, and Contributions
+Ask questions: GitHub Discussions
+Report issues: GitHub Issues
+Contribute: See CONTRIBUTING.md
+Docs: https://github.com/Bryantad/Sona/wiki
+Data and Telemetry
+The Sona Extension collects anonymous usage data to improve performance, feature adoption, and accessibility design. This data is never sold or shared and respects VS Code’s telemetry.enableTelemetry setting. You can disable telemetry in Settings → Telemetry at any time.
+
+License
+MIT License — © 2025 Waycore Inc. See LICENSE.
+
+About Waycore Inc.
+Waycore Inc. is an AI R&D company focused on building human-centered developer tools and cognitive software systems. Sona is our flagship project — a language that brings accessibility, clarity, and AI into harmony with how the brain codes.
+
+“Sona isn’t here to replace developers. It’s here to help them think more clearly.” — Andre D. Bryant, Founder & CEO of Waycore Inc.
