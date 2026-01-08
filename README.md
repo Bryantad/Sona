@@ -1,576 +1,243 @@
-# 🎵 Sona v0.10.1
+# 🚀 Sona — **AI-Native** Programming Language
 
-**AI-Native Programming Language with 91-Module Standard Library**
+**Human × AI collaboration with cognitive accessibility at the core.**
 
-[![Version](https://img.shields.io/badge/version-0.10.1-blue.svg)](https://github.com/Bryantad/Sona)
-[![Python](https://img.shields.io/badge/python-3.11+-green.svg)](https://www.python.org/)
-[![License](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
-
-Sona is a modern, expressive programming language designed for rapid development with built-in AI capabilities. Perfect for automation, data processing, web services, and AI-assisted applications.
-
----
-
-## ?s? What's New in v0.10.1
-
-- ?o. **Cognitive Preview** ??" Intent, decision provenance, trace, and cognitive scopes.
-- ?o. **Cognitive reports** ??" Exportable report artifacts and linting (runtime + LSP).
-- ?o. **Profile annotations** ??" ADHD/dyslexia profile metadata surfaced in the editor.
-- dY"" **Version sync** ??" Packaging/runtime/docs aligned on v0.10.1.
-
-[See Full Release Notes ?+'](SONA_0.10.0_RELEASE_NOTES.md)
+[![Version](https://img.shields.io/badge/version-0.9.9-blue.svg)](https://github.com/Bryantad/Sona/releases/tag/v0.9.9)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://python.org)
+[![Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/Waycoreinc.sona-ai-native-programming?label=VS%20Code%20Installs)](https://marketplace.visualstudio.com/items?itemName=Waycoreinc.sona-ai-native-programming)
+[![Marketplace Rating](https://img.shields.io/visual-studio-marketplace/r/Waycoreinc.sona-ai-native-programming?label=VS%20Code%20Rating)](https://marketplace.visualstudio.com/items?itemName=Waycoreinc.sona-ai-native-programming)
+[![GitHub Stars](https://img.shields.io/github/stars/Bryantad/Sona?style=social)](https://github.com/Bryantad/Sona/stargazers)
+[![YouTube](https://img.shields.io/youtube/channel/subscribers/UCFWuiQHiQPrJSAeAVi5raZA?style=social)](https://www.youtube.com/channel/UCFWuiQHiQPrJSAeAVi5raZA)
+[![X (Twitter) Follow](https://img.shields.io/twitter/follow/sona_org?style=social)](https://x.com/sona_org)
 
 ---
 
-## Cognitive Features
+## Overview
 
-Example 1: Intent anchors
+Sona is an AI-native language and toolchain built with cognitive accessibility in mind. The project prioritizes a reliable, deterministic standard library before provider integrations. AI providers will ship via a separate `sona-ai` package so the core remains stable, testable, and network-free.
 
-```sona
-@intent "parse user config safely";
-```
+This repository includes:
 
-Example 2: Focus blocks with validation
-
-```sona
-import json;
-
-func validate(cfg) {
-    return cfg;
-}
-
-@intent "parse user config safely";
-focus {
-    let cfg = json.parse(text);
-    validate(cfg);
-}
-```
-
-Example 3: Explainable checkpoints
-
-```sona
-cognitive_trace(enabled=true);
-explain_step(note="checkpoint before export");
-```
-
-Note: Each `@intent` is recorded as an intent entry in cognitive reports.
+- A pragmatic, network-free standard library with disciplined tests.
+- A VS Code extension that surfaces Sona in the editor.
+- Documentation and a roadmap for future AI provider support.
 
 ---
 
-## 🚀 Quick Start
+## Status (v0.9.4.1)
 
-### Installation
+- Platform used for verification: Windows, Python 3.12
+- Debug signal: `SONA_DEBUG=1` during test runs
+- Tests: PASS (stdlib-only suite)
+- Coverage: ~86% (gate ≥85%), branch coverage enabled
+- Deterministic: no network dependencies in core tests
+- Packaging: stdlib wiring corrected and locked with `sona/stdlib/MANIFEST.json`
+- VS Code Marketplace: Overview, icon, banner, screenshots, keywords, Q&A present
 
-```powershell
-# 1. Clone or download
-git clone https://github.com/Bryantad/Sona.git
-cd Sona
+### Maintainer note
 
-# 2. Create virtual environment
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1  # Windows
-# source .venv/bin/activate   # Linux/macOS
+The public 0.9.4 package missed proper stdlib wiring and shipped without a Marketplace Overview/icon. 0.9.4.1 corrects the packaging, adds the Overview and visuals, and locks the stdlib set so this does not regress.
 
-# 3. Install dependencies
-pip install -r requirements.txt
+---
 
-# 4. Install Sona
-pip install -e .
-```
+## What’s solid today
 
-### Your First Program
+### Standard library
 
-Create `hello.sona`:
+- **JSON**
+  - RFC 7396 Merge Patch: `merge_patch(target, patch)` (documented, tested)
+  - JSON Pointer helpers (with “pointer gotchas” documented)
+  - `deep_update(target, patch, *, list_strategy="replace"|"append"|"extend_unique", make_copy=True)`
+    - Dicts recurse; lists replace by default; type conflicts resolve to `patch`
+    - Back-compat shim: legacy `copy=` is still accepted and emits `DeprecationWarning`
+- **Collections**
+  - `chunk`, `unique_by`, `group_by` (order-preserving)
+- **Regex**
+  - Reusable handles, explicit timeout semantics, safe failure modes
 
-```sona
-// Simple greeting
-print("Hello from Sona v0.10.0!");
+### Extension (VS Code)
 
-// Use stdlib
-import json;
-let data = {"version": "0.10.0", "modules": 91};
-print(json.stringify(data));
-```
+- Identifier: `Waycoreinc.sona-ai-native-programming`
+- Overview: present
+- Icon/Banner/Screenshots: present
+- Categories/Keywords/Q&A: set for discoverability
 
-Run it:
+---
+
+## Installation
+
+### Python toolchain
+
+Requires Python 3.12+
 
 ```bash
-python run_sona.py hello.sona
+pip install sona==0.9.4.1
+# optional extras
+pip install "sona[ai]==0.9.4.1"     # provider package placeholder (separate)
+pip install "sona[dev]==0.9.4.1"    # development tooling
+````
+
+Verify environment:
+
+```bash
+sona build-info
+sona doctor
 ```
+
+### VS Code extension
+
+Install from Marketplace:
+[https://marketplace.visualstudio.com/items?itemName=Waycoreinc.sona-ai-native-programming](https://marketplace.visualstudio.com/items?itemName=Waycoreinc.sona-ai-native-programming)
 
 ---
 
-## 🎯 Core Features
+## Quickstart
 
-### ✅ All Tier 1 Features (Production Ready)
+REPL:
 
-| Feature            | Description                           | Status |
-| ------------------ | ------------------------------------- | ------ |
-| **Variables**      | `let x = 10;` `const PI = 3.14;`      | ✅     |
-| **Functions**      | `func add(a, b) { return a + b; }`    | ✅     |
-| **Control Flow**   | `if`, `when`, `match`, `while`, `for` | ✅     |
-| **Loop Control**   | `break`, `continue`, `repeat`         | ✅     |
-| **Collections**    | Lists, Dicts, Sets, Tuples            | ✅     |
-| **Destructuring**  | `let [a, b] = [1, 2];`                | ✅     |
-| **Error Handling** | `try/catch` blocks                    | ✅     |
-| **Modules**        | `import json;` `export func;`         | ✅     |
-| **Classes**        | OOP with inheritance                  | ✅     |
-| **Operators**      | Arithmetic, logical, comparison       | ✅     |
+```bash
+sona repl
+```
 
----
-
-## 📦 Standard Library (91 Modules)
-
-### 🔵 Core System (7 modules)
+Inside the REPL:
 
 ```sona
-import json;        // JSON parsing/serialization
-import math;        // Mathematical operations
-import string;      // String manipulation
-import regex;       // Regular expressions
-import boolean;     // Boolean utilities
-import type;        // Type checking
-import comparison;  // Comparison utilities
+explain("Learning Sona")
 ```
 
-### 📊 Data Structures (7 modules)
-
-```sona
-import collection;  // Collections namespace
-import queue;       // Queue operations
-import stack;       // Stack operations
-import graph;       // Graph algorithms
-import tree;        // Tree structures
-import heap;        // Min/Max heaps
-import matrix;      // 2D matrices
-```
-
-### 📁 I/O & Formats (8 modules)
-
-```sona
-import fs;          // File system operations
-import path;        // Path manipulation
-import io;          // Input/output
-import csv;         // CSV processing
-import yaml;        // YAML serialization
-import toml;        // TOML configuration
-import compression; // Gzip/zip compression
-import xml;         // XML parsing/building
-```
-
-### 🌐 Network & Web (9 modules)
-
-```sona
-import http;        // HTTP client
-import url;         // URL parsing/building
-import cookies;     // Cookie management
-import session;     // HTTP sessions
-import websocket;   // WebSocket client
-import dns;         // DNS resolution
-import smtp;        // Email sending
-import proxy;       // HTTP proxy
-import ftp;         // FTP client
-import oauth;       // OAuth2 flows
-```
-
-### 💾 Database & Storage (6 modules)
-
-```sona
-import sqlite;      // SQLite database
-import cache;       // In-memory cache
-import redis;       // Redis client
-import orm;         // Simple ORM
-import query;       // SQL query builder
-import migration;   // Database migrations
-```
-
-### 🔒 Security & Auth (6 modules)
-
-```sona
-import jwt;         // JWT tokens
-import crypto;      // Cryptographic hashing
-import password;    // Password hashing
-import hashing;     // General hashing
-import secrets;     // Secure random
-import permissions; // RBAC system
-```
-
-### ⚡ Async & Concurrency (5 modules)
-
-```sona
-import async;       // Async utilities
-import thread;      // Threading
-import process;     // Process management
-import pool;        // Thread/process pools
-import promise;     // Promise/Future pattern
-```
-
-### 🧪 Testing & Quality (5 modules)
-
-```sona
-import test;        // Test framework
-import assert;      // Assertions
-import mock;        // Mock objects
-import benchmark;   // Performance testing
-import profiler;    // Code profiling
-```
-
-### 🛠️ Utilities (13 modules)
-
-```sona
-import env;         // Environment variables
-import date;        // Date operations
-import time;        // Time operations
-import timer;       // Timer utilities
-import random;      // Random generation
-import encoding;    // Base64/URL encoding
-import uuid;        // UUID generation
-import validation;  // Input validation
-import statistics;  // Statistical functions
-import sort;        // Sorting algorithms
-import search;      // Search algorithms
-import numbers;     // Number utilities
-import operators;   // Operator utilities
-```
-
-### 🤖 Automation (7 modules)
-
-```sona
-import cli;         // CLI argument parsing
-import logging;     // Logging system
-import config;      // Configuration management
-import scheduler;   // Task scheduling
-import signal;      // Event system
-import shell;       // Shell commands
-import bitwise;     // Bitwise operations
-```
-
-### 🔧 Functional Programming (4 modules)
-
-```sona
-import functional;  // Composition, currying
-import decorator;   // Common decorators
-import iterator;    // Iterator utilities
-import color;       // Color manipulation
-```
-
-### 📝 Templates & Processing (3 modules)
-
-```sona
-import template;    // Template engine
-import markdown;    // Markdown to HTML
-import xml;         // XML processing
-```
-
----
-
-## 💡 Code Examples
-
-### Web Scraping with Sessions
-
-```sona
-import session;
-import json;
-
-// Create HTTP session
-let s = session.create();
-s.set_header("User-Agent", "Sona/0.10.0");
-
-// Make requests
-let response = s.get("https://api.example.com/data");
-let data = json.parse(response.body);
-
-print("Fetched " + data.length + " items");
-```
-
-### Database Operations
-
-```sona
-import sqlite;
-import orm;
-
-// Connect to database
-let db = sqlite.connect("app.db");
-db.execute("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, email TEXT)");
-
-// Insert data
-db.insert("users", {"name": "Alice", "email": "alice@example.com"});
-db.insert("users", {"name": "Bob", "email": "bob@example.com"});
-
-// Query
-let users = db.query("SELECT * FROM users WHERE name LIKE ?", ["A%"]);
-for user in users {
-    print(user.name + ": " + user.email);
-}
-```
-
-### JWT Authentication
-
-```sona
-import jwt;
-import password;
-
-// Hash password
-let hashed = password.hash("secretpassword");
-print("Hashed: " + hashed);
-
-// Create JWT token
-let payload = {
-    "user_id": 123,
-    "username": "alice",
-    "role": "admin"
-};
-
-let token = jwt.encode(payload, "my-secret-key", exp_minutes=60);
-print("Token: " + token);
-
-// Verify token
-let decoded = jwt.decode(token, "my-secret-key");
-print("User ID: " + decoded.user_id);
-```
-
-### Graph Algorithms
-
-```sona
-import graph;
-
-// Create graph
-let g = graph.create();
-g.add_edge("A", "B");
-g.add_edge("B", "C");
-g.add_edge("A", "C");
-g.add_edge("C", "D");
-
-// Find shortest path
-let path = g.shortest_path("A", "D");
-print("Path: " + path.join(" -> "));  // A -> C -> D
-
-// Check for cycles
-let has_cycle = g.has_cycle();
-print("Has cycle: " + has_cycle);
-```
-
-### Testing with Assertions
-
-```sona
-import test;
-import assert;
-
-// Create test suite
-let suite = test.suite("Math Tests");
-
-suite.add_test("addition", func() {
-    let result = 2 + 2;
-    assert.equal(result, 4);
-});
-
-suite.add_test("division", func() {
-    let result = 10 / 2;
-    assert.equal(result, 5);
-});
-
-// Run tests
-let results = suite.run();
-print("Passed: " + results.passed + "/" + results.total);
-```
-
-### Template Rendering
-
-```sona
-import template;
-
-// Create template
-let tmpl = "Hello {{name}}, you have {{count}} messages.";
-
-// Render
-let output = template.render(tmpl, {
-    "name": "Alice",
-    "count": 5
-});
-
-print(output);  // Hello Alice, you have 5 messages.
-```
-
-### Functional Programming
-
-```sona
-import functional;
-
-// Function composition
-let add_one = func(x) { return x + 1; };
-let double = func(x) { return x * 2; };
-
-let f = functional.pipe(add_one, double);
-let result = f(5);  // (5 + 1) * 2 = 12
-
-print("Result: " + result);
-
-// Currying
-let multiply = func(a, b) { return a * b; };
-let triple = functional.curry(multiply)(3);
-print("Triple 7: " + triple(7));  // 21
-```
-
----
-
-## 📚 Documentation
-
-- **[Quick Start Guide](QUICK_START.md)** - Get up and running in 5 minutes
-- **[API Reference](API.md)** - Complete API documentation
-- **[Release Notes](SONA_0.10.0_RELEASE_NOTES.md)** - What's new in v0.10.0
-- **[Examples](examples/)** - Sample projects and code snippets
-
----
-
-## ✅ Verification
-
-Run the comprehensive test suite:
-
-```powershell
-# PowerShell
-.\run_all_tests.ps1
-
-# Or run test file directly
-python run_sona.py test_all_097.sona
-```
-
-Expected output:
-
-```
-✅ ALL 91 MODULES VERIFIED SUCCESSFULLY!
-
-Module Categories:
-  • Core System:        7 modules
-  • Data Structures:    7 modules
-  • I/O & Formats:      8 modules
-  • Network & Web:      9 modules
-  • Database:           6 modules
-  • Security:           6 modules
-  • Async:              5 modules
-  • Testing:            5 modules
-  • Utilities:         13 modules
-  • Automation:         7 modules
-  • Functional:         4 modules
-  • Templates:          3 modules
-                      ────────────
-    TOTAL:               91 modules
-```
-
----
-
-## 🏗️ Architecture
-
-### Zero Dependencies
-
-Sona's standard library has **zero external dependencies**. Everything is built on Python's standard library, ensuring:
-
-- ✅ Fast installation
-- ✅ No version conflicts
-- ✅ Maximum stability
-- ✅ Easy deployment
-
-### Module Design
-
-Each module follows consistent patterns:
+Standard library examples:
 
 ```python
-# Comprehensive docstrings
-def function(param: type) -> type:
-    """
-    Description of what function does.
+# json.merge_patch
+from sona.stdlib import json as sjson
 
-    Args:
-        param: Description of parameter
+target = {"title": "Good", "meta": {"a": 1, "b": 2}}
+patch = {"meta": {"b": None, "c": 3}}
+assert sjson.merge_patch(target, patch) == {"title": "Good", "meta": {"a": 1, "c": 3}}
 
-    Returns:
-        Description of return value
+# json.deep_update
+base = {"a": {"x": 1}, "list": [1, 2]}
+upd  = {"a": {"y": 2}, "list": [9]}
+out  = sjson.deep_update(base, upd)  # default replaces lists
+assert out == {"a": {"x": 1, "y": 2}, "list": [9]}
 
-    Example:
-        >>> result = function(value)
-        >>> print(result)
-    """
-    # Implementation
-    pass
+# collections
+from sona.stdlib import collection as col
+assert col.chunk([1,2,3,4,5], 2, last="keep") == [[1,2],[3,4],[5]]
+assert col.unique_by(["aa","ab","ba"], key=lambda s: s[0]) == ["aa","ba"]
+assert col.group_by(["aa","ab","ba"], key=lambda s: s[0]) == {"a":["aa","ab"], "b":["ba"]}
+
+# regex
+from sona.stdlib import regex
+h = regex.compile(r"^[a-z]+$", {"case_insensitive": True})
+assert regex.match(h, "Alpha")["matched"] is True
 ```
 
-### Category Organization
+---
 
-Modules are organized into 12 logical categories:
+## CLI reference (snapshot)
 
-1. **Core System** - Fundamental operations
-2. **Data Structures** - Collections and algorithms
-3. **I/O & Formats** - File and format handling
-4. **Network & Web** - HTTP, WebSocket, DNS, etc.
-5. **Database & Storage** - Data persistence
-6. **Security & Auth** - Cryptography and authentication
-7. **Async & Concurrency** - Parallel execution
-8. **Testing & Quality** - Test and debug tools
-9. **Utilities** - Common helper functions
-10. **Automation** - CLI, logging, scheduling
-11. **Functional Programming** - FP patterns
-12. **Templates & Processing** - Text processing
+```bash
+sona init <project>           # Create a new project
+sona run <file>               # Execute Sona files
+sona repl                     # Interactive REPL
+sona transpile <file>         # Convert to other languages
+sona format <file>            # Format code
+sona check <file>             # Syntax validation
+sona info                     # Environment information
+sona build-info               # Build metadata + feature flags
+sona doctor                   # Diagnostics
+```
 
 ---
 
-## 🛣️ Roadmap
+## Configuration
 
-### v0.10.x (Cognitive Preview)
-
-- Cognitive report schema stabilization
-- LSP cognitive diagnostics depth
-- Export workflow integrations
-- Runtime coverage consistency
-
-### v1.0.0 (Target: Q2 2024)
-
-- Production-grade stability
-- Comprehensive test coverage
-- Package manager (npm-like)
-- VS Code extension
+* `SONA_DEBUG=1` enables verbose stdlib/runtime diagnostics during development and CI.
 
 ---
 
-## 🤝 Contributing
+## Testing and coverage
 
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+The CI focuses on the standard library to keep signals clean and actionable.
 
-### Areas for Contribution
+* Scope: `sona/stdlib/*` (excludes utils/ai/native\_\*, smod helpers)
+* Commands:
 
-- 📝 Documentation improvements
-- 🧪 Additional test cases
-- 🐛 Bug fixes
-- ✨ New module proposals
-- 🌍 Internationalization
+```bash
+# Windows PowerShell
+$env:SONA_DEBUG = "1"
 
----
+pytest -q
+coverage run -m pytest
+coverage report                # expect ≥85%
+```
 
-## 📄 License
-
-Sona is released under the MIT License. See [LICENSE](LICENSE) file for details.
-
----
-
-## 🙏 Acknowledgments
-
-Built with ❤️ using:
-
-- **Python** - Core runtime
-- **Lark** - Parser generator
-- **Community feedback** - Feature requests and bug reports
+* Smoke test gate (excerpt): ensures ≥22 stdlib modules, imports succeed, public API or namespace children exist, and basic JSON/collections/regex probes pass.
+* Deterministic: no network calls in core tests.
 
 ---
 
-## 📞 Support
+## Packaging integrity
 
-- **Issues**: [GitHub Issues](https://github.com/Bryantad/Sona/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/Bryantad/Sona/discussions)
-- **Documentation**: [docs/](docs/)
+A manifest is generated and version-controlled to prevent drift:
+
+* `sona/stdlib/MANIFEST.json` lists the intended stdlib modules.
+* A smoke test asserts the packaged modules match the manifest and that the count meets the minimum threshold.
+
+Before packaging the VSIX:
+
+```bash
+python scripts/generate_stdlib_manifest.py
+pytest -q && coverage run -m pytest && coverage report
+npx vsce ls
+npx vsce package
+python scripts/check_vsix.py sona-ai-native-programming-0.9.4.1.vsix
+```
+
+The asset check fails if `extension/README.md`, `extension/media/icon.png`, or `extension/package.json` are missing.
 
 ---
 
-<div align="center">
+## Roadmap (near term)
 
-**Sona v0.10.0** - 91 Modules, Zero Dependencies, Infinite Possibilities
+* Language Server Protocol (diagnostics, semantic tokens, quick fixes)
+* Transpilation fidelity for a focused subset of constructs
+* Package manager (publish/consume with lockfile and integrity checks)
+* AI provider integrations via `sona-ai` (provider-agnostic, safe by default, tested offline with fakes)
 
-Made with 🎵 by the Sona Team
+These will not compromise stdlib stability.
 
-</div>
+---
+
+## Release notes
+
+* 0.9.4 — foundation and stdlib improvements (merge\_patch, deep\_update, collections)
+* 0.9.4.1 — hotfix for packaging credibility (stdlib wiring, Marketplace Overview/icon/screenshots, keywords, Q\&A), README alignment, and a back-compat shim for `deep_update(copy=...)`
+
+See releases: [https://github.com/Bryantad/Sona/releases](https://github.com/Bryantad/Sona/releases)
+
+---
+
+## Contributing
+
+Contributions are welcome. Please:
+
+1. Open an issue to discuss scope and approach.
+2. Keep changes deterministic and testable.
+3. Maintain the stdlib coverage gate (≥85%) and pass smoke tests.
+4. Avoid introducing network dependencies into core tests.
+
+---
+
+## Community
+
+* Issues: [https://github.com/Bryantad/Sona/issues](https://github.com/Bryantad/Sona/issues)
+* Discussions: [https://github.com/Bryantad/Sona/discussions](https://github.com/Bryantad/Sona/discussions)
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE).
