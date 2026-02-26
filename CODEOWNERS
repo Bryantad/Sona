@@ -1,5 +1,0 @@
-# Code owners for Sona project
-# Format: <path> <github-username>
-/docs/ @repo-maintainers
-/sona/ @repo-maintainers
-/examples/ @repo-maintainers
