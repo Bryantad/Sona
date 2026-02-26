@@ -1,0 +1,180 @@
+# stack.smod
+# Purpose: Pure Sona stack runtime (no Python native bridge).
+
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func __copy_list(items) {
+    let out = []
+    if items {
+        for item in items {
+            out.append(item)
+        }
+    }
+    return out
+}
+
+func __reverse_list(items) {
+    let out = []
+    for item in items {
+        out.insert(0, item)
+    }
+    return out
+}
+
+func __stack_push(self, item) {
+    let items = self["items"]
+    items.append(item)
+    return self
+}
+
+func __stack_pop(self) {
+    let items = self["items"]
+    if len(items) == 0 {
+        return nil
+    }
+    let popped_item = items.pop()
+    return popped_item
+}
+
+func __stack_peek(self) {
+    let items = self["items"]
+    if len(items) == 0 {
+        return nil
+    }
+    let top_item = items.pop()
+    items.append(top_item)
+    return top_item
+}
+
+func __stack_is_empty(self) {
+    let items = self["items"]
+    let size_value = len(items)
+    return size_value == 0
+}
+
+func __stack_size(self) {
+    let items = self["items"]
+    let size_value = len(items)
+    return size_value
+}
+
+func __stack_clear(self) {
+    let items = self["items"]
+    items.clear()
+    return self
+}
+
+func __stack_to_list(self) {
+    let items = self["items"]
+    let copied = __reverse_list(items)
+    return copied
+}
+
+func __stack_contains(self, item) {
+    let items = self["items"]
+    for current in items {
+        if current == item {
+            return true
+        }
+    }
+    return false
+}
+
+func __stack_search(self, item) {
+    let items = self["items"]
+    let reversed_items = __reverse_list(items)
+    let distance = 0
+    while len(reversed_items) > 0 {
+        let current = reversed_items.pop(0)
+        if current == item {
+            return distance
+        }
+        distance = distance + 1
+    }
+    return -1
+}
+
+func Stack(items=nil) {
+    let stack_obj = {
+        "items": __copy_list(items),
+        "push": __stack_push,
+        "pop": __stack_pop,
+        "peek": __stack_peek,
+        "is_empty": __stack_is_empty,
+        "size": __stack_size,
+        "clear": __stack_clear,
+        "to_list": __stack_to_list,
+        "contains": __stack_contains,
+        "search": __stack_search
+    }
+    return stack_obj
+}
+
+func create(items=nil) {
+    return Stack(items)
+}
+
+func from_list(items) {
+    return Stack(items)
+}
+
+func push(stack_obj, item) {
+    return stack_obj.push(item)
+}
+
+func pop(stack_obj) {
+    return stack_obj.pop()
+}
+
+func peek(stack_obj) {
+    return stack_obj.peek()
+}
+
+func is_empty(stack_obj) {
+    return stack_obj.is_empty()
+}
+
+func size(stack_obj) {
+    return stack_obj.size()
+}
+
+func clear(stack_obj) {
+    return stack_obj.clear()
+}
+
+func to_list(stack_obj) {
+    return stack_obj.to_list()
+}
+
+func reverse(stack_obj) {
+    return Stack(stack_obj.to_list())
+}
+
+func contains(stack_obj, item) {
+    return stack_obj.contains(item)
+}
+
+func search(stack_obj, item) {
+    return stack_obj.search(item)
+}
+
+func filter_stack(stack_obj, predicate) {
+    let items = stack_obj["items"]
+    let out = []
+    for item in items {
+        if predicate(item) {
+            out.append(item)
+        }
+    }
+    return Stack(out)
+}
+
+func map_stack(stack_obj, mapper) {
+    let items = stack_obj["items"]
+    let out = []
+    for item in items {
+        out.append(mapper(item))
+    }
+    return Stack(out)
+}

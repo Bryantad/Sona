@@ -1,0 +1,64 @@
+# hashing.smod
+# Purpose: Sona hashing module entrypoint with stable native digest helpers.
+
+const module_format = "smod-runtime"
+const runtime_backend = "smod-bridge"
+
+func __default(value, fallback) {
+    if value == nil {
+        return fallback
+    }
+    return value
+}
+
+func md5(data) {
+    return __native__.md5(data)
+}
+
+func sha1(data) {
+    return __native__.sha1(data)
+}
+
+func sha256(data) {
+    return __native__.sha256(data)
+}
+
+func hash(data) {
+    return sha256(data)
+}
+
+func digest(data, options=nil) {
+    if options == nil {
+        return sha256(data)
+    }
+    let algorithm = __default(options.get("algorithm"), "sha256")
+    return checksum(data, algorithm)
+}
+
+func sha512(data) {
+    return __native__.sha512(data)
+}
+
+func blake2b(data, digest_size=nil) {
+    if digest_size == nil {
+        return __native__.blake2b(data)
+    }
+    return __native__.blake2b(data, digest_size)
+}
+
+func sha3_256(data) {
+    return __native__.sha3_256(data)
+}
+
+func sha3_512(data) {
+    return __native__.sha3_512(data)
+}
+
+func checksum(data, algorithm=nil) {
+    let selected = __default(algorithm, "sha256")
+    return __native__.checksum(data, selected)
+}
+
+func hmac_sha256(key, message) {
+    return __native__.hmac_sha256(key, message)
+}

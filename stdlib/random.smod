@@ -1,0 +1,277 @@
+# random.smod
+# Purpose: Pure Sona pseudo-random runtime (no Python native bridge).
+
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+const __rng_modulus = 2147483647
+const __rng_multiplier = 48271
+let __rng_state = [123456789]
+
+func __default(value, fallback) {
+    if value == nil {
+        return fallback
+    }
+    return value
+}
+
+func __copy_list(values) {
+    let out = []
+    if values {
+        for value in values {
+            out.append(value)
+        }
+    }
+    return out
+}
+
+func __next_raw() {
+    let current = __rng_state[0]
+    let next_value = (current * __rng_multiplier) % __rng_modulus
+    if next_value <= 0 {
+        next_value = 1
+    }
+    __rng_state.pop(0)
+    __rng_state.append(next_value)
+    return next_value
+}
+
+func seed(value=nil) {
+    let next_seed = 123456789
+    if value != nil {
+        next_seed = int(value)
+        next_seed = next_seed % (__rng_modulus - 1)
+        if next_seed <= 0 {
+            next_seed = next_seed + (__rng_modulus - 1)
+        }
+    }
+    __rng_state.pop(0)
+    __rng_state.append(next_seed)
+    return next_seed
+}
+
+func random() {
+    return __next_raw() / __rng_modulus
+}
+
+func __unit_random() {
+    return __next_raw() / __rng_modulus
+}
+
+func randint(a, b) {
+    if b < a {
+        let temp = a
+        a = b
+        b = temp
+    }
+
+    let span = (b - a) + 1
+    if span <= 0 {
+        return a
+    }
+
+    let offset = int(__unit_random() * span)
+    if offset >= span {
+        offset = span - 1
+    }
+    return a + offset
+}
+
+func choice(values) {
+    if values == nil {
+        return nil
+    }
+    if len(values) == 0 {
+        return nil
+    }
+    let max_index = len(values)
+    max_index = max_index - 1
+    let target_index = randint(0, max_index)
+    let position = 0
+    for candidate in values {
+        if position == target_index {
+            return candidate
+        }
+        position = position + 1
+    }
+    return nil
+}
+
+func shuffle(values) {
+    let pool = __copy_list(values)
+    let out = []
+
+    while len(pool) > 0 {
+        let max_index = len(pool)
+        max_index = max_index - 1
+        let index = randint(0, max_index)
+        out.append(pool.pop(index))
+    }
+    return out
+}
+
+func sample(values, k) {
+    let pool = __copy_list(values)
+    let out = []
+    let remaining = k
+
+    if remaining < 0 {
+        remaining = 0
+    }
+    if remaining > len(pool) {
+        remaining = len(pool)
+    }
+
+    while remaining > 0 {
+        let max_index = len(pool)
+        max_index = max_index - 1
+        let index = randint(0, max_index)
+        out.append(pool.pop(index))
+        remaining = remaining - 1
+    }
+    return out
+}
+
+func uniform(a, b) {
+    return a + (__unit_random() * (b - a))
+}
+
+func weighted_choice(options) {
+    if options == nil {
+        return nil
+    }
+
+    let total = 0.0
+    for key in options {
+        total = total + options[key]
+    }
+
+    if total <= 0 {
+        return nil
+    }
+
+    let threshold = __unit_random() * total
+    let running = 0.0
+    for key in options {
+        running = running + options[key]
+        if threshold <= running {
+            return key
+        }
+    }
+
+    for key in options {
+        return key
+    }
+    return nil
+}
+
+func __weighted_choice_lists(values, weights) {
+    if values == nil {
+        return nil
+    }
+    if weights == nil {
+        return choice(values)
+    }
+    if len(values) == 0 {
+        return nil
+    }
+
+    let total = 0.0
+    let i = 0
+    while i < len(values) {
+        total = total + weights[i]
+        i = i + 1
+    }
+
+    if total <= 0 {
+        return nil
+    }
+
+    let threshold = __unit_random() * total
+    let running = 0.0
+    i = 0
+    while i < len(values) {
+        running = running + weights[i]
+        if threshold <= running {
+            let picked = values[i]
+            return picked
+        }
+        i = i + 1
+    }
+
+    let last_index = len(values)
+    last_index = last_index - 1
+    let fallback = values[last_index]
+    return fallback
+}
+
+func choices(values, options=nil) {
+    if options == nil {
+        options = {}
+    }
+
+    let count = __default(options.get("k"), 1)
+    let weights = __default(options.get("weights"), nil)
+    let out = []
+    let i = 0
+
+    while i < count {
+        if weights == nil {
+            out.append(choice(values))
+        } else {
+            out.append(__weighted_choice_lists(values, weights))
+        }
+        i = i + 1
+    }
+
+    return out
+}
+
+func gauss(mu, sigma) {
+    # Central-limit approximation (deterministic PRNG-backed).
+    let total = 0.0
+    for _ in range(6) {
+        total = total + __unit_random()
+    }
+    return mu + ((total - 3.0) * sigma)
+}
+
+func triangular(low, high, mode=nil) {
+    mode = __default(mode, (low + high) / 2.0)
+    if high == low {
+        return low
+    }
+
+    let u = __unit_random()
+    let pivot = (mode - low) / (high - low)
+
+    if pivot <= 0 {
+        return mode + (u * (high - mode))
+    }
+    if pivot >= 1 {
+        return low + (u * (mode - low))
+    }
+
+    if u <= pivot {
+        return low + (u / pivot) * (mode - low)
+    }
+    return mode + ((u - pivot) / (1.0 - pivot)) * (high - mode)
+}
+
+func randbytes(n) {
+    let out = []
+    let i = 0
+    while i < n {
+        out.append(randint(0, 255))
+        i = i + 1
+    }
+    return out
+}
+
+func coin_flip() {
+    return __unit_random() < 0.5
+}
+
+func dice(sides=nil) {
+    return randint(1, __default(sides, 6))
+}

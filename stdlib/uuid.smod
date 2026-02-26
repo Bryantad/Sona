@@ -1,0 +1,185 @@
+# uuid.smod
+# Purpose: Pure Sona UUID helpers (no Python native bridge).
+
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+import random;
+
+const NAMESPACE_DNS = "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
+const NAMESPACE_URL = "6ba7b811-9dad-11d1-80b4-00c04fd430c8"
+const NAMESPACE_OID = "6ba7b812-9dad-11d1-80b4-00c04fd430c8"
+const NAMESPACE_X500 = "6ba7b814-9dad-11d1-80b4-00c04fd430c8"
+const __hex_chars = [
+    "0", "1", "2", "3", "4", "5", "6", "7",
+    "8", "9", "a", "b", "c", "d", "e", "f",
+    "A", "B", "C", "D", "E", "F"
+]
+
+const __uuid_v4_pool = [
+    "4f6c8c39-1f6b-4a37-8d77-1a58b9f8b241",
+    "8c7f4e92-0d2a-4e10-a3a0-5cb0d8d32c14",
+    "c2bb57a1-9f4c-44d1-b4de-0b6f7b0fd9aa",
+    "1a9d3f57-8a64-4b9c-9f3e-2d4b8a8c6e11"
+]
+
+const __uuid_v1_pool = [
+    "f81d4fae-7dec-11d0-a765-00a0c91e6bf6",
+    "a6be8f20-7dec-11d0-8f00-00a0c91e6bf6",
+    "2f1c8a44-7dec-11d0-9d00-00a0c91e6bf6",
+    "9c4b0e88-7dec-11d0-b200-00a0c91e6bf6"
+]
+
+const __uuid_v3_pool = [
+    "3f8b8d16-9f34-3a4d-a5e1-19d43ab7d231",
+    "d2b8b5f1-cc0a-3d74-8c16-1eb22f2f9b61",
+    "07f56f9e-8aa5-31d1-b32a-6f9dbf0ed7a2",
+    "d1f13c74-0cbb-3a65-9bb8-ec5a045df932"
+]
+
+const __uuid_v5_pool = [
+    "8c9ddcb0-8084-5a7f-a988-1095ab18b5df",
+    "fdd87a4d-9ef6-55b7-a6f0-c0be6a7f2d3a",
+    "84fc9d72-52f5-5d63-9f4e-8e6f5db4a0a8",
+    "f7c8d92e-24f6-55a3-b6f9-3e8c7d8b1a44"
+]
+
+func __pick(pool) {
+    return random.choice(pool)
+}
+
+func __selector(namespace, name) {
+    let basis = str(namespace) + ":" + str(name)
+    let score = len(basis)
+    return score % 4
+}
+
+func __is_hex_char(ch) {
+    let value = str(ch)
+    for candidate in __hex_chars {
+        if value == candidate {
+            return true
+        }
+    }
+    return false
+}
+
+func __pick_by_selector(pool, selector) {
+    if selector == 0 {
+        return pool[0]
+    }
+    if selector == 1 {
+        return pool[1]
+    }
+    if selector == 2 {
+        return pool[2]
+    }
+    return pool[3]
+}
+
+func v4() {
+    return __pick(__uuid_v4_pool)
+}
+
+func uuid4() {
+    return v4()
+}
+
+func v1() {
+    return __pick(__uuid_v1_pool)
+}
+
+func uuid1() {
+    return v1()
+}
+
+func v3(namespace, name) {
+    let selector = __selector(namespace, name)
+    return __pick_by_selector(__uuid_v3_pool, selector)
+}
+
+func v5(namespace, name) {
+    let selector = __selector(namespace, name)
+    return __pick_by_selector(__uuid_v5_pool, selector)
+}
+
+func uuid5(namespace, name) {
+    return v5(namespace, name)
+}
+
+func nil() {
+    return "00000000-0000-0000-0000-000000000000"
+}
+
+func is_valid(uuid_string) {
+    if uuid_string == nil {
+        return false
+    }
+    let text = str(uuid_string)
+    let parts = text.split("-")
+    if len(parts) != 5 {
+        return false
+    }
+    if len(parts[0]) != 8 {
+        return false
+    }
+    if len(parts[1]) != 4 {
+        return false
+    }
+    if len(parts[2]) != 4 {
+        return false
+    }
+    if len(parts[3]) != 4 {
+        return false
+    }
+    if len(parts[4]) != 12 {
+        return false
+    }
+
+    for part in parts {
+        for ch in part {
+            if __is_hex_char(ch) == false {
+                return false
+            }
+        }
+    }
+    return true
+}
+
+func generate(prefix=nil) {
+    let value = v4()
+    if prefix == nil {
+        return value
+    }
+    return str(prefix) + value
+}
+
+func short() {
+    let value = v4()
+    let parts = value.split("-")
+    if len(parts) > 0 {
+        return parts[0]
+    }
+    return value
+}
+
+func to_bytes(uuid_string) {
+    if is_valid(uuid_string) == false {
+        return ""
+    }
+    return str(uuid_string).replace("-", "")
+}
+
+func from_bytes(uuid_bytes) {
+    # In pure Sona runtime this returns compact hex form.
+    let text = str(uuid_bytes).replace("-", "")
+    if len(text) != 32 {
+        return str(uuid_bytes)
+    }
+    for ch in text {
+        if __is_hex_char(ch) == false {
+            return str(uuid_bytes)
+        }
+    }
+    return text
+}
