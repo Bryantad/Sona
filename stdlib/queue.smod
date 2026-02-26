@@ -1,0 +1,252 @@
+# queue.smod
+# Purpose: Pure Sona queue runtime (no Python native bridge).
+
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func __copy_list(items) {
+    let out = []
+    if items {
+        for item in items {
+            out.append(item)
+        }
+    }
+    return out
+}
+
+func __reverse_list(items) {
+    let out = []
+    for item in items {
+        out.insert(0, item)
+    }
+    return out
+}
+
+func __queue_enqueue(self, item) {
+    let items = self["items"]
+    items.append(item)
+    return self
+}
+
+func __queue_dequeue(self) {
+    let items = self["items"]
+    if len(items) == 0 {
+        return nil
+    }
+    let dequeued_item = items.pop(0)
+    return dequeued_item
+}
+
+func __queue_peek(self) {
+    let items = self["items"]
+    if len(items) == 0 {
+        return nil
+    }
+    for first_item in items {
+        return first_item
+    }
+    return nil
+}
+
+func __queue_is_empty(self) {
+    let items = self["items"]
+    let size_value = len(items)
+    return size_value == 0
+}
+
+func __queue_size(self) {
+    let items = self["items"]
+    let size_value = len(items)
+    return size_value
+}
+
+func __queue_clear(self) {
+    let items = self["items"]
+    items.clear()
+    return self
+}
+
+func __queue_to_list(self) {
+    let items = self["items"]
+    let copied = __copy_list(items)
+    return copied
+}
+
+func __queue_contains(self, item) {
+    let items = self["items"]
+    for current in items {
+        if current == item {
+            return true
+        }
+    }
+    return false
+}
+
+func Queue(items=nil) {
+    let queue_obj = {
+        "items": __copy_list(items),
+        "enqueue": __queue_enqueue,
+        "dequeue": __queue_dequeue,
+        "peek": __queue_peek,
+        "is_empty": __queue_is_empty,
+        "size": __queue_size,
+        "clear": __queue_clear,
+        "to_list": __queue_to_list,
+        "contains": __queue_contains
+    }
+    return queue_obj
+}
+
+func __priority_insert(items, entry) {
+    let i = 0
+    while i < len(items) {
+        let current = items[i]
+        if entry["priority"] < current["priority"] {
+            items.insert(i, entry)
+            return
+        }
+        if entry["priority"] == current["priority"] {
+            if entry["order"] < current["order"] {
+                items.insert(i, entry)
+                return
+            }
+        }
+        i = i + 1
+    }
+    items.append(entry)
+}
+
+func __priority_enqueue(self, item, priority=nil) {
+    if priority == nil {
+        priority = 0
+    }
+    let order = self["counter"][0]
+    self["counter"].pop(0)
+    self["counter"].append(order + 1)
+
+    let entry = {
+        "priority": priority,
+        "order": order,
+        "value": item
+    }
+    __priority_insert(self["items"], entry)
+    return self
+}
+
+func __priority_dequeue(self) {
+    if len(self["items"]) == 0 {
+        return nil
+    }
+    let entry = self["items"].pop(0)
+    return entry["value"]
+}
+
+func __priority_peek(self) {
+    if len(self["items"]) == 0 {
+        return nil
+    }
+    let entry = self["items"][0]
+    return entry["value"]
+}
+
+func __priority_is_empty(self) {
+    return len(self["items"]) == 0
+}
+
+func __priority_size(self) {
+    return len(self["items"])
+}
+
+func __priority_clear(self) {
+    self["items"].clear()
+    self["counter"].pop(0)
+    self["counter"].append(0)
+    return self
+}
+
+func PriorityQueue() {
+    let queue_obj = {
+        "items": [],
+        "counter": [0],
+        "enqueue": __priority_enqueue,
+        "dequeue": __priority_dequeue,
+        "peek": __priority_peek,
+        "is_empty": __priority_is_empty,
+        "size": __priority_size,
+        "clear": __priority_clear
+    }
+    return queue_obj
+}
+
+func create(items=nil) {
+    return Queue(items)
+}
+
+func create_priority() {
+    return PriorityQueue()
+}
+
+func enqueue(queue_obj, item) {
+    return queue_obj.enqueue(item)
+}
+
+func dequeue(queue_obj) {
+    return queue_obj.dequeue()
+}
+
+func peek(queue_obj) {
+    return queue_obj.peek()
+}
+
+func is_empty(queue_obj) {
+    return queue_obj.is_empty()
+}
+
+func size(queue_obj) {
+    return queue_obj.size()
+}
+
+func clear(queue_obj) {
+    return queue_obj.clear()
+}
+
+func to_list(queue_obj) {
+    return queue_obj.to_list()
+}
+
+func from_list(items) {
+    return Queue(items)
+}
+
+func reverse(queue_obj) {
+    return Queue(__reverse_list(queue_obj.to_list()))
+}
+
+func batch_dequeue(queue_obj, count) {
+    let out = []
+    let remaining = count
+    if remaining < 0 {
+        remaining = 0
+    }
+
+    while remaining > 0 {
+        if queue_obj.is_empty() {
+            break
+        }
+        out.append(queue_obj.dequeue())
+        remaining = remaining - 1
+    }
+    return out
+}
+
+func drain(queue_obj) {
+    let out = []
+    while queue_obj.is_empty() == false {
+        out.append(queue_obj.dequeue())
+    }
+    return out
+}
+
+func contains(queue_obj, item) {
+    return queue_obj.contains(item)
+}

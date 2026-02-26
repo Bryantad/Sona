@@ -13,7 +13,7 @@ with open(os.path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name="Sona: AI-Native Programming Language",
-    version="0.10.1",
+    version="0.10.3",
     author="Sona Development Team",
     author_email="sona-dev@hotmail.com",
     description=(

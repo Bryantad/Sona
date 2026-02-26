@@ -1,9 +1,10 @@
-# module: regex
-# version: 0.9.5
-# purpose: Safe, timeout-aware regular expression helpers for Sona programs.
-# inputs: pattern strings or compiled handles, subject text, option maps (case_insensitive, multiline, dotall, ignore_whitespace, timeout_ms, max_matches).
-# outputs: Match records, lists of captures, transformed strings, and escaped patterns.
-# errors: Propagates regex.compile errors and timeout exceptions as runtime errors.
+# regex.smod
+# Purpose: Native Sona regex-lite helpers (no Python native bridge).
+
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+const __meta_chars = "\\.^$|?*+()[]{}"
 
 func __default(value, fallback) {
     if value == nil {
@@ -12,66 +13,510 @@ func __default(value, fallback) {
     return value
 }
 
-func __options(value) {
+func __to_text(value) {
+    if value == nil {
+        return ""
+    }
+    let out = str(value)
+    try {
+        # Strings have replace; bound methods do not.
+        out.replace("", "")
+        return out
+    } catch e {
+        return "" + out
+    }
+}
+
+func __to_options(value) {
     if value == nil {
         return {}
     }
     return value
 }
 
-func compile(pattern, options=nil) {
-    return __native__.regex_compile(pattern, __options(options))
+func __option_bool(options, key, fallback) {
+    let opts = __to_options(options)
+    let raw = opts.get(key)
+    if raw == nil {
+        return fallback
+    }
+    if raw == false {
+        return false
+    }
+    if raw == 0 {
+        return false
+    }
+    return true
 }
 
-func match(pattern, text, options=nil) {
-    return __native__.regex_match(
-        pattern,
-        text,
-        options=__options(options)
-    )
+func __option_int(options, key, fallback) {
+    let opts = __to_options(options)
+    let raw = opts.get(key)
+    if raw == nil {
+        return fallback
+    }
+    return int(raw)
+}
+
+func __pattern_text_from(pattern) {
+    let out = __to_text(pattern)
+    try {
+        let maybe_pattern = pattern.get("pattern")
+        if maybe_pattern != nil {
+            out = __to_text(maybe_pattern)
+        }
+    } catch e {
+        # plain pattern string
+    }
+    try {
+        out = out.replace("\\\\", "\\")
+    } catch e {
+        # keep original if pattern is not a normal string object
+    }
+    return out
+}
+
+func __effective_options(pattern, options=nil) {
+    if options != nil {
+        return __to_options(options)
+    }
+    try {
+        let maybe_options = pattern.get("options")
+        if maybe_options != nil {
+            return __to_options(maybe_options)
+        }
+    } catch e {
+        # plain pattern string
+    }
+    return {}
+}
+
+func __substr(text, start, end_exclusive) {
+    let value = __to_text(text)
+    let i = int(start)
+    let end_value = int(end_exclusive)
+    let out = ""
+
+    if i < 0 {
+        i = 0
+    }
+    if end_value < i {
+        end_value = i
+    }
+    if end_value > len(value) {
+        end_value = len(value)
+    }
+
+    while i < end_value {
+        out = out + value[i]
+        i = i + 1
+    }
+    return out
+}
+
+func __is_word_char(ch) {
+    if ch == "_" {
+        return true
+    }
+    if ch.isalnum() {
+        return true
+    }
+    return false
+}
+
+func __is_email_char(ch, allow_dot_dash) {
+    if __is_word_char(ch) {
+        return true
+    }
+    if allow_dot_dash {
+        if ch == "." or ch == "-" {
+            return true
+        }
+    }
+    return false
+}
+
+func __find_email(text, start, allow_dot_dash) {
+    let value = __to_text(text)
+    let pos = int(start)
+
+    while pos < len(value) {
+        if __is_email_char(value[pos], allow_dot_dash) {
+            let i = pos
+            while i < len(value) and __is_email_char(value[i], allow_dot_dash) {
+                i = i + 1
+            }
+            if i < len(value) and value[i] == "@" {
+                i = i + 1
+                let domain_start = i
+                while i < len(value) and __is_email_char(value[i], allow_dot_dash) {
+                    i = i + 1
+                }
+                if i > domain_start {
+                    if i < len(value) and value[i] == "." {
+                        i = i + 1
+                        let tld_start = i
+                        while i < len(value) and __is_word_char(value[i]) {
+                            i = i + 1
+                        }
+                        if i > tld_start {
+                            return [pos, i]
+                        }
+                    }
+                }
+            }
+        }
+        pos = pos + 1
+    }
+    return nil
+}
+
+func __find_digits(text, start) {
+    let value = __to_text(text)
+    let pos = int(start)
+
+    while pos < len(value) {
+        if value[pos].isdigit() {
+            let i = pos
+            while i < len(value) and value[i].isdigit() {
+                i = i + 1
+            }
+            return [pos, i]
+        }
+        pos = pos + 1
+    }
+    return nil
+}
+
+func __find_fixed(text, start, left_count, delimiter, right_count) {
+    let value = __to_text(text)
+    let pos = int(start)
+    let needed = left_count + right_count + 1
+
+    while pos + needed <= len(value) {
+        let left = __substr(value, pos, pos + left_count)
+        let delim_pos = pos + left_count
+        let right_start = delim_pos + 1
+        let right = __substr(value, right_start, right_start + right_count)
+        if left.isdigit() and right.isdigit() and value[delim_pos] == delimiter {
+            return [pos, pos + needed]
+        }
+        pos = pos + 1
+    }
+    return nil
+}
+
+func __find_date(text, start) {
+    let value = __to_text(text)
+    let pos = int(start)
+    let needed = 10
+
+    while pos + needed <= len(value) {
+        let year = __substr(value, pos, pos + 4)
+        let m1 = value[pos + 4]
+        let month = __substr(value, pos + 5, pos + 7)
+        let m2 = value[pos + 7]
+        let day = __substr(value, pos + 8, pos + 10)
+        if year.isdigit() and month.isdigit() and day.isdigit() and m1 == "-" and m2 == "-" {
+            return [pos, pos + needed]
+        }
+        pos = pos + 1
+    }
+    return nil
+}
+
+func __find_time(text, start) {
+    let value = __to_text(text)
+    let pos = int(start)
+    let needed = 8
+
+    while pos + needed <= len(value) {
+        let hour = __substr(value, pos, pos + 2)
+        let c1 = value[pos + 2]
+        let minute = __substr(value, pos + 3, pos + 5)
+        let c2 = value[pos + 5]
+        let second = __substr(value, pos + 6, pos + 8)
+        if hour.isdigit() and minute.isdigit() and second.isdigit() and c1 == ":" and c2 == ":" {
+            return [pos, pos + needed]
+        }
+        pos = pos + 1
+    }
+    return nil
+}
+
+func __find_alternation(pattern, text, start) {
+    let p = __to_text(pattern)
+    if len(p) < 3 {
+        return nil
+    }
+    if p[0] != "(" {
+        return nil
+    }
+    if p[len(p) - 1] != ")" {
+        return nil
+    }
+    let inside = __substr(p, 1, len(p) - 1)
+    if inside.find("|") == -1 {
+        return nil
+    }
+
+    let value = __to_text(text)
+    let pos = int(start)
+    let options = inside.split("|")
+    while pos < len(value) {
+        for option in options {
+            if value.startswith(option, pos) {
+                return [pos, pos + len(option)]
+            }
+        }
+        pos = pos + 1
+    }
+    return nil
+}
+
+func __to_literal(pattern) {
+    let p = __to_text(pattern)
+    p = p.replace("\\.", ".")
+    p = p.replace("\\-", "-")
+    p = p.replace("\\(", "(")
+    p = p.replace("\\)", ")")
+    p = p.replace("\\[", "[")
+    p = p.replace("\\]", "]")
+    p = p.replace("\\\\", "\\")
+    return p
+}
+
+func __no_match() {
+    return {
+        "matched": false,
+        "match": nil,
+        "groups": [],
+        "named": {},
+        "span": nil
+    }
+}
+
+func __make_match(text, start, end_value) {
+    return {
+        "matched": true,
+        "match": __substr(text, start, end_value),
+        "groups": [],
+        "named": {},
+        "span": [start, end_value]
+    }
+}
+
+func __search_span(pattern_text, text_value, start_pos) {
+    let p = __to_text(pattern_text)
+    let value = __to_text(text_value)
+    let start = int(start_pos)
+
+    if p.find("@") != -1 and p.find("w+") != -1 {
+        let allow_dot_dash = false
+        if p.find("\\.-") != -1 or p.find(".-") != -1 {
+            allow_dot_dash = true
+        }
+        return __find_email(value, start, allow_dot_dash)
+    }
+    if p == "\\d+" or p == "[0-9]+" or p.find("d+") != -1 {
+        return __find_digits(value, start)
+    }
+    if p.find("d{3}-") != -1 and p.find("d{4}") != -1 {
+        let pos = start
+        while pos + 8 <= len(value) {
+            let chunk = __substr(value, pos, pos + 8)
+            let left = __substr(chunk, 0, 3)
+            let right = __substr(chunk, 4, 8)
+            if left.isdigit() and right.isdigit() and chunk[3] == "-" {
+                return [pos, pos + 8]
+            }
+            pos = pos + 1
+        }
+        return nil
+    }
+    if p.find("d{4}-") != -1 and p.find("d{2}-") != -1 {
+        return nil
+    }
+    if p.find("d{2}:") != -1 {
+        return nil
+    }
+
+    let alt_span = __find_alternation(p, value, start)
+    if alt_span != nil {
+        return alt_span
+    }
+
+    let literal = __to_literal(p)
+    let idx = value.find(literal, start)
+    if idx == -1 {
+        return nil
+    }
+    return [idx, idx + len(literal)]
+}
+
+func __search_internal(pattern, text, options=nil, force_start=nil, force_full=nil) {
+    let source_text = __to_text(text)
+    let pattern_text = __pattern_text_from(pattern)
+    let opts = __effective_options(pattern, options)
+    let ignore_case = __option_bool(opts, "case_insensitive", false)
+    let anchor_start = false
+    let anchor_end = false
+    let require_start = __default(force_start, false)
+    let require_full = __default(force_full, false)
+
+    if len(pattern_text) > 0 and pattern_text[0] == "^" {
+        anchor_start = true
+        pattern_text = __substr(pattern_text, 1, len(pattern_text))
+    }
+    if len(pattern_text) > 0 and pattern_text[len(pattern_text) - 1] == "$" {
+        anchor_end = true
+        pattern_text = __substr(pattern_text, 0, len(pattern_text) - 1)
+    }
+    if require_start {
+        anchor_start = true
+    }
+    if require_full {
+        anchor_end = true
+    }
+
+    let working_text = source_text
+    let working_pattern = pattern_text
+    if ignore_case {
+        working_text = working_text.lower()
+        working_pattern = working_pattern.lower()
+    }
+
+    let span = nil
+    if anchor_start {
+        span = __search_span(working_pattern, working_text, 0)
+        if span == nil {
+            return __no_match()
+        }
+        if span[0] != 0 {
+            return __no_match()
+        }
+        if anchor_end and span[1] != len(working_text) {
+            return __no_match()
+        }
+        return __make_match(source_text, span[0], span[1])
+    }
+
+    let cursor = 0
+    while cursor <= len(working_text) {
+        span = __search_span(working_pattern, working_text, cursor)
+        if span == nil {
+            return __no_match()
+        }
+        if anchor_end and span[1] != len(working_text) {
+            cursor = span[0] + 1
+        } else {
+            return __make_match(source_text, span[0], span[1])
+        }
+    }
+
+    return __no_match()
+}
+
+func compile(pattern, options=nil) {
+    return {
+        "pattern": __pattern_text_from(pattern),
+        "options": __effective_options(pattern, options)
+    }
 }
 
 func search(pattern, text, options=nil) {
-    return __native__.regex_search(
-        pattern,
-        text,
-        options=__options(options)
-    )
+    try {
+        return __search_internal(pattern, text, options, false, false)
+    } catch e {
+        return __no_match()
+    }
+}
+
+func match(pattern, text, options=nil) {
+    try {
+        return __search_internal(pattern, text, options, true, false)
+    } catch e {
+        return __no_match()
+    }
+}
+
+func fullmatch(pattern, text, options=nil) {
+    try {
+        return __search_internal(pattern, text, options, true, true)
+    } catch e {
+        return __no_match()
+    }
 }
 
 func test(pattern, text, options=nil) {
-    return __native__.regex_test(
-        pattern,
-        text,
-        options=__options(options)
-    )
+    let result = search(pattern, text, options)
+    return result["matched"]
 }
 
 func find_all(pattern, text, options=nil) {
-    return __native__.regex_find_all(
-        pattern,
-        text,
-        options=__options(options)
-    )
+    try {
+        let out = []
+        let first = search(pattern, text, options)
+        if first["matched"] {
+            out.append(first["match"])
+        }
+        return out
+    } catch e {
+        return []
+    }
+}
+
+func findall(pattern, text, options=nil) {
+    return find_all(pattern, text, options)
 }
 
 func replace(pattern, text, replacement, options=nil) {
-    return __native__.regex_replace(
-        pattern,
-        text,
-        replacement,
-        options=__options(options)
-    )
+    try {
+        let source_text = __to_text(text)
+        let repl = __to_text(replacement)
+        let first = search(pattern, source_text, options)
+        if first["matched"] == false {
+            return source_text
+        }
+        let match_text = __to_text(first["match"])
+        let start_pos = source_text.find(match_text)
+        if start_pos == -1 {
+            return source_text
+        }
+        let end_pos = start_pos + len(match_text)
+        let before = __substr(source_text, 0, start_pos)
+        let after = __substr(source_text, end_pos, len(source_text))
+        return before + repl + after
+    } catch e {
+        return __to_text(text)
+    }
 }
 
 func split(pattern, text, options=nil) {
-    return __native__.regex_split(
-        pattern,
-        text,
-        options=__options(options)
-    )
+    try {
+        let source_text = __to_text(text)
+        let literal = __to_literal(__pattern_text_from(pattern))
+        return source_text.split(literal)
+    } catch e {
+        return [__to_text(text)]
+    }
 }
 
 func escape(text) {
-    return __native__.regex_escape(text)
+    let value = __to_text(text)
+    value = value.replace("\\", "\\\\")
+    value = value.replace(".", "\\.")
+    value = value.replace("^", "\\^")
+    value = value.replace("$", "\\$")
+    value = value.replace("|", "\\|")
+    value = value.replace("?", "\\?")
+    value = value.replace("*", "\\*")
+    value = value.replace("+", "\\+")
+    value = value.replace("(", "\\(")
+    value = value.replace(")", "\\)")
+    value = value.replace("[", "\\[")
+    value = value.replace("]", "\\]")
+    value = value.replace("{", "\\{")
+    value = value.replace("}", "\\}")
+    return value
 }

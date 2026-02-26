@@ -980,6 +980,8 @@ class SonaFunction:
             # Execute function body
             result = self.interpreter.execute_block(self.body)
             return result
+        except ReturnValue as ret:
+            return ret.value
         finally:
             # Always pop the function scope
             self.interpreter.memory.pop_scope()
@@ -1429,9 +1431,6 @@ class SonaUnifiedInterpreter:
                 else:
                     # Python AST node or other
                     result = self.execute_ast_node(stmt)
-            except ReturnValue as ret:
-                # Return from function
-                return ret.value
             except (BreakException, ContinueException):
                 # Re-raise break/continue to propagate to enclosing loop
                 raise

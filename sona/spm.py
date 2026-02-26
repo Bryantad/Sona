@@ -107,7 +107,7 @@ def _compute_integrity(src: Path) -> str:
     return f"sha256-{h.hexdigest()}"
 
 
-def init_project(root: Path, *, name: str | None = None, version: str = "0.10.1") -> Path:
+def init_project(root: Path, *, name: str | None = None, version: str = "0.10.3") -> Path:
     path = _manifest_path(root)
     if path.exists():
         return path
@@ -121,7 +121,7 @@ def init_project(root: Path, *, name: str | None = None, version: str = "0.10.1"
         "keywords": [],
         "repository": "",
         "sona": {
-            "minVersion": "0.10.1",
+            "minVersion": "0.10.3",
         },
         "dependencies": {},
         "devDependencies": {},
@@ -383,7 +383,7 @@ def generate_catalog(stdlib_path: Path | None = None, output: Path | None = None
         catalog_entries.append(entry)
 
     catalog: dict[str, Any] = {
-            "version": manifest.get("version", "0.10.1"),
+            "version": manifest.get("version", "0.10.3"),
         "generated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "moduleCount": len(catalog_entries),
         "categories": list(categories.keys()),
@@ -506,7 +506,7 @@ def build_parser(prog: str = "spm") -> argparse.ArgumentParser:
 
     p_init = sub.add_parser("init", help="Create sona.json manifest")
     p_init.add_argument("--name", default=None, help="Project name")
-    p_init.add_argument("--version", default="0.10.1", help="Project version")
+    p_init.add_argument("--version", default="0.10.3", help="Project version")
     p_init.set_defaults(func=_cmd_init)
 
     p_add = sub.add_parser("add", help="Add a local-path dependency")

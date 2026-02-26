@@ -1119,7 +1119,11 @@ class PropertyAccessExpression(Expression):
     def evaluate(self, interpreter):
         """Evaluate property access"""
         obj = self.object.evaluate(interpreter)
-        
+
+        # Prefer dictionary fields for object-like maps.
+        if isinstance(obj, dict) and self.property_name in obj:
+            return obj[self.property_name]
+
         # Handle module property access
         if hasattr(obj, self.property_name):
             attr = getattr(obj, self.property_name)
@@ -1128,11 +1132,7 @@ class PropertyAccessExpression(Expression):
         submodules = getattr(obj, "__sona_submodules__", None)
         if isinstance(submodules, dict) and self.property_name in submodules:
             return submodules[self.property_name]
-        
-        # Handle dictionary-style access
-        if isinstance(obj, dict) and self.property_name in obj:
-            return obj[self.property_name]
-        
+
         raise AttributeError(
             f"Object has no property '{self.property_name}'"
         )
@@ -1184,7 +1184,22 @@ class MethodCallExpression(Expression):
                 pos_args.append(arg.evaluate(interpreter))
             else:
                 pos_args.append(arg)
-        
+
+        # Support object-like dictionaries with callable fields.
+        if isinstance(obj, dict) and self.method_name in obj:
+            method = obj[self.method_name]
+            if hasattr(method, 'call') and callable(getattr(method, 'call')):
+                method_args = [obj, *pos_args]
+                try:
+                    return method.call(method_args, kw_args)
+                except TypeError:
+                    return method.call(method_args)
+            if callable(method):
+                return method(obj, *pos_args, **kw_args)
+            raise TypeError(
+                f"'{self.method_name}' is not a callable method"
+            )
+
         # Get the method from the object
         if hasattr(obj, self.method_name):
             method = getattr(obj, self.method_name)

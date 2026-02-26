@@ -1,2 +1,3 @@
-include License.mdc
+include LICENSE
 recursive-include sona *.lark
+recursive-include stdlib *.smod *.py
