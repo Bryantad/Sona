@@ -2,7 +2,7 @@
 
 **Human × AI collaboration with cognitive accessibility at the core.**
 
-[![Version](https://img.shields.io/badge/version-0.11.0-blue.svg)](https://github.com/Bryantad/Sona/releases/tag/v0.11.0)
+[![Version](https://img.shields.io/badge/version-0.12.0-blue.svg)](https://github.com/Bryantad/Sona/releases/tag/v0.12.0)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://python.org)
 [![Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/Waycoreinc.sona-ai-native-programming?label=VS%20Code%20Installs)](https://marketplace.visualstudio.com/items?itemName=Waycoreinc.sona-ai-native-programming)
