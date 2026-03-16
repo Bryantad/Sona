@@ -77,6 +77,11 @@ Quick Start
 Install a supported version of Python (3.12+) on your system.
 
 Install the Sona extension from the VS Code Marketplace.
+---
+or
+---
+pip install sona-lang==0.12.1
+---
 
 Open or create a .sona file.
 
