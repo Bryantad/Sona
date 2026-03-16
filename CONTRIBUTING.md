@@ -56,6 +56,8 @@ python run_sona.py test_all_30_imports.sona
 ### 1. Create a Branch
 
 ```bash
+git checkout main
+git pull origin main
 git checkout -b feature/your-feature-name
 # or
 git checkout -b fix/bug-description
@@ -106,7 +108,7 @@ git commit -m "fix: Fix bug description"
 git push origin feature/your-feature-name
 ```
 
-Then create a Pull Request on GitHub with:
+Then create a Pull Request on GitHub **targeting the `main` branch** with:
 
 - Clear title and description
 - Reference any related issues
