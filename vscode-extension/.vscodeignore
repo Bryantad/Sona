@@ -1,0 +1,35 @@
+
+# Keep the VSIX lean: exclude dev/test/artifacts and large copies.
+# Keep branding assets explicitly included.
+!assets/**
+!assets/icon.png
+
+# VS Code/editor/project metadata
+.vscode/**
+.github/**
+
+# Build/test artifacts
+scripts/**
+**/*.ts
+**/*.map
+**/*.log
+coverage*/**
+
+# Packaged artifacts
+**/*.vsix
+**/*.zip
+
+# Local inspection folders created during packaging
+_extracted/**
+_vsix_check/**
+_tmp*/**
+**/_tmp*/**
+
+# This repo contains a nested copy of the full extension folder; exclude it
+sona-ai-native-programming/**
+
+# Docs not needed at runtime
+PUBLISHER_UPDATE.md
+EXTENSION_READY.md
+icon.md
+

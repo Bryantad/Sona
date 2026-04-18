@@ -1,0 +1,48 @@
+# receipt.smod
+# Purpose: Append structured events to the active execution receipt.
+#
+# This module gives Sona programs first-class access to the receipt
+# event log.  Events appended here appear in the receipt JSON under
+# execution.events and are included in the receipt hash.
+
+const module_format = "smod-runtime"
+const runtime_backend = "smod-bridge"
+
+# ── private helpers ──────────────────────────────────────────────
+
+func __default(value, fallback) {
+    if value == nil {
+        return fallback
+    }
+    return value
+}
+
+# ── public API ───────────────────────────────────────────────────
+
+func append_event(event_type, payload, classification) {
+    # Append a structured event to the active receipt.
+    #
+    # event_type   - string identifying the event kind  (required)
+    # payload      - optional dict of event-specific data
+    # classification - "internal" (default) | "diagnostic" | "user"
+    return __native__.receipt_append_event(
+        event_type,
+        __default(payload, nil),
+        __default(classification, "internal")
+    )
+}
+
+func has_context() {
+    # Return true if a receipt context is currently active.
+    return __native__.receipt_has_context()
+}
+
+func current_id() {
+    # Return the receipt hash of the active receipt, or nil.
+    return __native__.receipt_current_id()
+}
+
+func event_count() {
+    # Return the number of events recorded so far.
+    return __native__.receipt_event_count()
+}

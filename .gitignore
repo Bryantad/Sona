@@ -22,10 +22,11 @@ wheels/
 MANIFEST
 
 # Virtual environments
-.venv/
+.venv*/
 venv/
 ENV/
 env/
+.test-*/
 
 # IDE
 .vscode/
@@ -47,6 +48,12 @@ sona_cache/
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Temp and scratch files
+__tmp_*
+__smod_*
+_worktrees/
+node_modules/
 
 # Local artifacts
 .spm_tmp/

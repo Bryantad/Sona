@@ -1,0 +1,7 @@
+print("=== trailing commas ===");
+
+let items = [1, 2, 3,];
+let data = {x: 1, y: 2,};
+
+print(items);
+print(data["x"] + data["y"]);

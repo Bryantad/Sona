@@ -1,0 +1,17 @@
+# Sona 0.10.0 - Cognitive Focus Test
+
+print("=== Sona 0.10.0 Cognitive Focus Test ===");
+
+@intent "calculate monthly revenue safely";
+
+focus {
+    let totals = [120, 80, 40];
+    let sum_val = 0;
+    for value in totals {
+        sum_val = sum_val + value;
+    }
+    explain_step();
+    print("Focus block completed.");
+}
+
+print("=== Cognitive Focus Test Complete ===");

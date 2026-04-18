@@ -1,0 +1,177 @@
+# emotion.smod
+# Purpose: Emotion-aware programming primitives for Sona.
+#
+# Provides constants, detection, composite resolution, strategy
+# mapping, and receipt-integrated logging for the six canonical
+# emotion states.
+
+const module_format = "smod-runtime"
+const runtime_backend = "smod-bridge"
+
+# ── Emotion state constants ──────────────────────────────────────
+
+const NEUTRAL     = __native__.emotion_NEUTRAL
+const FRUSTRATION = __native__.emotion_FRUSTRATION
+const CURIOSITY   = __native__.emotion_CURIOSITY
+const SATISFACTION = __native__.emotion_SATISFACTION
+const CONFUSION   = __native__.emotion_CONFUSION
+const FATIGUE     = __native__.emotion_FATIGUE
+
+const STATES           = __native__.emotion_STATES
+const SOURCES          = __native__.emotion_SOURCES
+const INTENSITY_LABELS = __native__.emotion_INTENSITY_LABELS
+
+# ── Private helpers ──────────────────────────────────────────────
+
+func __default(value, fallback) {
+    if value == nil {
+        return fallback
+    }
+    return value
+}
+
+func __option(options, key, fallback) {
+    if options == nil {
+        return fallback
+    }
+    return __default(options.get(key), fallback)
+}
+
+# ── Validation ───────────────────────────────────────────────────
+
+func is_state(s) {
+    # Return true if s is one of the six canonical emotion states.
+    return __native__.emotion_is_valid_state(s)
+}
+
+func assert_valid_state(s) {
+    # Raise an error if s is not a valid emotion state.
+    if is_state(s) == false {
+        panic("Invalid emotion state: " + to_text(s))
+    }
+    return s
+}
+
+# ── Strategy matrix ──────────────────────────────────────────────
+
+func map_strategy(emotion_state) {
+    # Return the recommended response strategy for the given state.
+    #
+    # Returns a dict with "strategy" and "description" keys.
+    assert_valid_state(emotion_state)
+    return __native__.emotion_map_strategy(emotion_state)
+}
+
+# ── Intensity ────────────────────────────────────────────────────
+
+func intensity(confidence) {
+    # Map a confidence value (0.0-1.0) to an intensity label.
+    #
+    # Labels: minimal | low | moderate | high | critical
+    return __native__.emotion_intensity_label(confidence)
+}
+
+# ── Detection ────────────────────────────────────────────────────
+
+func detect(options) {
+    # Detect emotion from the specified source.
+    #
+    # options.source   - "runtime" | "text" | "structure"         (required)
+    #
+    # For "runtime":
+    #   options.exit_code    (default 0)
+    #   options.duration_ms  (default 0)
+    #   options.error_count  (default 0)
+    #
+    # For "text":
+    #   options.text         (default "")
+    #
+    # For "structure":
+    #   options.events       (default nil)
+    #
+    # Returns: {state, confidence, source, intensity}
+
+    const source = __option(options, "source", "runtime")
+
+    if source == "runtime" {
+        return __native__.emotion_detect_runtime(
+            __option(options, "exit_code", 0),
+            __option(options, "duration_ms", 0),
+            __option(options, "error_count", 0)
+        )
+    }
+
+    if source == "text" {
+        return __native__.emotion_detect_text(
+            __option(options, "text", "")
+        )
+    }
+
+    if source == "structure" {
+        return __native__.emotion_detect_structure(
+            __option(options, "events", nil)
+        )
+    }
+
+    panic("Unknown emotion source: " + to_text(source))
+}
+
+# ── Composite resolution ────────────────────────────────────────
+
+func resolve_composite(detections) {
+    # Merge multiple detection results into one composite state.
+    #
+    # detections - list of {state, confidence, source, intensity} dicts
+    #
+    # Returns: {state, confidence, source: "composite", intensity}
+    return __native__.emotion_resolve_composite(detections)
+}
+
+# ── Factory ──────────────────────────────────────────────────────
+
+func state(name, confidence, source) {
+    # Construct a validated emotion-state dict.
+    #
+    # name       - one of the six canonical states       (required)
+    # confidence - float 0.0-1.0                         (required)
+    # source     - detection source string               (default "api")
+    assert_valid_state(name)
+    const src = __default(source, "api")
+    return {
+        "state": name,
+        "confidence": confidence,
+        "source": src,
+        "intensity": intensity(confidence)
+    }
+}
+
+# ── Receipt integration ─────────────────────────────────────────
+
+func log(emotion_state) {
+    # Log an emotion state into the active receipt as a diagnostic event.
+    #
+    # emotion_state - dict with at least {state, confidence, source}
+    #
+    # Returns: the appended event dict, or nil if no receipt context.
+    import receipt
+    if receipt.has_context() {
+        return receipt.append_event("emotion", emotion_state, "diagnostic")
+    }
+    return nil
+}
+
+# ── Response ─────────────────────────────────────────────────────
+
+func respond(emotion_state) {
+    # Determine the recommended response for an emotion state.
+    #
+    # Returns: {state, confidence, intensity, strategy, description}
+    const strat = map_strategy(emotion_state.get("state"))
+    return {
+        "state": emotion_state.get("state"),
+        "confidence": emotion_state.get("confidence"),
+        "intensity": emotion_state.get("intensity"),
+        "strategy": strat.get("strategy"),
+        "description": strat.get("description")
+    }
+}
