@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sona-spm"
+version = "0.10.0"
+description = "Sona Package Manager (spm) - offline-first local-path package manager for Sona projects"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [{ name = "Sona Development Team" }]
+
+[project.scripts]
+spm = "sona_spm.spm:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

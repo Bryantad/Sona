@@ -1,0 +1,21 @@
+// Sona 0.9.6 Tier 1 Feature Test
+// Testing: Comments, Booleans, Lists, Functions
+
+// Test 1: Comments work!
+let message = "Hello";
+print(message);
+
+// Test 2: Boolean Literals
+let is_ready = true;
+print(is_ready);
+
+// Test 3: List Literals  
+let numbers = [1, 2, 3];
+print(numbers);
+
+// Test 4: Function Definition
+func greet(name) {
+    return "Hello, " + name;
+};
+let greeting = greet("Sona");
+print(greeting);

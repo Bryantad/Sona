@@ -1,0 +1,46 @@
+// Quick test: Import all 30 stdlib modules
+print("=== Testing All 30 Module Imports ===");
+print("");
+
+let passed = 0;
+let failed = 0;
+
+try { import json; print("✅ 1. json"); passed = passed + 1; } catch e { print("❌ 1. json: " + e); failed = failed + 1; };
+try { import string; print("✅ 2. string"); passed = passed + 1; } catch e { print("❌ 2. string: " + e); failed = failed + 1; };
+try { import math; print("✅ 3. math"); passed = passed + 1; } catch e { print("❌ 3. math: " + e); failed = failed + 1; };
+try { import regex; print("✅ 4. regex"); passed = passed + 1; } catch e { print("❌ 4. regex: " + e); failed = failed + 1; };
+try { import fs; print("✅ 5. fs"); passed = passed + 1; } catch e { print("❌ 5. fs: " + e); failed = failed + 1; };
+try { import path; print("✅ 6. path"); passed = passed + 1; } catch e { print("❌ 6. path: " + e); failed = failed + 1; };
+try { import io; print("✅ 7. io"); passed = passed + 1; } catch e { print("❌ 7. io: " + e); failed = failed + 1; };
+try { import env; print("✅ 8. env"); passed = passed + 1; } catch e { print("❌ 8. env: " + e); failed = failed + 1; };
+try { import csv; print("✅ 9. csv"); passed = passed + 1; } catch e { print("❌ 9. csv: " + e); failed = failed + 1; };
+try { import date; print("✅ 10. date"); passed = passed + 1; } catch e { print("❌ 10. date: " + e); failed = failed + 1; };
+try { import time; print("✅ 11. time"); passed = passed + 1; } catch e { print("❌ 11. time: " + e); failed = failed + 1; };
+try { import numbers; print("✅ 12. numbers"); passed = passed + 1; } catch e { print("❌ 12. numbers: " + e); failed = failed + 1; };
+try { import boolean; print("✅ 13. boolean"); passed = passed + 1; } catch e { print("❌ 13. boolean: " + e); failed = failed + 1; };
+try { import type; print("✅ 14. type"); passed = passed + 1; } catch e { print("❌ 14. type: " + e); failed = failed + 1; };
+try { import comparison; print("✅ 15. comparison"); passed = passed + 1; } catch e { print("❌ 15. comparison: " + e); failed = failed + 1; };
+try { import operators; print("✅ 16. operators"); passed = passed + 1; } catch e { print("❌ 16. operators: " + e); failed = failed + 1; };
+try { import random; print("✅ 17. random"); passed = passed + 1; } catch e { print("❌ 17. random: " + e); failed = failed + 1; };
+try { import encoding; print("✅ 18. encoding"); passed = passed + 1; } catch e { print("❌ 18. encoding: " + e); failed = failed + 1; };
+try { import timer; print("✅ 19. timer"); passed = passed + 1; } catch e { print("❌ 19. timer: " + e); failed = failed + 1; };
+try { import validation; print("✅ 20. validation"); passed = passed + 1; } catch e { print("❌ 20. validation: " + e); failed = failed + 1; };
+try { import statistics; print("✅ 21. statistics"); passed = passed + 1; } catch e { print("❌ 21. statistics: " + e); failed = failed + 1; };
+try { import sort; print("✅ 22. sort"); passed = passed + 1; } catch e { print("❌ 22. sort: " + e); failed = failed + 1; };
+try { import search; print("✅ 23. search"); passed = passed + 1; } catch e { print("❌ 23. search: " + e); failed = failed + 1; };
+try { import uuid; print("✅ 24. uuid"); passed = passed + 1; } catch e { print("❌ 24. uuid: " + e); failed = failed + 1; };
+try { import toml; print("✅ 25. toml"); passed = passed + 1; } catch e { print("❌ 25. toml: " + e); failed = failed + 1; };
+try { import hashing; print("✅ 26. hashing"); passed = passed + 1; } catch e { print("❌ 26. hashing: " + e); failed = failed + 1; };
+try { import collection; print("✅ 27. collection"); passed = passed + 1; } catch e { print("❌ 27. collection: " + e); failed = failed + 1; };
+try { import queue; print("✅ 28. queue"); passed = passed + 1; } catch e { print("❌ 28. queue: " + e); failed = failed + 1; };
+try { import stack; print("✅ 29. stack"); passed = passed + 1; } catch e { print("❌ 29. stack: " + e); failed = failed + 1; };
+try { import yaml; print("✅ 30. yaml"); passed = passed + 1; } catch e { print("❌ 30. yaml: " + e); failed = failed + 1; };
+
+print("");
+print("======================================");
+print("Results: " + passed + "/30 passed, " + failed + "/30 failed");
+print("======================================");
+
+if failed == 0 {
+    print("🎉 ALL 30 MODULES WORKING!");
+};

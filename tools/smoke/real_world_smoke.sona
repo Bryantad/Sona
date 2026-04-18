@@ -1,0 +1,33 @@
+# Real-world smoke program for Sona
+# Goals:
+# - Exercise the installed CLI execution path
+# - Verify stdlib imports, I/O, filesystem, validation
+# - Produce deterministic output and clean up
+
+print("=== Sona Real-World Smoke ===");
+
+# Imports (stdlib)
+import time;
+import validation;
+import io;
+import fs;
+
+# Validation
+email = "smoke@example.com";
+print("email valid: " + str(validation.is_email(email)));
+
+# File I/O (real side effects)
+test_file = "smoke_output.txt";
+io.write_file(test_file, "smoke\nline2");
+content = io.read_file(test_file);
+print("file bytes: " + str(len(content)));
+
+# Filesystem
+print("file exists: " + str(fs.exists(test_file)));
+fs.remove(test_file);
+print("file cleaned: " + str(!fs.exists(test_file)));
+
+# Time (runtime path)
+print("now: " + str(time.time_now()));
+
+print("=== Smoke Complete ===");

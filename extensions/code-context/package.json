@@ -1,0 +1,182 @@
+{
+    "name": "code-context",
+    "displayName": "Code Context",
+    "description": "Remember WHY code exists, not just what it does. Developer intent memory for your codebase.",
+    "version": "0.11.0",
+    "publisher": "Waycoreinc",
+    "license": "MIT",
+    "icon": "icon.png",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Bryantad/Sona"
+    },
+    "engines": {
+        "vscode": "^1.74.0"
+    },
+    "categories": [
+        "Other",
+        "Visualization"
+    ],
+    "keywords": [
+        "context",
+        "notes",
+        "intent",
+        "memory",
+        "comments",
+        "documentation",
+        "why",
+        "decisions",
+        "annotations",
+        "cognitive"
+    ],
+    "activationEvents": [
+        "onStartupFinished"
+    ],
+    "main": "./out/extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "codeContext.addNote",
+                "title": "Add Context Note",
+                "category": "Code Context"
+            },
+            {
+                "command": "codeContext.viewNote",
+                "title": "View Context Note",
+                "category": "Code Context"
+            },
+            {
+                "command": "codeContext.editNote",
+                "title": "Edit Context Note",
+                "category": "Code Context"
+            },
+            {
+                "command": "codeContext.deleteNote",
+                "title": "Delete Context Note",
+                "category": "Code Context"
+            },
+            {
+                "command": "codeContext.showAllNotes",
+                "title": "Show All Context Notes",
+                "category": "Code Context"
+            },
+            {
+                "command": "codeContext.exportNotes",
+                "title": "Export Notes as Markdown",
+                "category": "Code Context"
+            },
+            {
+                "command": "codeContext.clearStaleNotes",
+                "title": "Clear Stale Notes",
+                "category": "Code Context"
+            }
+        ],
+        "keybindings": [
+            {
+                "command": "codeContext.addNote",
+                "key": "ctrl+shift+n",
+                "mac": "cmd+shift+n",
+                "when": "editorTextFocus"
+            }
+        ],
+        "menus": {
+            "editor/context": [
+                {
+                    "command": "codeContext.addNote",
+                    "group": "codeContext@1",
+                    "when": "editorHasSelection"
+                },
+                {
+                    "command": "codeContext.viewNote",
+                    "group": "codeContext@2"
+                }
+            ]
+        },
+        "views": {
+            "explorer": [
+                {
+                    "id": "codeContextNotes",
+                    "name": "Context Notes",
+                    "contextualTitle": "Code Context"
+                }
+            ]
+        },
+        "configuration": {
+            "title": "Code Context",
+            "properties": {
+                "codeContext.showInlineMarkers": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show inline markers (💭) next to lines with context notes"
+                },
+                "codeContext.showHoverNotes": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show context notes on hover"
+                },
+                "codeContext.markerStyle": {
+                    "type": "string",
+                    "enum": [
+                        "emoji",
+                        "icon",
+                        "subtle"
+                    ],
+                    "default": "emoji",
+                    "description": "Style for inline markers"
+                },
+                "codeContext.noteCategories": {
+                    "type": "array",
+                    "default": [
+                        "💡 Decision",
+                        "🐛 Bug Fix",
+                        "⚠️ Temporary",
+                        "🔄 Refactor",
+                        "📝 Note"
+                    ],
+                    "description": "Quick-select categories for notes"
+                },
+                "codeContext.staleAfterDays": {
+                    "type": "number",
+                    "default": 30,
+                    "description": "Mark notes as stale after this many days (0 to disable)"
+                },
+                "codeContext.syncWithGit": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Store notes in .code-context.json (commit with code)"
+                },
+                "codeContext.showGitBlameHint": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show nearby git commit hash in note hover (read-only)"
+                },
+                "codeContext.showStatusBarIndicator": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show context note count in status bar"
+                }
+            }
+        },
+        "colors": [
+            {
+                "id": "codeContext.noteBackground",
+                "description": "Background color for lines with context notes",
+                "defaults": {
+                    "dark": "#3d3d0020",
+                    "light": "#ffff0010",
+                    "highContrast": "#ffff0020"
+                }
+            }
+        ]
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./"
+    },
+    "devDependencies": {
+        "@types/node": "^18.0.0",
+        "@types/vscode": "^1.74.0",
+        "typescript": "^5.0.0"
+    }
+}

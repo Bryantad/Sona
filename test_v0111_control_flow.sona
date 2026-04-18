@@ -1,0 +1,137 @@
+// v0.11.1 Control Flow Tests
+print("=== v0.11.1 Control Flow Tests ===");
+print("");
+
+// ---- P0 FIX: when statement subject matching ----
+print("--- when statement with subject ---");
+let x = 10;
+when x {
+    5 = > print("FAIL: matched 5");
+    10 = > print("PASS: when x matched 10");
+    15 = > print("FAIL: matched 15");
+}
+
+let color = "blue";
+when color {
+    "red" = > print("FAIL: matched red");
+    "green" = > print("FAIL: matched green");
+    "blue" = > print("PASS: when color matched blue");
+}
+
+// when with default (_)
+let y = 99;
+when y {
+    1 = > print("FAIL: matched 1");
+    2 = > print("FAIL: matched 2");
+    _ = > print("PASS: when y fell through to default");
+}
+
+print("");
+
+// ---- when expression (no subject - should still work) ----
+print("--- when expression (condition-based) ---");
+let age = 25;
+let category = when {
+    age < 13 = > "Child";
+    age < 20 = > "Teenager";
+    age < 65 = > "Adult";
+    _ = > "Senior";
+};
+print("PASS: when expr category = " + category);
+
+print("");
+
+// ---- Conditional expressions (when expr as ternary alternative) ----
+print("--- conditional expressions ---");
+let a = 10;
+let result1 = when {
+    a > 5 = > "big";
+    _ = > "small";
+};
+print("PASS: conditional = " + result1);
+
+let b = 3;
+let result2 = when {
+    b > 5 = > "big";
+    _ = > "small";
+};
+print("PASS: conditional = " + result2);
+
+print("");
+
+// ---- For-loop destructuring ----
+print("--- for-loop destructuring ---");
+
+// Index, value over a list
+let items = ["apple", "banana", "cherry"];
+for i, item in items {
+    print("PASS: index = " + str(i) + " item = " + item);
+}
+
+// Key, value over a dict
+let ages = {"Alice": 30, "Bob": 25};
+for name, age in ages {
+    print("PASS: name = " + name + " age = " + str(age));
+}
+
+print("");
+
+// ---- if/else if/else (confirm still working) ----
+print("--- if/else if/else ---");
+let val = 15;
+if val < 10 {
+    print("FAIL: val < 10");
+} else if val < 20 {
+    print("PASS: else if val < 20");
+} else {
+    print("FAIL: else");
+}
+
+print("");
+
+// ---- while with break/continue (confirm still working) ----
+print("--- while loop ---");
+let counter = 0;
+while counter < 5 {
+    counter = counter + 1;
+    if counter == 3 {
+        continue;
+    }
+    print("PASS: counter = " + str(counter));
+}
+
+print("");
+
+// ---- match statement (confirm still working) ----
+print("--- match statement ---");
+let grade = "B";
+match grade {
+    "A" = > print("FAIL: A");
+    "B" = > print("PASS: match grade = B");
+    "C" = > print("FAIL: C");
+    _ = > print("FAIL: default");
+}
+
+print("");
+
+// ---- repeat loops (confirm still working) ----
+print("--- repeat loop ---");
+let rcount = 0;
+repeat 3 {
+    rcount = rcount + 1;
+    print("PASS: repeat iteration " + str(rcount));
+}
+
+print("");
+
+// ---- try/catch (confirm still working) ----
+print("--- try/catch ---");
+try {
+    let bad = 1 / 0;
+    print("FAIL: no error");
+} catch e {
+    print("PASS: caught error");
+}
+
+print("");
+print("=== All v0.11.1 tests complete! ===");

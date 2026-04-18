@@ -1,0 +1,53 @@
+// Test break and continue statements
+print("=== Testing Break Statement ===");
+
+let i = 0;
+while i < 10 {
+    if i == 5 {
+        print("Breaking at i = 5");
+        break;
+    };
+    print("i = " + i);
+    i = i + 1;
+};
+
+print("Final i after break: " + i);
+print("");
+
+print("=== Testing Continue Statement ===");
+
+let j = 0;
+while j < 10 {
+    j = j + 1;
+    if j % 2 == 0 {
+        continue;
+    };
+    print("Odd number: " + j);
+};
+
+print("");
+
+print("=== Testing Break in For Loop ===");
+
+let numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+for num in numbers {
+    if num == 6 {
+        print("Found 6, breaking");
+        break;
+    };
+    print("Number: " + num);
+};
+
+print("");
+
+print("=== Testing Continue in For Loop ===");
+
+for n in numbers {
+    if n % 3 == 0 {
+        continue;
+    };
+    print("Not divisible by 3: " + n);
+};
+
+print("");
+print("All break/continue tests complete!");

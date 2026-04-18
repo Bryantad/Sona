@@ -1,0 +1,94 @@
+{
+    "name": "cognitive-load-meter",
+    "displayName": "Cognitive Load Meter",
+    "description": "A passive, live indicator of cognitive strain for the current file — measures human load over time, not code complexity.",
+    "version": "0.11.0",
+    "publisher": "Waycoreinc",
+    "license": "MIT",
+    "icon": "icon.png",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Bryantad/Sona"
+    },
+    "engines": {
+        "vscode": "^1.74.0"
+    },
+    "categories": [
+        "Visualization",
+        "Other"
+    ],
+    "keywords": [
+        "cognitive",
+        "adhd-friendly",
+        "neurodivergent",
+        "focus",
+        "wellness",
+        "attention",
+        "strain",
+        "load"
+    ],
+    "activationEvents": [
+        "onStartupFinished"
+    ],
+    "main": "./out/extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "cognitiveLoadMeter.toggleEnabled",
+                "title": "Toggle Cognitive Load Meter",
+                "category": "Cognitive Load Meter"
+            },
+            {
+                "command": "cognitiveLoadMeter.showDetails",
+                "title": "Show Load Details",
+                "category": "Cognitive Load Meter"
+            },
+            {
+                "command": "cognitiveLoadMeter.resetHistory",
+                "title": "Reset Load History",
+                "category": "Cognitive Load Meter"
+            }
+        ],
+        "configuration": {
+            "title": "Cognitive Load Meter",
+            "properties": {
+                "cognitiveLoadMeter.enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable the Cognitive Load Meter status bar indicator"
+                },
+                "cognitiveLoadMeter.lookbackMinutes": {
+                    "type": "number",
+                    "default": 10,
+                    "minimum": 1,
+                    "maximum": 120,
+                    "description": "How far back to consider edits when estimating cognitive load"
+                },
+                "cognitiveLoadMeter.debounceMs": {
+                    "type": "number",
+                    "default": 350,
+                    "minimum": 0,
+                    "maximum": 5000,
+                    "description": "Debounce time (ms) for recomputing the meter while typing"
+                },
+                "cognitiveLoadMeter.maxLinesForNesting": {
+                    "type": "number",
+                    "default": 2000,
+                    "minimum": 200,
+                    "maximum": 20000,
+                    "description": "Maximum lines scanned to estimate nesting depth (performance safeguard)"
+                }
+            }
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./"
+    },
+    "devDependencies": {
+        "@types/node": "^18.0.0",
+        "@types/vscode": "^1.74.0",
+        "typescript": "^5.0.0"
+    }
+}

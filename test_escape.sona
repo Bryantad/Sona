@@ -1,0 +1,3 @@
+print("Line 1");
+print("Line 2\nLine 3");
+print("Tab\there");

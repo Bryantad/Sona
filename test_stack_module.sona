@@ -1,0 +1,16 @@
+// Test stack module
+import stack;
+
+print("=== Testing Stack Module ===");
+
+let s = stack.Stack();
+s.push(10);
+s.push(20);
+s.push(30);
+
+print("Stack size: " + s.size());
+print("Pop: " + s.pop());
+print("Peek: " + s.peek());
+print("Stack size after pop: " + s.size());
+
+print("Stack module test complete!");

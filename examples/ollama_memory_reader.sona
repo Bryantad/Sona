@@ -1,0 +1,15 @@
+// examples/ollama_memory_reader.sona
+// Searches only for the fixed Ollama offline demo memory record.
+
+import memory;
+
+let hits = memory.search("demo memory seeded from ollama offline", {
+    "kind": "ollama_offline_demo_seed",
+    "subject": "ollama-offline-demo"
+});
+
+if hits["count"] > 0 {
+    print("Ollama offline demo memory found.");
+} else {
+    print("No Ollama offline demo memory found.");
+}

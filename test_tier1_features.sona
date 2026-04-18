@@ -1,0 +1,5 @@
+# Test Tier 1 Features for Sona 0.9.6
+
+// Comments test - both styles work!
+x = 5
+print(x)

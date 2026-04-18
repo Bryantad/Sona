@@ -1,0 +1,14 @@
+﻿print("=== Sona v0.9.6 Runtime Test ===")
+
+name = "Sona"
+version = "0.9.6"
+print("Language: " + name)
+print("Version: " + version)
+
+x = 42
+y = 10
+result = x + y
+print("Math test: " + str(x) + " + " + str(y) + " = " + str(result))
+
+print("=== Test Complete ===")
+print("✓ Runtime is ACTIVE and WORKING!")

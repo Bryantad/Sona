@@ -1,0 +1,56 @@
+// ============================================
+// Sona 0.9.6 - Tier 1 Features Showcase
+// ============================================
+
+// Feature 1: Comments
+// This demonstrates both single-line comments
+
+// Feature 2: Variables and Strings
+let language = "Sona";
+let version = "0.9.6";
+print("Welcome to " + language + " " + version);
+
+// Feature 3: Numbers and Arithmetic  
+let x = 10;
+let y = 5;
+let sum = x + y;
+print("Sum: " + sum);
+
+// Feature 4: Boolean Values
+let is_awesome = true;
+let is_broken = false;
+print("Sona is awesome: " + is_awesome);
+print("Sona is broken: " + is_broken);
+
+// Feature 5: Lists/Arrays
+let fruits = ["apple", "banana", "orange"];
+print("My fruits: " + fruits);
+
+let numbers = [1, 2, 3, 4, 5];
+print("Numbers: " + numbers);
+
+// Feature 6: Functions
+func greet(name) {
+    return "Hello, " + name + "!";
+};
+
+let message = greet("Developer");
+print(message);
+
+// Feature 7: Math Function
+func square(n) {
+    return n * n;
+};
+
+let result = square(7);
+print("7 squared = " + result);
+
+// Feature 8: Function with Multiple Operations
+func calculate_area(width, height) {
+    return width * height;
+};
+
+let area = calculate_area(10, 5);
+print("Area of 10x5 rectangle: " + area);
+
+print("===== All Tier 1 Features Working! =====");

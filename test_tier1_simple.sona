@@ -1,0 +1,4 @@
+let x = 5
+print(x)
+let y = 10
+print(y)

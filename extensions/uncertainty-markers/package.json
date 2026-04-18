@@ -1,0 +1,97 @@
+{
+    "name": "uncertainty-markers",
+    "displayName": "Uncertainty Markers",
+    "description": "First-class uncertainty in code: mark lines/blocks you're not fully sure about with a subtle gutter marker and hover note.",
+    "version": "0.11.0",
+    "publisher": "Waycoreinc",
+    "license": "MIT",
+    "icon": "icon.png",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Bryantad/Sona"
+    },
+    "engines": {
+        "vscode": "^1.74.0"
+    },
+    "categories": [
+        "Other",
+        "Visualization"
+    ],
+    "keywords": [
+        "uncertainty",
+        "cognitive",
+        "notes",
+        "annotations",
+        "adhd-friendly",
+        "neurodivergent"
+    ],
+    "activationEvents": [
+        "onStartupFinished"
+    ],
+    "main": "./out/extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "uncertaintyMarkers.mark",
+                "title": "Mark as Uncertain",
+                "category": "Uncertainty Markers"
+            },
+            {
+                "command": "uncertaintyMarkers.clearAtCursor",
+                "title": "Clear Uncertainty Marker at Cursor",
+                "category": "Uncertainty Markers"
+            },
+            {
+                "command": "uncertaintyMarkers.showAll",
+                "title": "Show All Uncertainty Markers",
+                "category": "Uncertainty Markers"
+            },
+            {
+                "command": "uncertaintyMarkers.toggleEnabled",
+                "title": "Toggle Uncertainty Markers",
+                "category": "Uncertainty Markers"
+            }
+        ],
+        "menus": {
+            "editor/context": [
+                {
+                    "command": "uncertaintyMarkers.mark",
+                    "group": "uncertainty@1",
+                    "when": "editorTextFocus && editorHasSelection"
+                },
+                {
+                    "command": "uncertaintyMarkers.clearAtCursor",
+                    "group": "uncertainty@2",
+                    "when": "editorTextFocus"
+                }
+            ]
+        },
+        "configuration": {
+            "title": "Uncertainty Markers",
+            "properties": {
+                "uncertaintyMarkers.enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable uncertainty markers"
+                },
+                "uncertaintyMarkers.defaultExpiryDays": {
+                    "type": "number",
+                    "default": 0,
+                    "minimum": 0,
+                    "maximum": 365,
+                    "description": "Default expiration in days for new markers (0 = never)"
+                }
+            }
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./"
+    },
+    "devDependencies": {
+        "@types/node": "^18.0.0",
+        "@types/vscode": "^1.74.0",
+        "typescript": "^5.0.0"
+    }
+}

@@ -1,0 +1,165 @@
+{
+    "name": "cognitive-focus-timer",
+    "displayName": "Cognitive Focus Timer",
+    "description": "Neurodivergent-friendly focus timer with Pomodoro cycles, streak tracking, and session logging",
+    "version": "0.11.0",
+    "publisher": "Waycoreinc",
+    "license": "MIT",
+    "icon": "icon.png",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Bryantad/Sona"
+    },
+    "engines": {
+        "vscode": "^1.74.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "keywords": [
+        "focus",
+        "timer",
+        "pomodoro",
+        "productivity",
+        "adhd",
+        "neurodivergent",
+        "cognitive",
+        "accessibility"
+    ],
+    "activationEvents": [
+        "onStartupFinished"
+    ],
+    "main": "./out/extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "focusTimer.start",
+                "title": "Start Focus Session",
+                "icon": "$(play)",
+                "category": "Focus Timer"
+            },
+            {
+                "command": "focusTimer.pause",
+                "title": "Pause Timer",
+                "icon": "$(debug-pause)",
+                "category": "Focus Timer"
+            },
+            {
+                "command": "focusTimer.stop",
+                "title": "Stop Session",
+                "icon": "$(debug-stop)",
+                "category": "Focus Timer"
+            },
+            {
+                "command": "focusTimer.skip",
+                "title": "Skip to Next Phase",
+                "icon": "$(debug-step-over)",
+                "category": "Focus Timer"
+            },
+            {
+                "command": "focusTimer.showStats",
+                "title": "Show Today's Stats",
+                "icon": "$(graph)",
+                "category": "Focus Timer"
+            },
+            {
+                "command": "focusTimer.showHistory",
+                "title": "Show Session History",
+                "icon": "$(history)",
+                "category": "Focus Timer"
+            },
+            {
+                "command": "focusTimer.resetStreak",
+                "title": "Reset Streak",
+                "icon": "$(refresh)",
+                "category": "Focus Timer"
+            },
+            {
+                "command": "focusTimer.configure",
+                "title": "Configure Timer",
+                "icon": "$(gear)",
+                "category": "Focus Timer"
+            }
+        ],
+        "configuration": {
+            "title": "Cognitive Focus Timer",
+            "properties": {
+                "focusTimer.focusDuration": {
+                    "type": "number",
+                    "default": 25,
+                    "minimum": 1,
+                    "maximum": 120,
+                    "description": "Focus session duration in minutes"
+                },
+                "focusTimer.shortBreakDuration": {
+                    "type": "number",
+                    "default": 5,
+                    "minimum": 1,
+                    "maximum": 30,
+                    "description": "Short break duration in minutes"
+                },
+                "focusTimer.longBreakDuration": {
+                    "type": "number",
+                    "default": 15,
+                    "minimum": 5,
+                    "maximum": 60,
+                    "description": "Long break duration in minutes"
+                },
+                "focusTimer.sessionsBeforeLongBreak": {
+                    "type": "number",
+                    "default": 4,
+                    "minimum": 2,
+                    "maximum": 10,
+                    "description": "Number of focus sessions before a long break"
+                },
+                "focusTimer.autoStartBreaks": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Automatically start break timer when focus ends"
+                },
+                "focusTimer.autoStartFocus": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Automatically start focus timer when break ends"
+                },
+                "focusTimer.showNotifications": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show notifications when phases complete"
+                },
+                "focusTimer.playSound": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Play sound when phases complete"
+                },
+                "focusTimer.dimEditorOnBreak": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Dim the editor during break time"
+                },
+                "focusTimer.dailyGoal": {
+                    "type": "number",
+                    "default": 8,
+                    "minimum": 1,
+                    "maximum": 24,
+                    "description": "Daily goal for completed focus sessions"
+                },
+                "focusTimer.logSessionsToFile": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Log completed sessions to a file"
+                }
+            }
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./"
+    },
+    "devDependencies": {
+        "@types/vscode": "^1.74.0",
+        "@types/node": "18.x",
+        "typescript": "^5.0.0"
+    }
+}

@@ -1,0 +1,11 @@
+// Test while loop specifically
+print("Testing while loop:");
+
+let i = 0;
+while i < 5 {
+    print("i = " + i);
+    i = i + 1;
+};
+
+print("Final i = " + i);
+print("While loop complete!");

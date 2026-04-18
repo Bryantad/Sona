@@ -1,0 +1,18 @@
+print("=== stdlib additions ===");
+
+import string;
+import collection;
+import assert;
+
+let greeting = string.template("Hello {name}!", {name: "World"});
+print(greeting);
+
+let value = collection.dict.deep_get({a: {b: 2}}, "a.b", 0);
+print(value);
+
+func boom() {
+    let x = 1 / 0;
+};
+
+assert.throws(boom);
+assert.deep_equals({a: [1, 2]}, {a: [1, 2]});

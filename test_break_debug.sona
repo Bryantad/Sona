@@ -1,0 +1,14 @@
+// Debug test for break
+print("Testing break...")
+i = 0
+repeat while i < 10 {
+    print("Before break check, i =", i)
+    if i == 5 {
+        print("About to break")
+        break
+        print("After break (should not print)")
+    }
+    print("End of loop body, i =", i)
+    i = i + 1
+}
+print("After loop, i =", i)

@@ -1,0 +1,16 @@
+print("=== import/from tests ===");
+
+import math as m;
+from math import sqrt;
+from math import sqrt as root;
+
+print(m.sqrt(9));
+print(sqrt(16));
+print(root(25));
+
+from collection import list as clist;
+print(clist.unique([1, 2, 2, 3]));
+
+from collection.list import chunk;
+let chunks = chunk([1, 2, 3, 4], 2);
+print(chunks);

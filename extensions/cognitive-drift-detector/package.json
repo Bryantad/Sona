@@ -1,0 +1,97 @@
+{
+    "name": "cognitive-drift-detector",
+    "displayName": "Cognitive Drift Detector",
+    "description": "Attention analytics (not productivity): detect when your mental context has drifted via file switching, idle gaps, and backtracking.",
+    "version": "0.11.0",
+    "publisher": "Waycoreinc",
+    "license": "MIT",
+    "icon": "icon.png",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Bryantad/Sona"
+    },
+    "engines": {
+        "vscode": "^1.74.0"
+    },
+    "categories": [
+        "Other",
+        "Visualization"
+    ],
+    "keywords": [
+        "cognitive",
+        "attention",
+        "context",
+        "drift",
+        "adhd-friendly",
+        "neurodivergent"
+    ],
+    "activationEvents": [
+        "onStartupFinished"
+    ],
+    "main": "./out/extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "cognitiveDrift.showActions",
+                "title": "Cognitive Drift: Show Re-Orient Actions",
+                "category": "Cognitive Drift Detector"
+            },
+            {
+                "command": "cognitiveDrift.reset",
+                "title": "Cognitive Drift: Reset",
+                "category": "Cognitive Drift Detector"
+            },
+            {
+                "command": "cognitiveDrift.toggleEnabled",
+                "title": "Toggle Cognitive Drift Detector",
+                "category": "Cognitive Drift Detector"
+            }
+        ],
+        "configuration": {
+            "title": "Cognitive Drift Detector",
+            "properties": {
+                "cognitiveDrift.enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable cognitive drift detection"
+                },
+                "cognitiveDrift.lookbackMinutes": {
+                    "type": "number",
+                    "default": 8,
+                    "minimum": 1,
+                    "maximum": 120,
+                    "description": "How far back to consider file switches when estimating drift"
+                },
+                "cognitiveDrift.switchesForHigh": {
+                    "type": "number",
+                    "default": 10,
+                    "minimum": 3,
+                    "maximum": 100,
+                    "description": "File switches within lookback window that indicate high drift"
+                },
+                "cognitiveDrift.idleSeconds": {
+                    "type": "number",
+                    "default": 90,
+                    "minimum": 0,
+                    "maximum": 3600,
+                    "description": "Consider you 'idle' if no edits have happened in this many seconds"
+                },
+                "cognitiveDrift.notifications": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Show a gentle notification when drift is High (off by default)"
+                }
+            }
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./"
+    },
+    "devDependencies": {
+        "@types/node": "^18.0.0",
+        "@types/vscode": "^1.74.0",
+        "typescript": "^5.0.0"
+    }
+}

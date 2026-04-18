@@ -1,0 +1,16 @@
+// Test queue module
+import queue;
+
+print("=== Testing Queue Module ===");
+
+let q = queue.Queue();
+q.enqueue(1);
+q.enqueue(2);
+q.enqueue(3);
+
+print("Queue size: " + q.size());
+print("Dequeue: " + q.dequeue());
+print("Queue size after dequeue: " + q.size());
+print("Is empty? " + q.is_empty());
+
+print("Queue module test complete!");

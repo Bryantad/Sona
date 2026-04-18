@@ -1,0 +1,97 @@
+# Sona 0.9.6 - Quick Functionality Test
+# Tests basic features that work in current implementation
+
+print("=== Sona 0.9.6 Quick Test ===");
+print("");
+
+# Variables
+x = 42;
+y = 10;
+name = "Sona";
+version = "0.9.6";
+
+print("Variables:");
+print("  x = " + str(x));
+print("  y = " + str(y));
+print("  name = " + name);
+print("  version = " + version);
+print("");
+
+# Arithmetic
+sum = x + y;
+diff = x - y;
+product = x * y;
+quotient = x / y;
+
+print("Arithmetic:");
+print("  " + str(x) + " + " + str(y) + " = " + str(sum));
+print("  " + str(x) + " - " + str(y) + " = " + str(diff));
+print("  " + str(x) + " * " + str(y) + " = " + str(product));
+print("  " + str(x) + " / " + str(y) + " = " + str(quotient));
+print("");
+
+# Strings
+hello = "Hello";
+world = "World";
+greeting = hello + ", " + world + "!";
+print("Strings:");
+print("  " + greeting);
+print("");
+
+# Comparisons
+a = 15;
+b = 20;
+print("Comparisons (a=" + str(a) + ", b=" + str(b) + "):");
+print("  a == b: " + str(a == b));
+print("  a != b: " + str(a != b));
+print("  a < b: " + str(a < b));
+print("  a > b: " + str(a > b));
+print("");
+
+# Lists
+numbers = [1, 2, 3, 4, 5];
+fruits = ["apple", "banana", "cherry"];
+print("Lists:");
+print("  numbers: " + str(numbers));
+print("  fruits: " + str(fruits));
+print("  first number: " + str(numbers[0]));
+print("  last fruit: " + str(fruits[2]));
+print("");
+
+# Dictionaries
+person = {"name": "Alice", "age": 30};
+print("Dictionaries:");
+print("  person: " + str(person));
+print("  name: " + str(person["name"]));
+print("  age: " + str(person["age"]));
+print("");
+
+# Expressions
+result1 = (10 + 5) * 2;
+result2 = 100 / (4 + 6);
+print("Expressions:");
+print("  (10 + 5) * 2 = " + str(result1));
+print("  100 / (4 + 6) = " + str(result2));
+print("");
+
+# Loops
+counter = 0;
+print("While loop (count to 5):");
+while (counter < 5) {
+    counter = counter + 1;
+    print("  " + str(counter));
+}
+print("");
+
+# Conditionals
+score = 85;
+print("If-else (score = " + str(score) + "):");
+if (score >= 80) {
+    print("  ✓ Grade: B or higher");
+} else {
+    print("  Grade: C or lower");
+}
+print("");
+
+print("=== Test Complete ===");
+print("Sona 0.9.6 core features are operational!");

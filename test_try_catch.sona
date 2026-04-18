@@ -1,0 +1,9 @@
+// Test try/catch with actual error
+try {
+    let result = undefined_function();
+    print("This won't print");
+} catch Exception as error {
+    print("Caught error!");
+};
+
+print("Program continues");

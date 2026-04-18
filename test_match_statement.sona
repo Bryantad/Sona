@@ -1,0 +1,33 @@
+// Test match statement (pattern matching)
+print("=== Testing Match Statement ===");
+
+let value = 5;
+match value {
+    1 => print("Value is one");
+    5 => print("Value is five");
+    _ => print("Value is something else");
+};
+
+print("");
+
+// Test match with multiple values
+let status = "success";
+match status {
+    "pending" => print("Still waiting");
+    "success" => print("Operation succeeded!");
+    "error" => print("Operation failed");
+    _ => print("Unknown status");
+};
+
+print("");
+
+// Test match with numbers
+let score = 85;
+match score {
+    100 => print("Perfect!");
+    90 => print("Excellent");
+    80 => print("Good");
+    _ => print("Keep trying");
+};
+
+print("Match statement tests complete!");

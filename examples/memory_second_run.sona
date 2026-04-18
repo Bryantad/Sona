@@ -1,0 +1,15 @@
+// examples/memory_second_run.sona
+// Searches for the fixed demo memory record only.
+
+import memory;
+
+let hits = memory.search("demo memory seeded from sdk", {
+    "kind": "demo_seed",
+    "subject": "sona-demo"
+});
+
+if hits["count"] > 0 {
+    print("Prior demo memory found.");
+} else {
+    print("No prior demo memory found.");
+}

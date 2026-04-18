@@ -1,0 +1,105 @@
+{
+    "name": "confidence-overlay",
+    "displayName": "Confidence Overlay",
+    "description": "Private-by-default confidence signals over code: subtly tint blocks as High/Medium/Low confidence.",
+    "version": "0.11.0",
+    "publisher": "Waycoreinc",
+    "license": "MIT",
+    "icon": "icon.png",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Bryantad/Sona"
+    },
+    "engines": {
+        "vscode": "^1.74.0"
+    },
+    "categories": [
+        "Other",
+        "Visualization"
+    ],
+    "keywords": [
+        "confidence",
+        "cognitive",
+        "overlay",
+        "annotations",
+        "neurodivergent",
+        "adhd-friendly"
+    ],
+    "activationEvents": [
+        "onStartupFinished"
+    ],
+    "main": "./out/extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "confidenceOverlay.setHigh",
+                "title": "Set Confidence: High",
+                "category": "Confidence Overlay"
+            },
+            {
+                "command": "confidenceOverlay.setMedium",
+                "title": "Set Confidence: Medium",
+                "category": "Confidence Overlay"
+            },
+            {
+                "command": "confidenceOverlay.setLow",
+                "title": "Set Confidence: Low",
+                "category": "Confidence Overlay"
+            },
+            {
+                "command": "confidenceOverlay.clearAtCursor",
+                "title": "Clear Confidence Overlay at Cursor",
+                "category": "Confidence Overlay"
+            },
+            {
+                "command": "confidenceOverlay.clearAllInFile",
+                "title": "Clear Confidence Overlays in File",
+                "category": "Confidence Overlay"
+            },
+            {
+                "command": "confidenceOverlay.toggleEnabled",
+                "title": "Toggle Confidence Overlay",
+                "category": "Confidence Overlay"
+            }
+        ],
+        "menus": {
+            "editor/context": [
+                {
+                    "command": "confidenceOverlay.setHigh",
+                    "group": "confidence@1",
+                    "when": "editorTextFocus && editorHasSelection"
+                },
+                {
+                    "command": "confidenceOverlay.setMedium",
+                    "group": "confidence@2",
+                    "when": "editorTextFocus && editorHasSelection"
+                },
+                {
+                    "command": "confidenceOverlay.setLow",
+                    "group": "confidence@3",
+                    "when": "editorTextFocus && editorHasSelection"
+                }
+            ]
+        },
+        "configuration": {
+            "title": "Confidence Overlay",
+            "properties": {
+                "confidenceOverlay.enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable confidence background overlays"
+                }
+            }
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./"
+    },
+    "devDependencies": {
+        "@types/node": "^18.0.0",
+        "@types/vscode": "^1.74.0",
+        "typescript": "^5.0.0"
+    }
+}

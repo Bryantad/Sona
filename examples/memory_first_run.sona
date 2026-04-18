@@ -1,0 +1,11 @@
+// examples/memory_first_run.sona
+// Records the fixed demo memory in the current configured namespace.
+
+import memory;
+
+memory.record("demo memory seeded from sdk", {
+    "kind": "demo_seed",
+    "subject": "sona-demo"
+});
+
+print("Recorded demo memory.");

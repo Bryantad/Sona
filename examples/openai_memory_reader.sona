@@ -1,0 +1,15 @@
+// examples/openai_memory_reader.sona
+// Searches only for the fixed OpenAI MCP demo memory record.
+
+import memory;
+
+let hits = memory.search("demo memory seeded from openai mcp", {
+    "kind": "openai_demo_seed",
+    "subject": "openai-mcp-demo"
+});
+
+if hits["count"] > 0 {
+    print("OpenAI demo memory found.");
+} else {
+    print("No OpenAI demo memory found.");
+}

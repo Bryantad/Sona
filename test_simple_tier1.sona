@@ -1,0 +1,12 @@
+// Simple Sona 0.9.6 Test
+let name = "World";
+print(name);
+
+let x = 10;
+print(x);
+
+let flag = true;
+print(flag);
+
+let numbers = [1, 2, 3];
+print(numbers);

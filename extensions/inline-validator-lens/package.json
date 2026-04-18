@@ -1,0 +1,156 @@
+{
+    "name": "inline-validator-lens",
+    "displayName": "Inline Validator Lens",
+    "description": "Real-time validation badges for string literals: emails, URLs, UUIDs, dates, IPs, and more",
+    "version": "0.11.0",
+    "publisher": "Waycoreinc",
+    "license": "MIT",
+    "icon": "icon.png",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Bryantad/Sona"
+    },
+    "engines": {
+        "vscode": "^1.74.0"
+    },
+    "categories": [
+        "Linters",
+        "Other"
+    ],
+    "keywords": [
+        "validation",
+        "email",
+        "url",
+        "uuid",
+        "ip",
+        "date",
+        "lint",
+        "codelens",
+        "inline"
+    ],
+    "activationEvents": [
+        "onLanguage:javascript",
+        "onLanguage:typescript",
+        "onLanguage:python",
+        "onLanguage:json",
+        "onLanguage:jsonc",
+        "onLanguage:yaml",
+        "onLanguage:sona",
+        "onLanguage:html",
+        "onLanguage:css",
+        "onLanguage:markdown",
+        "onLanguage:plaintext"
+    ],
+    "main": "./out/extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "validatorLens.toggleEnabled",
+                "title": "Toggle Validator Lens",
+                "category": "Validator Lens"
+            },
+            {
+                "command": "validatorLens.validateSelection",
+                "title": "Validate Selection",
+                "category": "Validator Lens"
+            },
+            {
+                "command": "validatorLens.showAllIssues",
+                "title": "Show All Validation Issues",
+                "category": "Validator Lens"
+            },
+            {
+                "command": "validatorLens.copyValidValue",
+                "title": "Copy Valid Value",
+                "category": "Validator Lens"
+            }
+        ],
+        "configuration": {
+            "title": "Inline Validator Lens",
+            "properties": {
+                "validatorLens.enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable inline validation badges"
+                },
+                "validatorLens.showInlineHints": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show inline hints next to string literals"
+                },
+                "validatorLens.showCodeLens": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Show CodeLens above validated strings"
+                },
+                "validatorLens.validateEmails": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Validate email addresses"
+                },
+                "validatorLens.validateUrls": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Validate URLs"
+                },
+                "validatorLens.validateUuids": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Validate UUIDs"
+                },
+                "validatorLens.validateIpAddresses": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Validate IP addresses (v4 and v6)"
+                },
+                "validatorLens.validateDates": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Validate ISO dates"
+                },
+                "validatorLens.validatePhoneNumbers": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Validate phone numbers"
+                },
+                "validatorLens.validateCreditCards": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Validate credit card numbers (Luhn check)"
+                },
+                "validatorLens.validateHexColors": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Validate hex color codes"
+                },
+                "validatorLens.validateJson": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Validate JSON strings"
+                },
+                "validatorLens.minStringLength": {
+                    "type": "number",
+                    "default": 5,
+                    "minimum": 1,
+                    "description": "Minimum string length to validate"
+                },
+                "validatorLens.maxValidationsPerFile": {
+                    "type": "number",
+                    "default": 200,
+                    "minimum": 10,
+                    "description": "Maximum validations per file (performance)"
+                }
+            }
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./"
+    },
+    "devDependencies": {
+        "@types/vscode": "^1.74.0",
+        "@types/node": "18.x",
+        "typescript": "^5.0.0"
+    }
+}

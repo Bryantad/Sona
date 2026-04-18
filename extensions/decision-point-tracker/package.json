@@ -1,0 +1,90 @@
+{
+    "name": "decision-point-tracker",
+    "displayName": "Decision Point Tracker",
+    "description": "Track moments of decision (refactors, restructures, deletions) with subtle markers and timestamps — reasoning topology for your codebase.",
+    "version": "0.11.0",
+    "publisher": "Waycoreinc",
+    "license": "MIT",
+    "icon": "icon.png",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Bryantad/Sona"
+    },
+    "engines": {
+        "vscode": "^1.74.0"
+    },
+    "categories": [
+        "Other",
+        "Visualization"
+    ],
+    "keywords": [
+        "decisions",
+        "refactor",
+        "cognitive",
+        "trace",
+        "intent",
+        "neurodivergent"
+    ],
+    "activationEvents": [
+        "onStartupFinished"
+    ],
+    "main": "./out/extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "decisionPointTracker.confirmPending",
+                "title": "Decision Point: Confirm",
+                "category": "Decision Point Tracker"
+            },
+            {
+                "command": "decisionPointTracker.showAll",
+                "title": "Show All Decision Points",
+                "category": "Decision Point Tracker"
+            },
+            {
+                "command": "decisionPointTracker.clearAtCursor",
+                "title": "Clear Decision Point at Cursor",
+                "category": "Decision Point Tracker"
+            },
+            {
+                "command": "decisionPointTracker.toggleEnabled",
+                "title": "Toggle Decision Point Tracker",
+                "category": "Decision Point Tracker"
+            }
+        ],
+        "configuration": {
+            "title": "Decision Point Tracker",
+            "properties": {
+                "decisionPointTracker.enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable decision point tracking"
+                },
+                "decisionPointTracker.minChangedChars": {
+                    "type": "number",
+                    "default": 80,
+                    "minimum": 10,
+                    "maximum": 5000,
+                    "description": "Minimum changed characters to consider an edit a potential decision point"
+                },
+                "decisionPointTracker.minChangedLines": {
+                    "type": "number",
+                    "default": 4,
+                    "minimum": 1,
+                    "maximum": 200,
+                    "description": "Minimum changed lines to consider an edit a potential decision point"
+                }
+            }
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./"
+    },
+    "devDependencies": {
+        "@types/node": "^18.0.0",
+        "@types/vscode": "^1.74.0",
+        "typescript": "^5.0.0"
+    }
+}

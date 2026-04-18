@@ -1,0 +1,27 @@
+# Sona v0.9.6 Runtime Verification Test
+# Test file to verify the extension and runtime work correctly
+
+# Test 1: Basic syntax
+print("=== Sona v0.9.6 Runtime Test ===")
+
+# Test 2: Variables
+name = "Sona"
+version = "0.9.6"
+print("Language: " + name)
+print("Version: " + version)
+
+# Test 3: Math
+x = 42
+y = 10
+result = x + y
+print("Math test: " + str(x) + " + " + str(y) + " = " + str(result))
+
+# Test 4: Import stdlib (these should work if runtime is active)
+# Uncomment when testing in VS Code with full Sona installation:
+# import json
+# import string
+# import math
+# import fs
+
+print("=== Test Complete ===")
+print("If you see this, the runtime is working!")
