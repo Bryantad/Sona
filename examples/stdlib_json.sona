@@ -1,0 +1,7 @@
+import json;
+
+let data = {"language": "Sona", "version": "0.14.0"};
+let text = json.dumps(data);
+
+print(text);
+print("Valid JSON: " + json.is_valid(text));

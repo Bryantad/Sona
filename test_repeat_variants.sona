@@ -1,0 +1,19 @@
+print("=== repeat while/until ===");
+
+let count = 0;
+repeat while count < 3 {
+    count = count + 1;
+};
+print(count);
+
+let n = 0;
+repeat until n >= 3 {
+    n = n + 1;
+};
+print(n);
+
+let m = 0;
+repeat until m >= 0 {
+    m = m + 1;
+};
+print(m);

@@ -1,5 +1,8 @@
 """Validation utility functions for Sona"""
 
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
 # Core validation functions
 let is_number = fn(x) { 
     return type(x) == "number" 

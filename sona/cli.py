@@ -1,11 +1,12 @@
 """
-Sona v0.10.3 Command Line Interface with AI Integration
+Sona v0.14.0 Command Line Interface with AI Integration
 
 Enhanced CLI with profile, benchmark, suggest, and explain commands
 powered by GPT-2 and cognitive assistance features.
 """
 
 import argparse
+import difflib
 import os
 import sys
 import traceback
@@ -143,7 +144,6 @@ def _load_default_interpreter():
     try:
         from sona.interpreter import SonaInterpreter
         _update_interpreter_status("cognitive", message=None, fallback_reason=None, hint=None)
-        safe_print("[INFO] Cognitive runtime enabled")
         return SonaInterpreter()
     except Exception as core_error:  # pragma: no cover - defensive
         fallback_reason = _summarize_interpreter_error(core_error)
@@ -198,6 +198,12 @@ def safe_print(*args, **kwargs):
         # Final fallback: replace any remaining non-ASCII
         text = text.encode('ascii', 'replace').decode('ascii')
         print(text, **kwargs)
+
+
+def safe_error(*args, **kwargs):
+    """Print a user-facing error message to stderr."""
+    kwargs.setdefault("file", sys.stderr)
+    safe_print(*args, **kwargs)
 
 
 def _update_interpreter_status(
@@ -365,6 +371,20 @@ def _emit_type_logger_summary(logger, args) -> dict:
 
 
 ERROR_MODES = {'explain', 'trace', 'both'}
+KNOWN_STDLIB_MODULES = (
+    "csv",
+    "date",
+    "env",
+    "fs",
+    "hashing",
+    "io",
+    "json",
+    "math",
+    "memory",
+    "path",
+    "string",
+    "time",
+)
 
 
 def _resolve_error_mode(args) -> str:
@@ -385,18 +405,141 @@ def _select_trace_exception(exc: Exception) -> Exception:
     return exc
 
 
-def _render_execution_error(exc: Exception, *, mode: str, debug: bool) -> None:
+def _render_execution_error(
+    exc: Exception,
+    *,
+    mode: str,
+    debug: bool,
+    filename: str | None = None,
+    source: str | None = None,
+) -> None:
     if mode == 'trace':
         trace_exc = _select_trace_exception(exc)
         traceback.print_exception(type(trace_exc), trace_exc, trace_exc.__traceback__)
         return
 
-    safe_print("[ERROR] Execution error:")
-    safe_print(str(exc))
+    _render_user_diagnostic(exc, filename=filename, source=source)
 
     if mode == 'both' or debug:
         trace_exc = _select_trace_exception(exc)
         traceback.print_exception(type(trace_exc), trace_exc, trace_exc.__traceback__)
+
+
+def _render_user_diagnostic(
+    exc: Exception,
+    *,
+    filename: str | None = None,
+    source: str | None = None,
+) -> None:
+    """Render compact, stable CLI diagnostics without changing interpreter behavior."""
+    cause = _select_trace_exception(exc)
+    message = str(cause) or str(exc) or "Unexpected error"
+    header, hint = _classify_user_error(cause, message)
+    summary = _diagnostic_summary(header, message)
+    safe_error(f"{header}: {summary}")
+
+    location = _extract_cli_location(cause, message, filename, source)
+    if location:
+        safe_error(f"  at {location}")
+
+    if hint:
+        safe_error(f"  hint: {hint}")
+
+
+def _first_nonempty_line(value: str) -> str:
+    for line in value.splitlines():
+        stripped = line.strip()
+        if stripped:
+            return stripped
+    return ""
+
+
+def _diagnostic_summary(header: str, message: str) -> str:
+    if header == "SonaImportError":
+        module_name = _extract_module_name(message)
+        if module_name:
+            return f"module '{module_name}' not found"
+    return _first_nonempty_line(message) or "Unexpected error"
+
+
+def _classify_user_error(exc: Exception, message: str) -> tuple[str, str | None]:
+    text = message.lower()
+    if isinstance(exc, ImportError) or "module file not found" in text or "module not found" in text or "no module named" in text:
+        return "SonaImportError", _module_hint(message)
+    if isinstance(exc, FileNotFoundError) or "file not found" in text:
+        return "SonaFileError", "check the path and run the command again."
+    if isinstance(exc, SyntaxError) or "syntax error" in text or "unexpected token" in text:
+        return "SonaSyntaxError", "check punctuation, quotes, and balanced brackets."
+    if isinstance(exc, NameError) or "is not defined" in text or "used before it was defined" in text:
+        return "SonaNameError", "declare it with let before using it."
+    if isinstance(exc, TypeError) or "not callable" in text or "expected" in text:
+        return "SonaTypeError", "check the value and arguments used in this call."
+    return "SonaRuntimeError", None
+
+
+def _module_hint(message: str) -> str:
+    module_name = _extract_module_name(message)
+    if module_name:
+        matches = difflib.get_close_matches(module_name, KNOWN_STDLIB_MODULES, n=1, cutoff=0.72)
+        if matches:
+            return f"did you mean '{matches[0]}'?"
+    return "check the module name and that it is available."
+
+
+def _extract_module_name(message: str) -> str | None:
+    import re
+
+    patterns = [
+        r"Module file not found:\s*(.+?)(?:\n|$)",
+        r"module ['\"]([^'\"]+)['\"] not found",
+        r"No module named ['\"]([^'\"]+)['\"]",
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, message, re.IGNORECASE)
+        if not match:
+            continue
+        value = match.group(1).strip()
+        if "\\" in value or "/" in value:
+            value = Path(value).stem
+        if value:
+            return value
+    return None
+
+
+def _extract_cli_location(
+    exc: Exception,
+    message: str,
+    filename: str | None,
+    source: str | None,
+) -> str | None:
+    line = getattr(exc, "lineno", None)
+    column = getattr(exc, "offset", None)
+    if line is None:
+        import re
+
+        match = re.search(r"line\s+(\d+)(?:,\s*column\s+(\d+))?", message, re.IGNORECASE)
+        if match:
+            try:
+                line = int(match.group(1))
+            except ValueError:
+                line = None
+            if match.group(2):
+                try:
+                    column = int(match.group(2))
+                except ValueError:
+                    column = None
+    if line is None:
+        return None
+
+    location = filename if filename else "<unknown>"
+    location = f"{location}:{line}"
+    if column:
+        location = f"{location}:{column}"
+    if source:
+        lines = source.splitlines()
+        if 0 < line <= len(lines):
+            location = f"{location}: {lines[line - 1].strip()}"
+    return location
 
 
 def read_text_safe(path: str) -> str:
@@ -432,15 +575,15 @@ def _run_python_script(path: Path, args: list[str], *, debug: bool = False) -> i
             return 0
         if isinstance(code, int):
             return code
-        safe_print(code)
+        safe_error(code)
         return 1
     except Exception as exc:
-        safe_print(f"[ERROR] Python execution error: {exc}")
+        safe_error(f"SonaRuntimeError: Python execution error: {exc}")
         if debug:
             import traceback
 
             traceback.print_exc()
-        return 1
+        return 2
     finally:
         sys.argv = original_argv
 
@@ -456,17 +599,19 @@ def _handle_direct_file_invocation(argv: list[str]) -> int | None:
         return None
     path = Path(candidate)
     if not path.exists():
+        if path.suffix.lower() in {'.sona', '.smod'}:
+            safe_error(f"SonaFileError: file not found: {candidate}")
+            safe_error("  hint: check the path and run the command again.")
+            return 1
         return None
 
     if path.suffix.lower() == '.py':
         return _run_python_script(path, argv[2:])
 
     if len(argv) > 2:
-        safe_print(
-            "[ERROR] Extra arguments detected. "
-            "Use 'sona run <file.sona>' for flags/options."
-        )
-        return 2
+        safe_error("SonaUsageError: extra arguments for direct file execution.")
+        safe_error("  hint: use 'sona run <file.sona>' for flags/options.")
+        return 1
 
     class DirectArgs:
         file = str(path)
@@ -679,9 +824,19 @@ ENHANCED_COMMANDS = None  # lazy-loaded mapping
 
 
 # Version information
-SONA_VERSION = "0.10.3"
+SONA_VERSION = "0.14.0"
 AI_FEATURES_VERSION = "1.0.0"
 DEFAULT_OFFLINE_MODEL = "qwen2.5-coder:7b"
+
+
+class SonaArgumentParser(argparse.ArgumentParser):
+    """Argument parser that keeps CLI usage failures in Sona's error shape."""
+
+    def error(self, message: str) -> None:
+        self.print_usage(sys.stderr)
+        safe_error(f"SonaUsageError: {message}")
+        safe_error("  hint: use 'sona --help' for available commands.")
+        raise SystemExit(2)
 
 
 def _ai_disabled_msg(cmd: str) -> int:
@@ -696,16 +851,26 @@ def _ai_disabled_msg(cmd: str) -> int:
 
 def create_argument_parser() -> argparse.ArgumentParser:
     """Create the main argument parser for Sona CLI"""
-    parser = argparse.ArgumentParser(
+    parser = SonaArgumentParser(
         prog='sona',
-        description='Sona Cognitive Programming Language v0.10.3',
-        epilog='For more information, visit: https://github.com/Bryantad/Sona'
+        description='Sona Cognitive Programming Language v0.14.0',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=(
+            "Usage:\n"
+            "  sona <file.sona>\n"
+            "  sona run <file.sona>\n\n"
+            "Examples:\n"
+            "  sona hello.sona\n"
+            "  sona run hello.sona\n"
+            "  sona run examples/hello.sona  (source checkout)\n\n"
+            "For more information, visit: https://github.com/Bryantad/Sona"
+        )
     )
 
     parser.add_argument(
         '--version', '-v',
         action='version',
-        version=f'Sona {SONA_VERSION} (AI Features {AI_FEATURES_VERSION})'
+        version=f'Sona {SONA_VERSION}'
     )
 
     parser.add_argument(
@@ -1155,7 +1320,8 @@ def handle_run_command(args) -> int:
 
     file_path = Path(args.file)
     if not file_path.exists():
-        safe_print(f"[ERROR] File '{args.file}' not found.")
+        safe_error(f"SonaFileError: file not found: {args.file}")
+        safe_error("  hint: check the path and run the command again.")
         return 1
 
     if file_path.suffix.lower() == '.py':
@@ -1204,7 +1370,13 @@ def handle_run_command(args) -> int:
         pass
     except Exception as e:
         mode = _resolve_error_mode(args)
-        _render_execution_error(e, mode=mode, debug=getattr(args, 'debug', False))
+        _render_execution_error(
+            e,
+            mode=mode,
+            debug=getattr(args, 'debug', False),
+            filename=args.file,
+            source=code if 'code' in locals() else None,
+        )
         error_text = f"{type(e).__name__}: {e}"
         exit_code = 1
     finally:
@@ -1615,7 +1787,8 @@ def handle_info_command(args) -> int:
 def handle_check_command(args) -> int:
     """Handle the check command"""
     if not Path(args.file).exists():
-        safe_print(f"[ERROR] File '{args.file}' not found.")
+        safe_error(f"SonaFileError: file not found: {args.file}")
+        safe_error("  hint: check the path and run the command again.")
         return 1
 
     try:
@@ -1761,7 +1934,7 @@ def handle_repl_command(args) -> int:
         from sona.interpreter import SonaInterpreter
         interpreter = SonaInterpreter()
 
-        safe_print("Sona REPL v0.10.3 - Type 'exit' to quit")
+        safe_print("Sona REPL v0.14.0 - Type 'exit' to quit")
         if args.ai:
             try:
                 interpreter.enable_ai()
@@ -2334,43 +2507,17 @@ def main() -> int:
 
     parser = create_argument_parser()
 
+    # Handle case where no arguments are provided
+    if len(sys.argv) == 1:
+        parser.print_help(sys.stderr)
+        return 1
+
     # Parse arguments first to check for global options
     args = parser.parse_args()
 
     # Handle global --types-status first (before any command processing)
     if hasattr(args, 'types_status') and args.types_status:
         return handle_types_status(args)
-
-    # Handle case where no arguments are provided
-    if len(sys.argv) == 1:
-        safe_print("[SONA] Sona Cognitive Programming Language v0.10.3")
-        safe_print("\nUsage: sona <command> [options]")
-        safe_print("\nCommands:")
-        safe_print("  run <file>         Execute a Sona file")
-        safe_print("  demo               Run the built-in feature demo")
-        safe_print("  profile <file>     Profile code execution")
-        safe_print("  benchmark <file>   Benchmark performance")
-        safe_print("  suggest <file>     Get AI suggestions")
-        safe_print("  explain <file>     Get AI explanations")
-        safe_print("  check <file>       Validate syntax")
-        safe_print("  format <file>      Format Sona code")
-        safe_print("  transpile <file>   Transpile to Python")
-        safe_print("  repl               Start interactive REPL")
-        safe_print("  lock               Generate sona.lock.json")
-        safe_print("  verify             Verify sona.lock.json")
-        safe_print("  setup <target>     Configure AI providers")
-        safe_print("  keys <cmd>         Manage API credentials")
-        safe_print("  ai-plan <goal>     Generate deterministic plan JSON")
-        safe_print("  ai-review <file>   Review artifact text")
-        safe_print("  ai-model <cmd>     Manage offline AI models")
-        safe_print("  ai-mode <action>   Enable cache/breaker for local AI")
-        safe_print("  probe [stdlib]     Run policy probe / stdlib inspection")
-        safe_print("  doctor             Diagnose environment readiness")
-        safe_print("  build-info         Show build and feature info")
-        safe_print("  perf-log <event>   Emit a perf event")
-        safe_print("  info               Show system info")
-        safe_print("\nUse 'sona <command> --help' for more information.")
-        return 0
 
     # Handle commands
     if args.command == 'run' or args.command is None:

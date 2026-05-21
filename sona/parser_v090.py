@@ -14,6 +14,7 @@ Version: 0.9.0
 Date: August 2025
 """
 
+import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -185,8 +186,6 @@ class SonaParserv090:
             # Initialize the transformer
             self.transformer = SonaASTTransformer(self.features_enabled)
             
-            print("✅ Sona - parser initialized successfully")
-            
         except Exception as e:
             print(f"❌ Failed to initialize parser: {e}")
             print("   Falling back to basic parsing mode")
@@ -355,6 +354,8 @@ class SonaParserv090:
     
     def _handle_parse_error(self, error: ParseError, source_code: str, filename: str):
         """Handle parsing errors with enhanced reporting"""
+        if os.getenv("SONA_DEBUG_PARSER") != "1":
+            return
         print(f"❌ Parse error in {filename}:")
         print(f"   {error}")
         
@@ -367,6 +368,8 @@ class SonaParserv090:
     
     def _handle_general_error(self, error: Exception, source_code: str, filename: str):
         """Handle general errors during parsing"""
+        if os.getenv("SONA_DEBUG_PARSER") != "1":
+            return
         print(f"❌ Error parsing {filename}: {error}")
         
         # Provide basic debugging info

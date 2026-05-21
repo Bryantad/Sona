@@ -1,0 +1,10 @@
+print("=== Smod Imports Test ===")
+
+import math
+import json.smod as json_mod
+
+let value = math.sqrt(25)
+print("math.sqrt(25): " + str(value))
+
+let payload = json_mod.loads('{"a": 3}')
+print("json_mod.loads a: " + str(payload["a"]))

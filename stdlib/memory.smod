@@ -1,0 +1,28 @@
+# memory.smod
+# Purpose: Access the external Sona memory server from Sona programs.
+
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func __default(value, fallback) {
+    if value == nil {
+        return fallback
+    }
+    return value
+}
+
+func search(query, opts=nil) {
+    return memory_search(query, __default(opts, {}))
+}
+
+func record(content, opts=nil) {
+    return memory_record(content, __default(opts, {}))
+}
+
+func get_trace(trace_id) {
+    return memory_get_trace(trace_id)
+}
+
+func reflect(input=nil, opts=nil) {
+    return memory_reflect(input, __default(opts, {}))
+}

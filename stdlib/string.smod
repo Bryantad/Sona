@@ -1,3 +1,6 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
 func __default(value, fallback) {
     if value == nil {
         return fallback
@@ -13,66 +16,66 @@ func __option(options, key, fallback) {
 }
 
 func upper(value) {
-    return __native__.string_upper(value)
+    return string_upper(value)
 }
 
 func lower(value) {
-    return __native__.string_lower(value)
+    return string_lower(value)
 }
 
 func casefold(value) {
-    return __native__.string_casefold(value)
+    return string_casefold(value)
 }
 
 func capitalize(value) {
-    return __native__.string_capitalize(value)
+    return string_capitalize(value)
 }
 
 func title(value) {
-    return __native__.string_title(value)
+    return string_title(value)
 }
 
 func swapcase(value) {
-    return __native__.string_swapcase(value)
+    return string_swapcase(value)
 }
 
 func repeat(value, count) {
-    return __native__.string_repeat(value, count)
+    return string_repeat(value, count)
 }
 
 func trim(value, chars=nil) {
-    return __native__.string_trim(value, __default(chars, nil))
+    return string_trim(value, __default(chars, nil))
 }
 
 func ltrim(value, chars=nil) {
-    return __native__.string_ltrim(value, __default(chars, nil))
+    return string_ltrim(value, __default(chars, nil))
 }
 
 func rtrim(value, chars=nil) {
-    return __native__.string_rtrim(value, __default(chars, nil))
+    return string_rtrim(value, __default(chars, nil))
 }
 
 func ensure_prefix(value, prefix) {
-    return __native__.string_ensure_prefix(value, prefix)
+    return string_ensure_prefix(value, prefix)
 }
 
 func ensure_suffix(value, suffix) {
-    return __native__.string_ensure_suffix(value, suffix)
+    return string_ensure_suffix(value, suffix)
 }
 
 func remove_prefix(value, prefix) {
-    return __native__.string_remove_prefix(value, prefix)
+    return string_remove_prefix(value, prefix)
 }
 
 func remove_suffix(value, suffix) {
-    return __native__.string_remove_suffix(value, suffix)
+    return string_remove_suffix(value, suffix)
 }
 
 func contains(value, substring, options=nil) {
     if options == nil {
         options = {}
     }
-    return __native__.string_contains(
+    return string_contains(
         value,
         substring,
         __option(options, "ignore_case", false)
@@ -83,7 +86,7 @@ func starts_with(value, prefix, options=nil) {
     if options == nil {
         options = {}
     }
-    return __native__.string_startswith(
+    return string_startswith(
         value,
         prefix,
         ignore_case=__option(options, "ignore_case", false)
@@ -94,7 +97,7 @@ func ends_with(value, suffix, options=nil) {
     if options == nil {
         options = {}
     }
-    return __native__.string_endswith(
+    return string_endswith(
         value,
         suffix,
         ignore_case=__option(options, "ignore_case", false)
@@ -105,7 +108,7 @@ func count(value, substring, options=nil) {
     if options == nil {
         options = {}
     }
-    return __native__.string_count(
+    return string_count(
         value,
         substring,
         ignore_case=__option(options, "ignore_case", false)
@@ -116,7 +119,7 @@ func split(value, delimiter=nil, options=nil) {
     if options == nil {
         options = {}
     }
-    return __native__.string_split(
+    return string_split(
         value,
         __default(delimiter, nil),
         maxsplit=__option(options, "maxsplit", -1),
@@ -128,7 +131,7 @@ func rsplit(value, delimiter=nil, options=nil) {
     if options == nil {
         options = {}
     }
-    return __native__.string_rsplit(
+    return string_rsplit(
         value,
         __default(delimiter, nil),
         maxsplit=__option(options, "maxsplit", -1)
@@ -139,22 +142,22 @@ func lines(value, options=nil) {
     if options == nil {
         options = {}
     }
-    return __native__.string_lines(value, __option(options, "keepends", false))
+    return string_lines(value, __option(options, "keepends", false))
 }
 
 func words(value) {
-    return __native__.string_words(value)
+    return string_words(value)
 }
 
 func join(parts, delimiter=nil) {
-    return __native__.string_join(parts, __default(delimiter, ""))
+    return string_join(parts, __default(delimiter, ""))
 }
 
 func replace(value, old, new, options=nil) {
     if options == nil {
         options = {}
     }
-    return __native__.string_replace(
+    return string_replace(
         value,
         old,
         new,
@@ -166,7 +169,7 @@ func replace_many(value, replacements, options=nil) {
     if options == nil {
         options = {}
     }
-    return __native__.string_replace_many(
+    return string_replace_many(
         value,
         replacements,
         ignore_case=__option(options, "ignore_case", false)
@@ -174,26 +177,26 @@ func replace_many(value, replacements, options=nil) {
 }
 
 func collapse_whitespace(value) {
-    return __native__.string_collapse_whitespace(value)
+    return string_collapse_whitespace(value)
 }
 
 func pad_left(value, width, fill=nil) {
-    return __native__.string_pad_left(value, width, __default(fill, " "))
+    return string_pad_left(value, width, __default(fill, " "))
 }
 
 func pad_right(value, width, fill=nil) {
-    return __native__.string_pad_right(value, width, __default(fill, " "))
+    return string_pad_right(value, width, __default(fill, " "))
 }
 
 func pad_center(value, width, fill=nil) {
-    return __native__.string_pad_center(value, width, __default(fill, " "))
+    return string_pad_center(value, width, __default(fill, " "))
 }
 
 func truncate(value, length, options=nil) {
     if options == nil {
         options = {}
     }
-    return __native__.string_truncate(
+    return string_truncate(
         value,
         length,
         suffix=__option(options, "suffix", "…")
@@ -201,34 +204,34 @@ func truncate(value, length, options=nil) {
 }
 
 func is_blank(value) {
-    return __native__.string_is_blank(value)
+    return string_is_blank(value)
 }
 
 func slugify(value, separator=nil) {
-    return __native__.string_slugify(value, __default(separator, "-"))
+    return string_slugify(value, __default(separator, "-"))
 }
 
 func snake_case(value) {
-    return __native__.string_snake_case(value)
+    return string_snake_case(value)
 }
 
 func kebab_case(value) {
-    return __native__.string_kebab_case(value)
+    return string_kebab_case(value)
 }
 
 func camel_case(value) {
-    return __native__.string_camel_case(value)
+    return string_camel_case(value)
 }
 
 func pascal_case(value) {
-    return __native__.string_pascal_case(value)
+    return string_pascal_case(value)
 }
 
 func format(template, options=nil) {
     if options == nil {
         options = {}
     }
-    return __native__.string_format(
+    return string_format(
         template,
         __option(options, "args", []),
         __option(options, "kwargs", {})
@@ -236,11 +239,11 @@ func format(template, options=nil) {
 }
 
 func length(value) {
-    return __native__.string_length(value)
+    return string_length(value)
 }
 
 func regex_escape(value) {
-    return __native__.string_regex_escape(value)
+    return string_regex_escape(value)
 }
 
 func __regex_flags(options) {
@@ -251,7 +254,7 @@ func __regex_flags(options) {
 }
 
 func regex_test(value, pattern, options=nil) {
-    return __native__.string_regex_test(
+    return string_regex_test(
         value,
         pattern,
         flags=__regex_flags(options)
@@ -259,7 +262,7 @@ func regex_test(value, pattern, options=nil) {
 }
 
 func regex_match(value, pattern, options=nil) {
-    return __native__.string_regex_match(
+    return string_regex_match(
         value,
         pattern,
         flags=__regex_flags(options)
@@ -267,7 +270,7 @@ func regex_match(value, pattern, options=nil) {
 }
 
 func regex_search(value, pattern, options=nil) {
-    return __native__.string_regex_search(
+    return string_regex_search(
         value,
         pattern,
         flags=__regex_flags(options)
@@ -275,7 +278,7 @@ func regex_search(value, pattern, options=nil) {
 }
 
 func regex_findall(value, pattern, options=nil) {
-    return __native__.string_regex_findall(
+    return string_regex_findall(
         value,
         pattern,
         flags=__regex_flags(options)
@@ -286,7 +289,7 @@ func regex_replace(value, pattern, replacement, options=nil) {
     if options == nil {
         options = {}
     }
-    return __native__.string_regex_replace(
+    return string_regex_replace(
         value,
         pattern,
         replacement,
@@ -299,7 +302,7 @@ func regex_split(value, pattern, options=nil) {
     if options == nil {
         options = {}
     }
-    return __native__.string_regex_split(
+    return string_regex_split(
         value,
         pattern,
         maxsplit=__option(options, "maxsplit", 0),

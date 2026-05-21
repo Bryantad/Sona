@@ -1,0 +1,125 @@
+# convert.smod
+# Purpose: Pure Sona type conversion helpers for nested stdlib imports.
+
+import string;
+
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func __default(value, fallback) {
+	if value == nil {
+		return fallback
+	}
+	return value
+}
+
+func __text(value) {
+	if value == nil {
+		return ""
+	}
+	let out = str(value)
+	try {
+		out.replace("", "")
+		return out
+	} catch e {
+		return "" + out
+	}
+}
+
+func __normalized_text(value) {
+	return string.lower(__text(value))
+}
+
+func __contains(values, target) {
+	for value in values {
+		if value == target {
+			return true
+		}
+	}
+	return false
+}
+
+func to_text(value, fallback="") {
+	if value == nil {
+		return fallback
+	}
+	return __text(value)
+}
+
+func to_int(value, fallback=0) {
+	if value == nil {
+		return fallback
+	}
+	try {
+		return int(value)
+	} catch e {
+		try {
+			return int(float(value))
+		} catch e2 {
+			return fallback
+		}
+	}
+}
+
+func to_float(value, fallback=0.0) {
+	if value == nil {
+		return fallback
+	}
+	try {
+		return float(value)
+	} catch e {
+		return fallback
+	}
+}
+
+func to_bool(value, fallback=false) {
+	if value == nil {
+		return fallback
+	}
+
+	let lowered = __normalized_text(value)
+	if lowered == "" {
+		return fallback
+	}
+	if __contains(["true", "1", "yes", "y", "on", "t"], lowered) {
+		return true
+	}
+	if __contains(["false", "0", "no", "n", "off", "f"], lowered) {
+		return false
+	}
+	return bool(value)
+}
+
+func to_list(value, fallback=nil) {
+	if value == nil {
+		return __default(fallback, [])
+	}
+	try {
+		return list(value)
+	} catch e {
+		if fallback != nil {
+			return fallback
+		}
+		return [value]
+	}
+}
+
+func coerce(value, target, fallback=nil) {
+	let kind = __normalized_text(target)
+	if kind == "text" or kind == "string" or kind == "str" {
+		return to_text(value, __default(fallback, ""))
+	}
+	if kind == "int" or kind == "integer" or kind == "number" {
+		return to_int(value, __default(fallback, 0))
+	}
+	if kind == "float" or kind == "decimal" {
+		return to_float(value, __default(fallback, 0.0))
+	}
+	if kind == "bool" or kind == "boolean" {
+		return to_bool(value, __default(fallback, false))
+	}
+	if kind == "list" or kind == "array" {
+		return to_list(value, fallback)
+	}
+	return __default(fallback, value)
+}
