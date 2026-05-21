@@ -112,9 +112,47 @@ def test_hashing_module_loads_via_smod_and_sha256_matches_vectors():
 
     assert result == [
         "smod-runtime",
-        "smod-bridge",
+        "smod",
         "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
         "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9",
         "645ffa69eaa33316aef5e1b49e66325e995bfdbe64351dc1dbabe840054e3c71",
     ]
+
+
+def test_former_bridge_modules_load_as_native_smod_contracts():
+    result = _run(
+        """
+        import csv;
+        import date;
+        import env;
+        import fs;
+        import io;
+        import json;
+        import math;
+        import path;
+        import string;
+        import time;
+        let parsed = json.loads('{"ok": true}');
+        [
+            csv.runtime_backend,
+            date.runtime_backend,
+            env.runtime_backend,
+            fs.runtime_backend,
+            io.runtime_backend,
+            json.runtime_backend,
+            math.runtime_backend,
+            path.runtime_backend,
+            string.runtime_backend,
+            time.runtime_backend,
+            string.upper("sona"),
+            math.sqrt(16),
+            path.basename("a/b/c.txt"),
+            parsed["ok"],
+            fs.exists("pyproject.toml")
+        ]
+        """
+    )
+
+    assert result[:10] == ["smod"] * 10
+    assert result[10:] == ["SONA", 4.0, "c.txt", True, True]

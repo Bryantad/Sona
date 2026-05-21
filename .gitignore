@@ -47,6 +47,7 @@ sona_cache/
 # Testing
 .pytest_cache/
 .coverage
+.coverage.*
 htmlcov/
 
 # Temp and scratch files
@@ -54,6 +55,11 @@ __tmp_*
 __smod_*
 _worktrees/
 node_modules/
+*.backup
+*_OLD.md
+_run_test.py
+_test_grammar_debug.py
+test.sona
 
 # Local artifacts
 .spm_tmp/
@@ -61,5 +67,14 @@ reports/
 _test_output_*.txt
 coverage.xml
 tmp_*.sona
+tmp_lock_smoke/
+dist-pypi*/
+dist-readme-check/
 *.vsix
+*.zip
+vscode-extension/sona-ai-native-programming/out/
+vscode-extension/_extracted/
+vscode-extension/_vsix_check/
+vscode-extension/_tmp*/
+vscode-extension/sona-ai-native-programming/_tmp*/
 SonaMinimal.code-workspace

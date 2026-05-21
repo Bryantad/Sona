@@ -1,0 +1,10 @@
+func greet(name) {
+    return "Hello, " + name + "!";
+};
+
+func add(a, b) {
+    return a + b;
+};
+
+print(greet("Sona developer"));
+print("2 + 3 = " + add(2, 3));

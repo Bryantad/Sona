@@ -1,3 +1,6 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
 # date.smod
 # Purpose: Date manipulation helpers for working with ISO dates, ranges, and calendar boundaries.
 # Inputs: ISO date or datetime strings, optional timezone identifiers, integer offsets.
@@ -12,31 +15,31 @@ func __default(value, fallback) {
 }
 
 func today(tz=nil) {
-	return __native__.date_today(__default(tz, nil))
+	return date_today(__default(tz, nil))
 }
 
 func yesterday(tz=nil) {
-	return __native__.date_yesterday(__default(tz, nil))
+	return date_yesterday(__default(tz, nil))
 }
 
 func tomorrow(tz=nil) {
-	return __native__.date_tomorrow(__default(tz, nil))
+	return date_tomorrow(__default(tz, nil))
 }
 
 func from_timestamp(value, tz=nil) {
-	return __native__.date_from_timestamp(value, __default(tz, nil))
+	return date_from_timestamp(value, __default(tz, nil))
 }
 
 func parse(value, tz=nil) {
-	return __native__.date_parse(value, __default(tz, nil))
+	return date_parse(value, __default(tz, nil))
 }
 
 func format_iso(value, tz=nil) {
-	return __native__.date_format_iso(value, __default(tz, nil))
+	return date_format_iso(value, __default(tz, nil))
 }
 
 func format(value, pattern, tz=nil) {
-	return __native__.date_format_pattern(
+	return date_format_pattern(
 		value,
 		pattern,
 		__default(tz, nil)
@@ -47,7 +50,7 @@ func diff(start, end, unit=nil, absolute=nil, tz=nil) {
 	if absolute == nil {
 		absolute = true
 	}
-	return __native__.date_diff(
+	return date_diff(
 		start,
 		end,
 		__default(unit, "days"),
@@ -60,11 +63,11 @@ func shift(value, options=nil) {
 	if options == nil {
 		options = {}
 	}
-	return __native__.date_shift(value, options)
+	return date_shift(value, options)
 }
 
 func start_of_week(value, week_start=nil, tz=nil) {
-	return __native__.date_start_of_week(
+	return date_start_of_week(
 		value,
 		__default(week_start, nil),
 		__default(tz, nil)
@@ -72,7 +75,7 @@ func start_of_week(value, week_start=nil, tz=nil) {
 }
 
 func end_of_week(value, week_start=nil, tz=nil) {
-	return __native__.date_end_of_week(
+	return date_end_of_week(
 		value,
 		__default(week_start, nil),
 		__default(tz, nil)
@@ -80,18 +83,18 @@ func end_of_week(value, week_start=nil, tz=nil) {
 }
 
 func start_of_month(value, tz=nil) {
-	return __native__.date_start_of_month(value, __default(tz, nil))
+	return date_start_of_month(value, __default(tz, nil))
 }
 
 func end_of_month(value, tz=nil) {
-	return __native__.date_end_of_month(value, __default(tz, nil))
+	return date_end_of_month(value, __default(tz, nil))
 }
 
 func range(start, end, step=nil, inclusive=nil, tz=nil) {
 	if inclusive == nil {
 		inclusive = false
 	}
-	return __native__.date_range(
+	return date_range(
 		start,
 		end,
 		__default(step, 1),
@@ -101,7 +104,7 @@ func range(start, end, step=nil, inclusive=nil, tz=nil) {
 }
 
 func closest(candidates, target, tz=nil) {
-	return __native__.date_closest(
+	return date_closest(
 		candidates,
 		target,
 		__default(tz, nil)
@@ -109,5 +112,5 @@ func closest(candidates, target, tz=nil) {
 }
 
 func sleep(seconds) {
-	__native__.date_sleep(seconds)
+	date_sleep(seconds)
 }

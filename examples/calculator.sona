@@ -1,0 +1,23 @@
+func add(a, b) {
+    return a + b;
+};
+
+func subtract(a, b) {
+    return a - b;
+};
+
+func multiply(a, b) {
+    return a * b;
+};
+
+func divide(a, b) {
+    return a / b;
+};
+
+let left = 12;
+let right = 4;
+
+print("Add: " + add(left, right));
+print("Subtract: " + subtract(left, right));
+print("Multiply: " + multiply(left, right));
+print("Divide: " + divide(left, right));

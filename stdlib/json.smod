@@ -1,3 +1,6 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
 func __default(value, fallback) {
     if value == nil {
         return fallback
@@ -16,7 +19,7 @@ func loads(text, options=nil) {
     if options == nil {
         options = {}
     }
-    return __native__.json_loads(
+    return json_loads(
         text,
         allow_comments=__option(options, "allow_comments", false),
         allow_trailing_commas=__option(options, "allow_trailing_commas", false),
@@ -28,7 +31,7 @@ func load(path, options=nil) {
     if options == nil {
         options = {}
     }
-    return __native__.json_load(
+    return json_load(
         path,
         encoding=__option(options, "encoding", "utf-8"),
         allow_comments=__option(options, "allow_comments", false),
@@ -41,7 +44,7 @@ func dumps(value, options=nil) {
     if options == nil {
         options = {}
     }
-    return __native__.json_dumps(
+    return json_dumps(
         value,
         indent=__option(options, "indent", nil),
         sort_keys=__option(options, "sort_keys", false),
@@ -54,7 +57,7 @@ func dump(value, path, options=nil) {
     if options == nil {
         options = {}
     }
-    return __native__.json_dump(
+    return json_dump(
         value,
         path,
         indent=__option(options, "indent", 2),
@@ -67,14 +70,14 @@ func dump(value, path, options=nil) {
 }
 
 func pretty(value) {
-    return __native__.json_pretty(value)
+    return json_pretty(value)
 }
 
 func normalize(value, options=nil) {
     if options == nil {
         options = {}
     }
-    return __native__.json_normalize(
+    return json_normalize(
         value,
         sort_keys=__option(options, "sort_keys", true),
         ensure_ascii=__option(options, "ensure_ascii", false)
@@ -85,7 +88,7 @@ func is_valid(text, options=nil) {
     if options == nil {
         options = {}
     }
-    return __native__.json_is_valid(
+    return json_is_valid(
         text,
         allow_comments=__option(options, "allow_comments", false),
         allow_trailing_commas=__option(options, "allow_trailing_commas", false)
@@ -96,7 +99,7 @@ func validate(text, options=nil) {
     if options == nil {
         options = {}
     }
-    return __native__.json_validate(
+    return json_validate(
         text,
         allow_comments=__option(options, "allow_comments", false),
         allow_trailing_commas=__option(options, "allow_trailing_commas", false)
@@ -107,15 +110,15 @@ func merge(values, deep=nil) {
     if deep == nil {
         deep = true
     }
-    return __native__.json_merge(...values, deep=deep)
+    return json_merge(...values, deep=deep)
 }
 
 func pointer_get(value, pointer, fallback=nil) {
-    return __native__.json_pointer_get(value, pointer, __default(fallback, nil))
+    return json_pointer_get(value, pointer, __default(fallback, nil))
 }
 
 func pointer_set(value, pointer, new_value) {
-    return __native__.json_pointer_set(value, pointer, new_value)
+    return json_pointer_set(value, pointer, new_value)
 }
 
 func parse(text, options=nil) {

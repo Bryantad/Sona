@@ -16,7 +16,7 @@ try:
     # Add current dir to path first
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     from sona import __version__ as SONA_VERSION
-    assert SONA_VERSION.startswith(("0.10.",)), f"Expected 0.10.x, got {SONA_VERSION}"
+    assert SONA_VERSION.startswith(("0.10.", "0.11.", "0.12.", "0.13.", "0.14.")), f"Expected 0.10.x-0.14.x, got {SONA_VERSION}"
 except ImportError:
     print("Warning: Could not verify Sona version (module not in path)")
 except AssertionError as e:

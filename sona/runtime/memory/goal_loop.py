@@ -445,7 +445,7 @@ class GoalInferenceKernel:
                 has_decision = True
             elif kind in {"intent_recorded", "working_memory_update", "user_input"}:
                 gap_signals += 1
-        return gap_signals > 0 and not has_decision
+        return gap_signals > 1 and not has_decision
 
 
 class GoalContinuationManager:
@@ -709,6 +709,14 @@ class GoalContinuationManager:
             top_k=top_k,
             token_budget=token_budget,
         )
+        retrieved = [
+            item
+            for item in retrieved
+            if not (
+                item.memory_type == "episode"
+                and getattr(item.memory, "kind", None) == "goal_state_transition"
+            )
+        ]
         suggestion = self.inference_kernel.suggest_next_step(goal, retrieved)
         if not suggestion.has_complete_explanation():
             return GoalContinuationStep(

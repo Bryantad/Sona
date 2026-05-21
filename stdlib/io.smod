@@ -1,11 +1,14 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
 func input(prompt=nil) {
-    return __native__.io.input(prompt)
+    return io_input(prompt)
 }
 
 func write_file(path, content) {
-    return __native__.io.write_file(path, content)
+    return io_write_file(path, content)
 }
 
 func read_file(path) {
-    return __native__.io.read_file(path)
+    return io_read_file(path)
 }
