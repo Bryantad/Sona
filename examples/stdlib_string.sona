@@ -1,0 +1,7 @@
+import string;
+
+let raw_name = "  sona developer  ";
+let clean_name = string.title(string.trim(raw_name));
+
+print("Name: " + clean_name);
+print("Has Sona: " + string.contains(clean_name, "Sona"));

@@ -2,7 +2,7 @@
 # Purpose: Access the external Sona memory server from Sona programs.
 
 const module_format = "smod-runtime"
-const runtime_backend = "smod-bridge"
+const runtime_backend = "smod"
 
 func __default(value, fallback) {
     if value == nil {
@@ -12,17 +12,17 @@ func __default(value, fallback) {
 }
 
 func search(query, opts=nil) {
-    return __native__.memory_search(query, __default(opts, {}))
+    return memory_search(query, __default(opts, {}))
 }
 
 func record(content, opts=nil) {
-    return __native__.memory_record(content, __default(opts, {}))
+    return memory_record(content, __default(opts, {}))
 }
 
 func get_trace(trace_id) {
-    return __native__.memory_get_trace(trace_id)
+    return memory_get_trace(trace_id)
 }
 
 func reflect(input=nil, opts=nil) {
-    return __native__.memory_reflect(input, __default(opts, {}))
+    return memory_reflect(input, __default(opts, {}))
 }

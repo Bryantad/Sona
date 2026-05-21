@@ -1,0 +1,7 @@
+import math;
+
+let radius = 3;
+let area = math.multiply(math.PI, math.multiply(radius, radius));
+
+print("Radius: " + radius);
+print("Circle area: " + area);

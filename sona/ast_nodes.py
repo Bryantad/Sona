@@ -22,6 +22,25 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
 
+def _should_retry_legacy_call_signature(exc: TypeError) -> bool:
+    """Return true only for Python call-signature TypeErrors.
+
+    Older callable adapters accepted `call(args)` while newer Sona functions
+    accept `call(args, kwargs)`. The retry path must not catch arbitrary
+    TypeErrors raised from inside the called function body.
+    """
+    message = str(exc)
+    signature_markers = (
+        "positional argument",
+        "positional arguments",
+        "required positional",
+        "unexpected keyword",
+        "missing ",
+        "takes ",
+    )
+    return any(marker in message for marker in signature_markers)
+
+
 # ========================================================================
 # BASE AST NODE CLASSES
 # ========================================================================
@@ -754,7 +773,23 @@ class IntentStatement(Statement):
     def execute(self, vm):
         values = self._evaluate_body(vm)
         if hasattr(vm, 'cognitive_monitor'):
-            return vm.cognitive_monitor.record_intent(values)
+            result = vm.cognitive_monitor.record_intent(values)
+            recorder = getattr(vm, "record_memory_episode", None)
+            if callable(recorder):
+                recorder(
+                    kind="intent_recorded",
+                    source_type="runtime",
+                    importance=0.75,
+                    payload={
+                        "goal": values.get("goal"),
+                        "has_constraints": bool(values.get("constraints")),
+                        "has_success": bool(
+                            values.get("success")
+                            or values.get("definition_of_done")
+                        ),
+                    },
+                )
+            return result
         return values
 
 @dataclass
@@ -1090,9 +1125,14 @@ class CallExpression(Expression):
         if hasattr(callee_value, 'call') and callable(getattr(callee_value, 'call')):
             try:
                 return callee_value.call(pos_args, kw_args)
-            except TypeError:
+            except TypeError as exc:
+                if not _should_retry_legacy_call_signature(exc):
+                    raise
                 # Backward compatibility for older call() signatures
-                return callee_value.call(pos_args)
+                try:
+                    return callee_value.call(pos_args)
+                except TypeError:
+                    raise exc
         if callable(callee_value):
             return callee_value(*pos_args, **kw_args)
         raise TypeError(f"Object of type '{type(callee_value).__name__}' is not callable")
@@ -1192,8 +1232,13 @@ class MethodCallExpression(Expression):
                 method_args = [obj, *pos_args]
                 try:
                     return method.call(method_args, kw_args)
-                except TypeError:
-                    return method.call(method_args)
+                except TypeError as exc:
+                    if not _should_retry_legacy_call_signature(exc):
+                        raise
+                    try:
+                        return method.call(method_args)
+                    except TypeError:
+                        raise exc
             if callable(method):
                 return method(obj, *pos_args, **kw_args)
             raise TypeError(
@@ -1206,8 +1251,13 @@ class MethodCallExpression(Expression):
             if hasattr(method, 'call') and callable(getattr(method, 'call')):
                 try:
                     return method.call(pos_args, kw_args)
-                except TypeError:
-                    return method.call(pos_args)
+                except TypeError as exc:
+                    if not _should_retry_legacy_call_signature(exc):
+                        raise
+                    try:
+                        return method.call(pos_args)
+                    except TypeError:
+                        raise exc
             if callable(method):
                 return method(*pos_args, **kw_args)
             raise TypeError(

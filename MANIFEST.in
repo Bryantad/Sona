@@ -1,3 +1,22 @@
 include LICENSE
 recursive-include sona *.lark
 recursive-include stdlib *.smod *.py
+prune .github
+prune .vscode
+prune .venv
+prune build
+prune dist
+prune dist-pypi
+prune dist-pypi-*
+prune dist-readme-check
+prune docs
+prune examples
+prune extensions
+prune htmlcov
+prune planning
+prune reports
+prune sona/_attic
+prune sona/vm
+prune tests
+prune vscode-extension
+global-exclude *.py[cod] __pycache__ .coverage .coverage.* coverage.xml *.vsix *.zip *.log *.bak *.tmp *~

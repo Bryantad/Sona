@@ -1,0 +1,7 @@
+let apples = 4;
+let oranges = 3;
+let total = apples + oranges;
+
+print("Apples: " + apples);
+print("Oranges: " + oranges);
+print("Total fruit: " + total);

@@ -1,8 +1,8 @@
 {
-  "version": "0.10.3",
+  "version": "0.14.0",
   "stdlib_cap": 91,
   "manifest_hash": "0100_production",
-  "description": "Sona v0.10.3 Standard Library - Complete 91-Module Production Collection",
+  "description": "Sona v0.14.0 Standard Library - Complete 91-Module Production Collection",
   "modules": [
     "assert",
     "async",

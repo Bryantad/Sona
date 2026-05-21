@@ -527,6 +527,8 @@ class RetrievalKernel:
             return 3.0
         if isinstance(memory, MemoryClaim):
             return 2.0
+        if isinstance(memory, Episode) and memory.kind == "goal_state_transition":
+            return -1.0
         return 1.0
 
     def _trust_score(

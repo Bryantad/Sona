@@ -1,5 +1,5 @@
 """
-Sona v0.10.1 - Enhanced Interpreter with Full Loop Support
+Sona v0.14.0 - Enhanced Interpreter with Full Loop Support
 ========================================================
 
 Production-grade interpreter with complete language feature support.
@@ -38,7 +38,6 @@ except ImportError:
     try:
         from parser_v090 import SonaParserv090
     except ImportError:
-        print("⚠️  Advanced parser not available, using basic mode")
         SonaParserv090 = None
 
 # Import AST nodes
@@ -60,7 +59,6 @@ except ImportError:
             ReturnValue,
         )
     except ImportError:
-        print("⚠️  AST nodes not available, using placeholder mode")
         # Create placeholder classes
 
         class AICompleteStatement:
@@ -82,8 +80,6 @@ except ImportError:
     try:
         from ai.cognitive_assistant import CognitiveAssistant
     except ImportError:
-        print("[WARN] CognitiveAssistant not available, using placeholder mode")
-
         class CognitiveAssistant:
             def __init__(self):
                 pass
@@ -98,7 +94,7 @@ except ImportError:
                 return {'task_breakdown': [], 'support_strategies': []}
 
 
-# Import structured error system (v0.10.1)
+# Import structured error system
 from .errors import (
     SonaError,
     SonaSyntaxError,
@@ -263,6 +259,11 @@ class SimpleModuleSystem:
                 raise
 
         module_globals["__native__"] = native_bridge
+        self._expose_native_intrinsics(
+            module_globals,
+            native_bridge,
+            module_name,
+        )
 
         previous_context = getattr(self.interpreter, "_module_context", None)
         self.interpreter.memory.global_scope = module_globals
@@ -298,6 +299,42 @@ class SimpleModuleSystem:
 
         setattr(module, "__getattr__", _module_getattr)
         return module
+
+    def _expose_native_intrinsics(
+        self,
+        module_globals: dict[str, Any],
+        native_bridge,
+        module_name: str,
+    ) -> None:
+        """Expose native runtime primitives as normal `.smod` globals.
+
+        This keeps modules bridge-free at the language surface: `.smod` code can
+        call `string_upper(...)` or `fs_read(...)` directly instead of reaching
+        through `__native__`.
+        """
+        native_module = getattr(native_bridge, "_native", None)
+        if native_module is None:
+            return
+
+        providers = [native_module]
+        factory = getattr(native_module, "build_native_bridge", None)
+        if callable(factory):
+            try:
+                providers.append(factory(self.interpreter))
+            except Exception:
+                pass
+
+        for provider in providers:
+            for attr_name in dir(provider):
+                if attr_name.startswith("_"):
+                    continue
+                try:
+                    value = getattr(provider, attr_name)
+                except Exception:
+                    continue
+                module_globals.setdefault(attr_name, value)
+                if not attr_name.startswith(f"{module_name}_"):
+                    module_globals.setdefault(f"{module_name}_{attr_name}", value)
 
     def _load_module(self, module_path: str, *, force_smod: bool = False):
         if module_path in self.loaded_by_path:
@@ -507,8 +544,24 @@ class SonaMemoryManager:
         """Set a variable in the appropriate scope"""
         if global_scope or not self.local_scopes:
             self.global_scope[name] = value
-        else:
-            self.local_scopes[-1][name] = value
+            return
+
+        # Assignment updates the nearest existing lexical binding. This matters
+        # for loops inside functions: accumulator variables declared before a
+        # loop must be updated, not shadowed in the loop scope.
+        for scope in reversed(self.local_scopes):
+            if name in scope:
+                scope[name] = value
+                return
+
+        self.local_scopes[-1][name] = value
+
+    def set_local_variable(self, name: str, value: Any):
+        """Set a variable in the current local scope without outer-scope rebinding."""
+        if not self.local_scopes:
+            self.global_scope[name] = value
+            return
+        self.local_scopes[-1][name] = value
 
     def get_variable(self, name: str) -> Any:
         """Get a variable from the appropriate scope"""
@@ -969,10 +1022,10 @@ class SonaFunction:
         try:
             # Set parameters as local variables
             for param in self.parameters:
-                self.interpreter.memory.set_variable(param, bound[param])
+                self.interpreter.memory.set_local_variable(param, bound[param])
 
             if self.varargs_param:
-                self.interpreter.memory.set_variable(
+                self.interpreter.memory.set_local_variable(
                     self.varargs_param,
                     bound.get(self.varargs_param, [])
                 )
@@ -995,7 +1048,12 @@ class SonaUnifiedInterpreter:
     Supports cognitive programming, AI assistance, and enhanced control flow.
     """
 
-    def __init__(self, *, project_root: str | Path | None = None):
+    def __init__(
+        self,
+        *,
+        project_root: str | Path | None = None,
+        resume_from_latest_checkpoint: bool = False,
+    ):
         """Initialize the interpreter with all necessary components"""
         self.memory = SonaMemoryManager()
         self.functions = {}
@@ -1008,6 +1066,10 @@ class SonaUnifiedInterpreter:
         self.suppress_diagnostics = False
         self.auto_ai_suggestions_enabled = True
         self._pending_focus_restore = None
+        self.active_goal_stack: list[str] = []
+        self.last_processed_episode_id: str | None = None
+        self.last_recorded_episode_id: str | None = None
+        self.restored_checkpoint = None
 
         # Initialize module system
         self.project_root = Path(project_root) if project_root else Path.cwd()
@@ -1018,12 +1080,171 @@ class SonaUnifiedInterpreter:
         self.cognitive_monitor = CognitiveMonitor(self, self.cognitive_assistant)
         self.session_start_time = time.time()
         self.current_context = ""
+        self._setup_runtime_memory()
 
         # Initialize built-in functions
         self._setup_builtins()
 
         # Preload stdlib modules into the core runtime namespace
         self.stdlib_status = self.module_system.load_stdlib_modules()
+        if resume_from_latest_checkpoint:
+            self.restored_checkpoint = self.restore_latest_checkpoint()
+
+    def _setup_runtime_memory(self) -> None:
+        """Wire the persistent runtime memory helpers used by governance tests."""
+        try:
+            from .runtime.memory.advanced import (
+                AuditKernel,
+                ComplianceReporter,
+                PolicyKernel,
+                RuntimeMemoryIntake,
+                SQLiteMemoryStore,
+                default_runtime_policy,
+            )
+            from .runtime.memory.internal import (
+                CheckpointManager,
+                GoalContinuationManager,
+            )
+        except Exception:
+            return
+
+        self.runtime_agent_id = "sona.local"
+        self.runtime_session_id = "default"
+        self.runtime_workspace_id = str(self.project_root.resolve())
+        self.runtime_project_id = self.project_root.name or "sona"
+        db_path = self.project_root / ".sona" / "runtime_memory.db"
+        self.runtime_memory_store = SQLiteMemoryStore(db_path)
+        self.runtime_memory_policy = default_runtime_policy()
+        self.runtime_policy_kernel = PolicyKernel(self.runtime_memory_policy)
+        self.runtime_audit_kernel = AuditKernel(self.runtime_memory_store)
+        self.runtime_compliance_reporter = ComplianceReporter(
+            self.runtime_memory_store,
+            policy_kernel=self.runtime_policy_kernel,
+            audit_kernel=self.runtime_audit_kernel,
+        )
+        self.runtime_memory_intake = RuntimeMemoryIntake(
+            self.runtime_memory_store,
+            policy_kernel=self.runtime_policy_kernel,
+            audit_kernel=self.runtime_audit_kernel,
+        )
+        self.goal_manager = GoalContinuationManager(
+            self.runtime_memory_store,
+            interpreter=self,
+        )
+        self.checkpoint_manager = CheckpointManager(
+            self.runtime_memory_store,
+            interpreter=self,
+            goal_manager=self.goal_manager,
+            policy_kernel=self.runtime_policy_kernel,
+            audit_kernel=self.runtime_audit_kernel,
+        )
+
+    def record_memory_episode(
+        self,
+        *,
+        kind: str,
+        payload: dict[str, Any] | None = None,
+        source_type: str = "runtime",
+        importance: float | None = None,
+        classification: Any = None,
+        confidence: float | None = None,
+    ):
+        intake = getattr(self, "runtime_memory_intake", None)
+        if intake is None:
+            return None
+        identity = self._runtime_execution_identity()
+        if identity.goal_id is None and getattr(self, "active_goal_stack", None):
+            identity.goal_id = self.active_goal_stack[-1]
+        episode = intake.append_episode(
+            kind=kind,
+            source_type=source_type,
+            payload=payload or {},
+            execution_identity=identity,
+            importance=importance,
+            classification=classification,
+            confidence=confidence,
+        )
+        if episode is not None:
+            self.last_recorded_episode_id = episode.id
+        return episode
+
+    def _runtime_execution_identity(self):
+        from .runtime.memory.advanced import RuntimeExecutionIdentity
+
+        return RuntimeExecutionIdentity(
+            agent_id=self.runtime_agent_id,
+            session_id=self.runtime_session_id,
+            workspace_id=self.runtime_workspace_id,
+            project_id=self.runtime_project_id,
+        )
+
+    def export_checkpoint_state(self, *, reason: str | None = None) -> dict[str, Any]:
+        monitor = self.cognitive_monitor
+        return {
+            "reason": reason,
+            "working_memory": dict(monitor.working_memory),
+            "intent_stack": list(monitor.intent_stack),
+            "decision_log": list(monitor.decision_log),
+            "scope_stack": list(monitor.scope_stack),
+            "current_context": self.current_context,
+            "focus_block_active": bool(self.focus_block_active),
+        }
+
+    def _capture_focus_stack(self) -> list[dict[str, Any]]:
+        return list(getattr(self.cognitive_monitor, "focus_sessions", []))
+
+    def _apply_checkpoint_restoration(self, restoration) -> None:
+        if restoration is None or not restoration.success:
+            return
+        monitor = self.cognitive_monitor
+        monitor.working_memory = dict(restoration.restored_working_memory)
+        monitor.intent_stack = list(restoration.restored_intent_stack)
+        monitor.decision_log = list(restoration.restored_decision_log)
+        monitor.scope_stack = list(restoration.restored_scope_stack)
+        monitor.focus_sessions = list(restoration.restored_focus_stack)
+        self.current_context = restoration.restored_current_context or ""
+        self.focus_block_active = bool(restoration.restored_focus_active)
+        self.last_processed_episode_id = restoration.last_processed_episode_id
+        self.restored_checkpoint = restoration
+
+    def create_checkpoint(self, reason: str):
+        return self.checkpoint_manager.create_checkpoint(reason=reason)
+
+    def restore_latest_checkpoint(self):
+        restoration = self.checkpoint_manager.restore_latest_checkpoint(
+            self.runtime_agent_id
+        )
+        self._apply_checkpoint_restoration(restoration)
+        return restoration
+
+    def restore_checkpoint(self, checkpoint_id: str):
+        restoration = self.checkpoint_manager.restore_checkpoint(checkpoint_id)
+        self._apply_checkpoint_restoration(restoration)
+        return restoration
+
+    def list_active_or_suspended_goals(self, **kwargs):
+        return self.goal_manager.list_active_or_suspended_goals(**kwargs)
+
+    def get_active_goal(self):
+        return self.goal_manager.get_active_goal()
+
+    def open_goal(self, title: str, **kwargs):
+        return self.goal_manager.open_goal(title, **kwargs)
+
+    def resume_goal(self, goal_id: str, **kwargs):
+        return self.goal_manager.resume_goal(goal_id, **kwargs)
+
+    def suspend_goal(self, goal_id: str, **kwargs):
+        return self.goal_manager.suspend_goal(goal_id, **kwargs)
+
+    def complete_goal(self, goal_id: str, **kwargs):
+        return self.goal_manager.complete_goal(goal_id, **kwargs)
+
+    def abandon_goal(self, goal_id: str, **kwargs):
+        return self.goal_manager.abandon_goal(goal_id, **kwargs)
+
+    def run_goal_continuation_step(self, **kwargs):
+        return self.goal_manager.continue_goal_once(**kwargs)
 
     def _setup_builtins(self):
         """Setup built-in functions and variables"""
@@ -1151,7 +1372,7 @@ class SonaUnifiedInterpreter:
                                  global_scope=True)
 
         # Built-in variables
-        self.memory.set_variable('__version__', '0.10.1', global_scope=True)
+        self.memory.set_variable('__version__', '0.14.0', global_scope=True)
         self.memory.set_variable('__sona__', True, global_scope=True)
         self.memory.set_variable('True', True, global_scope=True)
         self.memory.set_variable('False', False, global_scope=True)
@@ -1457,6 +1678,16 @@ class SonaUnifiedInterpreter:
             The result of the interpretation
         """
         try:
+            self.record_memory_episode(
+                kind="user_input",
+                source_type="runtime",
+                importance=0.3,
+                payload={
+                    "filename": filename,
+                    "line_count": len(str(code or "").splitlines()),
+                    "text": str(code or "")[:240],
+                },
+            )
             # Use Sona parser if available and code contains Sona syntax
             if SonaParserv090 and self._is_sona_syntax(code):
                 return self._execute_sona_code(code, filename)
@@ -1466,6 +1697,19 @@ class SonaUnifiedInterpreter:
                     print("⚠️  Sona parser not available, using Python compatibility mode")
                 return self.execute_python_like(code, filename)
         except Exception as e:
+            try:
+                self.record_memory_episode(
+                    kind="interpret_failure",
+                    source_type="runtime",
+                    importance=0.9,
+                    payload={
+                        "filename": filename,
+                        "error_type": type(e).__name__,
+                        "message": str(e),
+                    },
+                )
+            except Exception:
+                pass
             if self.debug_mode:
                 traceback.print_exc()
             message = self._explain_exception(e, code=code, filename=filename)
@@ -1680,8 +1924,9 @@ class SonaUnifiedInterpreter:
         parser = SonaParserv090()
 
         def _fallback(parse_error: Exception):
-            print(f"DEBUG: Exception in _execute_sona_code: {parse_error}")
-            print(f"DEBUG: Exception type: {type(parse_error)}")
+            if self.debug_mode:
+                print(f"DEBUG: Exception in _execute_sona_code: {parse_error}")
+                print(f"DEBUG: Exception type: {type(parse_error)}")
 
             # If Sona parsing fails, try converting to Python
             has_braces = '{' in code
@@ -1689,27 +1934,32 @@ class SonaUnifiedInterpreter:
                 kw in code for kw in ['while', 'for', 'if', 'repeat']
             )
 
-            print(f"DEBUG: has_braces={has_braces}, has_keywords={has_keywords}")
+            if self.debug_mode:
+                print(f"DEBUG: has_braces={has_braces}, has_keywords={has_keywords}")
 
             if has_braces and has_keywords:
                 try:
-                    print("DEBUG: Converting Sona to Python...")
+                    if self.debug_mode:
+                        print("DEBUG: Converting Sona to Python...")
                     converted_code = self._convert_sona_to_python(code)
-                    print(
-                        "DEBUG: Conversion successful, executing converted code..."
-                    )
+                    if self.debug_mode:
+                        print("DEBUG: Conversion successful, executing converted code...")
                     result = self.execute_python_like(
                         converted_code,
                         filename
                     )
-                    print("DEBUG: Converted code executed successfully!")
+                    if self.debug_mode:
+                        print("DEBUG: Converted code executed successfully!")
                     return result
                 except Exception as convert_error:
-                    print(f"Convert error: {convert_error}")
-                    import traceback
-                    traceback.print_exc()
+                    if self.debug_mode:
+                        print(f"Convert error: {convert_error}")
+                        import traceback
+                        traceback.print_exc()
 
             # If Sona parsing fails, try Python compatibility mode
+            if not self.debug_mode:
+                return self.execute_python_like(code, filename)
             print(f"⚠️  Sona parsing failed: {parse_error}")
             print("   Falling back to Python compatibility mode")
             return self.execute_python_like(code, filename)

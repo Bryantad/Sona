@@ -1,0 +1,6 @@
+import fs;
+
+let sample = "examples/hello.sona";
+
+print("Sample exists: " + fs.exists(sample));
+print("Sample is file: " + fs.is_file(sample));

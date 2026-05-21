@@ -2,7 +2,7 @@
   "name": "sona-ai-native-programming",
   "displayName": "Sona: AI-Native Programming with Cognitive Accessibility",
   "description": "AI-native programming for real work and real minds—Focus Mode, Working Memory, and Explain/Optimize commands backed by a deterministic stdlib and a clean REPL.",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "publisher": "Waycoreinc",
   "icon": "assets/icon.png",
   "engines": {
@@ -39,7 +39,8 @@
           "sona"
         ],
         "extensions": [
-          ".sona"
+          ".sona",
+          ".smod"
         ],
         "configuration": "./language-configuration.json"
       }

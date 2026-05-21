@@ -1,167 +1,105 @@
-# Sona Language Support for VS Code
+# Sona: AI-Native Programming with Cognitive Accessibility
 
-AI-powered Sona programming language support with cognitive accessibility features.
+[![Version](https://img.shields.io/badge/version-0.14.0-blue.svg)](https://github.com/Bryantad/Sona/releases/tag/v0.14.0)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://python.org)
+[![Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/Waycoreinc.sona-ai-native-programming?label=VS%20Code%20Installs)](https://marketplace.visualstudio.com/items?itemName=Waycoreinc.sona-ai-native-programming)
 
-## 🚀 Features
+Visual Studio Code support for the Sona programming language.
 
-### AI-Powered Development
+## What's New in 0.14.0
 
-- **Code Generation**: Generate Sona code from natural language descriptions
-- **Smart Refactoring**: AI-powered code improvements and optimizations
-- **Code Explanation**: Get detailed explanations of complex code
-- **Intelligent Debugging**: AI-assisted bug detection and fixes
-- **Performance Optimization**: Automatic code optimization suggestions
+Sona `0.14.0` focuses on developer usability: clearer CLI behavior,
+validated examples, better onboarding docs, and package stability.
 
-### Cognitive Accessibility
+- Stable CLI flow: `sona --version`, `sona --help`, `sona run file.sona`, and `sona file.sona`.
+- Updated quickstart path for installing and running Sona.
+- Existing **Run Sona File** command remains available from the Command Palette and editor context menu.
+- `.sona` and `.smod` syntax highlighting remains activation-safe.
 
-- **Neurotypical Mode (Default)**: Standard UI/UX for familiar development experience
-- **ADHD Mode**: High-contrast colors, minimal distractions, bold fonts for enhanced focus
-- **Dyslexia Mode**: Dyslexia-friendly fonts (OpenDyslexic) and enhanced readability
+## How to Use Sona in VS Code
 
-### Azure-Powered Infrastructure
+1. Install Python 3.11 or newer and the Sona CLI:
 
-- Enterprise-grade AI routing with fallback providers
-- Persistent cognitive memory across sessions
-- Real-time performance monitoring
-- Serverless cognitive functions
+   ```bash
+   pip install sona-lang
+   ```
 
-## 🎯 Getting Started
+2. Open a folder and create `hello.sona`:
 
-### First-Time Setup
+   ```sona
+   print("Hello, Sona!");
+   ```
 
-When you first install the Sona extension, you'll see a welcome message that guides you through:
+3. Open the Command Palette and run **Sona: Run Sona File**.
+4. Use `.sona` files for Sona programs and `.smod` files for Sona modules.
 
-1. **Profile Selection**: Choose your preferred UI mode for optimal accessibility
-2. **AI Connection**: Verify connection to Sona's AI infrastructure
-3. **Feature Overview**: Learn about available commands and capabilities
+## Quick Start
 
-### Onboarding Experience
+1. Install Python 3.11 or newer.
+2. Install the Sona CLI:
 
-The extension provides a seamless onboarding experience:
+   ```bash
+   pip install sona-lang
+   ```
 
-- **Welcome Dialog**: Introduces Sona v0.9.0 features and benefits
-- **Profile Configuration**: Easy setup for cognitive accessibility needs
-- **Interactive Tutorial**: Hands-on guidance for key features
-- **Help System**: Always-available assistance and documentation
+3. Check the CLI:
 
-### Manual Setup
+   ```bash
+   sona --version
+   sona --help
+   ```
 
-You can always reconfigure your experience using:
+4. Create `hello.sona`:
 
-- **Command Palette** → `Sona: Select User Profile`
-- **Status Bar** → Click the Sona icon → Change UI Profile
-- **Settings** → Search for "Sona" → Configure preferences
+   ```sona
+   print("Hello from Sona!");
+   ```
 
-## 🧠 User Profiles
+5. Run it:
 
-### Neurotypical (Default)
+   ```bash
+   sona run hello.sona
+   ```
 
-- Standard VS Code-style interface
-- Familiar colors and fonts
-- Conventional layout and spacing
-- Best for users comfortable with typical development environments
+See the full quickstart in `docs/QUICKSTART.md`.
 
-### ADHD Mode
+## Features
 
-- **High Contrast**: Enhanced visual separation and focus
-- **Bold Fonts**: Improved readability and attention
-- **Minimal Distractions**: Reduced visual clutter
-- **Fast Interactions**: Optimized for quick context switching
+- Syntax highlighting for `.sona` and `.smod`.
+- Run, check, format, profile, benchmark, and transpile commands.
+- REPL integration for interactive exploration.
+- Optional AI-assisted explain and suggestion commands.
+- Cognitive accessibility workflows including Focus Mode, Working Memory, and user profiles.
 
-### Dyslexia Mode
+## Useful Commands
 
-- **OpenDyslexic Font**: Specially designed for dyslexic readers
-- **Enhanced Spacing**: Improved line and character spacing
-- **Consistent Colors**: Reduced visual stress
-- **Clear Hierarchy**: Better information organization
+| Command | Description |
+| --- | --- |
+| **Sona: Welcome & Setup** | Opens extension onboarding. |
+| **Sona: Run Sona File** | Runs the active Sona file. |
+| **Sona: Check Syntax** | Checks syntax for the active Sona file. |
+| **Sona: Format Code** | Formats Sona code. |
+| **Sona: Start REPL** | Starts an interactive Sona shell. |
+| **Sona: Show System Info** | Shows runtime and extension environment details. |
 
-## 📋 Commands
-
-| Command                     | Description                    | Keyboard Shortcut |
-| --------------------------- | ------------------------------ | ----------------- |
-| `Sona: Select User Profile` | Change accessibility profile   | -                 |
-| `Sona: Generate Code`       | Generate code from description | `Ctrl+Shift+G`    |
-| `Sona: Refactor Code`       | Improve selected code          | `Ctrl+Shift+R`    |
-| `Sona: Explain Code`        | Get code explanation           | `Ctrl+Shift+E`    |
-| `Sona: Debug Code`          | AI-assisted debugging          | `Ctrl+Shift+D`    |
-| `Sona: Optimize Code`       | Performance optimization       | `Ctrl+Shift+O`    |
-| `Sona: Toggle Focus Mode`   | Enable/disable cognitive focus | `Ctrl+Shift+F`    |
-| `Sona: Welcome & Setup`     | Show onboarding                | -                 |
-| `Sona: Help & Commands`     | View help and commands         | `F1`              |
-
-## ⚙️ Configuration
-
-### Settings
+## Configuration
 
 ```json
 {
+  "sona.cli.pythonPath": "python",
+  "sona.cli.timeout": 30000,
   "sona.userProfile": "neurotypical",
-  "sona.aiRouter.endpoint": "https://sona-ai-router-prod.azurewebsites.net",
-  "sona.aiRouter.timeout": 30000,
+  "sona.ai.autoSetup": true,
   "sona.onboarding.showWelcome": true
 }
 ```
 
-### Profile Switching
+## Release Notes
 
-Switch profiles anytime through:
+- [Release notes](https://github.com/Bryantad/Sona/blob/main/RELEASE_NOTES_v0.14.0.md)
+- [GitHub release body](https://github.com/Bryantad/Sona/blob/main/docs/release-notes/v0.14.0_GITHUB_RELEASE_BODY.md)
 
-1. **Command Palette**: `Sona: Select User Profile`
-2. **Status Bar**: Click Sona icon → Change Profile
-3. **Settings**: Modify `sona.userProfile` directly
+## License
 
-Changes take effect immediately with no restart required.
-
-## 🔧 Status Bar
-
-The Sona status bar indicator shows:
-
-- Current profile mode (Neurotypical/ADHD/Dyslexia)
-- AI connection status
-- Quick access to profile switching
-- Connection health monitoring
-
-**Icons**:
-
-- ⚡ Neurotypical mode
-- 🚀 ADHD mode
-- 📖 Dyslexia mode
-
-## 🆘 Troubleshooting
-
-### Profile Not Switching
-
-1. Check VS Code settings for `sona.userProfile`
-2. Reload VS Code window
-3. Run `Sona: Select User Profile` again
-
-### AI Connection Issues
-
-1. Verify internet connection
-2. Check AI Router endpoint in settings
-3. Run `Sona: Check AI Connection`
-
-### Font Issues (Dyslexia Mode)
-
-1. Install OpenDyslexic font on your system
-2. Restart VS Code
-3. Font will fallback to Arial if OpenDyslexic unavailable
-
-## 📚 Learn More
-
-- [Sona Documentation](https://github.com/Bryantad/Sona)
-- [Azure Infrastructure Guide](https://github.com/Bryantad/Sona/blob/main/azure/README.md)
-- [Cognitive Accessibility Features](https://github.com/Bryantad/Sona/wiki/accessibility)
-
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guide](https://github.com/Bryantad/Sona/blob/main/Contributing.md).
-
-## 📄 License
-
-This extension is licensed under the same terms as the Sona language project.
-
----
-
-**Sona v0.9.0** - AI-Native Programming with Cognitive Accessibility
-🧠 Inclusive | 🤖 AI-Powered | ☁️ Cloud-Native
+MIT License. See [LICENSE](https://github.com/Bryantad/Sona/blob/main/LICENSE).

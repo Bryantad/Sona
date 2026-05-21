@@ -1,3 +1,6 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
 # time.smod
 # Purpose: Time operations for retrieving timestamps, formatting, parsing, and measuring durations.
 # Inputs: ISO timestamps, durations in seconds, optional timezone identifiers.
@@ -12,19 +15,19 @@ func __default(value, fallback) {
 }
 
 func now(timespec=nil, tz=nil) {
-	return __native__.time_now(__default(timespec, nil), __default(tz, nil))
+	return time_now(__default(timespec, nil), __default(tz, nil))
 }
 
 func utcnow(timespec=nil) {
-	return __native__.time_utcnow(__default(timespec, nil))
+	return time_utcnow(__default(timespec, nil))
 }
 
 func timestamp() {
-	return __native__.time_timestamp()
+	return time_timestamp()
 }
 
 func from_timestamp(value, timespec=nil, tz=nil) {
-	return __native__.time_from_timestamp(
+	return time_from_timestamp(
 		value,
 		__default(timespec, nil),
 		__default(tz, nil)
@@ -32,11 +35,11 @@ func from_timestamp(value, timespec=nil, tz=nil) {
 }
 
 func to_timestamp(value, tz=nil) {
-	return __native__.time_to_timestamp(value, __default(tz, nil))
+	return time_to_timestamp(value, __default(tz, nil))
 }
 
 func parse(value, tz=nil, timespec=nil) {
-	return __native__.time_parse(
+	return time_parse(
 		value,
 		__default(tz, nil),
 		__default(timespec, "microseconds")
@@ -44,7 +47,7 @@ func parse(value, tz=nil, timespec=nil) {
 }
 
 func format_iso(value, timespec=nil, tz=nil) {
-	return __native__.time_format_iso(
+	return time_format_iso(
 		value,
 		__default(timespec, nil),
 		__default(tz, nil)
@@ -52,7 +55,7 @@ func format_iso(value, timespec=nil, tz=nil) {
 }
 
 func format(value, pattern, tz=nil) {
-	return __native__.time_format_pattern(
+	return time_format_pattern(
 		value,
 		pattern,
 		__default(tz, nil)
@@ -63,7 +66,7 @@ func diff(start, end, unit=nil, absolute=nil) {
 	if absolute == nil {
 		absolute = true
 	}
-	return __native__.time_diff(
+	return time_diff(
 		start,
 		end,
 		__default(unit, "seconds"),
@@ -75,17 +78,17 @@ func shift(value, options=nil) {
 	if options == nil {
 		options = {}
 	}
-	return __native__.time_shift(value, options)
+	return time_shift(value, options)
 }
 
 func sleep(seconds) {
-	__native__.time_sleep(seconds)
+	time_sleep(seconds)
 }
 
 func monotonic() {
-	return __native__.time_monotonic()
+	return time_monotonic()
 }
 
 func perf_counter() {
-	return __native__.time_perf_counter()
+	return time_perf_counter()
 }

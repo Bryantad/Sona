@@ -7,13 +7,40 @@
 # VS Code/editor/project metadata
 .vscode/**
 .github/**
+**/.git/**
+**/.github/**
+**/.venv/**
+**/.DS_Store
 
 # Build/test artifacts
 scripts/**
 **/*.ts
 **/*.map
 **/*.log
+**/*.bak
+**/*.tmp
+**/*~
 coverage*/**
+**/coverage/**
+**/.coverage*
+**/__pycache__/**
+**/*.pyc
+node_modules/.cache/**
+node_modules/**/README*
+node_modules/**/Readme*
+node_modules/**/CHANGELOG*
+node_modules/**/changelog*
+node_modules/**/HISTORY*
+node_modules/**/MIGRATION*
+node_modules/**/test/**
+node_modules/**/tests/**
+node_modules/**/bench.js
+node_modules/**/.nycrc
+node_modules/**/.eslintrc
+node_modules/**/.npmignore
+node_modules/**/tsconfig.json
+node_modules/**/yarn.lock
+node_modules/**/Makefile
 
 # Packaged artifacts
 **/*.vsix
