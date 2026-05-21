@@ -1,9 +1,9 @@
 # Sona Receipt Explorer: Execution Audit Trail
 
-[![Version](https://img.shields.io/badge/version-0.13.0-blue.svg)](https://github.com/Bryantad/Sona/releases)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Marketplace](https://img.shields.io/badge/VS%20Code-Marketplace-blue)](https://marketplace.visualstudio.com/items?itemName=Waycoreinc.sona-receipt-explorer)
-[![Part of Sona](https://img.shields.io/badge/part%20of-Sona%20Ecosystem-purple)](https://github.com/Bryantad/Sona)
+[![Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/Waycoreinc.sona-receipt-explorer?label=marketplace)](https://marketplace.visualstudio.com/items?itemName=Waycoreinc.sona-receipt-explorer)
+[![Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/Waycoreinc.sona-receipt-explorer?label=installs)](https://marketplace.visualstudio.com/items?itemName=Waycoreinc.sona-receipt-explorer)
+[![Source Version](https://img.shields.io/github/v/tag/Bryantad/Sona?label=sona&sort=semver)](https://github.com/Bryantad/Sona/tags)
+[![License](https://img.shields.io/github/license/Bryantad/Sona)](LICENSE)
 
 ---
 

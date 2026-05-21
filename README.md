@@ -4,9 +4,10 @@ Sona is an AI-native programming language and developer toolchain focused on
 clear execution, readable diagnostics, deterministic examples, and cognitive
 accessibility.
 
-[![Version](https://img.shields.io/badge/version-0.14.0-blue.svg)](https://github.com/Bryantad/Sona/releases/tag/v0.14.0)
-[![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Source Version](https://img.shields.io/github/v/tag/Bryantad/Sona?label=source&sort=semver)](https://github.com/Bryantad/Sona/tags)
+[![CI](https://github.com/Bryantad/Sona/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Bryantad/Sona/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue.svg)](https://www.python.org/)
+[![License](https://img.shields.io/github/license/Bryantad/Sona)](LICENSE)
 
 Current release: `0.14.0`
 
