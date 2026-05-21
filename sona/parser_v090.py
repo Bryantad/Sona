@@ -2085,7 +2085,7 @@ def parse_file(file_path: str, parser: SonaParserv090 | None = None) -> list[AST
         parser = create_parser()
     
     try:
-        with open(file_path, encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8-sig') as f:
             source_code = f.read()
         
         return parser.parse(source_code, file_path)
@@ -2110,7 +2110,7 @@ def validate_file(file_path: str, parser: SonaParserv090 | None = None) -> dict[
         parser = create_parser()
     
     try:
-        with open(file_path, encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8-sig') as f:
             source_code = f.read()
         
         return parser.validate_syntax(source_code)

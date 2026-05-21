@@ -46,8 +46,6 @@ exclude = [
 	"vscode-extension*",
 	"planning*",
 	"assets*",
-	"sona._attic*",
-	"sona.vm*",
 ]
 
 [tool.setuptools.package-data]
@@ -90,7 +88,6 @@ extend-exclude = '''
 |utils/debug\.py
 |utils/suppress\.py
 |sona/type_system/.*
-|sona/vm/.*
 |type_aware_interpreter\.py
 |stdlib/utils/string/smod\.py
 |traditional_repl\.py
@@ -124,7 +121,6 @@ exclude = [
 	"**/utils/debug.py",
 	"**/utils/suppress.py",
 	"**/type_system/**",
-	"**/vm/**",
 	"**/type_aware_interpreter.py",
 	"**/stdlib/**",
 	"**/performance/**",
@@ -139,33 +135,4 @@ line-length = 100
 quote-style = "double"
 indent-style = "space"
 line-ending = "auto"
-
-[tool.coverage.run]
-branch = true
-source = ["sona"]
-omit = [
-	"tests/*",
-	"*/__init__.py",
-	"sona/_attic/*",
-	"sona/_attic/**",
-	"sona/vm/*",
-	"sona/vm/**",
-]
-
-[tool.coverage.report]
-show_missing = true
-skip_covered = true
-fail_under = 0
-
-[tool.pytest.ini_options]
-addopts = "-q --strict-markers --cov=sona --cov-report=xml --cov-report=term:skip-covered --hypothesis-show-statistics"
-testpaths = ["tests"]
-filterwarnings = [
-	"ignore:module 'sre_parse' is deprecated:DeprecationWarning:lark\\.utils",
-	"ignore:module 'sre_constants' is deprecated:DeprecationWarning:lark\\.utils",
-]
-markers = [
-	"property: property-based stdlib tests",
-	"stdlib: exercises stdlib harness",
-]
 

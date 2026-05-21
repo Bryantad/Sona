@@ -1,8 +1,4 @@
-"""
-Sona core helpers.
-
-Legacy class system experiments moved to sona._attic.core.
-"""
+"""Sona core helpers."""
 
 from .result import (
     ErrorCode,

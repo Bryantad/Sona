@@ -22,7 +22,7 @@ A clear and concise description of what you expected to happen.
 
 - OS: Windows / macOS / Linux
 - Python version: 3.12
-- Sona version: 0.9.6
+- Sona version: 0.14.0
 
 **Additional context**
 Add any other context about the problem here.

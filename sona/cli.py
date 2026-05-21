@@ -548,7 +548,7 @@ def read_text_safe(path: str) -> str:
     Tries common encodings; last resort returns replacement-decoded UTF-8.
     """
     p = Path(path)
-    for enc in ("utf-8", "utf-8-sig", "utf-16", "utf-16-le", "utf-16-be"):
+    for enc in ("utf-8-sig", "utf-8", "utf-16", "utf-16-le", "utf-16-be"):
         try:
             return p.read_text(encoding=enc)
         except UnicodeError:

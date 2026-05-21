@@ -2385,7 +2385,7 @@ class SonaUnifiedInterpreter:
             raise SonaRuntimeError(f"File not found: {filepath}")
 
         try:
-            with open(filepath, encoding='utf-8') as f:
+            with open(filepath, encoding='utf-8-sig') as f:
                 code = f.read()
             return self.interpret(code, filename=filepath)
         except Exception as e:
