@@ -1,9 +1,24 @@
 # Sona
 
-Sona is a Python-hosted programming language focused on clear CLI behavior,
-deterministic examples, and developer-friendly diagnostics.
+Sona is an AI-native programming language and developer toolchain focused on
+clear execution, readable diagnostics, deterministic examples, and cognitive
+accessibility.
+
+[![Version](https://img.shields.io/badge/version-0.14.0-blue.svg)](https://github.com/Bryantad/Sona/releases/tag/v0.14.0)
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 Current release: `0.14.0`
+
+## What Sona Provides
+
+- A Python-hosted runtime and CLI for `.sona` programs.
+- A stable first-run path for new developers.
+- Clear user-facing diagnostics with actionable hints.
+- A source-validated official example suite.
+- Standard library documentation for the stable user-facing modules.
+- VS Code support for `.sona` and `.smod` files.
+- Receipt Explorer support for Sona execution audit trails.
 
 ## Install
 
@@ -19,13 +34,16 @@ Confirm the install:
 sona --version
 ```
 
-Expected shape:
+Expected output shape:
 
 ```text
 Sona 0.14.0
 ```
 
 ## First Run
+
+The README does not assume access to repository examples. Create a local file
+first, then run it.
 
 Bash or macOS/Linux shell:
 
@@ -47,7 +65,7 @@ Expected output:
 Hello, Sona!
 ```
 
-## CLI
+## CLI Basics
 
 ```bash
 sona --help
@@ -55,8 +73,8 @@ sona run hello.sona
 sona hello.sona
 ```
 
-`sona run <file.sona>` and `sona <file.sona>` are both supported for local
-files. Repository examples are available only from a source checkout.
+Both `sona run <file.sona>` and `sona <file.sona>` are supported for local
+files.
 
 ## Documentation
 
@@ -65,28 +83,55 @@ files. Repository examples are available only from a source checkout.
 - [Standard Library Reference](docs/STDLIB_REFERENCE.md)
 - [Diagnostics Guide](docs/errors/v0.14-diagnostics.md)
 - [Package Manifest](docs/packages/manifest.md)
+- [Release Notes](RELEASE_NOTES_v0.14.0.md)
 
-## Source Checkout Examples
+## Official Examples
 
-Official examples are kept in the repository for documentation and release
-validation. They are not required to ship inside the installed Python package.
+Official examples are part of the source repository validation surface. They are
+not required to exist in installed Python packages.
+
+From a source checkout:
 
 ```bash
 python tools/run_examples.py
+sona run examples/hello.sona
 ```
 
 ## VS Code
 
 The main Sona VS Code extension lives in [`vscode-extension/`](vscode-extension/).
+It provides syntax highlighting, command palette actions, and editor workflow
+support for `.sona` and `.smod` files.
+
 The Receipt Explorer companion extension lives in
-[`extensions/sona-receipt-explorer/`](extensions/sona-receipt-explorer/).
+[`extensions/sona-receipt-explorer/`](extensions/sona-receipt-explorer/). It
+visualizes and compares Sona receipt files.
+
+## Repository Layout
+
+```text
+sona/                         Core runtime, CLI, parser, and packaged stdlib
+stdlib/                       Source .smod modules
+docs/                         Current user-facing documentation
+examples/                     Official source-checkout examples
+tools/run_examples.py         Source-checkout example validator
+vscode-extension/             Main Sona VS Code extension
+extensions/sona-receipt-explorer/
+                              Receipt Explorer VS Code extension
+```
 
 ## Package Scope
 
-The published Python package is intentionally lean. Source-only docs, examples,
-tests, extension sources, and local validation artifacts are excluded from the
-wheel and sdist.
+The Python package is intentionally lean. Docs, examples, tests, extension
+sources, local reports, and build artifacts are source-repository materials and
+are excluded from release wheels and sdists.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Keep pull requests focused, document
+runtime-visible behavior, and do not commit local test files, temporary build
+output, or planning notes.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+Sona is released under the MIT license. See [LICENSE](LICENSE).
