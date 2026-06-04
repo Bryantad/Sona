@@ -1,0 +1,266 @@
+# permissions.smod
+# Purpose: Sona-authored permission helpers for the public stdlib foundation.
+
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func Permission(name, description="") {
+    return {
+        "name": name,
+        "description": description
+    }
+}
+
+func __permission_name(permission) {
+    if permission == nil {
+        return ""
+    }
+    let name = permission.get("name")
+    if name != nil {
+        return name
+    }
+    return str(permission)
+}
+
+func __role_add(self, permission) {
+    if __role_has(self, permission) == false {
+        let permissions = self.get("permissions")
+        permissions.append(permission)
+    }
+    return self
+}
+
+func __role_remove(self, permission) {
+    let target = __permission_name(permission)
+    let kept = []
+    let permissions = self.get("permissions")
+    for current in permissions {
+        if __permission_name(current) != target {
+            kept.append(current)
+        }
+    }
+    permissions.clear()
+    for current in kept {
+        permissions.append(current)
+    }
+    return self
+}
+
+func __role_has(self, permission) {
+    let target = __permission_name(permission)
+    for current in self.get("permissions") {
+        if __permission_name(current) == target {
+            return true
+        }
+    }
+    return false
+}
+
+func Role(name, permissions=nil) {
+    let role = {
+        "name": name,
+        "permissions": [],
+        "add": __role_add,
+        "remove": __role_remove,
+        "has": __role_has
+    }
+    if permissions != nil {
+        for permission in permissions {
+            __role_add(role, permission)
+        }
+    }
+    return role
+}
+
+func __user_add_role(self, role) {
+    let roles = self.get("roles")
+    roles.append(role)
+    return self
+}
+
+func __user_remove_role(self, role) {
+    let kept = []
+    let target = role.get("name")
+    let roles = self.get("roles")
+    for current in roles {
+        if current.get("name") != target {
+            kept.append(current)
+        }
+    }
+    roles.clear()
+    for current in kept {
+        roles.append(current)
+    }
+    return self
+}
+
+func __user_add_permission(self, permission) {
+    let permissions = self.get("permissions")
+    permissions.append(permission)
+    return self
+}
+
+func __user_remove_permission(self, permission) {
+    let kept = []
+    let target = __permission_name(permission)
+    let permissions = self.get("permissions")
+    for current in permissions {
+        if __permission_name(current) != target {
+            kept.append(current)
+        }
+    }
+    permissions.clear()
+    for current in kept {
+        permissions.append(current)
+    }
+    return self
+}
+
+func __user_can(self, permission) {
+    for current in self.get("permissions") {
+        if __permission_name(current) == __permission_name(permission) {
+            return true
+        }
+    }
+    for role in self.get("roles") {
+        if __role_has(role, permission) {
+            return true
+        }
+    }
+    return false
+}
+
+func User(id, roles=nil, permissions=nil) {
+    let user = {
+        "id": id,
+        "roles": [],
+        "permissions": [],
+        "add_role": __user_add_role,
+        "remove_role": __user_remove_role,
+        "add_permission": __user_add_permission,
+        "remove_permission": __user_remove_permission,
+        "can": __user_can
+    }
+    if roles != nil {
+        for role in roles {
+            __user_add_role(user, role)
+        }
+    }
+    if permissions != nil {
+        for permission in permissions {
+            __user_add_permission(user, permission)
+        }
+    }
+    return user
+}
+
+func __find_permission(self, name) {
+    for permission in self.get("permissions") {
+        if permission.get("name") == name {
+            return permission
+        }
+    }
+    return nil
+}
+
+func __find_role(self, name) {
+    for role in self.get("roles") {
+        if role.get("name") == name {
+            return role
+        }
+    }
+    return nil
+}
+
+func __find_user(self, id) {
+    for user in self.get("users") {
+        if user.get("id") == id {
+            return user
+        }
+    }
+    return nil
+}
+
+func __manager_define_permission(self, name, description="") {
+    let existing = __find_permission(self, name)
+    if existing != nil {
+        return existing
+    }
+    let permission = Permission(name, description)
+    let manager_permissions = self.get("permissions")
+    manager_permissions.append(permission)
+    return permission
+}
+
+func __manager_create_role(self, name, permissions=nil) {
+    let role_permissions = []
+    if permissions != nil {
+        for permission_name in permissions {
+            let permission = __find_permission(self, permission_name)
+            if permission == nil {
+                permission = Permission(permission_name)
+            }
+            role_permissions.append(permission)
+        }
+    }
+    let role = Role(name, role_permissions)
+    let manager_roles = self.get("roles")
+    manager_roles.append(role)
+    return role
+}
+
+func __manager_create_user(self, id, roles=nil, permissions=nil) {
+    let user_roles = []
+    if roles != nil {
+        for role_name in roles {
+            let role = __find_role(self, role_name)
+            if role != nil {
+                user_roles.append(role)
+            }
+        }
+    }
+    let user_permissions = []
+    if permissions != nil {
+        for permission_name in permissions {
+            let permission = __find_permission(self, permission_name)
+            if permission == nil {
+                permission = Permission(permission_name)
+            }
+            user_permissions.append(permission)
+        }
+    }
+    let user = User(id, user_roles, user_permissions)
+    let manager_users = self.get("users")
+    manager_users.append(user)
+    return user
+}
+
+func __manager_check(self, user_id, permission_name) {
+    let user = __find_user(self, user_id)
+    if user == nil {
+        return false
+    }
+    let permission = __find_permission(self, permission_name)
+    if permission == nil {
+        permission = Permission(permission_name)
+    }
+    let allowed = __user_can(user, permission)
+    return allowed
+}
+
+func PermissionManager() {
+    return {
+        "permissions": [],
+        "roles": [],
+        "users": [],
+        "define_permission": __manager_define_permission,
+        "create_role": __manager_create_role,
+        "create_user": __manager_create_user,
+        "check": __manager_check
+    }
+}
+
+func create_manager() {
+    let manager = PermissionManager()
+    return manager
+}

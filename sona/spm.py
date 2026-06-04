@@ -28,6 +28,7 @@ DEFAULT_MANIFEST_NAME = "sona.json"
 DEFAULT_LOCK_NAME = "sona.lock.json"
 DEFAULT_MODULES_DIR = ".sona_modules"
 MANIFEST_SCHEMA_VERSION = 2
+DEFAULT_PROJECT_VERSION = "0.14.1"
 
 
 class SpmError(RuntimeError):
@@ -107,7 +108,7 @@ def _compute_integrity(src: Path) -> str:
     return f"sha256-{h.hexdigest()}"
 
 
-def init_project(root: Path, *, name: str | None = None, version: str = "0.10.3") -> Path:
+def init_project(root: Path, *, name: str | None = None, version: str = DEFAULT_PROJECT_VERSION) -> Path:
     path = _manifest_path(root)
     if path.exists():
         return path
@@ -121,7 +122,7 @@ def init_project(root: Path, *, name: str | None = None, version: str = "0.10.3"
         "keywords": [],
         "repository": "",
         "sona": {
-            "minVersion": "0.10.3",
+            "minVersion": DEFAULT_PROJECT_VERSION,
         },
         "dependencies": {},
         "devDependencies": {},
@@ -347,14 +348,28 @@ def generate_catalog(stdlib_path: Path | None = None, output: Path | None = None
 
     # Build catalog entries
     catalog_entries: list[dict[str, Any]] = []
-    for mod_name in modules_list:
-        if mod_name.startswith("native_"):
+    for module_entry in modules_list:
+        if isinstance(module_entry, str):
+            mod_name = module_entry
+            source = "legacy"
+            status = "stable"
+            user_facing = True
+        elif isinstance(module_entry, dict) and isinstance(module_entry.get("name"), str):
+            mod_name = module_entry["name"]
+            source = module_entry.get("source", "legacy")
+            status = module_entry.get("stability", "preview")
+            user_facing = module_entry.get("user_facing") is not False
+        else:
+            continue
+
+        if not user_facing or mod_name.startswith("native_") or mod_name in {"intrinsics", "native_intrinsics", "native_bridge"}:
             continue  # Skip internal native modules
 
         entry: dict[str, Any] = {
             "name": mod_name,
             "type": "stdlib",
-            "status": "stable",
+            "status": status,
+            "source": source,
         }
 
         # Find category
@@ -363,16 +378,27 @@ def generate_catalog(stdlib_path: Path | None = None, output: Path | None = None
                 entry["category"] = cat_name
                 break
 
-        # Check if .py file exists and extract docstring
-        mod_file = stdlib_path / f"{mod_name.replace('.', '/')}.py"
+        # Check if .smod or .py file exists and extract a short description.
+        smod_file = Path(__file__).resolve().parents[1] / "stdlib" / f"{mod_name.replace('.', '/')}.smod"
+        mod_file = smod_file if smod_file.exists() else stdlib_path / f"{mod_name.replace('.', '/')}.py"
         if not mod_file.exists():
             mod_file = stdlib_path / f"{mod_name}.py"
 
         if mod_file.exists():
             try:
                 content = mod_file.read_text(encoding="utf-8")
-                # Extract first docstring
-                if content.startswith('"""'):
+                if mod_file.suffix == ".smod":
+                    for line in content.splitlines():
+                        stripped = line.strip()
+                        if stripped.startswith("#"):
+                            comment = stripped.lstrip("#").strip()
+                            if not comment or comment.endswith(".smod"):
+                                continue
+                            if comment.lower().startswith("purpose:"):
+                                comment = comment.split(":", 1)[1].strip()
+                            entry["description"] = comment
+                            break
+                elif content.startswith('"""'):
                     end = content.find('"""', 3)
                     if end > 3:
                         docstring = content[3:end].strip().split("\n")[0]
@@ -383,7 +409,7 @@ def generate_catalog(stdlib_path: Path | None = None, output: Path | None = None
         catalog_entries.append(entry)
 
     catalog: dict[str, Any] = {
-            "version": manifest.get("version", "0.10.3"),
+        "version": manifest.get("version", DEFAULT_PROJECT_VERSION),
         "generated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "moduleCount": len(catalog_entries),
         "categories": list(categories.keys()),
@@ -506,7 +532,7 @@ def build_parser(prog: str = "spm") -> argparse.ArgumentParser:
 
     p_init = sub.add_parser("init", help="Create sona.json manifest")
     p_init.add_argument("--name", default=None, help="Project name")
-    p_init.add_argument("--version", default="0.10.3", help="Project version")
+    p_init.add_argument("--version", default=DEFAULT_PROJECT_VERSION, help="Project version")
     p_init.set_defaults(func=_cmd_init)
 
     p_add = sub.add_parser("add", help="Add a local-path dependency")

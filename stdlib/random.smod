@@ -1,5 +1,5 @@
 # random.smod
-# Purpose: Pure Sona pseudo-random runtime (no Python native bridge).
+# Purpose: Sona-authored pseudo-random runtime with optional private intrinsics.
 
 const module_format = "smod-runtime"
 const runtime_backend = "smod"

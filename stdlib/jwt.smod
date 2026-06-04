@@ -1,0 +1,172 @@
+# jwt.smod
+# Purpose: Sona-authored JWT-style token helpers over private intrinsics.
+
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func __b64(data) {
+    return intrinsic_base64_encode(data)
+}
+
+func __unb64(data) {
+    return intrinsic_base64_decode(data)
+}
+
+func __at(values, index) {
+    let current_index = 0
+    for selected_value in values {
+        if current_index == index {
+            return selected_value
+        }
+        current_index = current_index + 1
+    }
+    return nil
+}
+
+func __claims(payload, expires_in=nil) {
+    let claims_text = ""
+    if payload != nil {
+        for key in payload {
+            let claim_value = payload[key]
+            let key_text = str(key)
+            let value_text = str(claim_value)
+            claims_text = claims_text + key_text
+            claims_text = claims_text + "="
+            claims_text = claims_text + value_text
+            claims_text = claims_text + ";"
+        }
+    }
+    if expires_in != nil {
+        let now_value = intrinsic_now()
+        let exp_text = str(now_value + expires_in)
+        let iat_text = str(now_value)
+        claims_text = claims_text + "exp="
+        claims_text = claims_text + exp_text
+        claims_text = claims_text + ";"
+        claims_text = claims_text + "iat="
+        claims_text = claims_text + iat_text
+        claims_text = claims_text + ";"
+    }
+    return claims_text
+}
+
+func __parse_claims(text) {
+    let claims_map = {"raw": text}
+    let source_text = str(text)
+    let claim_parts = source_text.split(";")
+    for part in claim_parts {
+        if len(part) > 0 {
+            let pair_parts = part.split("=")
+            if len(pair_parts) >= 2 {
+                let key = __at(pair_parts, 0)
+                let value = __at(pair_parts, 1)
+                if key == "sub" {
+                    claims_map.update({"sub": value})
+                }
+                if key == "exp" {
+                    claims_map.update({"exp": value})
+                }
+                if key == "iat" {
+                    claims_map.update({"iat": value})
+                }
+            }
+        }
+    }
+    return claims_map
+}
+
+func encode(payload, secret, algorithm="HS256", expires_in=nil) {
+    if algorithm != "HS256" {
+        return nil
+    }
+    let header = __b64("alg=HS256;typ=JWT;")
+    let claims_text = __claims(payload, expires_in)
+    let body = __b64(claims_text)
+    let message = header
+    message = message + "."
+    message = message + body
+    let signature = intrinsic_hmac_sha256(secret, message)
+    let token_text = message
+    token_text = token_text + "."
+    token_text = token_text + signature
+    return token_text
+}
+
+func decode(token, secret, verify=true) {
+    let token_text = str(token)
+    let token_parts = token_text.split(".")
+    if len(token_parts) != 3 {
+        return nil
+    }
+    let first_part = __at(token_parts, 0)
+    let second_part = __at(token_parts, 1)
+    let signature_part = __at(token_parts, 2)
+    let message = first_part
+    message = message + "."
+    message = message + second_part
+    if verify {
+        let expected = intrinsic_hmac_sha256(secret, message)
+        if intrinsic_constant_time_eq(expected, signature_part) == false {
+            return nil
+        }
+    }
+    let payload_text = __unb64(second_part)
+    let payload = __parse_claims(payload_text)
+    let exp_value = payload.get("exp")
+    if exp_value != nil {
+        let exp_int = int(exp_value)
+        let now_value = intrinsic_now()
+        if now_value >= exp_int {
+            return nil
+        }
+    }
+    return payload
+}
+
+func create_token(user_id, secret, expires_in=3600) {
+    return encode({"sub": user_id}, secret, "HS256", expires_in)
+}
+
+func verify_token(token, secret) {
+    let payload = decode(token, secret, true)
+    if payload == nil {
+        return nil
+    }
+    let subject = payload.get("sub")
+    return subject
+}
+
+func get_payload_unverified(token) {
+    let token_text = str(token)
+    let token_parts = token_text.split(".")
+    if len(token_parts) != 3 {
+        return nil
+    }
+    let payload_part = __at(token_parts, 1)
+    let payload_text = __unb64(payload_part)
+    let payload = __parse_claims(payload_text)
+    return payload
+}
+
+func is_expired(token) {
+    let payload = get_payload_unverified(token)
+    if payload == nil {
+        return true
+    }
+    let exp_value = payload.get("exp")
+    if exp_value == nil {
+        return false
+    }
+    let exp_int = int(exp_value)
+    let now_value = intrinsic_now()
+    return now_value >= exp_int
+}
+
+func refresh_token(old_token, secret, expires_in=3600) {
+    let payload = decode(old_token, secret, true)
+    if payload == nil {
+        return nil
+    }
+    let subject = payload.get("sub")
+    return encode({"sub": subject}, secret, "HS256", expires_in)
+}

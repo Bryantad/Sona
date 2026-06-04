@@ -1,7 +1,7 @@
 # Sona Standard Library Reference
 
 This reference documents the stable user-facing stdlib surface for Sona
-`0.14.0`. The package may contain more modules, but this page is the usability
+`0.14.1`. The package may contain more modules, but this page is the usability
 contract for new developers.
 
 Documentation truth rule: if this reference and runtime behavior disagree,
@@ -38,6 +38,20 @@ JSON-compatible data.
 | `path` | Normalize, join, and inspect path strings. |
 | `string` | Transform and inspect text. |
 | `time` | Read clocks, timestamps, and durations. |
+| `queue` | Use a Sona-authored FIFO queue. |
+| `stack` | Use a Sona-authored LIFO stack. |
+| `sort` | Sort values with Sona-authored loop implementations. |
+| `search` | Find values in lists and strings with Sona-authored helpers. |
+| `statistics` | Compute descriptive statistics in Sona. |
+| `matrix` | Work with Sona-authored matrix map objects. |
+| `graph` | Work with Sona-authored graph map objects. |
+| `permissions` | Manage Sona-authored roles and permissions. |
+| `random` | Use deterministic Sona RNG helpers with intrinsic seeding support. |
+| `uuid` | Generate canonical UUID strings through a minimal intrinsic. |
+| `secrets` | Generate secure tokens through minimal private intrinsics. |
+| `password` | Hash and verify passwords with constant-time verification. |
+| `jwt` | Encode and verify preview JWT-style tokens. |
+| `crypto` | Use preview cryptographic wrappers over private intrinsics. |
 
 ## csv
 
@@ -314,3 +328,14 @@ print(time.now());
 
 ### Notes
 Time results vary by clock and timezone.
+
+## Sona-Native Foundation Modules
+
+Sona `0.14.1` moves the public foundation for `queue`, `stack`, `sort`,
+`search`, `statistics`, `matrix`, `graph`, and `permissions` into
+`stdlib/*.smod`. These modules are authored in Sona and should not depend on
+regular Python stdlib modules for their public implementation.
+
+`hashing`, `random`, `uuid`, `secrets`, `password`, `jwt`, and `crypto` are
+Sona-authored wrappers over a small private intrinsic set. `crypto.encrypt_simple`
+is preview/legacy obfuscation only and is not production encryption.

@@ -1,5 +1,5 @@
 """
-Sona v0.14.0 Command Line Interface with AI Integration
+Sona v0.14.1 Command Line Interface with AI Integration
 
 Enhanced CLI with profile, benchmark, suggest, and explain commands
 powered by GPT-2 and cognitive assistance features.
@@ -372,18 +372,32 @@ def _emit_type_logger_summary(logger, args) -> dict:
 
 ERROR_MODES = {'explain', 'trace', 'both'}
 KNOWN_STDLIB_MODULES = (
+    "crypto",
     "csv",
     "date",
     "env",
     "fs",
+    "graph",
     "hashing",
     "io",
     "json",
+    "jwt",
     "math",
+    "matrix",
     "memory",
+    "password",
     "path",
+    "permissions",
+    "queue",
+    "random",
+    "search",
+    "secrets",
+    "sort",
+    "stack",
+    "statistics",
     "string",
     "time",
+    "uuid",
 )
 
 
@@ -824,7 +838,7 @@ ENHANCED_COMMANDS = None  # lazy-loaded mapping
 
 
 # Version information
-SONA_VERSION = "0.14.0"
+SONA_VERSION = "0.14.1"
 AI_FEATURES_VERSION = "1.0.0"
 DEFAULT_OFFLINE_MODEL = "qwen2.5-coder:7b"
 
@@ -853,7 +867,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
     """Create the main argument parser for Sona CLI"""
     parser = SonaArgumentParser(
         prog='sona',
-        description='Sona Cognitive Programming Language v0.14.0',
+        description='Sona Cognitive Programming Language v0.14.1',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
             "Usage:\n"
@@ -1934,7 +1948,7 @@ def handle_repl_command(args) -> int:
         from sona.interpreter import SonaInterpreter
         interpreter = SonaInterpreter()
 
-        safe_print("Sona REPL v0.14.0 - Type 'exit' to quit")
+        safe_print("Sona REPL v0.14.1 - Type 'exit' to quit")
         if args.ai:
             try:
                 interpreter.enable_ai()
@@ -2186,9 +2200,7 @@ def handle_probe_command(args) -> int:
     # Check if this is a stdlib probe request
     if hasattr(args, 'probe_target') and args.probe_target == 'stdlib':
         try:
-            import sys
-            sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
-            from stdlib_cli_commands import stdlib_probe
+            from .stdlib_cli_commands import stdlib_probe
             return stdlib_probe()
         except Exception as e:
             safe_print(f"[ERROR] stdlib probe error: {e}")
@@ -2281,9 +2293,7 @@ def handle_doctor_command(_args) -> int:
         safe_print("\n[DOCTOR] Sona Doctor - System Health Check")
         safe_print("=" * 50)
         try:
-            import sys
-            sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
-            from stdlib_cli_commands import stdlib_doctor_check
+            from .stdlib_cli_commands import stdlib_doctor_check
             stdlib_doctor_check()
         except Exception as stdlib_err:
             safe_print(f"  [WARN]  Stdlib: Health check unavailable ({stdlib_err})")
@@ -2392,9 +2402,7 @@ def handle_build_info_command(_args) -> int:
 
         # Add stdlib metadata
         try:
-            import sys
-            sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
-            from stdlib_cli_commands import stdlib_build_info
+            from .stdlib_cli_commands import stdlib_build_info
             info["stdlib"] = stdlib_build_info()
         except Exception:
             info["stdlib"] = {"status": "unavailable"}
@@ -2531,7 +2539,6 @@ def main() -> int:
 
     elif args.command == 'ai-mode':
         return handle_ai_mode_command(args)
-
     elif args.command == 'lock':
         return handle_lock_command(args)
 

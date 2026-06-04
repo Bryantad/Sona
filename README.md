@@ -9,7 +9,7 @@ accessibility.
 [![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/github/license/Bryantad/Sona)](LICENSE)
 
-Current release: `0.14.0`
+Current release: `0.14.1`
 
 ## What Sona Provides
 
@@ -18,8 +18,6 @@ Current release: `0.14.0`
 - Clear user-facing diagnostics with actionable hints.
 - A source-validated official example suite.
 - Standard library documentation for the stable user-facing modules.
-- VS Code support for `.sona` and `.smod` files.
-- Receipt Explorer support for Sona execution audit trails.
 
 ## Install
 
@@ -38,7 +36,7 @@ sona --version
 Expected output shape:
 
 ```text
-Sona 0.14.0
+Sona 0.14.1
 ```
 
 ## First Run
@@ -84,7 +82,7 @@ files.
 - [Standard Library Reference](docs/STDLIB_REFERENCE.md)
 - [Diagnostics Guide](docs/errors/v0.14-diagnostics.md)
 - [Package Manifest](docs/packages/manifest.md)
-- [Release Notes](RELEASE_NOTES_v0.14.0.md)
+- [Release Notes](RELEASE_NOTES_v0.14.1.md)
 
 ## Official Examples
 
@@ -98,16 +96,6 @@ python tools/run_examples.py
 sona run examples/hello.sona
 ```
 
-## VS Code
-
-The main Sona VS Code extension lives in [`vscode-extension/`](vscode-extension/).
-It provides syntax highlighting, command palette actions, and editor workflow
-support for `.sona` and `.smod` files.
-
-The Receipt Explorer companion extension lives in
-[`extensions/sona-receipt-explorer/`](extensions/sona-receipt-explorer/). It
-visualizes and compares Sona receipt files.
-
 ## Repository Layout
 
 ```text
@@ -116,9 +104,6 @@ stdlib/                       Source .smod modules
 docs/                         Current user-facing documentation
 examples/                     Official source-checkout examples
 tools/run_examples.py         Source-checkout example validator
-vscode-extension/             Main Sona VS Code extension
-extensions/sona-receipt-explorer/
-                              Receipt Explorer VS Code extension
 ```
 
 ## Package Scope

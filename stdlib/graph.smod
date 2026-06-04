@@ -1,0 +1,353 @@
+# graph.smod
+# Purpose: Sona-authored graph helpers for the public stdlib foundation.
+
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func __copy_list(values) {
+    let copied_values = []
+    if values {
+        for value in values {
+            copied_values.append(value)
+        }
+    }
+    return copied_values
+}
+
+func __contains(values, target) {
+    for value in values {
+        if value == target {
+            return true
+        }
+    }
+    return false
+}
+
+func __at(values, index) {
+    let current_index = 0
+    for selected_value in values {
+        if current_index == index {
+            return selected_value
+        }
+        current_index = current_index + 1
+    }
+    return nil
+}
+
+func __graph_add_node(self, node) {
+    let graph_nodes = self.get("nodes")
+    if __contains(graph_nodes, node) == false {
+        graph_nodes.append(node)
+    }
+    return self
+}
+
+func __graph_add_edge(self, from_node, to_node, weight=1) {
+    __graph_add_node(self, from_node)
+    __graph_add_node(self, to_node)
+    let graph_edges = self.get("edges")
+    graph_edges.append({"from": from_node, "to": to_node, "weight": weight})
+    if self.get("directed") == false {
+        graph_edges.append({"from": to_node, "to": from_node, "weight": weight})
+    }
+    return self
+}
+
+func __graph_remove_node(self, node) {
+    let kept_nodes = []
+    for current in self.get("nodes") {
+        if current != node {
+            kept_nodes.append(current)
+        }
+    }
+    let graph_nodes = self.get("nodes")
+    graph_nodes.clear()
+    for current in kept_nodes {
+        graph_nodes.append(current)
+    }
+
+    let kept_edges = []
+    for edge in self.get("edges") {
+        if edge.get("from") != node {
+            if edge.get("to") != node {
+                kept_edges.append(edge)
+            }
+        }
+    }
+    let graph_edges = self.get("edges")
+    graph_edges.clear()
+    for edge in kept_edges {
+        graph_edges.append(edge)
+    }
+    return self
+}
+
+func __graph_remove_edge(self, from_node, to_node) {
+    let kept_edges = []
+    for edge in self.get("edges") {
+        let keep = true
+        if edge.get("from") == from_node {
+            if edge.get("to") == to_node {
+                keep = false
+            }
+        }
+        if self.get("directed") == false {
+            if edge.get("from") == to_node {
+                if edge.get("to") == from_node {
+                    keep = false
+                }
+            }
+        }
+        if keep {
+            kept_edges.append(edge)
+        }
+    }
+    let graph_edges = self.get("edges")
+    graph_edges.clear()
+    for edge in kept_edges {
+        graph_edges.append(edge)
+    }
+    return self
+}
+
+func __graph_neighbors(self, node) {
+    let neighbor_values = []
+    for edge in self.get("edges") {
+        if edge.get("from") == node {
+            let next_node = edge.get("to")
+            if __contains(neighbor_values, next_node) == false {
+                neighbor_values.append(next_node)
+            }
+        }
+    }
+    return neighbor_values
+}
+
+func __graph_has_edge(self, from_node, to_node) {
+    for edge in self.get("edges") {
+        if edge.get("from") == from_node {
+            if edge.get("to") == to_node {
+                return true
+            }
+        }
+    }
+    return false
+}
+
+func __graph_get_weight(self, from_node, to_node) {
+    for edge in self.get("edges") {
+        if edge.get("from") == from_node {
+            if edge.get("to") == to_node {
+                let found_weight = edge.get("weight")
+                return found_weight
+            }
+        }
+    }
+    return nil
+}
+
+func __path_with(path, node) {
+    let path_copy = __copy_list(path)
+    path_copy.append(node)
+    return path_copy
+}
+
+func __graph_shortest_path(self, start, end) {
+    if __contains(self.get("nodes"), start) == false {
+        return nil
+    }
+    if __contains(self.get("nodes"), end) == false {
+        return nil
+    }
+
+    let queue = [{"node": start, "path": [start]}]
+    let visited = [start]
+
+    while len(queue) > 0 {
+        let entry = queue.pop(0)
+        let node = entry.get("node")
+        if node == end {
+            let found_path = entry.get("path")
+            return found_path
+        }
+        let adjacent = self.neighbors(node)
+        for next_node in adjacent {
+            if __contains(visited, next_node) == false {
+                visited.append(next_node)
+                queue.append({"node": next_node, "path": __path_with(entry.get("path"), next_node)})
+            }
+        }
+    }
+    return nil
+}
+
+func __graph_to_dict(self) {
+    return {
+        "directed": self.get("directed"),
+        "nodes": __copy_list(self.get("nodes")),
+        "edges": __copy_list(self.get("edges"))
+    }
+}
+
+func Graph(directed=false) {
+    return {
+        "directed": directed,
+        "nodes": [],
+        "edges": [],
+        "add_node": __graph_add_node,
+        "add_edge": __graph_add_edge,
+        "remove_node": __graph_remove_node,
+        "remove_edge": __graph_remove_edge,
+        "neighbors": __graph_neighbors,
+        "has_edge": __graph_has_edge,
+        "get_weight": __graph_get_weight,
+        "shortest_path": __graph_shortest_path,
+        "to_dict": __graph_to_dict
+    }
+}
+
+func create(directed=false) {
+    return Graph(directed)
+}
+
+func dfs(graph, start, visited=nil) {
+    let seen = []
+    if visited != nil {
+        for item in visited {
+            seen.append(item)
+        }
+    }
+    let pending = [start]
+    let traversal = []
+    while len(pending) > 0 {
+        let node = pending.pop()
+        if __contains(seen, node) == false {
+            seen.append(node)
+            traversal.append(node)
+            let adjacent = graph.neighbors(node)
+            let index = len(adjacent)
+            while index > 0 {
+                index = index - 1
+                let next_node = __at(adjacent, index)
+                if __contains(seen, next_node) == false {
+                    pending.append(next_node)
+                }
+            }
+        }
+    }
+    return traversal
+}
+
+func bfs(graph, start) {
+    let visited = [start]
+    let queue = [start]
+    let out = []
+    while len(queue) > 0 {
+        let node = queue.pop(0)
+        out.append(node)
+        let adjacent = graph.neighbors(node)
+        for next_node in adjacent {
+            if __contains(visited, next_node) == false {
+                visited.append(next_node)
+                queue.append(next_node)
+            }
+        }
+    }
+    return out
+}
+
+func is_connected(graph) {
+    let graph_nodes = graph.get("nodes")
+    if len(graph_nodes) == 0 {
+        return true
+    }
+    let first_node = __at(graph_nodes, 0)
+    let reached = bfs(graph, first_node)
+    let reached_count = len(reached)
+    let node_count = len(graph_nodes)
+    return reached_count == node_count
+}
+
+func find_components(graph) {
+    let visited = []
+    let components = []
+    for node in graph.get("nodes") {
+        if __contains(visited, node) == false {
+            let component = bfs(graph, node)
+            for item in component {
+                if __contains(visited, item) == false {
+                    visited.append(item)
+                }
+            }
+            components.append(component)
+        }
+    }
+    return components
+}
+
+func degree(graph, node) {
+    let neighbors = graph.neighbors(node)
+    let neighbor_count = len(neighbors)
+    return neighbor_count
+}
+
+func topological_sort(graph) {
+    if graph.get("directed") == false {
+        return nil
+    }
+    let out = []
+    let remaining = __copy_list(graph.get("nodes"))
+    while len(remaining) > 0 {
+        let selected_index = -1
+        let i = 0
+        while i < len(remaining) {
+            let candidate = __at(remaining, i)
+            let incoming = 0
+            for edge in graph.get("edges") {
+                if edge.get("to") == candidate {
+                    if __contains(out, edge.get("from")) == false {
+                        incoming = incoming + 1
+                    }
+                }
+            }
+            if incoming == 0 {
+                selected_index = i
+                break
+            }
+            i = i + 1
+        }
+        if selected_index == -1 {
+            return nil
+        }
+        let selected_node = remaining.pop(selected_index)
+        out.append(selected_node)
+    }
+    return out
+}
+
+func dijkstra(graph, start) {
+    # Sona-native preview shape: list of distance records.
+    let out = []
+    for node in graph.get("nodes") {
+        let path = graph.shortest_path(start, node)
+        if path == nil {
+            out.append({"node": node, "distance": nil})
+        } else {
+            let path_distance = len(path)
+            path_distance = path_distance - 1
+            out.append({"node": node, "distance": path_distance})
+        }
+    }
+    return out
+}
+
+func from_dict(data) {
+    let g = Graph(data.get("directed"))
+    for node in data.get("nodes") {
+        __graph_add_node(g, node)
+    }
+    for edge in data.get("edges") {
+        __graph_add_edge(g, edge.get("from"), edge.get("to"), edge.get("weight"))
+    }
+    return g
+}

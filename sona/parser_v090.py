@@ -62,7 +62,6 @@ class SonaParserv090:
     - Cognitive programming constructs
     - Backward compatibility with existing syntax
     """
-    
     def __init__(self, grammar_file: str | None = None):
         """Initialize the enhanced parser"""
         self.grammar_file = grammar_file or self._get_default_grammar()
@@ -187,7 +186,7 @@ class SonaParserv090:
             self.transformer = SonaASTTransformer(self.features_enabled)
             
         except Exception as e:
-            print(f"❌ Failed to initialize parser: {e}")
+            print(f"[ERROR] Failed to initialize parser: {e}")
             print("   Falling back to basic parsing mode")
             self.parser = None
             self.transformer = None

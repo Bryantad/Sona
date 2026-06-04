@@ -1,0 +1,82 @@
+# crypto.smod
+# Purpose: Sona-authored crypto wrappers over private intrinsics.
+# Note: encrypt_simple/decrypt_simple are preview legacy helpers and are not
+# production encryption.
+
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func hash(data, algorithm="sha256") {
+    let selected = str(algorithm).lower()
+    if selected == "sha512" {
+        return intrinsic_sha512(data)
+    }
+    if selected == "sha256" {
+        return intrinsic_sha256(data)
+    }
+    return nil
+}
+
+func hmac(key, message, algorithm="sha256") {
+    if str(algorithm).lower() != "sha256" {
+        return nil
+    }
+    return intrinsic_hmac_sha256(key, message)
+}
+
+func random_bytes(length=32) {
+    return intrinsic_random_bytes(length)
+}
+
+func random_token(length=32) {
+    return intrinsic_sha256(intrinsic_random_bytes(length))
+}
+
+func random_string(length=32) {
+    let value = intrinsic_base64_encode(intrinsic_random_bytes(length))
+    let out = ""
+    let i = 0
+    while i < len(value) {
+        if i >= length {
+            break
+        }
+        out = out + value[i]
+        i = i + 1
+    }
+    return out
+}
+
+func compare_digest(a, b) {
+    return intrinsic_constant_time_eq(a, b)
+}
+
+func encrypt_simple(data, key) {
+    # Preview/legacy obfuscation only. Not production encryption.
+    return intrinsic_base64_encode(str(data))
+}
+
+func decrypt_simple(encrypted, key) {
+    return intrinsic_base64_decode(encrypted)
+}
+
+func derive_key(password, salt, iterations=100000, length=32) {
+    let digest = intrinsic_hmac_sha256(salt, password)
+    let out = ""
+    let i = 0
+    while i < len(digest) {
+        if i >= (length * 2) {
+            break
+        }
+        out = out + digest[i]
+        i = i + 1
+    }
+    return out
+}
+
+func hash_file(file_path, algorithm="sha256") {
+    return nil
+}
+
+func generate_salt(length=16) {
+    return intrinsic_base64_encode(intrinsic_random_bytes(length))
+}

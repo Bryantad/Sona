@@ -1,6 +1,6 @@
-# Packages in Sona v0.10.1 (Local-Only)
+# Packages in Sona v0.14.1 (Local-Only)
 
-v0.10.1 does **not** ship a public package registry.
+v0.14.1 does **not** ship a public package registry.
 It does ship the conventions needed to grow one later.
 
 SPM is also available as a standalone tool repository: https://github.com/Bryantad/Spm
@@ -12,13 +12,13 @@ Created by:
 - `spm init`
 - `sona pkg init`
 
-Minimal schema (v0.10):
+Minimal schema:
 
 ```json
 {
   "name": "my-project",
-  "version": "0.10.1",
-  "sona": { "minVersion": "0.10.1" },
+  "version": "0.14.1",
+  "sona": { "minVersion": "0.14.1" },
   "dependencies": {
     "my_pkg": { "path": "../my_pkg" }
   },

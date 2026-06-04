@@ -1,0 +1,223 @@
+# search.smod
+# Purpose: Sona-authored search helpers for the public stdlib foundation.
+
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func linear_search(sequence, target) {
+    let index = 0
+    for item in sequence {
+        if item == target {
+            return index
+        }
+        index = index + 1
+    }
+    return -1
+}
+
+func index_of(sequence, target) {
+    let result = linear_search(sequence, target)
+    return result
+}
+
+func contains(sequence, target) {
+    let result = linear_search(sequence, target)
+    return result != -1
+}
+
+func binary_search(sequence, target) {
+    let low = 0
+    let high = len(sequence)
+    high = high - 1
+    while low <= high {
+        let mid = int((low + high) / 2)
+        let value = __at(sequence, mid)
+        if value == target {
+            return mid
+        }
+        if value < target {
+            low = mid + 1
+        } else {
+            high = mid - 1
+        }
+    }
+    return -1
+}
+
+func find_all(sequence, target) {
+    let out = []
+    let index = 0
+    for item in sequence {
+        if item == target {
+            out.append(index)
+        }
+        index = index + 1
+    }
+    return out
+}
+
+func find_first(sequence, predicate) {
+    for item in sequence {
+        if predicate(item) {
+            return item
+        }
+    }
+    return nil
+}
+
+func find_last(sequence, predicate) {
+    let found = nil
+    for item in sequence {
+        if predicate(item) {
+            found = item
+        }
+    }
+    return found
+}
+
+func find_min(sequence, key=nil) {
+    if len(sequence) == 0 {
+        return nil
+    }
+    let best = __at(sequence, 0)
+    for item in sequence {
+        let item_key = item
+        let best_key = best
+        if key != nil {
+            item_key = key(item)
+            best_key = key(best)
+        }
+        if item_key < best_key {
+            best = item
+        }
+    }
+    return best
+}
+
+func find_max(sequence, key=nil) {
+    if len(sequence) == 0 {
+        return nil
+    }
+    let best = __at(sequence, 0)
+    for item in sequence {
+        let item_key = item
+        let best_key = best
+        if key != nil {
+            item_key = key(item)
+            best_key = key(best)
+        }
+        if item_key > best_key {
+            best = item
+        }
+    }
+    return best
+}
+
+func contains_any(sequence, targets) {
+    for target in targets {
+        if contains(sequence, target) {
+            return true
+        }
+    }
+    return false
+}
+
+func contains_all(sequence, targets) {
+    for target in targets {
+        if contains(sequence, target) == false {
+            return false
+        }
+    }
+    return true
+}
+
+func fuzzy_match(text, pattern) {
+    let source_text = str(text)
+    source_text = source_text.lower()
+    let wanted_text = str(pattern)
+    wanted_text = wanted_text.lower()
+    let fuzzy_position = 0
+    let wanted_count = len(wanted_text)
+    for source_ch in source_text {
+        if fuzzy_position < wanted_count {
+            let wanted_ch = __at(wanted_text, fuzzy_position)
+            if source_ch == wanted_ch {
+                fuzzy_position = fuzzy_position + 1
+            }
+        }
+    }
+    return fuzzy_position == wanted_count
+}
+
+func __min3(a, b, c) {
+    let best = a
+    if b < best {
+        best = b
+    }
+    if c < best {
+        best = c
+    }
+    return best
+}
+
+func __at(values, index) {
+    let current_index = 0
+    for selected_value in values {
+        if current_index == index {
+            return selected_value
+        }
+        current_index = current_index + 1
+    }
+    return nil
+}
+
+func levenshtein_distance(a, b) {
+    let s1 = str(a)
+    let s2 = str(b)
+    if len(s1) == 0 {
+        let size_value = len(s2)
+        return size_value
+    }
+    if len(s2) == 0 {
+        let size_value = len(s1)
+        return size_value
+    }
+
+    let previous = []
+    let j = 0
+    while j <= len(s2) {
+        previous.append(j)
+        j = j + 1
+    }
+
+    let i = 0
+    while i < len(s1) {
+        let first_value = i + 1
+        let current = [first_value]
+        j = 0
+        while j < len(s2) {
+            let cost = 0
+            let left_char = __at(s1, i)
+            let right_char = __at(s2, j)
+            if left_char != right_char {
+                cost = 1
+            }
+            let current_j = __at(current, j)
+            let insert_cost = current_j + 1
+            let previous_next_index = j + 1
+            let previous_next = __at(previous, previous_next_index)
+            let delete_cost = previous_next + 1
+            let previous_j = __at(previous, j)
+            let replace_cost = previous_j + cost
+            current.append(__min3(insert_cost, delete_cost, replace_cost))
+            j = j + 1
+        }
+        previous = current
+        i = i + 1
+    }
+
+    let final_len = len(previous)
+    let final_index = final_len - 1
+    let final_value = __at(previous, final_index)
+    return final_value
+}

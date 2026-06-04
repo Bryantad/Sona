@@ -1,0 +1,392 @@
+# matrix.smod
+# Purpose: Sona-authored matrix helpers for the public stdlib foundation.
+
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func __copy_row(row) {
+    let row_copy = []
+    for value in row {
+        row_copy.append(value)
+    }
+    return row_copy
+}
+
+func __copy_data(data) {
+    let data_copy = []
+    for row in data {
+        data_copy.append(__copy_row(row))
+    }
+    return data_copy
+}
+
+func __at(values, index) {
+    let current_index = 0
+    for selected_value in values {
+        if current_index == index {
+            return selected_value
+        }
+        current_index = current_index + 1
+    }
+    return nil
+}
+
+func __set(values, index, value) {
+    values.pop(index)
+    values.insert(index, value)
+    return values
+}
+
+func __matrix_get(self, row, col) {
+    let data = self["data"]
+    let target_row = __at(data, row)
+    let target_value = __at(target_row, col)
+    return target_value
+}
+
+func __matrix_set(self, row, col, value) {
+    let target = self["data"][row]
+    target.pop(col)
+    target.insert(col, value)
+    return self
+}
+
+func __matrix_to_list(self) {
+    let copied = __copy_data(self["data"])
+    return copied
+}
+
+func __matrix_add(self, other) {
+    let out = []
+    let i = 0
+    while i < self["rows"] {
+        let row = []
+        let j = 0
+        while j < self["cols"] {
+            row.append(self["data"][i][j] + other["data"][i][j])
+            j = j + 1
+        }
+        out.append(row)
+        i = i + 1
+    }
+    let matrix_value = Matrix(out)
+    return matrix_value
+}
+
+func __matrix_multiply(self, other) {
+    let out = []
+    let i = 0
+    while i < self["rows"] {
+        let row = []
+        let j = 0
+        while j < other["cols"] {
+            let total = 0
+            let k = 0
+            while k < self["cols"] {
+                total = total + (self["data"][i][k] * other["data"][k][j])
+                k = k + 1
+            }
+            row.append(total)
+            j = j + 1
+        }
+        out.append(row)
+        i = i + 1
+    }
+    let matrix_value = Matrix(out)
+    return matrix_value
+}
+
+func __matrix_transpose(self) {
+    let out = []
+    let j = 0
+    while j < self["cols"] {
+        let row = []
+        let i = 0
+        while i < self["rows"] {
+            row.append(self["data"][i][j])
+            i = i + 1
+        }
+        out.append(row)
+        j = j + 1
+    }
+    let matrix_value = Matrix(out)
+    return matrix_value
+}
+
+func __matrix_scalar_multiply(self, scalar) {
+    let out = []
+    let i = 0
+    while i < self["rows"] {
+        let row = []
+        let j = 0
+        while j < self["cols"] {
+            row.append(self["data"][i][j] * scalar)
+            j = j + 1
+        }
+        out.append(row)
+        i = i + 1
+    }
+    let matrix_value = Matrix(out)
+    return matrix_value
+}
+
+func Matrix(data) {
+    let copied = __copy_data(data)
+    let rows = len(copied)
+    let cols = 0
+    if rows > 0 {
+        cols = len(copied[0])
+    }
+    return {
+        "data": copied,
+        "rows": rows,
+        "cols": cols,
+        "get": __matrix_get,
+        "set": __matrix_set,
+        "add": __matrix_add,
+        "multiply": __matrix_multiply,
+        "transpose": __matrix_transpose,
+        "scalar_multiply": __matrix_scalar_multiply,
+        "to_list": __matrix_to_list
+    }
+}
+
+func create(data) {
+    let matrix_value = Matrix(data)
+    return matrix_value
+}
+
+func identity(size) {
+    let out = []
+    let i = 0
+    while i < size {
+        let row = []
+        let j = 0
+        while j < size {
+            if i == j {
+                row.append(1)
+            } else {
+                row.append(0)
+            }
+            j = j + 1
+        }
+        out.append(row)
+        i = i + 1
+    }
+    let matrix_value = Matrix(out)
+    return matrix_value
+}
+
+func zeros(rows, cols) {
+    let out = []
+    let i = 0
+    while i < rows {
+        let row = []
+        let j = 0
+        while j < cols {
+            row.append(0)
+            j = j + 1
+        }
+        out.append(row)
+        i = i + 1
+    }
+    let matrix_value = Matrix(out)
+    return matrix_value
+}
+
+func ones(rows, cols) {
+    let out = []
+    let i = 0
+    while i < rows {
+        let row = []
+        let j = 0
+        while j < cols {
+            row.append(1)
+            j = j + 1
+        }
+        out.append(row)
+        i = i + 1
+    }
+    let matrix_value = Matrix(out)
+    return matrix_value
+}
+
+func diagonal(values) {
+    let size = len(values)
+    let out = []
+    let i = 0
+    while i < size {
+        let row = []
+        let j = 0
+        while j < size {
+            if i == j {
+                row.append(values[i])
+            } else {
+                row.append(0)
+            }
+            j = j + 1
+        }
+        out.append(row)
+        i = i + 1
+    }
+    let matrix_value = Matrix(out)
+    return matrix_value
+}
+
+func _get_minor(data, row_index, col_index) {
+    let out = []
+    let i = 0
+    while i < len(data) {
+        if i != row_index {
+            let row = []
+            let j = 0
+            while j < len(data[i]) {
+                if j != col_index {
+                    row.append(data[i][j])
+                }
+                j = j + 1
+            }
+            out.append(row)
+        }
+        i = i + 1
+    }
+    return out
+}
+
+func _det_recursive(data) {
+    let work = __copy_data(data)
+    let size = len(work)
+    if size == 0 {
+        return 0
+    }
+    let det_value = 1.0
+    let pivot_index = 0
+    while pivot_index < size {
+        let pivot = pivot_index
+        while pivot < size {
+            let candidate_row = __at(work, pivot)
+            if __at(candidate_row, pivot_index) != 0 {
+                break
+            }
+            pivot = pivot + 1
+        }
+        if pivot == size {
+            return 0
+        }
+        if pivot != pivot_index {
+            let current_row = __at(work, pivot_index)
+            let pivot_row_for_swap = __at(work, pivot)
+            __set(work, pivot_index, pivot_row_for_swap)
+            __set(work, pivot, current_row)
+            det_value = det_value * -1
+        }
+        let pivot_row = __at(work, pivot_index)
+        let pivot_value = __at(pivot_row, pivot_index)
+        det_value = det_value * pivot_value
+        let row_index = pivot_index + 1
+        while row_index < size {
+            let target_row = __at(work, row_index)
+            let target_value = __at(target_row, pivot_index)
+            let factor = target_value / pivot_value
+            let col_index = pivot_index
+            while col_index < size {
+                let existing_value = __at(target_row, col_index)
+                let pivot_col_value = __at(pivot_row, col_index)
+                let new_value = existing_value - (factor * pivot_col_value)
+                __set(target_row, col_index, new_value)
+                col_index = col_index + 1
+            }
+            row_index = row_index + 1
+        }
+        pivot_index = pivot_index + 1
+    }
+    return det_value
+}
+
+func determinant(mat) {
+    let data = mat["data"]
+    let result = _det_recursive(data)
+    return result
+}
+
+func trace(mat) {
+    let total = 0
+    let i = 0
+    while i < mat["rows"] {
+        total = total + mat["data"][i][i]
+        i = i + 1
+    }
+    return total
+}
+
+func dot(vec1, vec2) {
+    let total = 0
+    let i = 0
+    while i < len(vec1) {
+        total = total + (vec1[i] * vec2[i])
+        i = i + 1
+    }
+    return total
+}
+
+func norm(vec) {
+    let total = 0.0
+    for value in vec {
+        total = total + (value * value)
+    }
+    if total == 0 {
+        return 0.0
+    }
+    let guess = total
+    let i = 0
+    while i < 20 {
+        guess = (guess + (total / guess)) / 2.0
+        i = i + 1
+    }
+    return guess
+}
+
+func flatten(mat) {
+    let out = []
+    let i = 0
+    while i < mat["rows"] {
+        let j = 0
+        while j < mat["cols"] {
+            out.append(mat["data"][i][j])
+            j = j + 1
+        }
+        i = i + 1
+    }
+    return out
+}
+
+func reshape(mat, new_rows, new_cols) {
+    let flat = flatten(mat)
+    if len(flat) != (new_rows * new_cols) {
+        return nil
+    }
+    let reshaped = from_list(flat, new_rows, new_cols)
+    return reshaped
+}
+
+func from_list(flat_list, rows, cols) {
+    if len(flat_list) != (rows * cols) {
+        return nil
+    }
+    let out = []
+    let index = 0
+    let i = 0
+    while i < rows {
+        let row = []
+        let j = 0
+        while j < cols {
+            row.append(flat_list[index])
+            index = index + 1
+            j = j + 1
+        }
+        out.append(row)
+        i = i + 1
+    }
+    let matrix_value = Matrix(out)
+    return matrix_value
+}

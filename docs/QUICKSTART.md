@@ -25,7 +25,7 @@ sona --version
 Expected shape:
 
 ```text
-Sona 0.14.0
+Sona 0.14.1
 ```
 
 ## 2. Create `hello.sona`

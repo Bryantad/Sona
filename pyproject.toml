@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sona-lang"
-version = "0.14.0"
+version = "0.14.1"
 description = "Sona Programming Language with Cognitive Accessibility and Neurodivergent-First Features"
 authors = [{name = "WayCore Inc.", email = "info@waycore.com"}]
 readme = "README.md"
@@ -49,7 +49,7 @@ exclude = [
 ]
 
 [tool.setuptools.package-data]
-sona = ["grammar.lark"]
+sona = ["grammar.lark", "stdlib/MANIFEST.json"]
 stdlib = ["*.smod", "utils/*.smod", "utils/validate/*.smod"]
 
 [project.optional-dependencies]

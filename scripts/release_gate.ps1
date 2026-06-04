@@ -1,5 +1,5 @@
 param(
-    [string]$ExpectedVersion = "0.10.3"
+    [string]$ExpectedVersion = "0.14.1"
 )
 
 Set-StrictMode -Version Latest
@@ -45,15 +45,24 @@ if ($initVersion -ne $ExpectedVersion) {
     throw "sona/__init__.py version '$initVersion' does not match expected '$ExpectedVersion'"
 }
 
-Assert-Exists "docs/release-notes/v0.10.3.md"
+Assert-Exists "RELEASE_NOTES_v0.14.1.md"
 
 Write-Host "Version checks passed ($ExpectedVersion)."
 Write-Host "Running smoke/test gates..."
 
-python tools/run_all_tests.py
-if ($LASTEXITCODE -ne 0) { throw "tools/run_all_tests.py failed with exit code $LASTEXITCODE" }
+python -m sona --version
+if ($LASTEXITCODE -ne 0) { throw "python -m sona --version failed with exit code $LASTEXITCODE" }
 
 python -m pytest -q tests -x
 if ($LASTEXITCODE -ne 0) { throw "pytest failed with exit code $LASTEXITCODE" }
+
+python -m sona probe stdlib
+if ($LASTEXITCODE -ne 0) { throw "python -m sona probe stdlib failed with exit code $LASTEXITCODE" }
+
+python -m sona build-info
+if ($LASTEXITCODE -ne 0) { throw "python -m sona build-info failed with exit code $LASTEXITCODE" }
+
+python tools/run_examples.py
+if ($LASTEXITCODE -ne 0) { throw "tools/run_examples.py failed with exit code $LASTEXITCODE" }
 
 Write-Host "Release gate passed."

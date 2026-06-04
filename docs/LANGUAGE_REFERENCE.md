@@ -1,6 +1,6 @@
 # Sona Language Reference
 
-This document describes stable behavior available in Sona `0.14.0`.
+This document describes stable behavior available in Sona `0.14.1`.
 It does not describe planned behavior.
 
 Documentation truth rule: if this reference and runtime behavior disagree,

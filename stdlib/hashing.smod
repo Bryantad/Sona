@@ -1,26 +1,19 @@
 # hashing.smod
-# Purpose: Sona hashing module entrypoint with stable native digest helpers.
+# Purpose: Sona-authored hashing wrapper over private intrinsics.
 
 const module_format = "smod-runtime"
 const runtime_backend = "smod"
 
-func __default(value, fallback) {
-    if value == nil {
-        return fallback
-    }
-    return value
-}
-
-func md5(data) {
-    return hashing_md5(data)
-}
-
-func sha1(data) {
-    return hashing_sha1(data)
-}
-
 func sha256(data) {
-    return hashing_sha256(data)
+    return intrinsic_sha256(data)
+}
+
+func sha512(data) {
+    return intrinsic_sha512(data)
+}
+
+func hmac_sha256(key, message) {
+    return intrinsic_hmac_sha256(key, message)
 }
 
 func hash(data) {
@@ -31,34 +24,44 @@ func digest(data, options=nil) {
     if options == nil {
         return sha256(data)
     }
-    let algorithm = __default(options.get("algorithm"), "sha256")
-    return checksum(data, algorithm)
-}
-
-func sha512(data) {
-    return hashing_sha512(data)
-}
-
-func blake2b(data, digest_size=nil) {
-    if digest_size == nil {
-        return hashing_blake2b(data)
-    }
-    return hashing_blake2b(data, digest_size)
-}
-
-func sha3_256(data) {
-    return hashing_sha3_256(data)
-}
-
-func sha3_512(data) {
-    return hashing_sha3_512(data)
+    return checksum(data, options.get("algorithm"))
 }
 
 func checksum(data, algorithm=nil) {
-    let selected = __default(algorithm, "sha256")
-    return hashing_checksum(data, selected)
+    if algorithm == nil {
+        return sha256(data)
+    }
+    let selected = str(algorithm).lower()
+    if selected == "sha256" {
+        return sha256(data)
+    }
+    if selected == "sha512" {
+        return sha512(data)
+    }
+    # Legacy algorithms remain named but outside the Sona-native intrinsic set.
+    return nil
 }
 
-func hmac_sha256(key, message) {
-    return hashing_hmac_sha256(key, message)
+func md5(data) {
+    return nil
+}
+
+func sha1(data) {
+    return nil
+}
+
+func blake2b(data, digest_size=nil) {
+    return nil
+}
+
+func sha3_256(data) {
+    return nil
+}
+
+func sha3_512(data) {
+    return nil
+}
+
+func hash_file(file_path, algorithm=nil) {
+    return nil
 }

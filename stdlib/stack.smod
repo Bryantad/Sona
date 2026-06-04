@@ -112,11 +112,13 @@ func Stack(items=nil) {
 }
 
 func create(items=nil) {
-    return Stack(items)
+    let stack_value = Stack(items)
+    return stack_value
 }
 
 func from_list(items) {
-    return Stack(items)
+    let stack_value = Stack(items)
+    return stack_value
 }
 
 func push(stack_obj, item) {
@@ -148,7 +150,9 @@ func to_list(stack_obj) {
 }
 
 func reverse(stack_obj) {
-    return Stack(stack_obj.to_list())
+    let reversed_items = stack_obj.to_list()
+    let stack_value = Stack(reversed_items)
+    return stack_value
 }
 
 func contains(stack_obj, item) {
@@ -167,7 +171,8 @@ func filter_stack(stack_obj, predicate) {
             out.append(item)
         }
     }
-    return Stack(out)
+    let stack_value = Stack(out)
+    return stack_value
 }
 
 func map_stack(stack_obj, mapper) {
@@ -176,5 +181,6 @@ func map_stack(stack_obj, mapper) {
     for item in items {
         out.append(mapper(item))
     }
-    return Stack(out)
+    let stack_value = Stack(out)
+    return stack_value
 }

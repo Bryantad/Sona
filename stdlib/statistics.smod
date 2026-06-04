@@ -1,0 +1,407 @@
+# statistics.smod
+# Purpose: Sona-authored descriptive statistics for the public stdlib foundation.
+
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func __copy(values) {
+    let copied_values = []
+    if values {
+        for copied_value in values {
+            copied_values.append(copied_value)
+        }
+    }
+    return copied_values
+}
+
+func __at(values, index) {
+    let current_index = 0
+    for selected_value in values {
+        if current_index == index {
+            return selected_value
+        }
+        current_index = current_index + 1
+    }
+    return nil
+}
+
+func __sorted(values) {
+    let sortable_pool = __copy(values)
+    let sorted_values = []
+    while len(sortable_pool) > 0 {
+        let best_sort_index = 0
+        let sort_index = 1
+        while sort_index < len(sortable_pool) {
+            if sortable_pool[sort_index] < sortable_pool[best_sort_index] {
+                best_sort_index = sort_index
+            }
+            sort_index = sort_index + 1
+        }
+        let selected_sort_value = sortable_pool.pop(best_sort_index)
+        sorted_values.append(selected_sort_value)
+    }
+    return sorted_values
+}
+
+func __sqrt(value) {
+    if value < 0 {
+        return nil
+    }
+    if value == 0 {
+        return 0.0
+    }
+    let sqrt_guess = value
+    let sqrt_iteration = 0
+    while sqrt_iteration < 20 {
+        sqrt_guess = (sqrt_guess + (value / sqrt_guess)) / 2.0
+        sqrt_iteration = sqrt_iteration + 1
+    }
+    return sqrt_guess
+}
+
+func __pow_int(base, exponent) {
+    let pow_result = 1.0
+    let pow_iteration = 0
+    while pow_iteration < exponent {
+        pow_result = pow_result * base
+        pow_iteration = pow_iteration + 1
+    }
+    return pow_result
+}
+
+func __nth_root(value, root) {
+    if root <= 0 {
+        return nil
+    }
+    if value < 0 {
+        return nil
+    }
+    if value == 0 {
+        return 0.0
+    }
+    let root_guess = value
+    if root_guess < 1.0 {
+        root_guess = 1.0
+    }
+    let root_iteration = 0
+    while root_iteration < 30 {
+        let divisor = __pow_int(root_guess, root - 1)
+        root_guess = (((root - 1) * root_guess) + (value / divisor)) / root
+        root_iteration = root_iteration + 1
+    }
+    return root_guess
+}
+
+func __minimum(data) {
+    if len(data) == 0 {
+        return nil
+    }
+    let minimum_value = __at(data, 0)
+    for minimum_candidate in data {
+        if minimum_candidate < minimum_value {
+            minimum_value = minimum_candidate
+        }
+    }
+    return minimum_value
+}
+
+func __maximum(data) {
+    if len(data) == 0 {
+        return nil
+    }
+    let maximum_value = __at(data, 0)
+    for maximum_candidate in data {
+        if maximum_candidate > maximum_value {
+            maximum_value = maximum_candidate
+        }
+    }
+    return maximum_value
+}
+
+func __range_span(data) {
+    if len(data) == 0 {
+        return nil
+    }
+    let high_value = __maximum(data)
+    let low_value = __minimum(data)
+    let span_value = high_value - low_value
+    return span_value
+}
+
+func count(data) {
+    let size_value = len(data)
+    return size_value
+}
+
+func sum_values(data) {
+    let total = 0.0
+    for value in data {
+        total = total + value
+    }
+    return total
+}
+
+func mean(data) {
+    if len(data) == 0 {
+        return nil
+    }
+    let total_value = sum_values(data)
+    let size_value = len(data)
+    return total_value / size_value
+}
+
+func min(data) {
+    let result = __minimum(data)
+    return result
+}
+
+func max(data) {
+    let result = __maximum(data)
+    return result
+}
+
+func min_value(data) {
+    let result = min(data)
+    return result
+}
+
+func max_value(data) {
+    let result = max(data)
+    return result
+}
+
+func range(data) {
+    let result = __range_span(data)
+    return result
+}
+
+func range_value(data) {
+    let result = __range_span(data)
+    return result
+}
+
+func median(data) {
+    if len(data) == 0 {
+        return nil
+    }
+    let values = __sorted(data)
+    let mid = int(len(values) / 2)
+    if (len(values) % 2) == 1 {
+        let middle_value = __at(values, mid)
+        return middle_value
+    }
+    let lower_index = mid - 1
+    let lower_value = __at(values, lower_index)
+    let upper_value = __at(values, mid)
+    return (lower_value + upper_value) / 2.0
+}
+
+func median_low(data) {
+    if len(data) == 0 {
+        return nil
+    }
+    let values = __sorted(data)
+    let value_count = len(values)
+    let final_index = value_count - 1
+    let mid = int(final_index / 2)
+    let middle_value = __at(values, mid)
+    return middle_value
+}
+
+func median_high(data) {
+    if len(data) == 0 {
+        return nil
+    }
+    let values = __sorted(data)
+    let mid = int(len(values) / 2)
+    let middle_value = __at(values, mid)
+    return middle_value
+}
+
+func variance(data, sample=false) {
+    if len(data) == 0 {
+        return nil
+    }
+    if sample {
+        if len(data) < 2 {
+            return nil
+        }
+    }
+    let avg = mean(data)
+    let total = 0.0
+    for value in data {
+        let delta = value - avg
+        total = total + (delta * delta)
+    }
+    let denom = len(data)
+    if sample {
+        denom = len(data)
+        denom = denom - 1
+    }
+    return total / denom
+}
+
+func pvariance(data) {
+    let result = variance(data, false)
+    return result
+}
+
+func stdev(data, sample=false) {
+    let var_value = variance(data, sample)
+    if var_value == nil {
+        return nil
+    }
+    let result = __sqrt(var_value)
+    return result
+}
+
+func pstdev(data) {
+    let result = stdev(data, false)
+    return result
+}
+
+func quantile(data, q) {
+    if len(data) == 0 {
+        return nil
+    }
+    if q < 0 {
+        return nil
+    }
+    if q > 1 {
+        return nil
+    }
+    let values = __sorted(data)
+    if q == 0 {
+        let first_value = __at(values, 0)
+        return first_value
+    }
+    if q == 1 {
+        let value_count = len(values)
+        let final_index = value_count - 1
+        let final_value = __at(values, final_index)
+        return final_value
+    }
+    let value_count = len(values)
+    let last_position = value_count - 1
+    let position = q * last_position
+    let lower = int(position)
+    let upper = lower + 1
+    let weight = position - lower
+    if upper >= value_count {
+        let lower_only = __at(values, lower)
+        return lower_only
+    }
+    let lower_value = __at(values, lower)
+    let upper_value = __at(values, upper)
+    let inverse_weight = 1.0 - weight
+    let lower_part = lower_value * inverse_weight
+    let upper_part = upper_value * weight
+    let result = lower_part + upper_part
+    return result
+}
+
+func quantiles(data, n=4) {
+    let out = []
+    if n <= 1 {
+        return out
+    }
+    let quantile_index = 1
+    while quantile_index < n {
+        let quantile_value = quantile(data, quantile_index / n)
+        out.append(quantile_value)
+        quantile_index = quantile_index + 1
+    }
+    return out
+}
+
+func correlation(x, y) {
+    if len(x) != len(y) {
+        return nil
+    }
+    if len(x) < 2 {
+        return nil
+    }
+    let mean_x = mean(x)
+    let mean_y = mean(y)
+    let numerator = 0.0
+    let sum_x = 0.0
+    let sum_y = 0.0
+    let i = 0
+    while i < len(x) {
+        let x_value = __at(x, i)
+        let y_value = __at(y, i)
+        let dx = x_value - mean_x
+        let dy = y_value - mean_y
+        numerator = numerator + (dx * dy)
+        sum_x = sum_x + (dx * dx)
+        sum_y = sum_y + (dy * dy)
+        i = i + 1
+    }
+    let denom = __sqrt(sum_x * sum_y)
+    if denom == 0 {
+        return 0.0
+    }
+    return numerator / denom
+}
+
+func mode(data) {
+    if len(data) == 0 {
+        return nil
+    }
+    let best = __at(data, 0)
+    let best_count = 0
+    for candidate in data {
+        let current_count = 0
+        for value in data {
+            if value == candidate {
+                current_count = current_count + 1
+            }
+        }
+        if current_count > best_count {
+            best = candidate
+            best_count = current_count
+        }
+    }
+    return best
+}
+
+func geometric_mean(data) {
+    if len(data) == 0 {
+        return nil
+    }
+    let product = 1.0
+    for value in data {
+        product = product * value
+    }
+    let size_value = len(data)
+    let result = __nth_root(product, size_value)
+    return result
+}
+
+func harmonic_mean(data) {
+    if len(data) == 0 {
+        return nil
+    }
+    let denom = 0.0
+    for value in data {
+        if value == 0 {
+            return nil
+        }
+        denom = denom + (1.0 / value)
+    }
+    let size_value = len(data)
+    return size_value / denom
+}
+
+func z_score(value, data) {
+    let sd = stdev(data)
+    if sd == nil {
+        return nil
+    }
+    if sd == 0 {
+        return 0.0
+    }
+    let avg = mean(data)
+    let delta = value - avg
+    return delta / sd
+}

@@ -91,9 +91,25 @@ def _stdlib_manifest() -> dict:
 
 def _stdlib_modules() -> list[str]:
     modules = _stdlib_manifest().get("modules", [])
+    result: list[str] = []
     if isinstance(modules, list):
-        return [m for m in modules if isinstance(m, str)]
-    return []
+        for module in modules:
+            if isinstance(module, str):
+                name = module
+                user_facing = True
+            elif isinstance(module, dict) and isinstance(module.get("name"), str):
+                name = module["name"]
+                user_facing = module.get("user_facing") is not False
+            else:
+                continue
+            if not user_facing:
+                continue
+            if name in {"intrinsics", "native_intrinsics", "native_bridge"}:
+                continue
+            if name.startswith("native_"):
+                continue
+            result.append(name)
+    return result
 
 
 def _pos(line_1: int, col_1: int) -> Position:
@@ -224,7 +240,10 @@ class StdlibDoc:
 
 
 def _resolve_stdlib_module_path(module_name: str) -> Optional[Path]:
-    candidates = [STDLIB_ROOT / f"{module_name}.py"]
+    candidates = [
+        SONA_ROOT / "stdlib" / f"{module_name}.smod",
+        STDLIB_ROOT / f"{module_name}.py",
+    ]
     if not module_name.startswith("native_"):
         candidates.append(STDLIB_ROOT / f"native_{module_name}.py")
     for p in candidates:
@@ -238,6 +257,26 @@ def _stdlib_docs(module_name: str) -> Optional[StdlibDoc]:
     module_path = _resolve_stdlib_module_path(module_name)
     if not module_path:
         return None
+
+    if module_path.suffix == ".smod":
+        text = _read_text(module_path)
+        symbols = {
+            match.group(1): ""
+            for match in re.finditer(r"^\s*func\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(", text, re.MULTILINE)
+            if not match.group(1).startswith("_")
+        }
+        first_comment = ""
+        for line in text.splitlines():
+            stripped = line.strip()
+            if stripped.startswith("#"):
+                comment = stripped.lstrip("#").strip()
+                if not comment or comment.endswith(".smod"):
+                    continue
+                if comment.lower().startswith("purpose:"):
+                    comment = comment.split(":", 1)[1].strip()
+                first_comment = comment
+                break
+        return StdlibDoc(module_doc=first_comment, symbols=symbols)
 
     try:
         tree = ast.parse(_read_text(module_path), filename=str(module_path))
@@ -265,7 +304,7 @@ if _PYGLS_AVAILABLE:
 
     class SonaLsp(LanguageServer):
         def __init__(self):
-            super().__init__("sona-lsp", "0.10.3")
+            super().__init__("sona-lsp", "0.14.1")
             self._parser = _make_parser()
 
         def validate(self, uri: str, text: str) -> None:

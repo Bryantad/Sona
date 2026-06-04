@@ -1,5 +1,5 @@
 """
-Sona v0.14.0 - Enhanced Interpreter with Full Loop Support
+Sona v0.14.1 - Enhanced Interpreter with Full Loop Support
 ========================================================
 
 Production-grade interpreter with complete language feature support.
@@ -135,6 +135,12 @@ class ContinueException(Exception):
 class SimpleModuleSystem:
     """Simple module system for loading stdlib modules"""
 
+    _PRIVATE_STDLIB_MODULES = {
+        "intrinsics",
+        "native_intrinsics",
+        "native_bridge",
+    }
+
     def __init__(self, interpreter, *, project_root: str | Path | None = None):
         self.interpreter = interpreter
         self.loaded_modules = {}
@@ -145,6 +151,9 @@ class SimpleModuleSystem:
         self.smod_path = Path(__file__).resolve().parents[1] / "stdlib"
         self.stdlib_namespace = SimpleNamespace()
         self.stdlib_errors = {}
+        self._manifest_payload: dict[str, Any] | None = None
+        self._manifest_entries: list[dict[str, Any]] | None = None
+        self._manifest_by_name: dict[str, dict[str, Any]] | None = None
         self._register_stdlib_root()
 
     def _register_stdlib_root(self) -> None:
@@ -227,6 +236,7 @@ class SimpleModuleSystem:
         module_file: Path,
         *,
         allow_missing_native: bool = False,
+        native_mode: str = "default",
     ):
         if not module_file.exists():
             raise ImportError(f"Module file not found: {module_file}")
@@ -250,13 +260,17 @@ class SimpleModuleSystem:
             def __getattr__(self, name: str):
                 raise AttributeError(name)
 
-        try:
-            native_bridge = NativeBridge(module_name)
-        except Exception:
-            if allow_missing_native:
-                native_bridge = _NullNativeBridge()
-            else:
-                raise
+        if native_mode == "none":
+            native_bridge = _NullNativeBridge()
+        else:
+            native_module_name = "intrinsics" if native_mode == "intrinsic" else module_name
+            try:
+                native_bridge = NativeBridge(native_module_name)
+            except Exception:
+                if allow_missing_native:
+                    native_bridge = _NullNativeBridge()
+                else:
+                    raise
 
         module_globals["__native__"] = native_bridge
         self._expose_native_intrinsics(
@@ -337,13 +351,32 @@ class SimpleModuleSystem:
                     module_globals.setdefault(f"{module_name}_{attr_name}", value)
 
     def _load_module(self, module_path: str, *, force_smod: bool = False):
+        if self._is_private_stdlib_module(module_path):
+            raise ImportError(f"Module '{module_path}' is private and cannot be imported")
+
         if module_path in self.loaded_by_path:
             return self.loaded_by_path[module_path]
 
         parts = module_path.split(".")
         smod_file = self._resolve_smod_path(module_path)
+        metadata = self._module_metadata(module_path)
+        source = metadata.get("source", "") if metadata else ""
 
-        if module_path.startswith("native_"):
+        if source == "sona":
+            module = self._load_smod_module(
+                module_path,
+                smod_file,
+                allow_missing_native=True,
+                native_mode="none",
+            )
+        elif source == "sona+intrinsic":
+            module = self._load_smod_module(
+                module_path,
+                smod_file,
+                allow_missing_native=False,
+                native_mode="intrinsic",
+            )
+        elif module_path.startswith("native_"):
             module_file = self.stdlib_path / f"{module_path}.py"
             module = self._load_module_from_file(
                 f"sona.stdlib.{module_path}",
@@ -355,14 +388,22 @@ class SimpleModuleSystem:
                 allow_missing_native = smod_file.is_relative_to(self.modules_path)
             except Exception:
                 allow_missing_native = str(smod_file).startswith(str(self.modules_path))
-            module = self._load_smod_module(module_path, smod_file, allow_missing_native=allow_missing_native)
+            module = self._load_smod_module(
+                module_path,
+                smod_file,
+                allow_missing_native=allow_missing_native,
+            )
         elif smod_file.exists():
             allow_missing_native = False
             try:
                 allow_missing_native = smod_file.is_relative_to(self.modules_path)
             except Exception:
                 allow_missing_native = str(smod_file).startswith(str(self.modules_path))
-            module = self._load_smod_module(module_path, smod_file, allow_missing_native=allow_missing_native)
+            module = self._load_smod_module(
+                module_path,
+                smod_file,
+                allow_missing_native=allow_missing_native,
+            )
         elif len(parts) > 1:
             module_file = self.stdlib_path.joinpath(*parts).with_suffix(".py")
             module = self._load_module_from_file(
@@ -433,16 +474,76 @@ class SimpleModuleSystem:
         self.interpreter.modules[module_name] = module_obj
         return True
 
-    def _load_manifest_modules(self) -> list[str]:
+    def _is_private_stdlib_module(self, module_path: str) -> bool:
+        if module_path in self._PRIVATE_STDLIB_MODULES:
+            return True
+        if module_path.startswith("native_"):
+            return True
+        return False
+
+    @staticmethod
+    def _normalize_manifest_entry(entry: Any) -> dict[str, Any] | None:
+        if isinstance(entry, str):
+            return {
+                "name": entry,
+                "source": "legacy",
+                "stability": "preview" if entry.startswith("native_") else "stable",
+            }
+        if isinstance(entry, dict) and isinstance(entry.get("name"), str):
+            normalized = dict(entry)
+            normalized.setdefault("source", "legacy")
+            normalized.setdefault("stability", "preview")
+            return normalized
+        return None
+
+    def _load_manifest_payload(self) -> dict[str, Any]:
         manifest_path = self.stdlib_path / "MANIFEST.json"
+        if self._manifest_payload is not None:
+            return self._manifest_payload
         if not manifest_path.exists():
-            return []
+            self._manifest_payload = {}
+            return self._manifest_payload
         try:
-            payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+            self._manifest_payload = json.loads(manifest_path.read_text(encoding="utf-8"))
         except Exception:
-            return []
+            self._manifest_payload = {}
+        return self._manifest_payload
+
+    def _manifest_module_entries(self) -> list[dict[str, Any]]:
+        if self._manifest_entries is not None:
+            return self._manifest_entries
+        payload = self._load_manifest_payload()
         modules = payload.get("modules", [])
-        return [name for name in modules if isinstance(name, str)]
+        entries: list[dict[str, Any]] = []
+        if isinstance(modules, list):
+            for entry in modules:
+                normalized = self._normalize_manifest_entry(entry)
+                if normalized:
+                    entries.append(normalized)
+        self._manifest_entries = entries
+        self._manifest_by_name = {entry["name"]: entry for entry in entries}
+        return entries
+
+    def _module_metadata(self, module_path: str) -> dict[str, Any]:
+        if self._manifest_by_name is None:
+            self._manifest_module_entries()
+        return (self._manifest_by_name or {}).get(module_path, {})
+
+    def _load_manifest_modules(self) -> list[str]:
+        entries = self._manifest_module_entries()
+        modules: list[str] = []
+        for entry in entries:
+            name = entry["name"]
+            if self._is_private_stdlib_module(name):
+                continue
+            source = entry.get("source")
+            stability = entry.get("stability")
+            preload = entry.get("preload")
+            if preload is False:
+                continue
+            if source in {"sona", "sona+intrinsic"} or stability == "stable" or preload is True:
+                modules.append(name)
+        return modules
 
     def _scan_stdlib_modules(self) -> list[str]:
         modules: list[str] = []
@@ -454,7 +555,10 @@ class SimpleModuleSystem:
             rel = path.relative_to(self.stdlib_path)
             if "__pycache__" in rel.parts:
                 continue
-            modules.append(".".join(rel.with_suffix("").parts))
+            module_name = ".".join(rel.with_suffix("").parts)
+            if self._is_private_stdlib_module(module_name):
+                continue
+            modules.append(module_name)
         return modules
 
     def _sorted_stdlib_modules(self, modules: list[str]) -> list[str]:
@@ -503,6 +607,9 @@ class SimpleModuleSystem:
         if module_path.endswith(".smod"):
             module_path = module_path[:-5]
             force_smod = True
+
+        if self._is_private_stdlib_module(module_path):
+            raise ImportError(f"Module '{module_path}' is private and cannot be imported")
 
         module_name = alias if alias else module_path
 
@@ -1053,6 +1160,7 @@ class SonaUnifiedInterpreter:
         *,
         project_root: str | Path | None = None,
         resume_from_latest_checkpoint: bool = False,
+        preload_stdlib: bool = False,
     ):
         """Initialize the interpreter with all necessary components"""
         self.memory = SonaMemoryManager()
@@ -1085,8 +1193,11 @@ class SonaUnifiedInterpreter:
         # Initialize built-in functions
         self._setup_builtins()
 
-        # Preload stdlib modules into the core runtime namespace
-        self.stdlib_status = self.module_system.load_stdlib_modules()
+        # Stdlib modules resolve on demand. Preloading remains available for
+        # tooling, but default startup stays light for CLI execution.
+        self.stdlib_status = {"loaded": [], "errors": {}}
+        if preload_stdlib:
+            self.stdlib_status = self.module_system.load_stdlib_modules()
         if resume_from_latest_checkpoint:
             self.restored_checkpoint = self.restore_latest_checkpoint()
 
@@ -1372,7 +1483,7 @@ class SonaUnifiedInterpreter:
                                  global_scope=True)
 
         # Built-in variables
-        self.memory.set_variable('__version__', '0.14.0', global_scope=True)
+        self.memory.set_variable('__version__', '0.14.1', global_scope=True)
         self.memory.set_variable('__sona__', True, global_scope=True)
         self.memory.set_variable('True', True, global_scope=True)
         self.memory.set_variable('False', False, global_scope=True)
@@ -3524,8 +3635,8 @@ class SonaUnifiedInterpreter:
             }
 
 
-# Create a default interpreter instance for convenience
-default_interpreter = SonaUnifiedInterpreter()
+# Lazily populated by callers that want to cache an interpreter instance.
+default_interpreter = None
 
 # Alias for backward compatibility
 SonaInterpreter = SonaUnifiedInterpreter

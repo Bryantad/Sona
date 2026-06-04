@@ -1,5 +1,5 @@
 """
-functional - Functional programming utilities for Sona stdlib (v0.10.1)
+functional - Functional programming utilities for Sona stdlib
 
 Provides functional helpers:
 - compose/pipe: Function composition

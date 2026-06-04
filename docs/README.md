@@ -1,6 +1,6 @@
 # Sona Documentation
 
-This folder contains the current user-facing documentation for Sona `0.14.0`.
+This folder contains the current user-facing documentation for Sona `0.14.1`.
 Historical planning notes, implementation journals, test reports, and retired
 feature drafts are intentionally not part of the published branch structure.
 

@@ -5,21 +5,21 @@ const module_format = "smod-runtime"
 const runtime_backend = "smod"
 
 func __copy_list(items) {
-    let out = []
+    let copied_items = []
     if items {
         for item in items {
-            out.append(item)
+            copied_items.append(item)
         }
     }
-    return out
+    return copied_items
 }
 
 func __reverse_list(items) {
-    let out = []
+    let reversed_items = []
     for item in items {
-        out.insert(0, item)
+        reversed_items.insert(0, item)
     }
-    return out
+    return reversed_items
 }
 
 func __queue_enqueue(self, item) {
@@ -101,12 +101,12 @@ func __priority_insert(items, entry) {
     let i = 0
     while i < len(items) {
         let current = items[i]
-        if entry["priority"] < current["priority"] {
+        if entry.get("priority") < current.get("priority") {
             items.insert(i, entry)
             return
         }
-        if entry["priority"] == current["priority"] {
-            if entry["order"] < current["order"] {
+        if entry.get("priority") == current.get("priority") {
+            if entry.get("order") < current.get("order") {
                 items.insert(i, entry)
                 return
             }
@@ -120,47 +120,60 @@ func __priority_enqueue(self, item, priority=nil) {
     if priority == nil {
         priority = 0
     }
-    let order = self["counter"][0]
-    self["counter"].pop(0)
-    self["counter"].append(order + 1)
+    let counter = self.get("counter")
+    let order = counter.pop(0)
+    counter.append(order + 1)
 
     let entry = {
         "priority": priority,
         "order": order,
         "value": item
     }
-    __priority_insert(self["items"], entry)
+    let items = self.get("items")
+    __priority_insert(items, entry)
     return self
 }
 
 func __priority_dequeue(self) {
-    if len(self["items"]) == 0 {
+    let items = self.get("items")
+    if len(items) == 0 {
         return nil
     }
-    let entry = self["items"].pop(0)
-    return entry["value"]
+    let entry = items.pop(0)
+    let value = entry.get("value")
+    return value
 }
 
 func __priority_peek(self) {
-    if len(self["items"]) == 0 {
+    let items = self.get("items")
+    if len(items) == 0 {
         return nil
     }
-    let entry = self["items"][0]
-    return entry["value"]
+    for entry in items {
+        let value = entry.get("value")
+        return value
+    }
+    return nil
 }
 
 func __priority_is_empty(self) {
-    return len(self["items"]) == 0
+    let items = self.get("items")
+    let size_value = len(items)
+    return size_value == 0
 }
 
 func __priority_size(self) {
-    return len(self["items"])
+    let items = self.get("items")
+    let size_value = len(items)
+    return size_value
 }
 
 func __priority_clear(self) {
-    self["items"].clear()
-    self["counter"].pop(0)
-    self["counter"].append(0)
+    let items = self.get("items")
+    let counter = self.get("counter")
+    items.clear()
+    counter.pop(0)
+    counter.append(0)
     return self
 }
 
@@ -179,11 +192,13 @@ func PriorityQueue() {
 }
 
 func create(items=nil) {
-    return Queue(items)
+    let queue_value = Queue(items)
+    return queue_value
 }
 
 func create_priority() {
-    return PriorityQueue()
+    let queue_value = PriorityQueue()
+    return queue_value
 }
 
 func enqueue(queue_obj, item) {
@@ -215,15 +230,18 @@ func to_list(queue_obj) {
 }
 
 func from_list(items) {
-    return Queue(items)
+    let queue_value = Queue(items)
+    return queue_value
 }
 
 func reverse(queue_obj) {
-    return Queue(__reverse_list(queue_obj.to_list()))
+    let reversed_items = __reverse_list(queue_obj.to_list())
+    let queue_value = Queue(reversed_items)
+    return queue_value
 }
 
 func batch_dequeue(queue_obj, count) {
-    let out = []
+    let dequeued_items = []
     let remaining = count
     if remaining < 0 {
         remaining = 0
@@ -233,20 +251,54 @@ func batch_dequeue(queue_obj, count) {
         if queue_obj.is_empty() {
             break
         }
-        out.append(queue_obj.dequeue())
+        dequeued_items.append(queue_obj.dequeue())
         remaining = remaining - 1
     }
-    return out
+    return dequeued_items
 }
 
 func drain(queue_obj) {
-    let out = []
+    let drained_items = []
     while queue_obj.is_empty() == false {
-        out.append(queue_obj.dequeue())
+        drained_items.append(queue_obj.dequeue())
     }
-    return out
+    return drained_items
 }
 
 func contains(queue_obj, item) {
     return queue_obj.contains(item)
+}
+
+func filter_queue(queue_obj, predicate) {
+    let filtered_items = []
+    let items = queue_obj.to_list()
+    for item in items {
+        if predicate(item) {
+            filtered_items.append(item)
+        }
+    }
+    let queue_value = Queue(filtered_items)
+    return queue_value
+}
+
+func map_queue(queue_obj, mapper) {
+    let mapped_items = []
+    let items = queue_obj.to_list()
+    for item in items {
+        mapped_items.append(mapper(item))
+    }
+    let queue_value = Queue(mapped_items)
+    return queue_value
+}
+
+func merge_queues(...queues) {
+    let merged_items = []
+    for queue_obj in queues {
+        let items = queue_obj.to_list()
+        for item in items {
+            merged_items.append(item)
+        }
+    }
+    let queue_value = Queue(merged_items)
+    return queue_value
 }

@@ -1,0 +1,195 @@
+# sort.smod
+# Purpose: Sona-authored sorting helpers for the public stdlib foundation.
+
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func __copy(sequence) {
+    let out = []
+    if sequence {
+        for item in sequence {
+            out.append(item)
+        }
+    }
+    return out
+}
+
+func __at(values, index) {
+    let current_index = 0
+    for selected_value in values {
+        if current_index == index {
+            return selected_value
+        }
+        current_index = current_index + 1
+    }
+    return nil
+}
+
+func __key(value, key_func) {
+    if key_func == nil {
+        return value
+    }
+    return key_func(value)
+}
+
+func __comes_before(a, b, key_func, reverse) {
+    let ka = __key(a, key_func)
+    let kb = __key(b, key_func)
+    if reverse {
+        return ka > kb
+    }
+    return ka < kb
+}
+
+func __insertion(sequence, key_func=nil, reverse=false) {
+    let pool = __copy(sequence)
+    let out = []
+    while len(pool) > 0 {
+        let best_index = 0
+        let i = 1
+        while i < len(pool) {
+            let current_value = __at(pool, i)
+            let best_value = __at(pool, best_index)
+            if __comes_before(current_value, best_value, key_func, reverse) {
+                best_index = i
+            }
+            i = i + 1
+        }
+        let selected_value = pool.pop(best_index)
+        out.append(selected_value)
+    }
+    return out
+}
+
+func sort(sequence, order="asc") {
+    let reverse = false
+    if order == "desc" {
+        reverse = true
+    }
+    if order == "descending" {
+        reverse = true
+    }
+    if order == "reverse" {
+        reverse = true
+    }
+    return __insertion(sequence, nil, reverse)
+}
+
+func quicksort(sequence, key=nil) {
+    return __insertion(sequence, key, false)
+}
+
+func mergesort(sequence, key=nil) {
+    return __insertion(sequence, key, false)
+}
+
+func stable_sort(sequence, key=nil) {
+    return __insertion(sequence, key, false)
+}
+
+func reverse_sort(sequence, key=nil) {
+    return __insertion(sequence, key, true)
+}
+
+func insertion_sort(sequence) {
+    return __insertion(sequence, nil, false)
+}
+
+func top_k(sequence, k, key=nil) {
+    let sorted_values = __insertion(sequence, key, true)
+    let out = []
+    let i = 0
+    while i < len(sorted_values) {
+        if i >= k {
+            break
+        }
+        let selected_value = __at(sorted_values, i)
+        out.append(selected_value)
+        i = i + 1
+    }
+    return out
+}
+
+func bottom_k(sequence, k, key=nil) {
+    let sorted_values = __insertion(sequence, key, false)
+    let out = []
+    let i = 0
+    while i < len(sorted_values) {
+        if i >= k {
+            break
+        }
+        let selected_value = __at(sorted_values, i)
+        out.append(selected_value)
+        i = i + 1
+    }
+    return out
+}
+
+func is_sorted(sequence, reverse=false) {
+    if len(sequence) <= 1 {
+        return true
+    }
+    let i = 1
+    while i < len(sequence) {
+        let previous_value = __at(sequence, i - 1)
+        let current_value = __at(sequence, i)
+        if reverse {
+            if previous_value < current_value {
+                return false
+            }
+        } else {
+            if previous_value > current_value {
+                return false
+            }
+        }
+        i = i + 1
+    }
+    return true
+}
+
+func sort_by_frequency(sequence) {
+    let pool = __copy(sequence)
+    let sorted_values = []
+    while len(pool) > 0 {
+        let best_index = 0
+        let best_count = 0
+        for value in pool {
+            let best_value = __at(pool, best_index)
+            if value == best_value {
+                best_count = best_count + 1
+            }
+        }
+        let i = 1
+        while i < len(pool) {
+            let current_count = 0
+            for value in pool {
+                let candidate_value = __at(pool, i)
+                if value == candidate_value {
+                    current_count = current_count + 1
+                }
+            }
+            if current_count > best_count {
+                best_index = i
+                best_count = current_count
+            }
+            i = i + 1
+        }
+        let best_value = __at(pool, best_index)
+        let removal_index = 0
+        while removal_index < len(pool) {
+            let removal_value = __at(pool, removal_index)
+            if removal_value == best_value {
+                let selected_value = pool.pop(removal_index)
+                sorted_values.append(selected_value)
+            } else {
+                removal_index = removal_index + 1
+            }
+        }
+    }
+    return sorted_values
+}
+
+func natural_sort(sequence) {
+    let sorted_values = __insertion(sequence, nil, false)
+    return sorted_values
+}
