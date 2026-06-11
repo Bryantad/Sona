@@ -1,0 +1,37 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+# pipe.smod
+# Purpose: Functional pipeline helpers without adding new syntax.
+
+func map(values, callable_obj) {
+    return pipe_map(values, callable_obj)
+}
+
+func filter(values, callable_obj) {
+    return pipe_filter(values, callable_obj)
+}
+
+func reduce(values, callable_obj, initial=nil) {
+    return pipe_reduce(values, callable_obj, initial)
+}
+
+func each(values, callable_obj) {
+    return pipe_each(values, callable_obj)
+}
+
+func compose(functions) {
+    return pipe_compose(functions)
+}
+
+func take(values, count) {
+    return pipe_take(values, count)
+}
+
+func drop(values, count) {
+    return pipe_drop(values, count)
+}
+
+func unique(values) {
+    return pipe_unique(values)
+}

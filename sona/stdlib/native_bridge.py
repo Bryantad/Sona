@@ -5,6 +5,11 @@ from __future__ import annotations
 import importlib
 
 
+_SPECIAL_NATIVE_MODULES = {
+    "assert": "native_assertions",
+}
+
+
 class NativeModuleProxy:
     """Expose native module attributes with optional prefix fallback."""
 
@@ -32,12 +37,16 @@ class NativeBridge:
         self._proxy = NativeModuleProxy(self._native, f"{module_name}_")
 
     def _load_native(self, module_name: str):
+        special = _SPECIAL_NATIVE_MODULES.get(module_name)
         candidates = [
+            f"sona.stdlib.{special}" if special else "",
             f"sona.stdlib.native_{module_name}",
             f"sona.stdlib.{module_name}",
         ]
         last_error = None
         for candidate in candidates:
+            if not candidate:
+                continue
             try:
                 return importlib.import_module(candidate)
             except Exception as exc:

@@ -7,7 +7,21 @@ import pytest
 from sona.interpreter import SonaUnifiedInterpreter
 
 
-PUBLIC_IMPORTS = ["fs", "path", "csv", "log", "profile", "guardian"]
+PUBLIC_IMPORTS = [
+    "fs",
+    "path",
+    "csv",
+    "format",
+    "color",
+    "assert",
+    "url",
+    "pipe",
+    "intent",
+    "focus",
+    "log",
+    "profile",
+    "guardian",
+]
 
 
 def snapshot(root: Path) -> list[str]:

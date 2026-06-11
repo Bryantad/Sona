@@ -1,0 +1,33 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+# url.smod
+# Purpose: URL parsing, encoding, decoding, and joining.
+
+func parse(value) {
+    return url_parse(value)
+}
+
+func build(parts) {
+    return url_build(parts)
+}
+
+func encode(value) {
+    return url_encode(value)
+}
+
+func decode(value) {
+    return url_decode(value)
+}
+
+func query_encode(mapping) {
+    return url_query_encode(mapping)
+}
+
+func query_decode(value) {
+    return url_query_decode(value)
+}
+
+func join(base, relative) {
+    return url_join(base, relative)
+}

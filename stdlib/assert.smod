@@ -1,0 +1,28 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+# assert.smod
+# Purpose: Dedicated testing assertions with structured failures.
+
+func equal(actual, expected, message=nil) {
+    return assert_equal(actual, expected, message)
+}
+
+func not_equal(actual, expected, message=nil) {
+    return assert_not_equal(actual, expected, message)
+}
+
+func contains(container, value, message=nil) {
+    return assert_contains(container, value, message)
+}
+
+func raises(callable_or_wrapper, expected_error=nil, message=nil) {
+    if expected_error == nil {
+        expected_error = "Exception"
+    }
+    return assert_raises(callable_or_wrapper, expected_error, message)
+}
+
+func fail(message) {
+    return assert_fail(message)
+}
