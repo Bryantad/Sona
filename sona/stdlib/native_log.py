@@ -98,6 +98,9 @@ def log_history(limit: Any = 20) -> list[dict[str, Any]]:
     return list(_events[-count:])
 
 
+history = log_history
+
+
 def log_clear() -> bool:
     _events.clear()
     return True
@@ -126,6 +129,7 @@ __all__ = [
     "log_set_format",
     "log_get_format",
     "log_history",
+    "history",
     "log_clear",
     "log_format_event",
 ]

@@ -90,26 +90,30 @@ def _stdlib_manifest() -> dict:
 
 
 def _stdlib_modules() -> list[str]:
-    modules = _stdlib_manifest().get("modules", [])
-    result: list[str] = []
-    if isinstance(modules, list):
-        for module in modules:
-            if isinstance(module, str):
-                name = module
-                user_facing = True
-            elif isinstance(module, dict) and isinstance(module.get("name"), str):
-                name = module["name"]
-                user_facing = module.get("user_facing") is not False
-            else:
-                continue
-            if not user_facing:
-                continue
-            if name in {"intrinsics", "native_intrinsics", "native_bridge"}:
-                continue
-            if name.startswith("native_"):
-                continue
-            result.append(name)
-    return result
+    try:
+        from .stdlib_manifest import user_module_names
+    except Exception:
+        modules = _stdlib_manifest().get("modules", [])
+        result: list[str] = []
+        if isinstance(modules, list):
+            for module in modules:
+                if isinstance(module, str):
+                    name = module
+                    user_facing = True
+                elif isinstance(module, dict) and isinstance(module.get("name"), str):
+                    name = module["name"]
+                    user_facing = module.get("user_facing") is not False
+                else:
+                    continue
+                if not user_facing:
+                    continue
+                if name in {"intrinsics", "native_intrinsics", "native_bridge"}:
+                    continue
+                if name.startswith("native_"):
+                    continue
+                result.append(name)
+        return result
+    return user_module_names()
 
 
 def _pos(line_1: int, col_1: int) -> Position:

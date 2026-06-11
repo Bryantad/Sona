@@ -1292,8 +1292,23 @@ def create_argument_parser() -> argparse.ArgumentParser:
     probe_parser.add_argument(
         'probe_target',
         nargs='?',
-        choices=['stdlib'],
-        help='Probe target (stdlib for standard library inspection)'
+        choices=['stdlib', 'accessibility', 'guardian'],
+        help='Probe target (stdlib, accessibility, or guardian)'
+    )
+    probe_parser.add_argument(
+        '--category',
+        choices=['utility', 'accessibility', 'resilience', 'testing', 'developer-experience', 'security', 'internal'],
+        help='Filter stdlib probe output by manifest category',
+    )
+    probe_parser.add_argument(
+        '--stability',
+        choices=['stable', 'experimental', 'internal'],
+        help='Filter stdlib probe output by stability group',
+    )
+    probe_parser.add_argument(
+        '--profile',
+        choices=['adhd', 'dyslexia', 'autism', 'cross-profile'],
+        help='Filter accessibility probe output by profile',
     )
     probe_parser.add_argument(
         '--text', help='Optional inline text to scan', default=''
@@ -2201,9 +2216,28 @@ def handle_probe_command(args) -> int:
     if hasattr(args, 'probe_target') and args.probe_target == 'stdlib':
         try:
             from .stdlib_cli_commands import stdlib_probe
-            return stdlib_probe()
+            return stdlib_probe(
+                category=getattr(args, 'category', None),
+                stability=getattr(args, 'stability', None),
+            )
         except Exception as e:
             safe_print(f"[ERROR] stdlib probe error: {e}")
+            return 1
+
+    if hasattr(args, 'probe_target') and args.probe_target == 'accessibility':
+        try:
+            from .stdlib_cli_commands import accessibility_probe
+            return accessibility_probe(profile=getattr(args, 'profile', None))
+        except Exception as e:
+            safe_print(f"[ERROR] accessibility probe error: {e}")
+            return 1
+
+    if hasattr(args, 'probe_target') and args.probe_target == 'guardian':
+        try:
+            from .stdlib_cli_commands import guardian_probe
+            return guardian_probe()
+        except Exception as e:
+            safe_print(f"[ERROR] guardian probe error: {e}")
             return 1
 
     # Lightweight scan using policy deny patterns (original functionality)

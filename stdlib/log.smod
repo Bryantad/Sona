@@ -56,13 +56,6 @@ func get_format() {
     return log_get_format()
 }
 
-func history(limit=nil) {
-    if limit == nil {
-        limit = 20
-    }
-    return log_history(limit)
-}
-
 func clear() {
     return log_clear()
 }
