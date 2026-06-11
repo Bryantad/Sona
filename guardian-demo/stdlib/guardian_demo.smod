@@ -1,0 +1,8 @@
+# depends: app.sona
+
+let demo_name = "guardian-recovery"
+
+fn describe_demo() {
+    return "Guardian watches this fixture and restores known-good state."
+}
+

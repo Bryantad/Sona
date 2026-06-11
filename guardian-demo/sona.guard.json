@@ -1,0 +1,13 @@
+{
+  "validation_commands": [
+    [
+      "python",
+      "-c",
+      "from pathlib import Path; text = Path('app.sona').read_text(encoding='utf-8-sig'); assert 'Guardian demo: known-good application' in text"
+    ]
+  ],
+  "auto_recover": false,
+  "excludes": [
+    "output/**"
+  ]
+}

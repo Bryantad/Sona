@@ -72,6 +72,7 @@ dist-pypi*/
 dist-readme-check/
 *.vsix
 *.zip
+guardian-demo/output/*.json
 vscode-extension/sona-ai-native-programming/out/
 vscode-extension/_extracted/
 vscode-extension/_vsix_check/
