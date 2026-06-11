@@ -30,7 +30,7 @@
     {"name": "focus", "source": "intrinsic", "stability": "stable", "category": "utility", "profiles": [], "requires_native": true, "local_only": true, "side_effects": [], "description": "Local focus-session helpers.", "preload": false},
     {"name": "format", "source": "intrinsic", "stability": "stable", "category": "utility", "profiles": [], "requires_native": true, "local_only": true, "side_effects": [], "description": "Deterministic human-readable output formatting.", "preload": false},
     {"name": "functional", "source": "intrinsic", "stability": "preview", "preload": false},
-    {"name": "guardian", "source": "intrinsic", "stability": "preview", "category": "resilience", "profiles": [], "requires_native": true, "local_only": true, "side_effects": [], "description": "Local Guardian resilience facade.", "preload": false},
+    {"name": "guardian", "source": "intrinsic", "stability": "stable", "category": "resilience", "profiles": [], "requires_native": true, "local_only": true, "side_effects": ["explicit-project-state"], "description": "Local Guardian resilience facade with snapshots, drift detection, quarantine, rollback, and audit history.", "preload": false},
     {"name": "graph", "source": "sona", "stability": "core"},
     {"name": "hashing", "source": "sona+intrinsic", "stability": "stable"},
     {"name": "heap", "source": "intrinsic", "stability": "preview", "preload": false},

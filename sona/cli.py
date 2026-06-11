@@ -1314,6 +1314,71 @@ def create_argument_parser() -> argparse.ArgumentParser:
         '--text', help='Optional inline text to scan', default=''
     )
 
+    guard_parser = subparsers.add_parser(
+        'guard',
+        help='Guardian project resilience commands',
+    )
+    guard_sub = guard_parser.add_subparsers(
+        dest='guard_cmd',
+        help='Guardian operations',
+    )
+
+    def add_guard_root(command_parser):
+        command_parser.add_argument(
+            '--project-root',
+            default=None,
+            help='Project root to guard (defaults to current directory)',
+        )
+
+    for name, help_text in [
+        ('init', 'Initialize Guardian for a project root'),
+        ('status', 'Show Guardian status'),
+        ('verify', 'Detect drift against the trusted baseline'),
+        ('doctor', 'Show Guardian readiness and policy state'),
+        ('diff', 'Show concise drift details'),
+        ('graph', 'Show Guardian PARG dependency graph'),
+        ('audit', 'Show local Guardian audit history'),
+    ]:
+        sub = guard_sub.add_parser(name, help=help_text)
+        add_guard_root(sub)
+
+    guard_sub.choices['verify'].add_argument(
+        '--run-validation',
+        action='store_true',
+        help='Run trusted validation commands recorded during init',
+    )
+    guard_sub.choices['audit'].add_argument(
+        '--limit',
+        type=int,
+        default=50,
+        help='Maximum audit records to print',
+    )
+
+    snapshot_parser = guard_sub.add_parser('snapshot', help='Create a Guardian snapshot')
+    add_guard_root(snapshot_parser)
+    snapshot_parser.add_argument('--name', default=None, help='Optional snapshot label')
+
+    quarantine_parser = guard_sub.add_parser('quarantine', help='Copy suspect files into local quarantine')
+    add_guard_root(quarantine_parser)
+    quarantine_parser.add_argument('paths', nargs='*', help='Optional relative paths to quarantine')
+    quarantine_parser.add_argument('--reason', default='manual', help='Quarantine reason')
+
+    rollback_parser = guard_sub.add_parser('rollback', help='Restore the last known-good snapshot')
+    add_guard_root(rollback_parser)
+    rollback_parser.add_argument('--snapshot-id', default=None, help='Snapshot id to restore')
+
+    heal_parser = guard_sub.add_parser('heal', help='Recommend or apply Guardian recovery')
+    add_guard_root(heal_parser)
+    heal_parser.add_argument(
+        '--apply',
+        action='store_true',
+        help='Quarantine suspect state and restore the last known-good snapshot',
+    )
+
+    report_parser = guard_sub.add_parser('report', help='Print a Guardian report')
+    add_guard_root(report_parser)
+    report_parser.add_argument('--json', action='store_true', help='Print JSON report')
+
     # doctor command
     _doctor_parser = subparsers.add_parser(  # noqa: F841
         'doctor', help='Diagnose environment & feature readiness'
@@ -2261,6 +2326,63 @@ def handle_probe_command(args) -> int:
         return 1
 
 
+def handle_guard_command(args) -> int:
+    try:
+        import json
+        from .stdlib import native_guardian as guardian
+
+        command = getattr(args, 'guard_cmd', None)
+        project_root = getattr(args, 'project_root', None)
+        if not command:
+            safe_print("[ERROR] Missing Guardian command. Try: sona guard --help")
+            return 1
+
+        if command == 'init':
+            result = guardian.guardian_init(project_root)
+        elif command == 'status':
+            result = guardian.guardian_status(project_root)
+        elif command == 'verify':
+            result = guardian.guardian_verify(
+                project_root,
+                run_validation=getattr(args, 'run_validation', False),
+            )
+        elif command == 'doctor':
+            result = guardian.guardian_doctor(project_root)
+        elif command == 'snapshot':
+            result = guardian.guardian_snapshot(project_root, getattr(args, 'name', None))
+        elif command == 'diff':
+            result = guardian.guardian_diff(project_root)
+        elif command == 'quarantine':
+            result = guardian.guardian_quarantine(
+                project_root,
+                list(getattr(args, 'paths', []) or []),
+                getattr(args, 'reason', 'manual'),
+            )
+        elif command == 'rollback':
+            result = guardian.guardian_rollback(project_root, getattr(args, 'snapshot_id', None))
+        elif command == 'heal':
+            result = guardian.guardian_heal(project_root, apply=getattr(args, 'apply', False))
+        elif command == 'graph':
+            result = guardian.guardian_graph(project_root)
+        elif command == 'audit':
+            result = guardian.guardian_audit_history(project_root, getattr(args, 'limit', 50))
+        elif command == 'report':
+            if getattr(args, 'json', False):
+                result = guardian.guardian_report_json(project_root)
+            else:
+                safe_print(guardian.guardian_report_plain(project_root))
+                return 0
+        else:
+            safe_print(f"[ERROR] Unknown Guardian command: {command}")
+            return 1
+
+        print(json.dumps(result, indent=2, sort_keys=True))
+        return 0
+    except Exception as e:  # pragma: no cover
+        safe_print(f"[ERROR] guardian command error: {e}")
+        return 1
+
+
 def handle_doctor_command(_args) -> int:
     # Summarize subsystem readiness
     try:
@@ -2640,6 +2762,8 @@ def main() -> int:
         return handle_ai_review_command(args)
     elif args.command == 'probe':
         return handle_probe_command(args)
+    elif args.command == 'guard':
+        return handle_guard_command(args)
     elif args.command == 'doctor':
         return handle_doctor_command(args)
     elif args.command == 'build-info':

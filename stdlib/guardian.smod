@@ -17,6 +17,46 @@ func verify(project_root=nil) {
     return guardian_verify(project_root)
 }
 
+func snapshot(project_root=nil, name=nil) {
+    return guardian_snapshot(project_root, name)
+}
+
+func diff(project_root=nil) {
+    return guardian_diff(project_root)
+}
+
+func quarantine(project_root=nil, paths=nil, reason=nil) {
+    if paths == nil { paths = [] }
+    if reason == nil { reason = "manual" }
+    return guardian_quarantine(project_root, paths, reason)
+}
+
+func rollback(project_root=nil, snapshot_id=nil) {
+    return guardian_rollback(project_root, snapshot_id)
+}
+
+func heal(project_root=nil, apply=nil) {
+    if apply == nil { apply = false }
+    return guardian_heal(project_root, apply)
+}
+
 func doctor(project_root=nil) {
     return guardian_doctor(project_root)
+}
+
+func graph(project_root=nil) {
+    return guardian_graph(project_root)
+}
+
+func audit_history(project_root=nil, limit=nil) {
+    if limit == nil { limit = 50 }
+    return guardian_audit_history(project_root, limit)
+}
+
+func report_json(project_root=nil) {
+    return guardian_report_json(project_root)
+}
+
+func report_plain(project_root=nil) {
+    return guardian_report_plain(project_root)
 }
