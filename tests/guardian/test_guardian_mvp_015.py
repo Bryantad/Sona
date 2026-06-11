@@ -7,7 +7,9 @@ import sys
 import pytest
 
 from sona.interpreter import SonaUnifiedInterpreter
+from sona.stdlib import native_accessibility
 from sona.stdlib import native_guardian as guardian
+from sona.stdlib import native_log
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -94,6 +96,24 @@ def test_guardian_config_drift_uses_trusted_validation_policy(tmp_path):
     assert result["validation_results"][0]["exit_code"] == 0
     assert "SystemExit(99)" not in " ".join(result["validation_results"][0]["command"])
     assert any(item["event"] == "guardian.quarantine" for item in guardian.guardian_audit_history(project, 200))
+
+
+def test_guardian_publishes_accessibility_context(tmp_path):
+    project = make_project(tmp_path)
+    native_accessibility.breadcrumb_clear()
+    native_accessibility.certainty_clear()
+    native_log.log_clear()
+
+    guardian.guardian_init(project)
+    (project / "app.sona").write_text('print("drift")\n', encoding="utf-8")
+    result = guardian.guardian_verify(project)
+
+    assert result["status"] == "drift"
+    assert result["accessibility"]["available"] is True
+    assert result["accessibility"]["issue_chunks"] == [["app.sona"]]
+    assert any(item["message"] == "guardian.verify" for item in native_accessibility.breadcrumb_history(20))
+    assert any(item.get("name") == "guardian.verify" for item in native_log.log_history(20))
+    assert any(item["name"] == "guardian-drift" for item in native_accessibility.certainty_report())
 
 
 def test_guardian_rejects_symlink_escape(tmp_path):

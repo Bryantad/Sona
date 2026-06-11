@@ -37,6 +37,7 @@ DEFAULT_EXCLUDES = [
 
 CONFIG_NAME = "sona.guard.json"
 STATE_VERSION = 1
+MUTATING_ACTIONS = {"init", "snapshot", "quarantine", "rollback", "heal-apply"}
 
 
 def _now() -> str:
@@ -387,17 +388,72 @@ def _config_drift(root: Path, trusted_config: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _accessibility_event(root: Path, action: str, result: dict[str, Any]) -> dict[str, Any]:
+    """Publish Guardian context to stable in-memory accessibility helpers."""
+    try:
+        from . import native_accessibility as access
+        from . import native_log
+    except Exception:
+        return {"available": False}
+
+    status = str(result.get("status", "unknown"))
+    fields = {
+        "action": action,
+        "status": status,
+        "added": len(result.get("added", []) or []),
+        "changed": len(result.get("changed", []) or []),
+        "missing": len(result.get("missing", []) or []),
+        "project_root": str(root),
+    }
+    access.contract_require(bool(root), "Guardian project root is required")
+    boundary_ok = access.boundary_check("guardian", action)
+    strict = access.strict_check({
+        "side_effect": action in MUTATING_ACTIONS,
+        "boundary": "guardian" if boundary_ok else "",
+    })
+    access.breadcrumb_add(f"guardian.{action}", fields)
+    native_log.log_event(f"guardian.{action}", fields)
+    certainty = None
+    if status == "drift" or result.get("config_drift", {}).get("drift"):
+        certainty = access.certainty_add(
+            "guardian-drift",
+            "Guardian detected project state drift.",
+            "warning",
+        )
+    issue_chunks = access.chunk_items(
+        [*result.get("added", []), *result.get("changed", []), *result.get("missing", [])],
+        5,
+    )
+    explanation = access.explain_value({"action": action, "status": status})
+    message = access.simplify_message(f"Guardian {action} finished with status {status}.")
+    paced = access.pace_format(message)
+    sensory = access.sensory_apply(paced)
+    visible_events = access.noise_filter([{"scope": "guardian", "action": action, "status": status}])
+    return {
+        "available": True,
+        "boundary_ok": boundary_ok,
+        "strict": strict,
+        "certainty": certainty,
+        "issue_chunks": issue_chunks,
+        "explanation": explanation,
+        "message": sensory,
+        "visible_events": visible_events,
+    }
+
+
 def guardian_status(project_root: Any = None) -> dict[str, Any]:
     root = _project_root(project_root)
     baseline = _load_baseline(root)
     circuit = _circuit_status(root)
-    return {
+    result = {
         "project_root": str(root),
         "initialized": baseline is not None,
         "state_dir": str(_state_dir(root)),
         "snapshot_id": baseline.get("snapshot_id") if baseline else None,
         "circuit_breaker": circuit,
     }
+    result["accessibility"] = _accessibility_event(root, "status", result)
+    return result
 
 
 def guardian_snapshot(project_root: Any = None, name: Any = None) -> dict[str, Any]:
@@ -420,7 +476,9 @@ def guardian_snapshot(project_root: Any = None, name: Any = None) -> dict[str, A
     }
     _write_json(_snapshot_manifest_path(root, snapshot_id), manifest)
     _audit(root, "guardian.snapshot", {"snapshot_id": snapshot_id, "file_count": len(files)})
-    return {"status": "snapshot-created", "snapshot_id": snapshot_id, "file_count": len(files)}
+    result = {"status": "snapshot-created", "snapshot_id": snapshot_id, "file_count": len(files)}
+    result["accessibility"] = _accessibility_event(root, "snapshot", result)
+    return result
 
 
 def guardian_init(project_root: Any = None) -> dict[str, Any]:
@@ -441,7 +499,7 @@ def guardian_init(project_root: Any = None) -> dict[str, Any]:
     manifest = _load_snapshot(root, snapshot["snapshot_id"])
     _write_baseline(root, manifest)
     _audit(root, "guardian.init", {"file_count": len(manifest["files"]), "snapshot_id": snapshot["snapshot_id"]})
-    return {
+    result = {
         "status": "initialized",
         "project_root": str(root),
         "file_count": len(manifest["files"]),
@@ -449,6 +507,8 @@ def guardian_init(project_root: Any = None) -> dict[str, Any]:
         "trusted_config_hash": trusted_config["config_hash"],
         "validation_commands": trusted_config["validation_commands"],
     }
+    result["accessibility"] = _accessibility_event(root, "init", result)
+    return result
 
 
 def guardian_quarantine(project_root: Any = None, paths: Any = None, reason: Any = "manual") -> dict[str, Any]:
@@ -475,7 +535,9 @@ def guardian_quarantine(project_root: Any = None, paths: Any = None, reason: Any
     }
     _write_json(_quarantine_root(root) / quarantine_id / "manifest.json", manifest)
     _audit(root, "guardian.quarantine", {"quarantine_id": quarantine_id, "paths": selected})
-    return {"status": "quarantined", "quarantine_id": quarantine_id, "files": records}
+    result = {"status": "quarantined", "quarantine_id": quarantine_id, "files": records}
+    result["accessibility"] = _accessibility_event(root, "quarantine", result)
+    return result
 
 
 def guardian_verify(project_root: Any = None, run_validation: Any = False) -> dict[str, Any]:
@@ -501,6 +563,7 @@ def guardian_verify(project_root: Any = None, run_validation: Any = False) -> di
         "validation_results": validations,
         "policy_source": "trusted-baseline",
     }
+    result["accessibility"] = _accessibility_event(root, "verify", result)
     _audit(root, "guardian.verify", {
         "status": result["status"],
         "added": len(diff["added"]),
@@ -513,25 +576,31 @@ def guardian_verify(project_root: Any = None, run_validation: Any = False) -> di
 
 def guardian_diff(project_root: Any = None) -> dict[str, Any]:
     result = guardian_verify(project_root)
-    return {
+    diff = {
         "status": result.get("status"),
         "added": result.get("added", []),
         "missing": result.get("missing", []),
         "changed": result.get("changed", []),
         "config_drift": result.get("config_drift", {}),
     }
+    diff["accessibility"] = _accessibility_event(_project_root(project_root), "diff", diff)
+    return diff
 
 
 def guardian_rollback(project_root: Any = None, snapshot_id: Any = None) -> dict[str, Any]:
     root = _project_root(project_root)
     circuit = _circuit_status(root)
     if circuit.get("active"):
-        return {"status": "blocked", "reason": "circuit-breaker-active", "circuit_breaker": circuit}
+        result = {"status": "blocked", "reason": "circuit-breaker-active", "circuit_breaker": circuit}
+        result["accessibility"] = _accessibility_event(root, "rollback", result)
+        return result
     snapshot = _load_snapshot(root, str(snapshot_id) if snapshot_id else None)
     integrity = _verify_snapshot_integrity(root, snapshot)
     if not integrity["ok"]:
         breaker = _set_circuit(root, "snapshot-integrity-failed", integrity)
-        return {"status": "failed", "snapshot_id": snapshot["snapshot_id"], "circuit_breaker": breaker}
+        result = {"status": "failed", "snapshot_id": snapshot["snapshot_id"], "circuit_breaker": breaker}
+        result["accessibility"] = _accessibility_event(root, "rollback", result)
+        return result
     before = guardian_verify(root)
     quarantine = guardian_quarantine(root, reason="pre-rollback")
     snapshot_files = _inventory_map(snapshot.get("files", []))
@@ -545,7 +614,9 @@ def guardian_rollback(project_root: Any = None, snapshot_id: Any = None) -> dict
         os.replace(temporary, target)
         if _hash_file(target) != item["sha256"]:
             breaker = _set_circuit(root, "restore-hash-mismatch", {"path": rel_path})
-            return {"status": "failed", "snapshot_id": snapshot["snapshot_id"], "quarantine": quarantine, "circuit_breaker": breaker}
+            result = {"status": "failed", "snapshot_id": snapshot["snapshot_id"], "quarantine": quarantine, "circuit_breaker": breaker}
+            result["accessibility"] = _accessibility_event(root, "rollback", result)
+            return result
     for rel_path in before.get("added", []):
         target = _safe_resolve(root, rel_path, "rollback-remove-added")
         if target.exists() and target.is_file():
@@ -557,28 +628,36 @@ def guardian_rollback(project_root: Any = None, snapshot_id: Any = None) -> dict
     after = guardian_verify(root)
     if after.get("status") != "ok" or failed_validations:
         breaker = _set_circuit(root, "post-rollback-verification-failed", {"verify": after, "validation_results": validations})
-        return {"status": "failed", "snapshot_id": snapshot["snapshot_id"], "quarantine": quarantine, "verify": after, "validation_results": validations, "circuit_breaker": breaker}
+        result = {"status": "failed", "snapshot_id": snapshot["snapshot_id"], "quarantine": quarantine, "verify": after, "validation_results": validations, "circuit_breaker": breaker}
+        result["accessibility"] = _accessibility_event(root, "rollback", result)
+        return result
     _audit(root, "guardian.rollback", {"snapshot_id": snapshot["snapshot_id"], "quarantine_id": quarantine["quarantine_id"]})
-    return {
+    result = {
         "status": "rolled-back",
         "snapshot_id": snapshot["snapshot_id"],
         "quarantine": quarantine,
         "verify": after,
         "validation_results": validations,
     }
+    result["accessibility"] = _accessibility_event(root, "rollback", result)
+    return result
 
 
 def guardian_heal(project_root: Any = None, apply: Any = False) -> dict[str, Any]:
     root = _project_root(project_root)
     verify = guardian_verify(root)
     if verify.get("status") == "ok":
-        return {"status": "ok", "message": "No Guardian drift detected.", "verify": verify}
+        result = {"status": "ok", "message": "No Guardian drift detected.", "verify": verify}
+        result["accessibility"] = _accessibility_event(root, "heal", result)
+        return result
     if not apply:
-        return {
+        result = {
             "status": "recommend-apply",
             "message": "Guardian detected drift. Run `sona guard heal --apply` to quarantine and restore the last known-good snapshot.",
             "verify": verify,
         }
+        result["accessibility"] = _accessibility_event(root, "heal", result)
+        return result
     return guardian_rollback(root)
 
 
@@ -592,6 +671,7 @@ def guardian_doctor(project_root: Any = None) -> dict[str, Any]:
         if status["initialized"]
         else "Guardian is not initialized for this project."
     )
+    status["accessibility"] = _accessibility_event(root, "doctor", status)
     return status
 
 
@@ -601,6 +681,7 @@ def guardian_graph(project_root: Any = None) -> dict[str, Any]:
     files = _inventory(root, trusted_config.get("excludes", []))
     graph = _parg_graph(root, files)
     _audit(root, "guardian.graph", {"nodes": len(graph["nodes"]), "edges": len(graph["edges"])})
+    graph["accessibility"] = _accessibility_event(root, "graph", {"status": "ok"})
     return graph
 
 
