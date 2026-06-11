@@ -1,0 +1,22 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+# guardian.smod
+# Purpose: Local Guardian resilience facade.
+# Import purity: importing this module does not create Guardian state.
+
+func status(project_root=nil) {
+    return guardian_status(project_root)
+}
+
+func init(project_root=nil) {
+    return guardian_init(project_root)
+}
+
+func verify(project_root=nil) {
+    return guardian_verify(project_root)
+}
+
+func doctor(project_root=nil) {
+    return guardian_doctor(project_root)
+}

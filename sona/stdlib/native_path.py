@@ -31,6 +31,10 @@ def path_extension(path):
     return _path.extension(path)
 
 
+def path_stem(path):
+    return _path.stem(path)
+
+
 def path_is_absolute(path):
     return _path.is_absolute(path)
 
@@ -43,6 +47,10 @@ def path_resolve(base, target):
     return _path.resolve(base, target)
 
 
+def path_relative(path, start="."):
+    return _path.relative_to(path, start)
+
+
 def __dir__():
     return [
         "path_join",
@@ -51,9 +59,11 @@ def __dir__():
         "path_dirname",
         "path_split",
         "path_extension",
+        "path_stem",
         "path_is_absolute",
         "path_is_relative",
         "path_resolve",
+        "path_relative",
     ]
 
 

@@ -134,6 +134,18 @@ def today(tz: Optional[str] = None) -> str:
     return _current_datetime(tz).date().isoformat()
 
 
+def now(tz: Optional[str] = None) -> str:
+    """Return the current local or timezone-adjusted datetime in ISO format."""
+
+    return _current_datetime(tz).isoformat()
+
+
+def utcnow() -> str:
+    """Return the current UTC datetime in ISO format."""
+
+    return datetime.now(timezone.utc).isoformat()
+
+
 def year(value: str, tz: Optional[str] = None) -> int:
     return _coerce_date(value, tz).year
 
@@ -180,6 +192,12 @@ def from_timestamp(ts: float, tz: Optional[str] = None) -> str:
     else:
         current = datetime.fromtimestamp(float(ts)).astimezone()
     return current.date().isoformat()
+
+
+def fromtimestamp(ts: float, tz: Optional[str] = None) -> str:
+    """Alias for :func:`from_timestamp` matching Python's spelling."""
+
+    return from_timestamp(ts, tz)
 
 
 def parse(value: str, tz: Optional[str] = None) -> Dict[str, object]:

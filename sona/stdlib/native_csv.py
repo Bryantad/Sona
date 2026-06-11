@@ -18,10 +18,16 @@ def _normalize_options(options: Any) -> Dict[str, Any]:
     return {}
 
 
+def _delimiter_options(delimiter: Any = ",") -> Dict[str, Any]:
+    if isinstance(delimiter, dict) or hasattr(delimiter, "items"):
+        return _normalize_options(delimiter)
+    return {"delimiter": str(delimiter or ",")}
+
+
 def csv_parse(csv_data: Any, options: Any = None) -> Dict[str, Any]:
     """Parse CSV string into records."""
     try:
-        normalized_options = _normalize_options(options)
+        normalized_options = _delimiter_options(options if options is not None else ",")
         result = _csv.parse(str(csv_data), normalized_options)
         
         return {
@@ -42,7 +48,7 @@ def csv_parse(csv_data: Any, options: Any = None) -> Dict[str, Any]:
 def csv_parse_file(file_path: Any, options: Any = None) -> Dict[str, Any]:
     """Parse CSV file into records."""
     try:
-        normalized_options = _normalize_options(options)
+        normalized_options = _delimiter_options(options if options is not None else ",")
         result = _csv.parse_file(str(file_path), normalized_options)
         
         return {
@@ -69,7 +75,7 @@ def csv_stringify(records: Any, options: Any = None) -> Dict[str, Any]:
                 "message": "Records must be a list",
             }
         
-        normalized_options = _normalize_options(options)
+        normalized_options = _delimiter_options(options if options is not None else ",")
         csv_data = _csv.stringify(records, normalized_options)
         
         return {
@@ -93,7 +99,7 @@ def csv_write_file(file_path: Any, records: Any, options: Any = None) -> Dict[st
                 "message": "Records must be a list",
             }
         
-        normalized_options = _normalize_options(options)
+        normalized_options = _delimiter_options(options if options is not None else ",")
         success = _csv.write_file(str(file_path), records, normalized_options)
         
         return {
@@ -106,6 +112,18 @@ def csv_write_file(file_path: Any, records: Any, options: Any = None) -> Dict[st
             "message": str(exc),
             "error_type": type(exc).__name__,
         }
+
+
+def csv_read(file_path: Any, delimiter: Any = ",") -> Dict[str, Any]:
+    """Read CSV records from a file using a simple delimiter argument."""
+
+    return csv_parse_file(file_path, _delimiter_options(delimiter))
+
+
+def csv_write(file_path: Any, records: Any, delimiter: Any = ",") -> Dict[str, Any]:
+    """Write CSV records to a file using a simple delimiter argument."""
+
+    return csv_write_file(file_path, records, _delimiter_options(delimiter))
 
 
 def csv_validate(csv_data: Any, options: Any = None) -> Dict[str, Any]:
@@ -221,6 +239,8 @@ __all__ = [
     "csv_parse_file",
     "csv_stringify",
     "csv_write_file", 
+    "csv_read",
+    "csv_write",
     "csv_validate",
     "csv_stream",
     "csv_extract_fields",

@@ -94,6 +94,8 @@ def _import_targets(modules, native_modules, nested_modules):
         entry = entry_map.get(name, {})
         if entry.get("source") in {"sona", "sona+intrinsic"}:
             continue
+        if (SMOD_ROOT / f"{name.replace('.', '/')}.smod").exists():
+            continue
         targets.append(f"sona.stdlib.{name}")
     targets.extend(
         f"sona.stdlib.native_{name}"
