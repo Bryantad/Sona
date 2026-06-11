@@ -1,7 +1,7 @@
 # Sona Standard Library Reference
 
 This reference documents the stable user-facing stdlib surface for Sona
-`0.14.1`. The package may contain more modules, but this page is the usability
+`0.15.0`. The package may contain more modules, but this page is the usability
 contract for new developers.
 
 Documentation truth rule: if this reference and runtime behavior disagree,
@@ -34,7 +34,6 @@ JSON-compatible data.
 | `io` | Read from and write to text files. |
 | `json` | Parse, validate, and serialize JSON-compatible data. |
 | `math` | Use numeric helpers and common math operations. |
-| `memory` | Store and query lightweight runtime memory values. |
 | `path` | Normalize, join, and inspect path strings. |
 | `string` | Transform and inspect text. |
 | `time` | Read clocks, timestamps, and durations. |
@@ -52,6 +51,28 @@ JSON-compatible data.
 | `password` | Hash and verify passwords with constant-time verification. |
 | `jwt` | Encode and verify preview JWT-style tokens. |
 | `crypto` | Use preview cryptographic wrappers over private intrinsics. |
+| `profile` | Work with local cognitive-accessibility profile presets. |
+| `simplify` | Simplify messages into plain-language text. |
+| `breadcrumb` | Track local in-memory workflow breadcrumbs. |
+| `flow` | Score local workflow flow and suggest next steps. |
+| `explain` | Produce deterministic runtime explanations. |
+| `pace` | Format output with local pacing preferences. |
+| `affirm` | Produce factual success and milestone messages. |
+| `chunk` | Chunk lists, text, steps, and checkpoints. |
+| `timer` | Use local monotonic focus timers. |
+| `noise` | Filter local event noise. |
+| `tone` | Normalize message tone. |
+| `readability` | Check text and identifier readability. |
+| `linewidth` | Wrap and check line width. |
+| `mirror` | Explain similar symbols and pairs. |
+| `chunk_read` | Navigate chunked reading sections. |
+| `contract` | Run explicit runtime contract checks. |
+| `boundary` | Apply local permission boundaries. |
+| `routine` | Define and step through local routines. |
+| `strict` | Run opt-in strict checks. |
+| `certainty` | Track local assumptions and uncertainty notes. |
+| `sensory` | Apply low-stimulation text transformations. |
+| `guardian` | Guard a project with local snapshots, drift detection, quarantine, rollback, and audit history. |
 
 ## csv
 
@@ -331,7 +352,7 @@ Time results vary by clock and timezone.
 
 ## Sona-Native Foundation Modules
 
-Sona `0.14.1` moves the public foundation for `queue`, `stack`, `sort`,
+Sona `0.15.0` moves the public foundation for `queue`, `stack`, `sort`,
 `search`, `statistics`, `matrix`, `graph`, and `permissions` into
 `stdlib/*.smod`. These modules are authored in Sona and should not depend on
 regular Python stdlib modules for their public implementation.

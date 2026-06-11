@@ -1,5 +1,5 @@
 param(
-    [string]$ExpectedVersion = "0.14.1"
+    [string]$ExpectedVersion = "0.15.0"
 )
 
 Set-StrictMode -Version Latest
@@ -100,8 +100,14 @@ function Invoke-PythonInspector {
 $RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 $DistDir = Join-Path $RepoRoot "dist-pypi-$ExpectedVersion"
 $HardeningDir = Join-Path $RepoRoot "build\release-hardening\$ExpectedVersion"
-$VenvDir = Join-Path $HardeningDir "venv"
-$SmokeDir = Join-Path $HardeningDir "smoke-workdir"
+$ExternalSmokeRoot = Join-Path ([System.IO.Path]::GetTempPath()) "sona-release-hardening-$ExpectedVersion"
+$WheelVenvDir = Join-Path $ExternalSmokeRoot "wheel-venv"
+$SdistVenvDir = Join-Path $ExternalSmokeRoot "sdist-venv"
+$WheelSmokeDir = Join-Path $ExternalSmokeRoot "wheel-smoke-workdir"
+$SdistSmokeDir = Join-Path $ExternalSmokeRoot "sdist-smoke-workdir"
+$resolvedRepoRoot = [System.IO.Path]::GetFullPath($RepoRoot)
+$resolvedExternalSmokeRoot = [System.IO.Path]::GetFullPath($ExternalSmokeRoot)
+Assert-Condition (-not $resolvedExternalSmokeRoot.StartsWith($resolvedRepoRoot, [System.StringComparison]::OrdinalIgnoreCase)) "Clean-install smoke root must be outside the repository: $ExternalSmokeRoot"
 
 Write-Host "== Phase 1: fast release gate =="
 Invoke-Checked "powershell" @(
@@ -113,7 +119,9 @@ Write-Host "== Phase 2: clean Python artifact build =="
 Invoke-Checked "python" @("-m", "build", "--version") $RepoRoot
 Reset-Directory $DistDir
 Reset-Directory $HardeningDir
-New-Item -ItemType Directory -Force -Path $SmokeDir | Out-Null
+Reset-Directory $ExternalSmokeRoot
+New-Item -ItemType Directory -Force -Path $WheelSmokeDir | Out-Null
+New-Item -ItemType Directory -Force -Path $SdistSmokeDir | Out-Null
 Invoke-Checked "python" @("-m", "build", "--wheel", "--sdist", "--no-isolation", "--outdir", $DistDir) $RepoRoot
 
 $wheelFiles = @(Get-ChildItem -LiteralPath $DistDir -File | Where-Object { $_.Name -like "*.whl" })
@@ -212,23 +220,88 @@ print("Python archive inspection passed.")
 '@
 Invoke-PythonInspector $pythonArchiveInspector @($Wheel.FullName, $Sdist.FullName, $ExpectedVersion)
 
-Write-Host "== Phase 4: fresh wheel installation =="
-Invoke-Checked "python" @("-m", "venv", $VenvDir) $RepoRoot
-if ($env:OS -eq "Windows_NT") {
-    $VenvPython = Join-Path $VenvDir "Scripts\python.exe"
-} else {
-    $VenvPython = Join-Path $VenvDir "bin/python"
+function Invoke-InstallSmoke {
+    param(
+        [System.IO.FileInfo]$Artifact,
+        [string]$Label,
+        [string]$VenvDir,
+        [string]$SmokeDir
+    )
+
+    Write-Host "== Phase 4: fresh $Label installation =="
+    Invoke-Checked "python" @("-m", "venv", $VenvDir) $RepoRoot | Out-Host
+    if ($env:OS -eq "Windows_NT") {
+        $venvPython = Join-Path $VenvDir "Scripts\python.exe"
+    } else {
+        $venvPython = Join-Path $VenvDir "bin/python"
+    }
+    Assert-Condition (Test-Path $venvPython) "Venv Python not found: $venvPython"
+    Invoke-Checked $venvPython @("-m", "pip", "install", "--disable-pip-version-check", $Artifact.FullName) $SmokeDir | Out-Host
+    $versionOutput = Invoke-CheckedOutput $venvPython @("-m", "sona", "--version") $SmokeDir
+    Assert-Condition ($versionOutput -match [regex]::Escape($ExpectedVersion)) "$Label version output missing ${ExpectedVersion}: $versionOutput"
+    Invoke-Checked $venvPython @("-m", "sona", "probe", "stdlib") $SmokeDir | Out-Host
+    Invoke-Checked $venvPython @("-m", "sona", "probe", "stdlib", "--category", "accessibility") $SmokeDir | Out-Host
+    Invoke-Checked $venvPython @("-m", "sona", "probe", "stdlib", "--category", "resilience") $SmokeDir | Out-Host
+    Invoke-Checked $venvPython @("-m", "sona", "build-info") $SmokeDir | Out-Host
+    $importPath = Invoke-CheckedOutput $venvPython @("-c", "import pathlib, sona; print(pathlib.Path(sona.__file__).resolve())") $SmokeDir
+    $resolvedImportPath = [System.IO.Path]::GetFullPath($importPath)
+    $resolvedVenvPath = [System.IO.Path]::GetFullPath($VenvDir)
+    Assert-Condition ($resolvedImportPath.StartsWith($resolvedVenvPath, [System.StringComparison]::OrdinalIgnoreCase)) "$Label sona.__file__ is not inside the temp venv: $resolvedImportPath"
+
+    $stableImportScript = @'
+from pathlib import Path
+from sona.interpreter import SonaUnifiedInterpreter
+stable_modules = [
+    "path", "format", "color", "assert", "uuid", "url", "csv", "pipe",
+    "intent", "focus", "log", "profile", "simplify", "breadcrumb", "flow",
+    "explain", "pace", "affirm", "chunk", "timer", "noise", "tone",
+    "readability", "linewidth", "mirror", "chunk_read", "contract",
+    "boundary", "routine", "strict", "certainty", "sensory", "guardian",
+]
+interp = SonaUnifiedInterpreter(project_root=Path.cwd())
+for name in stable_modules:
+    interp.module_system.import_module(name)
+for hidden in ["native_bridge", "native_intrinsics", "intrinsics"]:
+    try:
+        interp.module_system.import_module(hidden)
+    except Exception:
+        continue
+    raise SystemExit(f"hidden module import unexpectedly succeeded: {hidden}")
+print("stable imports and hidden-module checks passed")
+'@
+    Push-Location $SmokeDir
+    try {
+        $stableImportScript | & $venvPython - | Out-Host
+        if ($LASTEXITCODE -ne 0) {
+            throw "$Label stable import smoke failed with exit code $LASTEXITCODE."
+        }
+    } finally {
+        Pop-Location
+    }
+
+    $guardianRoot = Join-Path $SmokeDir "guardian-fixture"
+    New-Item -ItemType Directory -Force -Path $guardianRoot | Out-Null
+    try {
+        Set-Content -LiteralPath (Join-Path $guardianRoot "app.sona") -Value 'print("guardian fixture")' -Encoding UTF8
+        Invoke-Checked $venvPython @("-m", "sona", "guard", "init", "--project-root", $guardianRoot) $SmokeDir | Out-Host
+        Invoke-Checked $venvPython @("-m", "sona", "guard", "status", "--project-root", $guardianRoot) $SmokeDir | Out-Host
+        Invoke-Checked $venvPython @("-m", "sona", "guard", "verify", "--project-root", $guardianRoot) $SmokeDir | Out-Host
+        Invoke-Checked $venvPython @("-m", "sona", "guard", "doctor", "--project-root", $guardianRoot) $SmokeDir | Out-Host
+    } finally {
+        if (Test-Path $guardianRoot) {
+            Remove-Item -LiteralPath $guardianRoot -Recurse -Force
+        }
+    }
+
+    [PSCustomObject]@{
+        Label = $Label
+        VersionOutput = $versionOutput
+        ImportPath = $resolvedImportPath
+    }
 }
-Assert-Condition (Test-Path $VenvPython) "Venv Python not found: $VenvPython"
-Invoke-Checked $VenvPython @("-m", "pip", "install", "--disable-pip-version-check", $Wheel.FullName) $SmokeDir
-$VersionOutput = Invoke-CheckedOutput $VenvPython @("-m", "sona", "--version") $SmokeDir
-Assert-Condition ($VersionOutput -match [regex]::Escape($ExpectedVersion)) "Version output missing ${ExpectedVersion}: $VersionOutput"
-Invoke-Checked $VenvPython @("-m", "sona", "probe", "stdlib") $SmokeDir
-Invoke-Checked $VenvPython @("-m", "sona", "build-info") $SmokeDir
-$ImportPath = Invoke-CheckedOutput $VenvPython @("-c", "import pathlib, sona; print(pathlib.Path(sona.__file__).resolve())") $SmokeDir
-$ResolvedImportPath = [System.IO.Path]::GetFullPath($ImportPath)
-$ResolvedVenvPath = [System.IO.Path]::GetFullPath($VenvDir)
-Assert-Condition ($ResolvedImportPath.StartsWith($ResolvedVenvPath, [System.StringComparison]::OrdinalIgnoreCase)) "sona.__file__ is not inside the temp venv: $ResolvedImportPath"
+
+$WheelSmoke = Invoke-InstallSmoke $Wheel "wheel" $WheelVenvDir $WheelSmokeDir
+$SdistSmoke = Invoke-InstallSmoke $Sdist "sdist" $SdistVenvDir $SdistSmokeDir
 
 & python -c "import importlib.util; raise SystemExit(0 if importlib.util.find_spec('twine') else 1)"
 $twineExit = $LASTEXITCODE
@@ -250,5 +323,8 @@ Write-Host ("  SHA-256: {0}" -f $WheelInfo.Sha256)
 Write-Host ("Sdist: {0}" -f $SdistInfo.Path)
 Write-Host ("  Size: {0}" -f $SdistInfo.Size)
 Write-Host ("  SHA-256: {0}" -f $SdistInfo.Sha256)
-Write-Host ("Confirmed Sona runtime version: {0}" -f $VersionOutput)
-Write-Host ("Temporary smoke-test import path: {0}" -f $ResolvedImportPath)
+Write-Host ("Confirmed wheel runtime version: {0}" -f $WheelSmoke.VersionOutput)
+Write-Host ("Confirmed sdist runtime version: {0}" -f $SdistSmoke.VersionOutput)
+Write-Host ("Wheel smoke-test import path: {0}" -f $WheelSmoke.ImportPath)
+Write-Host ("Sdist smoke-test import path: {0}" -f $SdistSmoke.ImportPath)
+Write-Host ("External smoke root: {0}" -f $ExternalSmokeRoot)

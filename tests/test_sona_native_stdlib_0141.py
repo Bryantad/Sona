@@ -312,8 +312,8 @@ def test_crypto_preview_wrapper_behavior():
 
 def test_manifest_source_and_stability_classifications():
     data, entries = manifest_entries()
-    assert data["version"] == "0.14.1"
-    assert data["manifest_hash"] == "0141_sona_native_foundation"
+    assert data["version"] == "0.15.0"
+    assert data["manifest_hash"] == "0150_cognitive_runtime_guardian"
     assert {entry["source"] for entry in data["modules"]} <= {"sona", "sona+intrinsic", "intrinsic"}
 
     for name in ["queue", "stack", "sort", "search", "statistics", "matrix", "graph", "permissions"]:

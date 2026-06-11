@@ -1,5 +1,5 @@
 """
-Sona v0.14.1 Command Line Interface with AI Integration
+Sona v0.15.0 Command Line Interface with AI Integration
 
 Enhanced CLI with profile, benchmark, suggest, and explain commands
 powered by GPT-2 and cognitive assistance features.
@@ -838,7 +838,7 @@ ENHANCED_COMMANDS = None  # lazy-loaded mapping
 
 
 # Version information
-SONA_VERSION = "0.14.1"
+SONA_VERSION = "0.15.0"
 AI_FEATURES_VERSION = "1.0.0"
 DEFAULT_OFFLINE_MODEL = "qwen2.5-coder:7b"
 
@@ -867,7 +867,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
     """Create the main argument parser for Sona CLI"""
     parser = SonaArgumentParser(
         prog='sona',
-        description='Sona Cognitive Programming Language v0.14.1',
+        description='Sona Cognitive Programming Language v0.15.0',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
             "Usage:\n"
@@ -2028,7 +2028,7 @@ def handle_repl_command(args) -> int:
         from sona.interpreter import SonaInterpreter
         interpreter = SonaInterpreter()
 
-        safe_print("Sona REPL v0.14.1 - Type 'exit' to quit")
+        safe_print("Sona REPL v0.15.0 - Type 'exit' to quit")
         if args.ai:
             try:
                 interpreter.enable_ai()

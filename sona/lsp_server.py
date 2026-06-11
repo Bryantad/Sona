@@ -308,7 +308,7 @@ if _PYGLS_AVAILABLE:
 
     class SonaLsp(LanguageServer):
         def __init__(self):
-            super().__init__("sona-lsp", "0.14.1")
+            super().__init__("sona-lsp", "0.15.0")
             self._parser = _make_parser()
 
         def validate(self, uri: str, text: str) -> None:

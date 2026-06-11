@@ -1,5 +1,5 @@
 """
-Sona v0.14.1 - Enhanced Interpreter with Full Loop Support
+Sona v0.15.0 - Enhanced Interpreter with Full Loop Support
 ========================================================
 
 Production-grade interpreter with complete language feature support.
@@ -1483,7 +1483,7 @@ class SonaUnifiedInterpreter:
                                  global_scope=True)
 
         # Built-in variables
-        self.memory.set_variable('__version__', '0.14.1', global_scope=True)
+        self.memory.set_variable('__version__', '0.15.0', global_scope=True)
         self.memory.set_variable('__sona__', True, global_scope=True)
         self.memory.set_variable('True', True, global_scope=True)
         self.memory.set_variable('False', False, global_scope=True)

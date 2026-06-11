@@ -28,7 +28,7 @@ DEFAULT_MANIFEST_NAME = "sona.json"
 DEFAULT_LOCK_NAME = "sona.lock.json"
 DEFAULT_MODULES_DIR = ".sona_modules"
 MANIFEST_SCHEMA_VERSION = 2
-DEFAULT_PROJECT_VERSION = "0.14.1"
+DEFAULT_PROJECT_VERSION = "0.15.0"
 
 
 class SpmError(RuntimeError):

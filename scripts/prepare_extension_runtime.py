@@ -2,7 +2,7 @@
 """
 Legacy/manual VS Code runtime staging helper.
 
-This script is not part of the primary 0.14.1 VSIX packaging path. The primary
+This script is not part of the primary VSIX packaging path. The primary
 VSIX continues to use a separately installed Sona Python runtime. Keep this
 helper available only for manual legacy staging checks.
 
