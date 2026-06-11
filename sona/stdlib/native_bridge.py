@@ -33,6 +33,44 @@ for _accessibility_module in [
 ]:
     _SPECIAL_NATIVE_MODULES[_accessibility_module] = "native_accessibility"
 
+for _experimental_accessibility_module in [
+    "interrupt",
+    "hyperfocus",
+    "priority",
+    "drift",
+    "scaffold",
+    "reentry",
+    "reward",
+    "context",
+    "momentum",
+    "rotate",
+    "start",
+    "alias",
+    "phonetic",
+    "visual",
+    "symbol",
+    "sequence",
+    "memory",
+    "contrast",
+    "template",
+    "spoken",
+    "pattern",
+    "trace",
+    "transition",
+    "detail",
+    "anchor",
+    "overload",
+    "mono",
+    "system",
+    "mastery",
+    "shutdown",
+    "energy",
+    "narrative",
+    "journal",
+    "adapt",
+]:
+    _SPECIAL_NATIVE_MODULES[_experimental_accessibility_module] = "native_accessibility_experimental"
+
 
 class NativeModuleProxy:
     """Expose native module attributes with optional prefix fallback."""

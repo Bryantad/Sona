@@ -1,0 +1,17 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func configure(options) { return experimental_configure(options) }
+func status() { return experimental_status() }
+func notice(message, severity=nil) {
+    if severity == nil { severity = "info" }
+    return interrupt_notice(message, severity)
+}
+func queue(message, severity=nil) {
+    if severity == nil { severity = "info" }
+    return interrupt_queue(message, severity)
+}
+func list(limit=nil) {
+    if limit == nil { limit = 20 }
+    return interrupt_list(limit)
+}

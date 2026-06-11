@@ -1,0 +1,8 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+const configure = experimental_configure
+const status = experimental_status
+const suggest = adapt_suggest
+const set_preferences = adapt_set_preferences
+const get_preferences = adapt_get_preferences

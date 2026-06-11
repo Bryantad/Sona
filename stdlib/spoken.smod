@@ -1,0 +1,10 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func configure(options) { return experimental_configure(options) }
+func status() { return experimental_status() }
+func script(text) { return spoken_script(text) }
+func pace(text, words_per_chunk=nil) {
+    if words_per_chunk == nil { words_per_chunk = 8 }
+    return spoken_pace(text, words_per_chunk)
+}

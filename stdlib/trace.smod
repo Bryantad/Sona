@@ -1,0 +1,7 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func configure(options) { return experimental_configure(options) }
+func status() { return experimental_status() }
+func steps(events) { return trace_steps(events) }
+func summary(events) { return trace_summary(events) }
