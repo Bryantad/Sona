@@ -1,0 +1,22 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func enable() {
+    return sensory_enable()
+}
+
+func disable() {
+    return sensory_disable()
+}
+
+func is_enabled() {
+    return sensory_is_enabled()
+}
+
+func configure(options) {
+    return sensory_configure(options)
+}
+
+func apply(text) {
+    return sensory_apply(text)
+}

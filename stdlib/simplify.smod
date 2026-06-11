@@ -1,0 +1,16 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func error(error_value, level=nil) {
+    if level == nil { level = "standard" }
+    return simplify_error(error_value, level)
+}
+
+func message(text, level=nil) {
+    if level == nil { level = "standard" }
+    return simplify_message(text, level)
+}
+
+func steps(error_value) {
+    return simplify_steps(error_value)
+}

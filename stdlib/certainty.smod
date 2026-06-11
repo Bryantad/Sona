@@ -1,0 +1,19 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func check(value_or_metadata) {
+    return certainty_check(value_or_metadata)
+}
+
+func report() {
+    return certainty_report()
+}
+
+func add(name, description, severity=nil) {
+    if severity == nil { severity = "info" }
+    return certainty_add(name, description, severity)
+}
+
+func clear() {
+    return certainty_clear()
+}

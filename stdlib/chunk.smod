@@ -1,0 +1,30 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func items(values, size=nil) {
+    if size == nil { size = 5 }
+    return chunk_items(values, size)
+}
+
+func text(value, width=nil) {
+    if width == nil { width = 80 }
+    return chunk_text(value, width)
+}
+
+func steps(values, size=nil) {
+    if size == nil { size = 3 }
+    return chunk_steps(values, size)
+}
+
+func progress(current, total) {
+    return chunk_progress(current, total)
+}
+
+func checkpoint(name, state=nil) {
+    if state == nil { state = {} }
+    return chunk_checkpoint(name, state)
+}
+
+func resume(name) {
+    return chunk_resume(name)
+}

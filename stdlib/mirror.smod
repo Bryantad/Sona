@@ -1,0 +1,14 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func check(source) {
+    return mirror_check(source)
+}
+
+func explain(symbol) {
+    return mirror_explain(symbol)
+}
+
+func pairs() {
+    return mirror_pairs()
+}

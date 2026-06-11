@@ -1,0 +1,18 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func set(width) {
+    return linewidth_set(width)
+}
+
+func current() {
+    return linewidth_current()
+}
+
+func wrap(text) {
+    return linewidth_wrap(text)
+}
+
+func check(text) {
+    return linewidth_check(text)
+}

@@ -1,0 +1,22 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func score(text) {
+    return readability_score(text)
+}
+
+func identifier(name) {
+    return readability_identifier(name)
+}
+
+func suggest(name) {
+    return readability_suggest(name)
+}
+
+func check_many(names) {
+    return readability_check_many(names)
+}
+
+func configure(options) {
+    return readability_configure(options)
+}

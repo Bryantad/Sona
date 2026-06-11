@@ -9,6 +9,30 @@ _SPECIAL_NATIVE_MODULES = {
     "assert": "native_assertions",
 }
 
+for _accessibility_module in [
+    "simplify",
+    "breadcrumb",
+    "flow",
+    "explain",
+    "pace",
+    "affirm",
+    "chunk",
+    "timer",
+    "noise",
+    "tone",
+    "readability",
+    "linewidth",
+    "mirror",
+    "chunk_read",
+    "contract",
+    "boundary",
+    "routine",
+    "strict",
+    "certainty",
+    "sensory",
+]:
+    _SPECIAL_NATIVE_MODULES[_accessibility_module] = "native_accessibility"
+
 
 class NativeModuleProxy:
     """Expose native module attributes with optional prefix fallback."""

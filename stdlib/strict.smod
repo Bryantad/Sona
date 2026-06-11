@@ -1,0 +1,22 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func enable() {
+    return strict_enable()
+}
+
+func disable() {
+    return strict_disable()
+}
+
+func is_enabled() {
+    return strict_is_enabled()
+}
+
+func configure(options) {
+    return strict_configure(options)
+}
+
+func check(event) {
+    return strict_check(event)
+}

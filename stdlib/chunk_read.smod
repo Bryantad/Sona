@@ -1,0 +1,27 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func text(value, size=nil) {
+    if size == nil { size = 5 }
+    return chunk_read_text(value, size)
+}
+
+func sections(values) {
+    return chunk_read_sections(values)
+}
+
+func next() {
+    return chunk_read_next()
+}
+
+func previous() {
+    return chunk_read_previous()
+}
+
+func current() {
+    return chunk_read_current()
+}
+
+func reset() {
+    return chunk_read_reset()
+}
