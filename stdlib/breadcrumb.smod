@@ -1,0 +1,22 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func add(message, fields=nil) {
+    if fields == nil { fields = {} }
+    return breadcrumb_add(message, fields)
+}
+
+func current() {
+    return breadcrumb_current()
+}
+
+func history(limit=nil) {
+    if limit == nil { limit = 20 }
+    return breadcrumb_history(limit)
+}
+
+func clear() {
+    return breadcrumb_clear()
+}
+
+const format = breadcrumb_format

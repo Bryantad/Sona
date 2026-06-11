@@ -1,0 +1,30 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+# profile.smod
+# Purpose: Optional cognitive-accessibility profile presets.
+# Privacy: State is process-local and never persisted by default.
+
+func activate(name) {
+    return profile_activate(name)
+}
+
+func activate_many(names) {
+    return profile_activate_many(names)
+}
+
+func current() {
+    return profile_current()
+}
+
+func available() {
+    return profile_available()
+}
+
+func reset() {
+    return profile_reset()
+}
+
+func configure(options) {
+    return profile_configure(options)
+}

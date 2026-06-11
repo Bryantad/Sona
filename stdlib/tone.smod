@@ -1,0 +1,14 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func neutralize(message) {
+    return tone_neutralize(message)
+}
+
+func set(mode) {
+    return tone_set(mode)
+}
+
+func current() {
+    return tone_current()
+}

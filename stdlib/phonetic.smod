@@ -1,0 +1,7 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func configure(options) { return experimental_configure(options) }
+func status() { return experimental_status() }
+func spell(word) { return phonetic_spell(word) }
+func compare(left, right) { return phonetic_compare(left, right) }

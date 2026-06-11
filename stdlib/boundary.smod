@@ -1,0 +1,33 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func create(name, permissions) {
+    return boundary_create(name, permissions)
+}
+
+func activate(name) {
+    return boundary_activate(name)
+}
+
+func current() {
+    return boundary_current()
+}
+
+func check(permission, target=nil) {
+    if target == nil { target = "" }
+    return boundary_check(permission, target)
+}
+
+func allow(permission, target=nil) {
+    if target == nil { target = "" }
+    return boundary_allow(permission, target)
+}
+
+func deny(permission, target=nil) {
+    if target == nil { target = "" }
+    return boundary_deny(permission, target)
+}
+
+func deactivate() {
+    return boundary_deactivate()
+}

@@ -1,0 +1,5 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+const configure = experimental_configure
+const status = experimental_status

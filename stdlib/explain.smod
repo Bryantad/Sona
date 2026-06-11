@@ -1,0 +1,22 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func value(value) {
+    return explain_value(value)
+}
+
+func error(error_value) {
+    return explain_error(error_value)
+}
+
+func module(name) {
+    return explain_module(name)
+}
+
+func function(name) {
+    return explain_function(name)
+}
+
+func steps(value_or_error) {
+    return explain_steps(value_or_error)
+}

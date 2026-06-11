@@ -11,6 +11,14 @@ def date_today(tz: Optional[str] = None) -> str:
     return _date.today(tz)
 
 
+def date_now(tz: Optional[str] = None) -> str:
+    return _date.now(tz)
+
+
+def date_utcnow() -> str:
+    return _date.utcnow()
+
+
 def date_year(value: str, tz: Optional[str] = None) -> int:
     return _date.year(value, tz)
 
@@ -47,6 +55,12 @@ def date_from_timestamp(
     value: float, tz: Optional[str] = None
 ) -> str:
     return _date.from_timestamp(value, tz)
+
+
+def date_fromtimestamp(
+    value: float, tz: Optional[str] = None
+) -> str:
+    return _date.fromtimestamp(value, tz)
 
 
 def date_parse(value: str, tz: Optional[str] = None) -> dict:
@@ -127,6 +141,8 @@ def date_sleep(seconds: float) -> None:
 
 __all__ = [
     "date_today",
+    "date_now",
+    "date_utcnow",
     "date_year",
     "date_month",
     "date_day",
@@ -136,6 +152,7 @@ __all__ = [
     "date_yesterday",
     "date_tomorrow",
     "date_from_timestamp",
+    "date_fromtimestamp",
     "date_parse",
     "date_format_iso",
     "date_format_pattern",

@@ -1,28 +1,29 @@
 # memory.smod
-# Purpose: Access the external Sona memory server from Sona programs.
+# Purpose: Experimental local cognitive memory/glossary helpers.
 
 const module_format = "smod-runtime"
 const runtime_backend = "smod"
 
-func __default(value, fallback) {
-    if value == nil {
-        return fallback
-    }
-    return value
+func configure(options) { return experimental_configure(options) }
+func status() { return experimental_status() }
+func card(key, value=nil) {
+    if value == nil { value = "" }
+    return memory_card(key, value)
 }
+func store(key, value) { return memory_store(key, value) }
+func recall(key) { return memory_recall(key) }
 
+# Compatibility names from the earlier memory facade remain local-only.
 func search(query, opts=nil) {
-    return memory_search(query, __default(opts, {}))
+    if opts == nil { opts = {} }
+    return memory_search(query, opts)
 }
-
 func record(content, opts=nil) {
-    return memory_record(content, __default(opts, {}))
+    if opts == nil { opts = {} }
+    return memory_record(content, opts)
 }
-
-func get_trace(trace_id) {
-    return memory_get_trace(trace_id)
-}
-
+func get_trace(trace_id) { return memory_get_trace(trace_id) }
 func reflect(input=nil, opts=nil) {
-    return memory_reflect(input, __default(opts, {}))
+    if opts == nil { opts = {} }
+    return memory_reflect(input, opts)
 }

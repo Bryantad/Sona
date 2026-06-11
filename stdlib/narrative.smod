@@ -1,0 +1,10 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func configure(options) { return experimental_configure(options) }
+func status() { return experimental_status() }
+func frame(event, meaning=nil) {
+    if meaning == nil { meaning = "" }
+    return narrative_frame(event, meaning)
+}
+func steps(event) { return narrative_steps(event) }

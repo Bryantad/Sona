@@ -1,0 +1,65 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+# log.smod
+# Purpose: Deterministic local logging helpers backed by in-process state.
+# Side effects: No filesystem or configuration writes occur unless future sink APIs are explicitly called.
+
+func debug(message, fields=nil) {
+    if fields == nil {
+        fields = {}
+    }
+    return log_debug(message, fields)
+}
+
+func info(message, fields=nil) {
+    if fields == nil {
+        fields = {}
+    }
+    return log_info(message, fields)
+}
+
+func warn(message, fields=nil) {
+    if fields == nil {
+        fields = {}
+    }
+    return log_warn(message, fields)
+}
+
+func error(message, fields=nil) {
+    if fields == nil {
+        fields = {}
+    }
+    return log_error(message, fields)
+}
+
+func event(name, fields=nil) {
+    if fields == nil {
+        fields = {}
+    }
+    return log_event(name, fields)
+}
+
+func set_level(level) {
+    return log_set_level(level)
+}
+
+func get_level() {
+    return log_get_level()
+}
+
+func set_format(mode) {
+    return log_set_format(mode)
+}
+
+func get_format() {
+    return log_get_format()
+}
+
+func clear() {
+    return log_clear()
+}
+
+func format_event(event, mode=nil) {
+    return log_format_event(event, mode)
+}

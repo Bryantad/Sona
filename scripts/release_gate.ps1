@@ -1,5 +1,5 @@
 param(
-    [string]$ExpectedVersion = "0.14.1"
+    [string]$ExpectedVersion = "0.15.0"
 )
 
 Set-StrictMode -Version Latest
@@ -45,10 +45,13 @@ if ($initVersion -ne $ExpectedVersion) {
     throw "sona/__init__.py version '$initVersion' does not match expected '$ExpectedVersion'"
 }
 
-Assert-Exists "RELEASE_NOTES_v0.14.1.md"
+Assert-Exists "RELEASE_NOTES_v0.15.0.md"
 
 Write-Host "Version checks passed ($ExpectedVersion)."
 Write-Host "Running smoke/test gates..."
+
+python tools/validate_release_metadata.py --version $ExpectedVersion
+if ($LASTEXITCODE -ne 0) { throw "validate_release_metadata.py failed with exit code $LASTEXITCODE" }
 
 python -m sona --version
 if ($LASTEXITCODE -ne 0) { throw "python -m sona --version failed with exit code $LASTEXITCODE" }

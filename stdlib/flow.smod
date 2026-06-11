@@ -1,0 +1,18 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func score(metrics) {
+    return flow_score(metrics)
+}
+
+func check(metrics) {
+    return flow_check(metrics)
+}
+
+func suggest(metrics) {
+    return flow_suggest(metrics)
+}
+
+func configure(options) {
+    return flow_configure(options)
+}

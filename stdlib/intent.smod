@@ -1,0 +1,29 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+# intent.smod
+# Purpose: Local in-process intent notes.
+
+func set(name, description) {
+    return intent_set(name, description)
+}
+
+func get(name) {
+    return intent_get(name)
+}
+
+func has(name) {
+    return intent_has(name)
+}
+
+func list() {
+    return intent_list()
+}
+
+func clear(name) {
+    return intent_clear(name)
+}
+
+func clear_all() {
+    return intent_clear_all()
+}

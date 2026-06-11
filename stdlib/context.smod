@@ -1,0 +1,14 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func configure(options) { return experimental_configure(options) }
+func status() { return experimental_status() }
+func pack(title, details=nil) {
+    if details == nil { details = {} }
+    return context_pack(title, details)
+}
+func save(name, details=nil) {
+    if details == nil { details = {} }
+    return context_save(name, details)
+}
+func current(name) { return context_current(name) }

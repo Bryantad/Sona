@@ -1,0 +1,49 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+# color.smod
+# Purpose: Optional ANSI terminal styling that respects terminal capability and NO_COLOR.
+
+func enable() {
+    return color_enable()
+}
+
+func disable() {
+    return color_disable()
+}
+
+func is_enabled() {
+    return color_is_enabled()
+}
+
+func red(value) {
+    return color_red(value)
+}
+
+func green(value) {
+    return color_green(value)
+}
+
+func yellow(value) {
+    return color_yellow(value)
+}
+
+func blue(value) {
+    return color_blue(value)
+}
+
+func bold(value) {
+    return color_bold(value)
+}
+
+func dim(value) {
+    return color_dim(value)
+}
+
+func reset() {
+    return color_reset()
+}
+
+func strip(value) {
+    return color_strip(value)
+}

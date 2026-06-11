@@ -28,7 +28,7 @@ DEFAULT_MANIFEST_NAME = "sona.json"
 DEFAULT_LOCK_NAME = "sona.lock.json"
 DEFAULT_MODULES_DIR = ".sona_modules"
 MANIFEST_SCHEMA_VERSION = 2
-DEFAULT_PROJECT_VERSION = "0.14.1"
+DEFAULT_PROJECT_VERSION = "0.15.0"
 
 
 class SpmError(RuntimeError):
@@ -343,13 +343,24 @@ def generate_catalog(stdlib_path: Path | None = None, output: Path | None = None
 
     manifest = json.loads(manifest_file.read_text(encoding="utf-8"))
 
-    modules_list = manifest.get("modules", [])
     categories = manifest.get("categories", {})
+    try:
+        from .stdlib_manifest import manifest_entries as _canonical_entries
+        modules_list = _canonical_entries()
+        canonical = True
+    except Exception:
+        modules_list = manifest.get("modules", [])
+        canonical = False
 
     # Build catalog entries
     catalog_entries: list[dict[str, Any]] = []
     for module_entry in modules_list:
-        if isinstance(module_entry, str):
+        if canonical and isinstance(module_entry, dict):
+            mod_name = module_entry["name"]
+            source = module_entry.get("source", "legacy")
+            status = module_entry.get("stability", "experimental")
+            user_facing = module_entry.get("user_facing") is not False
+        elif isinstance(module_entry, str):
             mod_name = module_entry
             source = "legacy"
             status = "stable"
@@ -372,11 +383,15 @@ def generate_catalog(stdlib_path: Path | None = None, output: Path | None = None
             "source": source,
         }
 
+        if isinstance(module_entry, dict) and module_entry.get("category"):
+            entry["category"] = module_entry["category"]
+
         # Find category
-        for cat_name, cat_modules in categories.items():
-            if mod_name in cat_modules or mod_name.split(".")[0] in cat_modules:
-                entry["category"] = cat_name
-                break
+        if "category" not in entry:
+            for cat_name, cat_modules in categories.items():
+                if mod_name in cat_modules or mod_name.split(".")[0] in cat_modules:
+                    entry["category"] = cat_name
+                    break
 
         # Check if .smod or .py file exists and extract a short description.
         smod_file = Path(__file__).resolve().parents[1] / "stdlib" / f"{mod_name.replace('.', '/')}.smod"

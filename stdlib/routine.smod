@@ -1,0 +1,26 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func define(name, steps) {
+    return routine_define(name, steps)
+}
+
+func start(name) {
+    return routine_start(name)
+}
+
+func next(step=nil) {
+    return routine_next(step)
+}
+
+func current() {
+    return routine_current()
+}
+
+func complete() {
+    return routine_complete()
+}
+
+func reset() {
+    return routine_reset()
+}

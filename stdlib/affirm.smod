@@ -1,0 +1,24 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func success(message, fields=nil) {
+    if fields == nil { fields = {} }
+    return affirm_success(message, fields)
+}
+
+func milestone(name, details=nil) {
+    if details == nil { details = "" }
+    return affirm_milestone(name, details)
+}
+
+func enabled() {
+    return affirm_enabled()
+}
+
+func enable() {
+    return affirm_enable()
+}
+
+func disable() {
+    return affirm_disable()
+}

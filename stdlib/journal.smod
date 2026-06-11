@@ -1,0 +1,14 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func configure(options) { return experimental_configure(options) }
+func status() { return experimental_status() }
+func entry(prompt, response=nil) {
+    if response == nil { response = "" }
+    return journal_entry(prompt, response)
+}
+func save(prompt, response=nil) {
+    if response == nil { response = "" }
+    return journal_save(prompt, response)
+}
+const recent = journal_recent

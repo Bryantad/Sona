@@ -1,0 +1,28 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+# focus.smod
+# Purpose: Local focus-session state.
+
+func begin(name, description=nil) {
+    if description == nil {
+        description = ""
+    }
+    return focus_begin(name, description)
+}
+
+func current() {
+    return focus_current()
+}
+
+func history() {
+    return focus_history()
+}
+
+func is_active() {
+    return focus_is_active()
+}
+
+func clear() {
+    return focus_clear()
+}

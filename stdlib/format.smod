@@ -1,0 +1,65 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+# format.smod
+# Purpose: Deterministic human-readable output formatting.
+
+func number(value, decimals=nil) {
+    if decimals == nil {
+        decimals = 2
+    }
+    return format_number(value, decimals)
+}
+
+func integer(value) {
+    return format_integer(value)
+}
+
+func percent(value, decimals=nil) {
+    if decimals == nil {
+        decimals = 1
+    }
+    return format_percent(value, decimals)
+}
+
+func pad_left(value, width, fill=nil) {
+    if fill == nil {
+        fill = " "
+    }
+    return format_pad_left(value, width, fill)
+}
+
+func pad_right(value, width, fill=nil) {
+    if fill == nil {
+        fill = " "
+    }
+    return format_pad_right(value, width, fill)
+}
+
+func center(value, width, fill=nil) {
+    if fill == nil {
+        fill = " "
+    }
+    return format_center(value, width, fill)
+}
+
+func table(rows, headers=nil) {
+    if headers == nil {
+        headers = []
+    }
+    return format_table(rows, headers)
+}
+
+func progress(current, total, width=nil) {
+    if width == nil {
+        width = 20
+    }
+    return format_progress(current, total, width)
+}
+
+func truncate(value, width, suffix=nil) {
+    if suffix == nil {
+        suffix = "..."
+    }
+    return format_truncate(value, width, suffix)
+}

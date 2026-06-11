@@ -5,6 +5,73 @@ from __future__ import annotations
 import importlib
 
 
+_SPECIAL_NATIVE_MODULES = {
+    "assert": "native_assertions",
+}
+
+for _accessibility_module in [
+    "simplify",
+    "breadcrumb",
+    "flow",
+    "explain",
+    "pace",
+    "affirm",
+    "chunk",
+    "timer",
+    "noise",
+    "tone",
+    "readability",
+    "linewidth",
+    "mirror",
+    "chunk_read",
+    "contract",
+    "boundary",
+    "routine",
+    "strict",
+    "certainty",
+    "sensory",
+]:
+    _SPECIAL_NATIVE_MODULES[_accessibility_module] = "native_accessibility"
+
+for _experimental_accessibility_module in [
+    "interrupt",
+    "hyperfocus",
+    "priority",
+    "drift",
+    "scaffold",
+    "reentry",
+    "reward",
+    "context",
+    "momentum",
+    "rotate",
+    "start",
+    "alias",
+    "phonetic",
+    "visual",
+    "symbol",
+    "sequence",
+    "memory",
+    "contrast",
+    "template",
+    "spoken",
+    "pattern",
+    "trace",
+    "transition",
+    "detail",
+    "anchor",
+    "overload",
+    "mono",
+    "system",
+    "mastery",
+    "shutdown",
+    "energy",
+    "narrative",
+    "journal",
+    "adapt",
+]:
+    _SPECIAL_NATIVE_MODULES[_experimental_accessibility_module] = "native_accessibility_experimental"
+
+
 class NativeModuleProxy:
     """Expose native module attributes with optional prefix fallback."""
 
@@ -32,12 +99,16 @@ class NativeBridge:
         self._proxy = NativeModuleProxy(self._native, f"{module_name}_")
 
     def _load_native(self, module_name: str):
+        special = _SPECIAL_NATIVE_MODULES.get(module_name)
         candidates = [
+            f"sona.stdlib.{special}" if special else "",
             f"sona.stdlib.native_{module_name}",
             f"sona.stdlib.{module_name}",
         ]
         last_error = None
         for candidate in candidates:
+            if not candidate:
+                continue
             try:
                 return importlib.import_module(candidate)
             except Exception as exc:

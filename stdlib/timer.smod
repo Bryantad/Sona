@@ -1,0 +1,32 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func start(name, minutes) {
+    return timer_start(name, minutes)
+}
+
+func remaining() {
+    return timer_remaining()
+}
+
+func elapsed() {
+    return timer_elapsed()
+}
+
+func check() {
+    return timer_check()
+}
+
+func pause() {
+    return timer_pause()
+}
+
+func resume() {
+    return timer_resume()
+}
+
+const stop = timer_stop
+
+func history() {
+    return timer_history()
+}

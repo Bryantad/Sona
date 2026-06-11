@@ -1,6 +1,6 @@
 # Sona Official Examples
 
-These examples are the stable `0.14.x` onboarding surface for docs and tests.
+These examples are the stable `0.15.x` onboarding surface for docs and tests.
 Do not rename or remove them without updating `docs/QUICKSTART.md`,
 `docs/STDLIB_REFERENCE.md`, and the example tests.
 

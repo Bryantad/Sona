@@ -1,0 +1,26 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func set_level(level) {
+    return noise_set_level(level)
+}
+
+func current_level() {
+    return noise_current_level()
+}
+
+func filter(events) {
+    return noise_filter(events)
+}
+
+func allow(scope) {
+    return noise_allow(scope)
+}
+
+func block(scope) {
+    return noise_block(scope)
+}
+
+func reset() {
+    return noise_reset()
+}

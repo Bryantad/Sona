@@ -1,0 +1,30 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func require(condition, message) {
+    return contract_require(condition, message)
+}
+
+func ensure(condition, message) {
+    return contract_ensure(condition, message)
+}
+
+func type(value, expected, name=nil) {
+    if name == nil { name = "" }
+    return contract_type(value, expected, name)
+}
+
+func range(value, minimum, maximum, name=nil) {
+    if name == nil { name = "" }
+    return contract_range(value, minimum, maximum, name)
+}
+
+func non_empty(value, name=nil) {
+    if name == nil { name = "" }
+    return contract_non_empty(value, name)
+}
+
+func equal(actual, expected, message=nil) {
+    if message == nil { message = "" }
+    return contract_equal(actual, expected, message)
+}

@@ -1,0 +1,10 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func configure(options) { return experimental_configure(options) }
+func status() { return experimental_status() }
+func highlight(text, term) { return visual_highlight(text, term) }
+func spacing(text, spaces=nil) {
+    if spaces == nil { spaces = 1 }
+    return visual_spacing(text, spaces)
+}

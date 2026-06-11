@@ -90,26 +90,30 @@ def _stdlib_manifest() -> dict:
 
 
 def _stdlib_modules() -> list[str]:
-    modules = _stdlib_manifest().get("modules", [])
-    result: list[str] = []
-    if isinstance(modules, list):
-        for module in modules:
-            if isinstance(module, str):
-                name = module
-                user_facing = True
-            elif isinstance(module, dict) and isinstance(module.get("name"), str):
-                name = module["name"]
-                user_facing = module.get("user_facing") is not False
-            else:
-                continue
-            if not user_facing:
-                continue
-            if name in {"intrinsics", "native_intrinsics", "native_bridge"}:
-                continue
-            if name.startswith("native_"):
-                continue
-            result.append(name)
-    return result
+    try:
+        from .stdlib_manifest import user_module_names
+    except Exception:
+        modules = _stdlib_manifest().get("modules", [])
+        result: list[str] = []
+        if isinstance(modules, list):
+            for module in modules:
+                if isinstance(module, str):
+                    name = module
+                    user_facing = True
+                elif isinstance(module, dict) and isinstance(module.get("name"), str):
+                    name = module["name"]
+                    user_facing = module.get("user_facing") is not False
+                else:
+                    continue
+                if not user_facing:
+                    continue
+                if name in {"intrinsics", "native_intrinsics", "native_bridge"}:
+                    continue
+                if name.startswith("native_"):
+                    continue
+                result.append(name)
+        return result
+    return user_module_names()
 
 
 def _pos(line_1: int, col_1: int) -> Position:
@@ -304,7 +308,7 @@ if _PYGLS_AVAILABLE:
 
     class SonaLsp(LanguageServer):
         def __init__(self):
-            super().__init__("sona-lsp", "0.14.1")
+            super().__init__("sona-lsp", "0.15.0")
             self._parser = _make_parser()
 
         def validate(self, uri: str, text: str) -> None:

@@ -18,6 +18,14 @@ func today(tz=nil) {
 	return date_today(__default(tz, nil))
 }
 
+func now(tz=nil) {
+	return date_now(__default(tz, nil))
+}
+
+func utcnow() {
+	return date_utcnow()
+}
+
 func yesterday(tz=nil) {
 	return date_yesterday(__default(tz, nil))
 }
@@ -28,6 +36,10 @@ func tomorrow(tz=nil) {
 
 func from_timestamp(value, tz=nil) {
 	return date_from_timestamp(value, __default(tz, nil))
+}
+
+func fromtimestamp(value, tz=nil) {
+	return date_fromtimestamp(value, __default(tz, nil))
 }
 
 func parse(value, tz=nil) {
