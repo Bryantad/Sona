@@ -27,6 +27,12 @@ unchanged.
   - Local audit history.
 - `python -m sona probe stdlib` now uses static manifest metadata and remains
   under the 5 second performance gate on the reference machine.
+- `profile.smod` now applies selected cognitive-accessibility presets to the
+  actual runtime-backed modules for pacing, noise filtering, flow thresholds,
+  line width, readability, strict checks, and sensory text transformation.
+- Sona `0.15.0` includes formal roadmap documentation for native compiler
+  independence while remaining explicit that the release still uses the
+  Python-backed runtime.
 
 ## Safety Notes
 
@@ -51,11 +57,21 @@ by existing local primitives:
 - Provenance attestations.
 - Secure update metadata.
 
+## Roadmap Scope
+
+Sona `0.15.0` does not complete Python independence, LLVM code generation,
+standalone native binaries, native memory management, package registry
+publishing, production-ready LSP completion, formatter support, debugger
+support, or a full benchmark suite. Those are staged roadmap items documented
+under `docs/roadmap/`, `docs/compiler/`, `docs/spm/`, and `docs/devex/`.
+
 ## Validation
 
 The release ledger is maintained in
 `docs/release/0.15.0-validation-ledger.md`. The module inventory is documented
-in `docs/release/0.15.0-module-matrix.md`.
+in `docs/release/0.15.0-module-matrix.md`. User-facing accessibility and
+Guardian behavior is documented in `docs/ACCESSIBILITY_REFERENCE.md` and
+`docs/GUARDIAN_REFERENCE.md`.
 
 Required final validation:
 
@@ -80,8 +96,8 @@ not the repository root.
 
 Final validation results:
 
-- `python -m pytest -q tests`: 114 passed, 2 warnings.
-- `python -m sona probe stdlib`: static manifest mode, median 0.139s across
+- `python -m pytest -q tests`: 144 passed, 2 warnings.
+- `python -m sona probe stdlib`: static manifest mode, median 0.122s across
   three final runs.
 - `python tools/run_examples.py`: 9 examples passed.
 - `python -m twine check --strict dist-pypi-0.15.0/*`: passed.
@@ -93,10 +109,10 @@ Final validation results:
 
 ```text
 sona_lang-0.15.0-py3-none-any.whl
-Size: 552413 bytes
-SHA-256: e541c222c64820bd49018633e6173529360f6aec3bcdd2e884deae7b500c3c5a
+Size: 554171 bytes
+SHA-256: 9eb221cced7feca3387a329395ef6a1adb065681ace9046514b69ffef34e488e
 
 sona_lang-0.15.0.tar.gz
-Size: 458750 bytes
-SHA-256: 249059de41bd56935d7f0829e7659a54fdeb09a725e87c443cf03c9fd46f8f08
+Size: 459481 bytes
+SHA-256: 3af93d9232335cc96d99da3f5fa710f2af82c195a31f53942c52234f9d7da827
 ```

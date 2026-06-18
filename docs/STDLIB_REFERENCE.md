@@ -26,17 +26,25 @@ JSON-compatible data.
 
 | Module | Purpose |
 | --- | --- |
+| `assert` | Run dedicated testing assertions. |
+| `color` | Apply optional ANSI terminal styling. |
 | `csv` | Parse, validate, and write comma-separated value data. |
 | `date` | Work with ISO dates, calendar boundaries, and date differences. |
 | `env` | Read and write process environment values. |
+| `focus` | Track local in-memory focus sessions. |
+| `format` | Produce deterministic human-readable output formatting. |
 | `fs` | Inspect and manipulate filesystem paths. |
 | `hashing` | Create deterministic digests for strings and byte-like data. |
+| `intent` | Track local in-process intent notes. |
 | `io` | Read from and write to text files. |
 | `json` | Parse, validate, and serialize JSON-compatible data. |
+| `log` | Use deterministic local logging helpers. |
 | `math` | Use numeric helpers and common math operations. |
 | `path` | Normalize, join, and inspect path strings. |
+| `pipe` | Use functional pipeline helpers. |
 | `string` | Transform and inspect text. |
 | `time` | Read clocks, timestamps, and durations. |
+| `url` | Parse, build, encode, and decode URL values. |
 | `queue` | Use a Sona-authored FIFO queue. |
 | `stack` | Use a Sona-authored LIFO stack. |
 | `sort` | Sort values with Sona-authored loop implementations. |
@@ -349,6 +357,40 @@ print(time.now());
 
 ### Notes
 Time results vary by clock and timezone.
+
+## Cognitive Profile Presets
+
+### Status
+Stable
+
+### Purpose
+`profile` selects local cognitive-accessibility support presets. Presets are
+explicit user choices, not diagnoses, and they do not persist state by default.
+
+### Functions
+`available()`, `activate(name)`, `activate_many(names)`, `current()`,
+`configure(options)`, `reset()`.
+
+### Runtime Effects
+
+- `cross-profile`: guided pacing and conservative flow thresholds.
+- `adhd`: guided pacing, focused noise filtering, and lower flow-switch
+  tolerance.
+- `dyslexia`: guided pacing, 72-character line width, and shorter identifier
+  readability threshold.
+- `autism`: guided pacing, strict checks enabled, and low-stimulation sensory
+  text transformation enabled.
+- `low-stimulation`: low-stimulation pacing, minimal noise filtering, and
+  sensory text transformation enabled.
+- `custom`: no automatic preset changes; explicit `configure` options apply.
+
+`profile.current()` reports the active preset names, preserved options, a
+runtime snapshot for `pace`, `noise`, `linewidth`, `readability`, `strict`,
+`sensory`, and `flow`, plus `local_only: true` and `persistent: false`.
+
+### Notes
+Known runtime options are validated before mutation. Unknown options are
+preserved for compatibility but do not change runtime state.
 
 ## Sona-Native Foundation Modules
 

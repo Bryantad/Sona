@@ -80,8 +80,11 @@ files.
 - [Quickstart](docs/QUICKSTART.md)
 - [Language Reference](docs/LANGUAGE_REFERENCE.md)
 - [Standard Library Reference](docs/STDLIB_REFERENCE.md)
+- [Accessibility Reference](docs/ACCESSIBILITY_REFERENCE.md)
+- [Guardian Reference](docs/GUARDIAN_REFERENCE.md)
 - [Diagnostics Guide](docs/errors/v0.14-diagnostics.md)
 - [Package Manifest](docs/packages/manifest.md)
+- [Native Independence Roadmap](docs/roadmap/SONA_NATIVE_INDEPENDENCE.md)
 - [Release Notes](RELEASE_NOTES_v0.15.0.md)
 
 ## Official Examples

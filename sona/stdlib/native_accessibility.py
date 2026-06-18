@@ -109,16 +109,22 @@ def breadcrumb_format(mode: Any = "plain") -> str:
 
 def flow_score(metrics: Any) -> float:
     data = metrics if isinstance(metrics, dict) else {}
-    switches = float(data.get("context_switches", 0))
-    errors = float(data.get("errors", 0))
+    switches = float(data.get("context_switches", data.get("task_switches", 0)))
+    errors = float(data.get("errors", data.get("interruptions", 0)))
     completed = float(data.get("completed_steps", 0))
-    score = 1.0 - min(1.0, (switches / 10.0) + (errors / 10.0)) + min(0.25, completed / 20.0)
+    max_switches = max(1.0, float(_flow_options.get("max_switches", 5)))
+    max_errors = max(1.0, float(_flow_options.get("max_errors", 3)))
+    pressure = min(
+        1.0,
+        (switches / max_switches * 0.5) + (errors / max_errors * 0.5),
+    )
+    score = 1.0 - pressure + min(0.25, completed / 20.0)
     return round(max(0.0, min(1.0, score)), 3)
 
 
 def flow_check(metrics: Any) -> dict[str, Any]:
     score = flow_score(metrics)
-    return {"score": score, "ok": score >= 0.6}
+    return {"score": score, "ok": score >= float(_flow_options.get("min_score", 0.6))}
 
 
 def flow_suggest(metrics: Any) -> list[str]:
