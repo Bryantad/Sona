@@ -9,11 +9,9 @@ accessibility.
 [![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue.svg)](https://www.python.org/)
 [![Package](https://img.shields.io/badge/package-sona--lang-blue)](https://pypi.org/project/sona-lang/)
 [![License](https://img.shields.io/github/license/Bryantad/Sona)](LICENSE)
-
-[![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/Waycoreinc.sona-receipt-explorer?label=VS%20Code%20Marketplace\&logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=Waycoreinc.sona-receipt-explorer)
-[![VS Code Installs](https://img.shields.io/visual-studio-marketplace/i/Waycoreinc.sona-receipt-explorer?label=VS%20Code%20installs\&logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=Waycoreinc.sona-receipt-explorer)
+[![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/Waycoreinc.sona-ai-native-programming?label=VS%20Code%20Marketplace&logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=Waycoreinc.sona-ai-native-programming)
+[![VS Code Installs](https://img.shields.io/visual-studio-marketplace/i/Waycoreinc.sona-ai-native-programming?label=VS%20Code%20installs&logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=Waycoreinc.sona-ai-native-programming)
 [![YouTube](https://img.shields.io/badge/YouTube-Sona-red?logo=youtube&logoColor=white)](https://www.youtube.com/@LearnSonaLang)
-[![X](https://img.shields.io/badge/X-@YOUR_HANDLE-black?logo=x\&logoColor=white)](https://x.com/YOUR_HANDLE)
 [![GitHub Sponsors](https://img.shields.io/badge/GitHub%20Sponsors-Sponsor-ea4aaa?logo=githubsponsors\&logoColor=white)](https://github.com/sponsors/Bryantad)
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-Support-ff5e5b?logo=kofi\&logoColor=white)](https://ko-fi.com/YOUR_HANDLE)
 
