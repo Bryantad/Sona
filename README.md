@@ -5,7 +5,6 @@ clear execution, readable diagnostics, deterministic examples, and cognitive
 accessibility.
 
 [![Source Version](https://img.shields.io/github/v/tag/Bryantad/Sona?label=source&sort=semver)](https://github.com/Bryantad/Sona/tags)
-[![CI](https://github.com/Bryantad/Sona/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Bryantad/Sona/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/github/license/Bryantad/Sona)](LICENSE)
 
