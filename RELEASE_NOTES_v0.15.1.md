@@ -325,14 +325,25 @@ dependency stack.
 ## Artifact Hashes
 
 ```text
+sona_lang-0.15.1-py3-none-any.whl
+Path: dist-pypi-0.15.1/sona_lang-0.15.1-py3-none-any.whl
+Size: 561373 bytes
+SHA-256: 1457e247a50c0ce2f3acae12424c4a6303c841adb1d813c61cbb1b2cc15d532a
+
+sona_lang-0.15.1.tar.gz
+Path: dist-pypi-0.15.1/sona_lang-0.15.1.tar.gz
+Size: 466895 bytes
+SHA-256: f0b357aa60fe80c293607995026be925d78f2e2bcbfde1d1511ec6ce729a8b27
+
 sona-ai-native-programming-0.15.1.vsix
 Path: vscode-extension/sona-ai-native-programming-0.15.1.vsix
 Size: 1183192 bytes
 SHA-256: CBEF61B66E82D0D855830CF35501117D4BED5829EE87CF31312FA2DB09971426
 ```
 
-VSIX archive inspection confirmed no source maps and no nested VSIX payloads in
-the packaged extension.
+PyPI archive inspection, clean wheel install, clean sdist install, Guardian
+smoke checks, and `twine check --strict` passed. VSIX archive inspection
+confirmed no source maps and no nested VSIX payloads in the packaged extension.
 
 ## Explicit Release Boundaries
 
