@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.15.1
+
+- Restored manual and Azure AI setup loading.
+- Added local Ollama/Qwen setup with installed model auto-detection.
+- Kept `sona explain` and `sona suggest` fast by default with local static
+  analysis; model-backed output is opt-in through `--ai`.
+- Added the preview Sona AI Console VS Code sidebar view with selectable
+  provider-ready agent modes.
+- Rebuilt the primary VS Code extension package for `0.15.1`.
+
 ## 0.15.0
 
 - Added the cognitive-accessibility runtime foundation with 55 public modules:

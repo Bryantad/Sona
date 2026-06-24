@@ -1,5 +1,5 @@
 """
-Sona v0.15.0 Command Line Interface with AI Integration
+Sona v0.15.1 Command Line Interface with AI Integration
 
 Enhanced CLI with profile, benchmark, suggest, and explain commands
 powered by GPT-2 and cognitive assistance features.
@@ -178,20 +178,20 @@ def safe_print(*args, **kwargs):
         text = " ".join(str(a) for a in args)
         # Replace common emoji with ASCII equivalents
         replacements = {
-            '\U0001f680': '[ROCKET]',  # 🚀
-            '\u2705': '[OK]',          # ✅
-            '\u274c': '[ERROR]',       # ❌
-            '\U0001f916': '[AI]',      # 🤖
-            '\U0001f4d6': '[INFO]',    # 📖
-            '\U0001f50d': '[DEBUG]',   # 🔍
-            '\U0001f504': '[INFO]',    # 🔄
-            '\u26a0\ufe0f': '[WARN]',  # ⚠️
-            '\u26a0': '[WARN]',        # ⚠
-            '\U0001f44b': '[BYE]',     # 👋
-            '\U0001f3e5': '[INFO]',    # 🏥
-            '\U0001f4ca': '[INFO]',    # 📊
-            '\u2139\ufe0f': '[INFO]',  # ℹ️
-            '\u2139': '[INFO]',        # ℹ
+            '\U0001f680': '[ROCKET]',  # rocket
+            '\u2705': '[OK]',          # check mark
+            '\u274c': '[ERROR]',       # cross mark
+            '\U0001f916': '[AI]',      # robot
+            '\U0001f4d6': '[INFO]',    # open book
+            '\U0001f50d': '[DEBUG]',   # magnifying glass
+            '\U0001f504': '[INFO]',    # refresh
+            '\u26a0\ufe0f': '[WARN]',  # warning
+            '\u26a0': '[WARN]',        # warning
+            '\U0001f44b': '[BYE]',     # wave
+            '\U0001f3e5': '[INFO]',    # hospital
+            '\U0001f4ca': '[INFO]',    # chart
+            '\u2139\ufe0f': '[INFO]',  # info
+            '\u2139': '[INFO]',        # info
         }
         for emoji, replacement in replacements.items():
             text = text.replace(emoji, replacement)
@@ -838,7 +838,7 @@ ENHANCED_COMMANDS = None  # lazy-loaded mapping
 
 
 # Version information
-SONA_VERSION = "0.15.0"
+SONA_VERSION = "0.15.1"
 AI_FEATURES_VERSION = "1.0.0"
 DEFAULT_OFFLINE_MODEL = "qwen2.5-coder:7b"
 
@@ -867,7 +867,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
     """Create the main argument parser for Sona CLI"""
     parser = SonaArgumentParser(
         prog='sona',
-        description='Sona Cognitive Programming Language v0.15.0',
+        description='Sona Cognitive Programming Language v0.15.1',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
             "Usage:\n"
@@ -1023,6 +1023,11 @@ def create_argument_parser() -> argparse.ArgumentParser:
         action='store_true',
         help='Focus on accessibility suggestions',
     )
+    suggest_parser.add_argument(
+        '--ai',
+        action='store_true',
+        help='Use the configured AI backend; default is fast local analysis',
+    )
 
     # Explain command
     explain_parser = subparsers.add_parser(
@@ -1035,6 +1040,11 @@ def create_argument_parser() -> argparse.ArgumentParser:
         choices=['simple', 'detailed', 'cognitive'],
         default='simple',
         help='Explanation style',
+    )
+    explain_parser.add_argument(
+        '--ai',
+        action='store_true',
+        help='Use the configured AI backend; default is fast local analysis',
     )
 
     # Info command
@@ -2028,7 +2038,7 @@ def handle_repl_command(args) -> int:
         from sona.interpreter import SonaInterpreter
         interpreter = SonaInterpreter()
 
-        safe_print("Sona REPL v0.15.0 - Type 'exit' to quit")
+        safe_print("Sona REPL v0.15.1 - Type 'exit' to quit")
         if args.ai:
             try:
                 interpreter.enable_ai()
@@ -2097,8 +2107,12 @@ def handle_enhanced_command(command: str, args) -> int:
                 arg_list.append('--performance')
             if getattr(args, 'accessibility', False):
                 arg_list.append('--accessibility')
+            if getattr(args, 'ai', False):
+                arg_list.append('--ai')
         elif command == 'explain' and hasattr(args, 'style'):
             arg_list.extend(['--style', args.style])
+            if getattr(args, 'ai', False):
+                arg_list.append('--ai')
 
         result = cmds[command](arg_list)  # type: ignore[index]
         return result if isinstance(result, int) else 0

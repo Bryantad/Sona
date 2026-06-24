@@ -1,8 +1,8 @@
 {
-  "version": "0.15.0",
+  "version": "0.15.1",
   "stdlib_cap": 145,
   "manifest_hash": "0150_cognitive_runtime_guardian",
-  "description": "Sona v0.15.0 Standard Library - Cognitive Runtime and Guardian Resilience Layer",
+  "description": "Sona v0.15.1 Standard Library - Cognitive Runtime and Guardian Resilience Layer",
   "modules": [
     {"name": "assert", "source": "intrinsic", "stability": "stable", "category": "testing", "profiles": [], "requires_native": true, "local_only": true, "side_effects": [], "description": "Dedicated testing assertions.", "preload": false},
     {"name": "async", "source": "intrinsic", "stability": "preview", "preload": false},

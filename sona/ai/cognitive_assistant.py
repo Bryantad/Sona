@@ -8,15 +8,12 @@ Provides executive function support, attention management, and cognitive load mo
 import time
 from typing import Any, Dict, List, Optional
 
-from .ai_backend import get_ai_backend
-
-
 class CognitiveAssistant:
     """AI-powered cognitive assistant for neurodivergent programming"""
     
     def __init__(self):
         """Initialize cognitive assistant"""
-        self.gpt2 = get_ai_backend()
+        self.gpt2 = None
         self.session_start = time.time()
         self.typing_patterns = []
         self.break_history = []
@@ -27,6 +24,13 @@ class CognitiveAssistant:
             'hyperfocus_threshold': 90,  # minutes
             'preferred_break_type': 'gentle'
         }
+
+    def _get_backend(self):
+        if self.gpt2 is None:
+            from .ai_backend import get_ai_backend
+
+            self.gpt2 = get_ai_backend()
+        return self.gpt2
     
     def analyze_working_memory(self, current_task: str, context: str) -> dict[str, Any]:
         """Analyze working memory load and provide suggestions"""
@@ -231,7 +235,9 @@ class CognitiveAssistant:
         
         # Use AI for personalized suggestions
         try:
-            ai_suggestion = self.gpt2.suggest_improvements(f"Task: {task}\nLoad: {load}")
+            ai_suggestion = self._get_backend().suggest_improvements(
+                f"Task: {task}\nLoad: {load}"
+            )
             if ai_suggestion and len(ai_suggestion) < 100:
                 suggestions.append(ai_suggestion)
         except:
@@ -307,7 +313,11 @@ class CognitiveAssistant:
     def _get_ai_break_suggestion(self, cognitive_state: str) -> str | None:
         """Get AI-powered break suggestion"""
         prompt = f"Suggest a {cognitive_state} cognitive load break activity for a programmer:"
-        suggestions = self.gpt2.generate_completion(prompt, max_new_tokens=20, temperature=0.7)
+        suggestions = self._get_backend().generate_completion(
+            prompt,
+            max_new_tokens=20,
+            temperature=0.7,
+        )
         
         if suggestions and suggestions[0]:
             return suggestions[0].strip()
@@ -327,7 +337,7 @@ class CognitiveAssistant:
         """Use AI to break down complex tasks"""
         prompt = f"Break down this programming task into subtasks:\n{task}\nSubtasks:"
         
-        breakdown_text = self.gpt2.generate_completion(
+        breakdown_text = self._get_backend().generate_completion(
             prompt, 
             max_new_tokens=100, 
             temperature=0.6

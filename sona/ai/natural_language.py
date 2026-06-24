@@ -8,15 +8,13 @@ AI-powered explanations and documentation generation.
 import re
 from typing import Dict, List
 
-from .ai_backend import get_ai_backend
-
 
 class NaturalLanguageProcessor:
     """Natural language to code converter and explainer"""
     
     def __init__(self):
         """Initialize natural language processor"""
-        self.gpt2 = get_ai_backend()
+        self.gpt2 = None
         self.code_patterns = {
             'create_function': r'create|make|build.*function',
             'process_data': r'process|handle|work with.*data',
@@ -25,6 +23,13 @@ class NaturalLanguageProcessor:
             'conditional': r'if|when|check if',
             'store_data': r'save|store|keep.*data'
         }
+
+    def _get_backend(self):
+        if self.gpt2 is None:
+            from .ai_backend import get_ai_backend
+
+            self.gpt2 = get_ai_backend()
+        return self.gpt2
         
     def text_to_code(self, description: str, target_language: str = 'sona') -> dict[str, str]:
         """Convert natural language description to code
@@ -124,8 +129,8 @@ class NaturalLanguageProcessor:
         
         # Use AI for additional suggestions
         try:
-            ai_suggestions = self.gpt2.suggest_improvements(current_code)
-            if ai_suggestions:
+            ai_suggestions = self._get_backend().suggest_improvements(current_code)
+            if ai_suggestions and not ai_suggestions.startswith("Error:"):
                 suggestions.extend(ai_suggestions.split('\n')[:2])
         except:
             pass
@@ -279,9 +284,9 @@ class NaturalLanguageProcessor:
         """Use AI to generate code from description"""
         try:
             prompt = f"Convert this to {language} code: {description}\n\nCode:\n"
-            ai_code = self.gpt2.natural_language_to_code(description, language)
+            ai_code = self._get_backend().natural_language_to_code(description, language)
             
-            if ai_code and not ai_code.startswith("# Unable"):
+            if ai_code and not ai_code.startswith("# Unable") and not ai_code.startswith("Error:"):
                 return ai_code
         except:
             pass
@@ -367,8 +372,8 @@ class NaturalLanguageProcessor:
         
         # Add AI explanation
         try:
-            ai_explanation = self.gpt2.explain_code(code)
-            if ai_explanation:
+            ai_explanation = self._get_backend().explain_code(code)
+            if ai_explanation and not ai_explanation.startswith("Error:"):
                 explanation += f"\nDetailed explanation: {ai_explanation}"
         except:
             pass
@@ -378,9 +383,28 @@ class NaturalLanguageProcessor:
     def _generate_simple_explanation(self, code: str) -> str:
         """Generate simple code explanation"""
         try:
-            return self.gpt2.explain_code(code)
+            explanation = self._get_backend().explain_code(code)
+            if explanation and not explanation.startswith("Error:"):
+                return explanation
         except:
-            return "This code performs a programming task."
+            pass
+        return self._fallback_simple_explanation(code)
+
+    def _fallback_simple_explanation(self, code: str) -> str:
+        """Generate a deterministic explanation without an AI backend."""
+        parts = ["This code performs a programming task."]
+        functions = re.findall(r'\b(?:func|function|def)\s+(\w+)', code)
+        if functions:
+            parts.append(f"It defines function(s): {', '.join(functions[:5])}.")
+        if "print(" in code:
+            parts.append("It prints output for the user.")
+        if "return" in code:
+            parts.append("At least one function returns a computed value.")
+        if "if" in code:
+            parts.append("It includes conditional decision logic.")
+        if "for" in code or "while" in code:
+            parts.append("It includes repeated work through a loop.")
+        return " ".join(parts)
     
     def _generate_detailed_explanation(self, code: str) -> str:
         """Generate detailed code explanation"""

@@ -1,5 +1,5 @@
 param(
-    [string]$ExpectedVersion = "0.15.0"
+    [string]$ExpectedVersion = "0.15.1"
 )
 
 Set-StrictMode -Version Latest

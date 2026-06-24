@@ -1,5 +1,5 @@
 param(
-    [string]$ExpectedVersion = "0.15.0"
+    [string]$ExpectedVersion = "0.15.1"
 )
 
 Set-StrictMode -Version Latest
@@ -45,7 +45,7 @@ if ($initVersion -ne $ExpectedVersion) {
     throw "sona/__init__.py version '$initVersion' does not match expected '$ExpectedVersion'"
 }
 
-Assert-Exists "RELEASE_NOTES_v0.15.0.md"
+Assert-Exists "RELEASE_NOTES_v0.15.1.md"
 
 Write-Host "Version checks passed ($ExpectedVersion)."
 Write-Host "Running smoke/test gates..."

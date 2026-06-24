@@ -9,7 +9,7 @@ accessibility.
 [![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/github/license/Bryantad/Sona)](LICENSE)
 
-Current release: `0.15.0`
+Current release: `0.15.1`
 
 ## What Sona Provides
 
@@ -36,7 +36,7 @@ sona --version
 Expected output shape:
 
 ```text
-Sona 0.15.0
+Sona 0.15.1
 ```
 
 ## First Run
@@ -85,7 +85,7 @@ files.
 - [Diagnostics Guide](docs/errors/v0.14-diagnostics.md)
 - [Package Manifest](docs/packages/manifest.md)
 - [Native Independence Roadmap](docs/roadmap/SONA_NATIVE_INDEPENDENCE.md)
-- [Release Notes](RELEASE_NOTES_v0.15.0.md)
+- [Release Notes](RELEASE_NOTES_v0.15.1.md)
 
 ## Official Examples
 

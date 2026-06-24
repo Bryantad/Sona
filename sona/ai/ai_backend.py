@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 _AI_BACKEND: Any | None = None
+_ENV_LOADED = False
 
 
 def _normalize_choice(value: str | None) -> str | None:
@@ -44,9 +45,23 @@ def _init_gpt2():
     return GPT2Integration()
 
 
+def _load_workspace_env_once() -> None:
+    global _ENV_LOADED
+    if _ENV_LOADED:
+        return
+    _ENV_LOADED = True
+    try:
+        from sona.stdlib.env import load_dotenv
+
+        load_dotenv(Path.cwd() / ".env", override=False)
+    except Exception:
+        return
+
+
 def get_ai_backend(preferred: str | None = None):
     """Return the active AI backend instance (singleton)."""
     global _AI_BACKEND
+    _load_workspace_env_once()
     if _AI_BACKEND is not None:
         return _AI_BACKEND
 
@@ -63,7 +78,11 @@ def get_ai_backend(preferred: str | None = None):
     try:
         from .local_models import DEFAULT_OLLAMA_MODEL, ensure_local_model
 
-        status = ensure_local_model(model_env or DEFAULT_OLLAMA_MODEL, quiet=True)
+        status = ensure_local_model(
+            model_env or DEFAULT_OLLAMA_MODEL,
+            quiet=True,
+            timeout=0.25,
+        )
     except Exception:
         status = None
 
@@ -91,5 +110,6 @@ def get_ai_backend(preferred: str | None = None):
 
 def reset_ai_backend() -> None:
     """Reset the cached backend instance."""
-    global _AI_BACKEND
+    global _AI_BACKEND, _ENV_LOADED
     _AI_BACKEND = None
+    _ENV_LOADED = False

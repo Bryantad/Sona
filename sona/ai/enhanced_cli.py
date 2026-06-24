@@ -6,6 +6,7 @@ suggest, and explain with cognitive assistance features.
 """
 
 import time
+import os
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -176,28 +177,40 @@ def benchmark_command(args: list[str]) -> int:
 def suggest_command(args: list[str]) -> int:
     """Sona suggest command - AI-powered code suggestions"""
     if not args:
-        print("Usage: sona suggest <file.sona> [--cognitive] [--performance] [--accessibility]")
+        print("Usage: sona suggest <file.sona> [--cognitive] [--performance] [--accessibility] [--ai]")
         return 1
 
     file_path = args[0]
     cognitive = "--cognitive" in args
     performance = "--performance" in args
     accessibility = "--accessibility" in args
+    use_ai = _use_ai_backend(args)
 
     if not Path(file_path).exists():
         print(f"[ERROR] File not found: {file_path}")
         return 1
 
-    modules = _require_ai()
-    if modules is None:
-        return 1
-
-    print(f"[INFO] Generating AI suggestions for: {file_path}")
+    mode_label = "AI" if use_ai else "local"
+    print(f"[INFO] Generating {mode_label} suggestions for: {file_path}")
     print("=" * 50)
 
     try:
         with open(file_path, encoding='utf-8') as f:
             code_content = f.read()
+
+        if not use_ai:
+            suggestions = generate_static_suggestions(
+                code_content,
+                cognitive=cognitive,
+                performance=performance,
+                accessibility=accessibility,
+            )
+            display_suggestions(suggestions)
+            return 0
+
+        modules = _require_ai()
+        if modules is None:
+            return 1
 
         # Initialize AI components
         gpt2 = modules['get_ai_backend']()
@@ -235,11 +248,12 @@ def suggest_command(args: list[str]) -> int:
 def explain_command(args: list[str]) -> int:
     """Sona explain command - AI code explanation"""
     if not args:
-        print("Usage: sona explain <file.sona> [--style simple|detailed|cognitive]")
+        print("Usage: sona explain <file.sona> [--style simple|detailed|cognitive] [--ai]")
         return 1
 
     file_path = args[0]
     style = "simple"
+    use_ai = _use_ai_backend(args)
 
     # Parse style argument
     for i, arg in enumerate(args):
@@ -251,17 +265,22 @@ def explain_command(args: list[str]) -> int:
         print(f"[ERROR] File not found: {file_path}")
         return 1
 
-    modules = _require_ai()
-    if modules is None:
-        return 1
-
-    print(f"[INFO] Explaining code: {file_path}")
+    mode_label = "AI" if use_ai else "local"
+    print(f"[INFO] Explaining code ({mode_label}): {file_path}")
     print(f"Style: {style}")
     print("=" * 50)
 
     try:
         with open(file_path, encoding='utf-8') as f:
             code_content = f.read()
+
+        if not use_ai:
+            print(generate_static_explanation(code_content, style))
+            return 0
+
+        modules = _require_ai()
+        if modules is None:
+            return 1
 
         # Initialize NLP processor
         nlp = modules['NaturalLanguageProcessor']()
@@ -289,6 +308,18 @@ def explain_command(args: list[str]) -> int:
 
 # Helper functions
 
+def _use_ai_backend(args: list[str]) -> bool:
+    """Return True only when slow/model-backed AI is explicitly requested."""
+    if "--ai" in args:
+        return True
+    return os.getenv("SONA_ENHANCED_CLI_AI", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
 def analyze_code_structure(code: str) -> dict[str, Any]:
     """Analyze basic code structure"""
     lines = code.split('\n')
@@ -297,7 +328,7 @@ def analyze_code_structure(code: str) -> dict[str, Any]:
     return {
         'total_lines': len(lines),
         'code_lines': len(non_empty_lines),
-        'functions': code.count('function ') + code.count('def '),
+        'functions': len(_extract_function_names(code)),
         'classes': code.count('class '),
         'loops': code.count('for ') + code.count('while '),
         'conditionals': code.count('if ') + code.count('elif '),
@@ -308,6 +339,116 @@ def analyze_code_structure(code: str) -> dict[str, Any]:
             + code.count('focus(')
         ),
     }
+
+
+def generate_static_explanation(code: str, style: str = "simple") -> str:
+    """Generate a deterministic explanation without initializing AI backends."""
+    analysis = analyze_code_structure(code)
+    parts = ["This code performs a Sona programming task."]
+
+    function_names = _extract_function_names(code)
+    if function_names:
+        parts.append(f"It defines function(s): {', '.join(function_names[:5])}.")
+    if "import " in code:
+        parts.append("It imports one or more modules before running the main work.")
+    if "print(" in code:
+        parts.append("It prints output for the user.")
+    if "return" in code:
+        parts.append("At least one function returns a computed value.")
+    if analysis['conditionals']:
+        parts.append("It includes conditional decision logic.")
+    if analysis['loops']:
+        parts.append("It includes repeated work through a loop.")
+
+    explanation = " ".join(parts)
+    if style in {"detailed", "cognitive"}:
+        explanation += "\n\nCode structure:"
+        explanation += f"\n- {analysis['code_lines']} non-empty line(s)"
+        explanation += f"\n- {analysis['functions']} function definition(s)"
+        explanation += f"\n- {analysis['loops']} loop(s)"
+        explanation += f"\n- {analysis['conditionals']} conditional branch(es)"
+        explanation += f"\n- {analysis['comments']} comment line marker(s)"
+
+    if style == "cognitive":
+        suggestions = generate_static_cognitive_suggestions(code)
+        explanation += "\n\nCognitive notes:"
+        for suggestion in suggestions[:3]:
+            explanation += f"\n- {suggestion}"
+
+    return explanation
+
+
+def generate_static_suggestions(
+    code: str,
+    *,
+    cognitive: bool = False,
+    performance: bool = False,
+    accessibility: bool = False,
+) -> dict[str, list[str]]:
+    """Generate deterministic suggestions without initializing AI backends."""
+    requested = any([cognitive, performance, accessibility])
+    suggestions: dict[str, list[str]] = {}
+
+    if cognitive or not requested:
+        suggestions['cognitive'] = generate_static_cognitive_suggestions(code)
+    if performance or not requested:
+        suggestions['performance'] = generate_static_performance_suggestions(code)
+    if accessibility or not requested:
+        suggestions['accessibility'] = generate_static_accessibility_suggestions(code)
+
+    return suggestions
+
+
+def generate_static_cognitive_suggestions(code: str) -> list[str]:
+    analysis = analyze_code_structure(code)
+    suggestions: list[str] = []
+
+    if analysis['code_lines'] > 25:
+        suggestions.append("Break the file into smaller sections or helper functions for easier review.")
+    if analysis['functions'] > 4:
+        suggestions.append("Group related functions so each section has a clear purpose.")
+    if analysis['comments'] == 0 and analysis['code_lines'] > 8:
+        suggestions.append("Add short comments around non-obvious steps to reduce cognitive load.")
+    if analysis['cognitive_keywords'] == 0:
+        suggestions.append("Consider adding a small think/focus note near the most important logic.")
+    if analysis['conditionals'] + analysis['loops'] > 4:
+        suggestions.append("Name intermediate values clearly before complex branches or loops.")
+
+    return suggestions[:4] or ["No high-priority cognitive suggestions found."]
+
+
+def generate_static_performance_suggestions(code: str) -> list[str]:
+    analysis = analyze_code_structure(code)
+    suggestions: list[str] = []
+
+    if analysis['loops']:
+        suggestions.append("Review loop bodies for repeated work that could be computed once.")
+    if code.count("import ") > 4:
+        suggestions.append("Keep imports focused so startup work stays predictable.")
+    if analysis['code_lines'] > 40:
+        suggestions.append("Measure the slowest path before optimizing; this file has enough code to benefit from profiling.")
+
+    return suggestions[:3] or ["No obvious performance issues found from static structure."]
+
+
+def generate_static_accessibility_suggestions(code: str) -> list[str]:
+    suggestions: list[str] = []
+    long_lines = [line for line in code.splitlines() if len(line) > 100]
+
+    if long_lines:
+        suggestions.append("Wrap long lines so code is easier to scan in narrow editor panes.")
+    if code.count("_") == 0 and len(code.split()) > 30:
+        suggestions.append("Use descriptive names with separators for multi-word concepts.")
+    if "#" not in code and "//" not in code and len(code.splitlines()) > 8:
+        suggestions.append("Add brief comments for setup, transformation, and output sections.")
+
+    return suggestions[:3] or ["No obvious accessibility issues found from static structure."]
+
+
+def _extract_function_names(code: str) -> list[str]:
+    import re
+
+    return re.findall(r'\b(?:func|function|fn|def)\s+(\w+)', code)
 
 
 def simulate_execution(code: str) -> float:

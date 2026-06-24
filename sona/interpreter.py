@@ -1,5 +1,5 @@
 """
-Sona v0.15.0 - Enhanced Interpreter with Full Loop Support
+Sona v0.15.1 - Enhanced Interpreter with Full Loop Support
 ========================================================
 
 Production-grade interpreter with complete language feature support.
@@ -1483,7 +1483,7 @@ class SonaUnifiedInterpreter:
                                  global_scope=True)
 
         # Built-in variables
-        self.memory.set_variable('__version__', '0.15.0', global_scope=True)
+        self.memory.set_variable('__version__', '0.15.1', global_scope=True)
         self.memory.set_variable('__sona__', True, global_scope=True)
         self.memory.set_variable('True', True, global_scope=True)
         self.memory.set_variable('False', False, global_scope=True)
@@ -1805,7 +1805,7 @@ class SonaUnifiedInterpreter:
             else:
                 # Fallback to Python-like compatibility mode
                 if not SonaParserv090:
-                    print("⚠️  Sona parser not available, using Python compatibility mode")
+                    print("[WARN] Sona parser not available, using Python compatibility mode")
                 return self.execute_python_like(code, filename)
         except Exception as e:
             try:
@@ -2071,7 +2071,7 @@ class SonaUnifiedInterpreter:
             # If Sona parsing fails, try Python compatibility mode
             if not self.debug_mode:
                 return self.execute_python_like(code, filename)
-            print(f"⚠️  Sona parsing failed: {parse_error}")
+            print(f"[WARN] Sona parsing failed: {parse_error}")
             print("   Falling back to Python compatibility mode")
             return self.execute_python_like(code, filename)
 
@@ -2730,16 +2730,16 @@ class SonaUnifiedInterpreter:
 
             from multi_ai_provider import MultiAIProvider
             self.real_ai = MultiAIProvider()
-            print("✅ REAL AI provider initialized with MultiAIProvider")
+            print("[OK] REAL AI provider initialized with MultiAIProvider")
         except ImportError as e:
-            print(f"❌ Failed to import MultiAIProvider: {e}")
+            print(f"[ERROR] Failed to import MultiAIProvider: {e}")
             # Fallback to original real AI provider
             try:
                 from .ai.real_ai_provider import REAL_AI_PROVIDER
                 self.real_ai = REAL_AI_PROVIDER
-                print("✅ REAL AI provider initialized (fallback)")
+                print("[OK] REAL AI provider initialized (fallback)")
             except ImportError:
-                print("❌ Failed to import fallback AI provider")
+                print("[ERROR] Failed to import fallback AI provider")
                 self.real_ai = None
 
     def _real_ai_complete(self, code_context: str) -> str:
@@ -3422,9 +3422,9 @@ class SonaUnifiedInterpreter:
                 response['recommended_break_duration'] = \
                     break_suggestions.get('recommended_duration', 15)
 
-                print(f"🧠 Break recommended: {break_reason}")
+                print(f"[INFO] Break recommended: {break_reason}")
                 activities = break_suggestions.get('suggested_activities', [])
-                print(f"💡 Suggested activities: {', '.join(activities[:2])}")
+                print(f"[INFO] Suggested activities: {', '.join(activities[:2])}")
 
             return response
 

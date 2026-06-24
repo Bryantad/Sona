@@ -17,7 +17,6 @@ ROOT = Path(__file__).resolve().parents[1]
 ACTIVE_STALE_SCAN = [
     "README.md",
     "CHANGELOG.md",
-    "RELEASE_NOTES_v0.15.0.md",
     "pyproject.toml",
     "sona/__init__.py",
     "sona/cli.py",
@@ -116,9 +115,9 @@ def cli_version_output() -> str:
     return proc.stdout.strip()
 
 
-def check_no_stale_active_references(version: str) -> None:
+def check_no_stale_active_references(version: str, active_scan: list[str]) -> None:
     stale = "0.14.1"
-    for path in ACTIVE_STALE_SCAN:
+    for path in active_scan:
         text = read(path)
         if path != "CHANGELOG.md" and stale in text:
             fail(f"active file {path} still contains stale {stale}")
@@ -131,6 +130,7 @@ def main() -> int:
     parser.add_argument("--version", required=True, help="Expected release version")
     args = parser.parse_args()
     expected = args.version
+    active_scan = [*ACTIVE_STALE_SCAN, f"RELEASE_NOTES_v{expected}.md"]
 
     checks = {
         "pyproject.toml": parse_pyproject_version(),
@@ -157,7 +157,7 @@ def main() -> int:
     require_contains("docs/packages/manifest.md", f"v{expected}")
     require_contains("sona/stdlib/MANIFEST.json", "0150_cognitive_runtime_guardian")
 
-    check_no_stale_active_references(expected)
+    check_no_stale_active_references(expected, active_scan)
     print(f"Release metadata validated for {expected}.")
     return 0
 

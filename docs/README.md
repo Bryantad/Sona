@@ -1,6 +1,6 @@
 # Sona Documentation
 
-This folder contains the current user-facing documentation for Sona `0.15.0`.
+This folder contains the current user-facing documentation for Sona `0.15.1`.
 Historical planning notes, implementation journals, test reports, and retired
 feature drafts are intentionally not part of the published branch structure.
 
@@ -16,10 +16,10 @@ feature drafts are intentionally not part of the published branch structure.
 
 ## Roadmaps
 
-Sona `0.15.0` still uses the Python-backed runtime. Native compiler
+Sona `0.15.1` still uses the Python-backed runtime. Native compiler
 independence, LLVM code generation, self-hosting, package publishing, full LSP
 completion, formatter support, debugger support, and benchmark expansion are
-staged roadmap items, not completed `0.15.0` features.
+staged roadmap items, not completed `0.15.1` features.
 
 - [Native Independence](roadmap/SONA_NATIVE_INDEPENDENCE.md)
 - [Compiler Architecture](compiler/ARCHITECTURE.md)

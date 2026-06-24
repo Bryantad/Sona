@@ -30,7 +30,12 @@ class OllamaIntegration:
         self.max_length = None
 
     def _ensure_ready(self) -> bool:
-        status = ensure_local_model(self.model, quiet=True, host=self.host)
+        status = ensure_local_model(
+            self.model,
+            quiet=True,
+            host=self.host,
+            timeout=min(float(self.timeout), 1.0),
+        )
         self.is_loaded = bool(status.get("installed"))
         if status.get("status") == "error":
             self.last_error = status.get("error") or "Ollama check failed"
@@ -46,7 +51,12 @@ class OllamaIntegration:
 
     def load_model(self) -> bool:
         """Validate that the Ollama model is available."""
-        status = ensure_local_model(self.model, quiet=True, host=self.host)
+        status = ensure_local_model(
+            self.model,
+            quiet=True,
+            host=self.host,
+            timeout=min(float(self.timeout), 1.0),
+        )
         self.is_loaded = bool(status.get("installed"))
         self.last_error = status.get("error")
         return self.is_loaded
@@ -139,7 +149,12 @@ class OllamaIntegration:
 
     def get_model_info(self) -> dict[str, Any]:
         """Get information about the configured Ollama model."""
-        status = ensure_local_model(self.model, quiet=True, host=self.host)
+        status = ensure_local_model(
+            self.model,
+            quiet=True,
+            host=self.host,
+            timeout=min(float(self.timeout), 1.0),
+        )
         return {
             "model": self.model,
             "ollama_host": self.host,

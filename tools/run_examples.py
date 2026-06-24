@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the official Sona 0.15.0 examples in an isolated temp workspace."""
+"""Run the official Sona 0.15.1 examples in an isolated temp workspace."""
 
 from __future__ import annotations
 

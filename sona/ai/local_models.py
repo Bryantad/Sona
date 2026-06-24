@@ -94,6 +94,7 @@ def ensure_local_model(
     pull_if_missing: bool = False,
     quiet: bool = False,
     host: str | None = None,
+    timeout: float = 0.75,
 ) -> dict[str, Any]:
     """Check whether Ollama is running and the model is installed."""
     model = model or os.getenv("SONA_OLLAMA_MODEL") or DEFAULT_OLLAMA_MODEL
@@ -110,7 +111,7 @@ def ensure_local_model(
     }
 
     try:
-        version = request_ollama_json(host, "/api/version")
+        version = request_ollama_json(host, "/api/version", timeout=timeout)
     except Exception as exc:
         status["status"] = "not_running"
         status["error"] = _format_error(exc)
@@ -121,7 +122,7 @@ def ensure_local_model(
         status["version"] = version.get("version")
 
     try:
-        tags = request_ollama_json(host, "/api/tags")
+        tags = request_ollama_json(host, "/api/tags", timeout=timeout)
     except Exception as exc:
         status["status"] = "error"
         status["error"] = _format_error(exc)
@@ -151,7 +152,7 @@ def ensure_local_model(
 
     if pull_result.get("pulled"):
         try:
-            tags = request_ollama_json(host, "/api/tags")
+            tags = request_ollama_json(host, "/api/tags", timeout=timeout)
         except Exception as exc:
             status["status"] = "error"
             status["error"] = _format_error(exc)

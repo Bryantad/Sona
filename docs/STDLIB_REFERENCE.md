@@ -1,7 +1,7 @@
 # Sona Standard Library Reference
 
 This reference documents the stable user-facing stdlib surface for Sona
-`0.15.0`. The package may contain more modules, but this page is the usability
+`0.15.1`. The package may contain more modules, but this page is the usability
 contract for new developers.
 
 Documentation truth rule: if this reference and runtime behavior disagree,
@@ -394,7 +394,7 @@ preserved for compatibility but do not change runtime state.
 
 ## Sona-Native Foundation Modules
 
-Sona `0.15.0` moves the public foundation for `queue`, `stack`, `sort`,
+Sona `0.15.1` moves the public foundation for `queue`, `stack`, `sort`,
 `search`, `statistics`, `matrix`, `graph`, and `permissions` into
 `stdlib/*.smod`. These modules are authored in Sona and should not depend on
 regular Python stdlib modules for their public implementation.

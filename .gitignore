@@ -43,6 +43,9 @@ Thumbs.db
 *.pyc
 sona_cache/
 .sona/
+.env
+.env.*
+!.env.example
 
 # Testing
 .pytest_cache/
