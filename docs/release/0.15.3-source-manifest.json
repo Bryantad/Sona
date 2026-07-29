@@ -1,0 +1,2422 @@
+{
+  "destination_base_commit": "cbad07e02810bb859e1d11574f62e1b29a7965e5",
+  "entries": [
+    {
+      "classification": "modified",
+      "destination_relative_path": ".github/workflows/ci.yml",
+      "destination_sha256": "3B3099E43D4D3020A453F5426CF7B520F880BE532A7C84A45CF78D0FB2CB009C",
+      "reason": "Include reviewed Sona 0.15.3 packaging implementation from .github/workflows/ci.yml.",
+      "release_area": "packaging",
+      "source_relative_path": ".github/workflows/ci.yml",
+      "source_sha256": "3B3099E43D4D3020A453F5426CF7B520F880BE532A7C84A45CF78D0FB2CB009C"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": ".gitignore",
+      "destination_sha256": "6DE3EF567FB714FBEFBA3E20CF1F10CE32F16932FEB483D6A8B03BF294095316",
+      "reason": "Include reviewed Sona 0.15.3 packaging implementation from .gitignore.",
+      "release_area": "packaging",
+      "source_relative_path": ".gitignore",
+      "source_sha256": "6DE3EF567FB714FBEFBA3E20CF1F10CE32F16932FEB483D6A8B03BF294095316"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": ".nvmrc",
+      "destination_sha256": "783AC338E9D8B06757177A5BFA668EAE116F3803C1473169698486F40FB25D19",
+      "reason": "Include reviewed Sona 0.15.3 packaging implementation from .nvmrc.",
+      "release_area": "packaging",
+      "source_relative_path": ".nvmrc",
+      "source_sha256": "783AC338E9D8B06757177A5BFA668EAE116F3803C1473169698486F40FB25D19"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "CHANGELOG.md",
+      "destination_sha256": "815F8A1E10602FF8AECDB1D5038FF3DDF019FC835035446452BDCBEDAA491F79",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from CHANGELOG.md.",
+      "release_area": "runtime",
+      "source_relative_path": "CHANGELOG.md",
+      "source_sha256": "815F8A1E10602FF8AECDB1D5038FF3DDF019FC835035446452BDCBEDAA491F79"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "README.md",
+      "destination_sha256": "6ABD81FD1AD6E785E43D93858CB501555C35AC29DBC5FDE280D6310858247FDD",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from README.md.",
+      "release_area": "runtime",
+      "source_relative_path": "README.md",
+      "source_sha256": "6ABD81FD1AD6E785E43D93858CB501555C35AC29DBC5FDE280D6310858247FDD"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "RELEASE_NOTES_v0.15.3.md",
+      "destination_sha256": "0C805F45EE3EE1E7D58F86E0C88835D6F702F071DADD5F30D0CB764899698994",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from RELEASE_NOTES_v0.15.3.md.",
+      "release_area": "docs",
+      "source_relative_path": "RELEASE_NOTES_v0.15.3.md",
+      "source_sha256": "0C805F45EE3EE1E7D58F86E0C88835D6F702F071DADD5F30D0CB764899698994"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "docs/AI_PROVIDER_ARCHITECTURE.md",
+      "destination_sha256": "C59AA6C6C03C42ED89CB63312474428276108CEBB7F94EB3181ECAE3E330C4AA",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from docs/AI_PROVIDER_ARCHITECTURE.md.",
+      "release_area": "docs",
+      "source_relative_path": "docs/AI_PROVIDER_ARCHITECTURE.md",
+      "source_sha256": "C59AA6C6C03C42ED89CB63312474428276108CEBB7F94EB3181ECAE3E330C4AA"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "docs/CONFIGURATION.md",
+      "destination_sha256": "3C02B635B04D9132E67E6762C97B82DB23EB638E554505AAC1F6E4C34DE4D6B4",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from docs/CONFIGURATION.md.",
+      "release_area": "docs",
+      "source_relative_path": "docs/CONFIGURATION.md",
+      "source_sha256": "3C02B635B04D9132E67E6762C97B82DB23EB638E554505AAC1F6E4C34DE4D6B4"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "docs/DIAGNOSTICS_REFERENCE.md",
+      "destination_sha256": "68912458752C84BA9DF47E1455C3304DED13B71B49ACBB9CD4FE72B0685DCB19",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from docs/DIAGNOSTICS_REFERENCE.md.",
+      "release_area": "docs",
+      "source_relative_path": "docs/DIAGNOSTICS_REFERENCE.md",
+      "source_sha256": "68912458752C84BA9DF47E1455C3304DED13B71B49ACBB9CD4FE72B0685DCB19"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "docs/GOVERNANCE_REFERENCE.md",
+      "destination_sha256": "A685D473D5DE11A984D2E82BD7BF67829329224F3D1FD4E5CEDE19978A38AAED",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from docs/GOVERNANCE_REFERENCE.md.",
+      "release_area": "docs",
+      "source_relative_path": "docs/GOVERNANCE_REFERENCE.md",
+      "source_sha256": "A685D473D5DE11A984D2E82BD7BF67829329224F3D1FD4E5CEDE19978A38AAED"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "docs/GUARDIAN_REFERENCE.md",
+      "destination_sha256": "0E0E7FB85E7A40C9A7D4EAA89D98B6E0F8282FA54F1B77C57C003B8ED0604F28",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from docs/GUARDIAN_REFERENCE.md.",
+      "release_area": "docs",
+      "source_relative_path": "docs/GUARDIAN_REFERENCE.md",
+      "source_sha256": "0E0E7FB85E7A40C9A7D4EAA89D98B6E0F8282FA54F1B77C57C003B8ED0604F28"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "docs/HUGGINGFACE_MODELS.md",
+      "destination_sha256": "8BD9813E4DE6DDC268CCF62F0073742FE438C0EE32B163B068E3312A4261E8BD",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from docs/HUGGINGFACE_MODELS.md.",
+      "release_area": "docs",
+      "source_relative_path": "docs/HUGGINGFACE_MODELS.md",
+      "source_sha256": "8BD9813E4DE6DDC268CCF62F0073742FE438C0EE32B163B068E3312A4261E8BD"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "docs/LANGUAGE_REFERENCE.md",
+      "destination_sha256": "2DAB700925F88DFF5F1B478C35D5AACF78CA7015E6F8E3323262573256641A7A",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from docs/LANGUAGE_REFERENCE.md.",
+      "release_area": "docs",
+      "source_relative_path": "docs/LANGUAGE_REFERENCE.md",
+      "source_sha256": "2DAB700925F88DFF5F1B478C35D5AACF78CA7015E6F8E3323262573256641A7A"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "docs/MODEL_REGISTRY.md",
+      "destination_sha256": "0DDC05746275098DCFD571196453B8F7DC922CBC342F54EDFF663C97662E6822",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from docs/MODEL_REGISTRY.md.",
+      "release_area": "docs",
+      "source_relative_path": "docs/MODEL_REGISTRY.md",
+      "source_sha256": "0DDC05746275098DCFD571196453B8F7DC922CBC342F54EDFF663C97662E6822"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "docs/QUICKSTART.md",
+      "destination_sha256": "C7321A86794CEC107B85FAAEA5151C42EF3143CD98DC070D30C27960B4E53474",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from docs/QUICKSTART.md.",
+      "release_area": "docs",
+      "source_relative_path": "docs/QUICKSTART.md",
+      "source_sha256": "C7321A86794CEC107B85FAAEA5151C42EF3143CD98DC070D30C27960B4E53474"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "docs/README.md",
+      "destination_sha256": "416E6E3D5791EC6BBBB6D4DC62DE4FDAA6BD5395068D523AA99BA8B2CB4CCE64",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from docs/README.md.",
+      "release_area": "docs",
+      "source_relative_path": "docs/README.md",
+      "source_sha256": "416E6E3D5791EC6BBBB6D4DC62DE4FDAA6BD5395068D523AA99BA8B2CB4CCE64"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "docs/STDLIB_REFERENCE.md",
+      "destination_sha256": "7F23FBE50392C90087862A3587382BE04DC02FD6B765EBCBA02E5D6EA3C09E04",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from docs/STDLIB_REFERENCE.md.",
+      "release_area": "docs",
+      "source_relative_path": "docs/STDLIB_REFERENCE.md",
+      "source_sha256": "7F23FBE50392C90087862A3587382BE04DC02FD6B765EBCBA02E5D6EA3C09E04"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "docs/architecture/bytecode.md",
+      "destination_sha256": "3DF4BEC4B9CD64EF41F8E0CF181078D29F4959F403FB7F08DDC196D4E19690C8",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from docs/architecture/bytecode.md.",
+      "release_area": "docs",
+      "source_relative_path": "docs/architecture/bytecode.md",
+      "source_sha256": "3DF4BEC4B9CD64EF41F8E0CF181078D29F4959F403FB7F08DDC196D4E19690C8"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "docs/architecture/engine-migration.md",
+      "destination_sha256": "0749FB0A051E542E59A4848935E80EA73F98A6709FB46F94457F3E2B9E8879AC",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from docs/architecture/engine-migration.md.",
+      "release_area": "docs",
+      "source_relative_path": "docs/architecture/engine-migration.md",
+      "source_sha256": "0749FB0A051E542E59A4848935E80EA73F98A6709FB46F94457F3E2B9E8879AC"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "docs/architecture/native-module-migration-manifest.json",
+      "destination_sha256": "4CC1117D9DF363E217E42CAFCD3E65EF605B4D903BC3558BA4975F17E7ABADAC",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from docs/architecture/native-module-migration-manifest.json.",
+      "release_area": "docs",
+      "source_relative_path": "docs/architecture/native-module-migration-manifest.json",
+      "source_sha256": "4CC1117D9DF363E217E42CAFCD3E65EF605B4D903BC3558BA4975F17E7ABADAC"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "docs/architecture/native-modules.md",
+      "destination_sha256": "848F5CE59DC496B55A22425BB87184E81CB1BFDCE0FA30EFE54471CAB915F536",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from docs/architecture/native-modules.md.",
+      "release_area": "docs",
+      "source_relative_path": "docs/architecture/native-modules.md",
+      "source_sha256": "848F5CE59DC496B55A22425BB87184E81CB1BFDCE0FA30EFE54471CAB915F536"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "docs/architecture/native-runtime.md",
+      "destination_sha256": "D304D83DF675FC304154B3EF8E115859716A42CA86F563B89A121C77CD220017",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from docs/architecture/native-runtime.md.",
+      "release_area": "docs",
+      "source_relative_path": "docs/architecture/native-runtime.md",
+      "source_sha256": "D304D83DF675FC304154B3EF8E115859716A42CA86F563B89A121C77CD220017"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "docs/architecture/sona-ir.md",
+      "destination_sha256": "969B0A43A1321C5303F1BAC4F5B7EC68D12738A93DC2D09065660CC125992A12",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from docs/architecture/sona-ir.md.",
+      "release_area": "docs",
+      "source_relative_path": "docs/architecture/sona-ir.md",
+      "source_sha256": "969B0A43A1321C5303F1BAC4F5B7EC68D12738A93DC2D09065660CC125992A12"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "docs/errors/v0.10-errors.md",
+      "destination_sha256": "271CB0DFBF7789B583E3DEE5516C65E16C8C8D1BB91A8FFA24432EAB04B3088C",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from docs/errors/v0.10-errors.md.",
+      "release_area": "docs",
+      "source_relative_path": "docs/errors/v0.10-errors.md",
+      "source_sha256": "271CB0DFBF7789B583E3DEE5516C65E16C8C8D1BB91A8FFA24432EAB04B3088C"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "docs/errors/v0.14-diagnostics.md",
+      "destination_sha256": "97B03DF624D08A64C942F8D4E105E16557D954F46D48FBDF5A840DD26E5BA8DA",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from docs/errors/v0.14-diagnostics.md.",
+      "release_area": "docs",
+      "source_relative_path": "docs/errors/v0.14-diagnostics.md",
+      "source_sha256": "97B03DF624D08A64C942F8D4E105E16557D954F46D48FBDF5A840DD26E5BA8DA"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "docs/packages/manifest.md",
+      "destination_sha256": "F905BE946BB1A7E7A361830F38B6BB3C28D86F82C40587F7DB8E77BEC4EED413",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from docs/packages/manifest.md.",
+      "release_area": "docs",
+      "source_relative_path": "docs/packages/manifest.md",
+      "source_sha256": "F905BE946BB1A7E7A361830F38B6BB3C28D86F82C40587F7DB8E77BEC4EED413"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "docs/release/0.15.2-defect-ledger.md",
+      "destination_sha256": "06337D64D54D814F26801AD581870AE8F0EA218CCAEE8E356E420CD0BE79AF0D",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from docs/release/0.15.2-defect-ledger.md.",
+      "release_area": "docs",
+      "source_relative_path": "docs/release/0.15.2-defect-ledger.md",
+      "source_sha256": "06337D64D54D814F26801AD581870AE8F0EA218CCAEE8E356E420CD0BE79AF0D"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "docs/release/0.15.2-implementation-report.md",
+      "destination_sha256": "994B8AC98AB8E04BFEB5C7F650774C83B4F9DB488A65214CAC312F66BA51545E",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from docs/release/0.15.2-implementation-report.md.",
+      "release_area": "docs",
+      "source_relative_path": "docs/release/0.15.2-implementation-report.md",
+      "source_sha256": "994B8AC98AB8E04BFEB5C7F650774C83B4F9DB488A65214CAC312F66BA51545E"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "docs/release/0.15.2-language-certification-audit.md",
+      "destination_sha256": "48AE3F0F5FC538A4940FC203B3AA6512AA993D2B47675F06EA4EE7310A2AA39F",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from docs/release/0.15.2-language-certification-audit.md.",
+      "release_area": "docs",
+      "source_relative_path": "docs/release/0.15.2-language-certification-audit.md",
+      "source_sha256": "48AE3F0F5FC538A4940FC203B3AA6512AA993D2B47675F06EA4EE7310A2AA39F"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "docs/release/0.15.2-language-certification-report.md",
+      "destination_sha256": "F3EEE62EDA99BF8CA1D2D97A38EE455732561F19517DF35B79168A216D1EBE04",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from docs/release/0.15.2-language-certification-report.md.",
+      "release_area": "docs",
+      "source_relative_path": "docs/release/0.15.2-language-certification-report.md",
+      "source_sha256": "F3EEE62EDA99BF8CA1D2D97A38EE455732561F19517DF35B79168A216D1EBE04"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "docs/release/0.15.2-language-feature-matrix.md",
+      "destination_sha256": "8D1078F009E937E4C7FE5EC2CC06852F7DAC4DDCC1D579F893F80EEE9FE4F421",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from docs/release/0.15.2-language-feature-matrix.md.",
+      "release_area": "docs",
+      "source_relative_path": "docs/release/0.15.2-language-feature-matrix.md",
+      "source_sha256": "8D1078F009E937E4C7FE5EC2CC06852F7DAC4DDCC1D579F893F80EEE9FE4F421"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "docs/release/0.15.2-plan.md",
+      "destination_sha256": "F4CED23C8BF5CFC25FCAF646459F6BA16492145BB163AAA8D0318E40B7E185AE",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from docs/release/0.15.2-plan.md.",
+      "release_area": "docs",
+      "source_relative_path": "docs/release/0.15.2-plan.md",
+      "source_sha256": "F4CED23C8BF5CFC25FCAF646459F6BA16492145BB163AAA8D0318E40B7E185AE"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "docs/release/0.15.2-repository-audit.md",
+      "destination_sha256": "87BA6B568B03FAA60805B25CAC28FE697E81504BAD8F4998A0E55E6090D4F7FA",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from docs/release/0.15.2-repository-audit.md.",
+      "release_area": "docs",
+      "source_relative_path": "docs/release/0.15.2-repository-audit.md",
+      "source_sha256": "87BA6B568B03FAA60805B25CAC28FE697E81504BAD8F4998A0E55E6090D4F7FA"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "docs/release/0.15.3-implementation-report.md",
+      "destination_sha256": "9D8C47E23547CB553814F64AEAE3A4AD34B26E41BE4044FA205C4C03FF07D802",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from docs/release/0.15.3-implementation-report.md.",
+      "release_area": "docs",
+      "source_relative_path": "docs/release/0.15.3-implementation-report.md",
+      "source_sha256": "9D8C47E23547CB553814F64AEAE3A4AD34B26E41BE4044FA205C4C03FF07D802"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "docs/release/0.15.3-native-status.md",
+      "destination_sha256": "F3978BDF6CF4CE6AEBB05F23CE58B682B6C603F3D56BEA0343627F2514C95943",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from docs/release/0.15.3-native-status.md.",
+      "release_area": "docs",
+      "source_relative_path": "docs/release/0.15.3-native-status.md",
+      "source_sha256": "F3978BDF6CF4CE6AEBB05F23CE58B682B6C603F3D56BEA0343627F2514C95943"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "docs/roadmap/self-hosting.md",
+      "destination_sha256": "3B428C33DA6708FF9AC732D34117256D4E62DEF9F253809A6851E5EECA53D77A",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from docs/roadmap/self-hosting.md.",
+      "release_area": "docs",
+      "source_relative_path": "docs/roadmap/self-hosting.md",
+      "source_sha256": "3B428C33DA6708FF9AC732D34117256D4E62DEF9F253809A6851E5EECA53D77A"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "docs/stdlib/catalog.json",
+      "destination_sha256": "977C02C574965C77398EE40D14DE4D52E29603A665E81694E994A5C19D1843CF",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from docs/stdlib/catalog.json.",
+      "release_area": "docs",
+      "source_relative_path": "docs/stdlib/catalog.json",
+      "source_sha256": "977C02C574965C77398EE40D14DE4D52E29603A665E81694E994A5C19D1843CF"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "guardian-demo/stdlib/guardian_demo.smod",
+      "destination_sha256": "F02F658FF634C116CB20394BFCB7C0292DB3AC9DFE4C9170261FF5826DEBD1E7",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from guardian-demo/stdlib/guardian_demo.smod.",
+      "release_area": "runtime",
+      "source_relative_path": "guardian-demo/stdlib/guardian_demo.smod",
+      "source_sha256": "F02F658FF634C116CB20394BFCB7C0292DB3AC9DFE4C9170261FF5826DEBD1E7"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "native/Cargo.lock",
+      "destination_sha256": "D1D10F24A6D847D3C6816CAC7C86FC0801552861CAF9A9680F2C200A7F6BE397",
+      "reason": "Include reviewed Sona 0.15.3 native implementation from native/Cargo.lock.",
+      "release_area": "native",
+      "source_relative_path": "native/Cargo.lock",
+      "source_sha256": "D1D10F24A6D847D3C6816CAC7C86FC0801552861CAF9A9680F2C200A7F6BE397"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "native/Cargo.toml",
+      "destination_sha256": "446E7CB9CCDB259F9D2A59EBE472B0E226E12146E8C550B7C12607C667A9012A",
+      "reason": "Include reviewed Sona 0.15.3 native implementation from native/Cargo.toml.",
+      "release_area": "native",
+      "source_relative_path": "native/Cargo.toml",
+      "source_sha256": "446E7CB9CCDB259F9D2A59EBE472B0E226E12146E8C550B7C12607C667A9012A"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "native/crates/sona-ast/Cargo.toml",
+      "destination_sha256": "76E18509DAAA138E2D4BB5720F4A93F2BF1F30B128F42703A6A668847D6E00C5",
+      "reason": "Include reviewed Sona 0.15.3 native implementation from native/crates/sona-ast/Cargo.toml.",
+      "release_area": "native",
+      "source_relative_path": "native/crates/sona-ast/Cargo.toml",
+      "source_sha256": "76E18509DAAA138E2D4BB5720F4A93F2BF1F30B128F42703A6A668847D6E00C5"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "native/crates/sona-ast/src/lib.rs",
+      "destination_sha256": "66116294C02E212FB7A1C00DA0247FC26E2872F85337658F4208E11763287A44",
+      "reason": "Include reviewed Sona 0.15.3 native implementation from native/crates/sona-ast/src/lib.rs.",
+      "release_area": "native",
+      "source_relative_path": "native/crates/sona-ast/src/lib.rs",
+      "source_sha256": "66116294C02E212FB7A1C00DA0247FC26E2872F85337658F4208E11763287A44"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "native/crates/sona-bytecode/Cargo.toml",
+      "destination_sha256": "7A8B92A0452F0E36B432F73DE728A844017722B20C43E086AAEF38ADCA8EA6E3",
+      "reason": "Include reviewed Sona 0.15.3 native implementation from native/crates/sona-bytecode/Cargo.toml.",
+      "release_area": "native",
+      "source_relative_path": "native/crates/sona-bytecode/Cargo.toml",
+      "source_sha256": "7A8B92A0452F0E36B432F73DE728A844017722B20C43E086AAEF38ADCA8EA6E3"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "native/crates/sona-bytecode/src/lib.rs",
+      "destination_sha256": "D92F057387F977AB97DAAEA23706DAB3483C1D755B1DBFFAB03435EF7618359F",
+      "reason": "Include reviewed Sona 0.15.3 native implementation from native/crates/sona-bytecode/src/lib.rs.",
+      "release_area": "native",
+      "source_relative_path": "native/crates/sona-bytecode/src/lib.rs",
+      "source_sha256": "D92F057387F977AB97DAAEA23706DAB3483C1D755B1DBFFAB03435EF7618359F"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "native/crates/sona-cli/Cargo.toml",
+      "destination_sha256": "5D9543E5820B63AE4F18ACA24330A02E123EBC789FE224F233E94E57E76C3457",
+      "reason": "Include reviewed Sona 0.15.3 native implementation from native/crates/sona-cli/Cargo.toml.",
+      "release_area": "native",
+      "source_relative_path": "native/crates/sona-cli/Cargo.toml",
+      "source_sha256": "5D9543E5820B63AE4F18ACA24330A02E123EBC789FE224F233E94E57E76C3457"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "native/crates/sona-cli/src/main.rs",
+      "destination_sha256": "97405002DE42A7131B21B3B68B5E519C6013EED9420CC8E45741853E2A11434E",
+      "reason": "Include reviewed Sona 0.15.3 native implementation from native/crates/sona-cli/src/main.rs.",
+      "release_area": "native",
+      "source_relative_path": "native/crates/sona-cli/src/main.rs",
+      "source_sha256": "97405002DE42A7131B21B3B68B5E519C6013EED9420CC8E45741853E2A11434E"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "native/crates/sona-diagnostics/Cargo.toml",
+      "destination_sha256": "432E70351C4F2425EB876B3736F59467D6863CF8C29E9E1D00ED0A8F8EA13720",
+      "reason": "Include reviewed Sona 0.15.3 native implementation from native/crates/sona-diagnostics/Cargo.toml.",
+      "release_area": "native",
+      "source_relative_path": "native/crates/sona-diagnostics/Cargo.toml",
+      "source_sha256": "432E70351C4F2425EB876B3736F59467D6863CF8C29E9E1D00ED0A8F8EA13720"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "native/crates/sona-diagnostics/src/lib.rs",
+      "destination_sha256": "21B868E3DC6BEBD8B38FDE4758E2A1E66B4D2F0BE4FEACFB6C5DF3C35474EB66",
+      "reason": "Include reviewed Sona 0.15.3 native implementation from native/crates/sona-diagnostics/src/lib.rs.",
+      "release_area": "native",
+      "source_relative_path": "native/crates/sona-diagnostics/src/lib.rs",
+      "source_sha256": "21B868E3DC6BEBD8B38FDE4758E2A1E66B4D2F0BE4FEACFB6C5DF3C35474EB66"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "native/crates/sona-ir/Cargo.toml",
+      "destination_sha256": "241A9FC5EBAABA48422B4E9774B11CDA7D1F1F305955D3D728AF2E4260D2FBF2",
+      "reason": "Include reviewed Sona 0.15.3 native implementation from native/crates/sona-ir/Cargo.toml.",
+      "release_area": "native",
+      "source_relative_path": "native/crates/sona-ir/Cargo.toml",
+      "source_sha256": "241A9FC5EBAABA48422B4E9774B11CDA7D1F1F305955D3D728AF2E4260D2FBF2"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "native/crates/sona-ir/src/lib.rs",
+      "destination_sha256": "F2B3AF990DB411E5CE62446FE174260756CCB18AED9976F99F40FA56FB23DDE4",
+      "reason": "Include reviewed Sona 0.15.3 native implementation from native/crates/sona-ir/src/lib.rs.",
+      "release_area": "native",
+      "source_relative_path": "native/crates/sona-ir/src/lib.rs",
+      "source_sha256": "F2B3AF990DB411E5CE62446FE174260756CCB18AED9976F99F40FA56FB23DDE4"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "native/crates/sona-lexer/Cargo.toml",
+      "destination_sha256": "DCE60BF0659F8A0140658C5EE51B8CB8A9519A10BB1D5537AAFFF9068BA8225E",
+      "reason": "Include reviewed Sona 0.15.3 native implementation from native/crates/sona-lexer/Cargo.toml.",
+      "release_area": "native",
+      "source_relative_path": "native/crates/sona-lexer/Cargo.toml",
+      "source_sha256": "DCE60BF0659F8A0140658C5EE51B8CB8A9519A10BB1D5537AAFFF9068BA8225E"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "native/crates/sona-lexer/src/lib.rs",
+      "destination_sha256": "DFA756ADD8B65BB1A34A0842EC8751A12181AF45F68B573BBACA8D3A5957A0E0",
+      "reason": "Include reviewed Sona 0.15.3 native implementation from native/crates/sona-lexer/src/lib.rs.",
+      "release_area": "native",
+      "source_relative_path": "native/crates/sona-lexer/src/lib.rs",
+      "source_sha256": "DFA756ADD8B65BB1A34A0842EC8751A12181AF45F68B573BBACA8D3A5957A0E0"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "native/crates/sona-modules/Cargo.toml",
+      "destination_sha256": "5A889F6CDA15828EA8E4E7861AEEB4E884803A3B81CD219F1C4378B378899DEC",
+      "reason": "Include reviewed Sona 0.15.3 native implementation from native/crates/sona-modules/Cargo.toml.",
+      "release_area": "native",
+      "source_relative_path": "native/crates/sona-modules/Cargo.toml",
+      "source_sha256": "5A889F6CDA15828EA8E4E7861AEEB4E884803A3B81CD219F1C4378B378899DEC"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "native/crates/sona-modules/src/lib.rs",
+      "destination_sha256": "83713DC576BBBE1A14FF755AD5E33E16DCBC08142179EE73BE4589594321326F",
+      "reason": "Include reviewed Sona 0.15.3 native implementation from native/crates/sona-modules/src/lib.rs.",
+      "release_area": "native",
+      "source_relative_path": "native/crates/sona-modules/src/lib.rs",
+      "source_sha256": "83713DC576BBBE1A14FF755AD5E33E16DCBC08142179EE73BE4589594321326F"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "native/crates/sona-parser/Cargo.toml",
+      "destination_sha256": "2FDD3D32A00727134BC695F882109A362902F7F784DB0D0961FC81F09E10DA33",
+      "reason": "Include reviewed Sona 0.15.3 native implementation from native/crates/sona-parser/Cargo.toml.",
+      "release_area": "native",
+      "source_relative_path": "native/crates/sona-parser/Cargo.toml",
+      "source_sha256": "2FDD3D32A00727134BC695F882109A362902F7F784DB0D0961FC81F09E10DA33"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "native/crates/sona-parser/src/lib.rs",
+      "destination_sha256": "EDBB3C21BA6A82D74147DF9DE562A83C6E085FC3110727A29E55FCE37E8E5EB2",
+      "reason": "Include reviewed Sona 0.15.3 native implementation from native/crates/sona-parser/src/lib.rs.",
+      "release_area": "native",
+      "source_relative_path": "native/crates/sona-parser/src/lib.rs",
+      "source_sha256": "EDBB3C21BA6A82D74147DF9DE562A83C6E085FC3110727A29E55FCE37E8E5EB2"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "native/crates/sona-runtime/Cargo.toml",
+      "destination_sha256": "1516C9531D5ED2F9F4DF25B69E7BB28023B80B1C4B0F1FDB21126D8544ED4EAE",
+      "reason": "Include reviewed Sona 0.15.3 native implementation from native/crates/sona-runtime/Cargo.toml.",
+      "release_area": "native",
+      "source_relative_path": "native/crates/sona-runtime/Cargo.toml",
+      "source_sha256": "1516C9531D5ED2F9F4DF25B69E7BB28023B80B1C4B0F1FDB21126D8544ED4EAE"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "native/crates/sona-runtime/src/lib.rs",
+      "destination_sha256": "448E30D9A5DF178330A1BA8BA56339FE194A96203F635DF5FDDE0077B2AC7F75",
+      "reason": "Include reviewed Sona 0.15.3 native implementation from native/crates/sona-runtime/src/lib.rs.",
+      "release_area": "native",
+      "source_relative_path": "native/crates/sona-runtime/src/lib.rs",
+      "source_sha256": "448E30D9A5DF178330A1BA8BA56339FE194A96203F635DF5FDDE0077B2AC7F75"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "native/crates/sona-source/Cargo.toml",
+      "destination_sha256": "BD4F1F3F0F653D4D437340933DF5BC5978D17247D0F6727B68AF9140AF6F3CE0",
+      "reason": "Include reviewed Sona 0.15.3 native implementation from native/crates/sona-source/Cargo.toml.",
+      "release_area": "native",
+      "source_relative_path": "native/crates/sona-source/Cargo.toml",
+      "source_sha256": "BD4F1F3F0F653D4D437340933DF5BC5978D17247D0F6727B68AF9140AF6F3CE0"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "native/crates/sona-source/src/lib.rs",
+      "destination_sha256": "049AA5DDEE39C6F957D35E2B32A8B8861428AA50EA7F9340E215D2FB11239CAC",
+      "reason": "Include reviewed Sona 0.15.3 native implementation from native/crates/sona-source/src/lib.rs.",
+      "release_area": "native",
+      "source_relative_path": "native/crates/sona-source/src/lib.rs",
+      "source_sha256": "049AA5DDEE39C6F957D35E2B32A8B8861428AA50EA7F9340E215D2FB11239CAC"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "native/crates/sona-vm/Cargo.toml",
+      "destination_sha256": "0B25B974F966203C6322C832B4107349BC502E5A9541480FB43146EC21029259",
+      "reason": "Include reviewed Sona 0.15.3 native implementation from native/crates/sona-vm/Cargo.toml.",
+      "release_area": "native",
+      "source_relative_path": "native/crates/sona-vm/Cargo.toml",
+      "source_sha256": "0B25B974F966203C6322C832B4107349BC502E5A9541480FB43146EC21029259"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "native/crates/sona-vm/src/lib.rs",
+      "destination_sha256": "34F1DE2C1F1F1E9E763F3A2C224EA70F441F4803E01713F65A2CFE9299508C87",
+      "reason": "Include reviewed Sona 0.15.3 native implementation from native/crates/sona-vm/src/lib.rs.",
+      "release_area": "native",
+      "source_relative_path": "native/crates/sona-vm/src/lib.rs",
+      "source_sha256": "34F1DE2C1F1F1E9E763F3A2C224EA70F441F4803E01713F65A2CFE9299508C87"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "native/tests/conformance/arithmetic.sona",
+      "destination_sha256": "1561A29B77841211B2B826503A853DA178228EB89F3F262F33CFEB9A89DB1859",
+      "reason": "Include reviewed Sona 0.15.3 native implementation from native/tests/conformance/arithmetic.sona.",
+      "release_area": "native",
+      "source_relative_path": "native/tests/conformance/arithmetic.sona",
+      "source_sha256": "1561A29B77841211B2B826503A853DA178228EB89F3F262F33CFEB9A89DB1859"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "native/tests/conformance/control_flow.sona",
+      "destination_sha256": "5746DA888B866D30F3F609F0CA0A99A1755379D84F62CC2D54F10815764AC446",
+      "reason": "Include reviewed Sona 0.15.3 native implementation from native/tests/conformance/control_flow.sona.",
+      "release_area": "native",
+      "source_relative_path": "native/tests/conformance/control_flow.sona",
+      "source_sha256": "5746DA888B866D30F3F609F0CA0A99A1755379D84F62CC2D54F10815764AC446"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "native/tests/conformance/functions.sona",
+      "destination_sha256": "85ED0DE497EDA8EF8AF45DBAD0D09129D322DD22BFA75B98CE1917C030BCCDB5",
+      "reason": "Include reviewed Sona 0.15.3 native implementation from native/tests/conformance/functions.sona.",
+      "release_area": "native",
+      "source_relative_path": "native/tests/conformance/functions.sona",
+      "source_sha256": "85ED0DE497EDA8EF8AF45DBAD0D09129D322DD22BFA75B98CE1917C030BCCDB5"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "native/tests/conformance/hello.sona",
+      "destination_sha256": "F38A1999DAA299AE8C959DA4EE0A2888649115F7BD68218038BFE74D957BDB7A",
+      "reason": "Include reviewed Sona 0.15.3 native implementation from native/tests/conformance/hello.sona.",
+      "release_area": "native",
+      "source_relative_path": "native/tests/conformance/hello.sona",
+      "source_sha256": "F38A1999DAA299AE8C959DA4EE0A2888649115F7BD68218038BFE74D957BDB7A"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "native/tests/conformance/mathcore.smod",
+      "destination_sha256": "3E40290B1621AE29C641EBDABAE428DF5838E60AD2CA8CE13FDC5D4A2D1126B9",
+      "reason": "Include reviewed Sona 0.15.3 native implementation from native/tests/conformance/mathcore.smod.",
+      "release_area": "native",
+      "source_relative_path": "native/tests/conformance/mathcore.smod",
+      "source_sha256": "3E40290B1621AE29C641EBDABAE428DF5838E60AD2CA8CE13FDC5D4A2D1126B9"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "native/tests/conformance/module_import.sona",
+      "destination_sha256": "30E0A26551880BE0F904C8B29C3ACA18286F389C54701F2CD2F4DE8F9FA90991",
+      "reason": "Include reviewed Sona 0.15.3 native implementation from native/tests/conformance/module_import.sona.",
+      "release_area": "native",
+      "source_relative_path": "native/tests/conformance/module_import.sona",
+      "source_sha256": "30E0A26551880BE0F904C8B29C3ACA18286F389C54701F2CD2F4DE8F9FA90991"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "pyproject.toml",
+      "destination_sha256": "FF2D1D5B66B188DFA736FB1CC295540937D9E1B3615D8D843D1A3B8164550334",
+      "reason": "Include reviewed Sona 0.15.3 packaging implementation from pyproject.toml.",
+      "release_area": "packaging",
+      "source_relative_path": "pyproject.toml",
+      "source_sha256": "FF2D1D5B66B188DFA736FB1CC295540937D9E1B3615D8D843D1A3B8164550334"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "requirements.txt",
+      "destination_sha256": "0D9B1CC9F5D3141831E6CAC7E09DBB769FEBF1CC3608864B8FC54A26F4F68B54",
+      "reason": "Include reviewed Sona 0.15.3 packaging implementation from requirements.txt.",
+      "release_area": "packaging",
+      "source_relative_path": "requirements.txt",
+      "source_sha256": "0D9B1CC9F5D3141831E6CAC7E09DBB769FEBF1CC3608864B8FC54A26F4F68B54"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "rust-toolchain.toml",
+      "destination_sha256": "BE940EF3182EE0C8729A2C93C32DE0E7931F9476D3D1911DF08A15952F43FF2B",
+      "reason": "Include reviewed Sona 0.15.3 packaging implementation from rust-toolchain.toml.",
+      "release_area": "packaging",
+      "source_relative_path": "rust-toolchain.toml",
+      "source_sha256": "BE940EF3182EE0C8729A2C93C32DE0E7931F9476D3D1911DF08A15952F43FF2B"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "scripts/language_certification_gate.ps1",
+      "destination_sha256": "8A580B7F8F709E70C50E9909B5F2D0724A432FBBC5CD38173E151CB40227BE31",
+      "reason": "Include reviewed Sona 0.15.3 packaging implementation from scripts/language_certification_gate.ps1.",
+      "release_area": "packaging",
+      "source_relative_path": "scripts/language_certification_gate.ps1",
+      "source_sha256": "8A580B7F8F709E70C50E9909B5F2D0724A432FBBC5CD38173E151CB40227BE31"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "scripts/release_gate.ps1",
+      "destination_sha256": "2B735C0EACF69C47E68EBB0D9ED4DA6EBAB7128E329217C4A7C78817AC944A7C",
+      "reason": "Include reviewed Sona 0.15.3 packaging implementation from scripts/release_gate.ps1.",
+      "release_area": "packaging",
+      "source_relative_path": "scripts/release_gate.ps1",
+      "source_sha256": "2B735C0EACF69C47E68EBB0D9ED4DA6EBAB7128E329217C4A7C78817AC944A7C"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "scripts/release_hardening.ps1",
+      "destination_sha256": "8A5776CFBDB89EDFB77799D76C32075CE0E7C57E6C45AB9C2AE88B77653E3378",
+      "reason": "Include reviewed Sona 0.15.3 packaging implementation from scripts/release_hardening.ps1.",
+      "release_area": "packaging",
+      "source_relative_path": "scripts/release_hardening.ps1",
+      "source_sha256": "8A5776CFBDB89EDFB77799D76C32075CE0E7C57E6C45AB9C2AE88B77653E3378"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "sona/__init__.py",
+      "destination_sha256": "9F594B073F05C061F5DAB501FD3DA40890024AD3363F69B23A7B4491041469D8",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from sona/__init__.py.",
+      "release_area": "runtime",
+      "source_relative_path": "sona/__init__.py",
+      "source_sha256": "9F594B073F05C061F5DAB501FD3DA40890024AD3363F69B23A7B4491041469D8"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "sona/ai/__init__.py",
+      "destination_sha256": "7837A5EBB862B5F07D5CDB183934B4B2C128272F2F8D8FE5A674D312FA325117",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from sona/ai/__init__.py.",
+      "release_area": "runtime",
+      "source_relative_path": "sona/ai/__init__.py",
+      "source_sha256": "7837A5EBB862B5F07D5CDB183934B4B2C128272F2F8D8FE5A674D312FA325117"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "sona/ai/enhanced_cli.py",
+      "destination_sha256": "EDD1A87E925A0F5131190BE427E484AEE1B95E4BE949EC127FBC25067419A5CA",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from sona/ai/enhanced_cli.py.",
+      "release_area": "runtime",
+      "source_relative_path": "sona/ai/enhanced_cli.py",
+      "source_sha256": "EDD1A87E925A0F5131190BE427E484AEE1B95E4BE949EC127FBC25067419A5CA"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "sona/ai/sona_language_adapter.py",
+      "destination_sha256": "680123F9F03A88F2C0AD18617BF8E5853D3E484BA7FD5B84507B7C502A2A8203",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from sona/ai/sona_language_adapter.py.",
+      "release_area": "runtime",
+      "source_relative_path": "sona/ai/sona_language_adapter.py",
+      "source_sha256": "680123F9F03A88F2C0AD18617BF8E5853D3E484BA7FD5B84507B7C502A2A8203"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "sona/ai/sona_specialized_gpt2.py",
+      "destination_sha256": "B686E5DF91458D01A2BD3A7F9E572796BC6DEC1811BB84E1C814B295AD63C30E",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from sona/ai/sona_specialized_gpt2.py.",
+      "release_area": "runtime",
+      "source_relative_path": "sona/ai/sona_specialized_gpt2.py",
+      "source_sha256": "B686E5DF91458D01A2BD3A7F9E572796BC6DEC1811BB84E1C814B295AD63C30E"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "sona/ast_nodes.py",
+      "destination_sha256": "AC933BD6AB3B61D0DD6099ED3029128E621708FFA647C0E42F98D44B01F9A5E0",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from sona/ast_nodes.py.",
+      "release_area": "runtime",
+      "source_relative_path": "sona/ast_nodes.py",
+      "source_sha256": "AC933BD6AB3B61D0DD6099ED3029128E621708FFA647C0E42F98D44B01F9A5E0"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "sona/cli.py",
+      "destination_sha256": "13DAC04DE8B0CF06F359A3333A467DB79D988F11172299D5ADC89E549422393D",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from sona/cli.py.",
+      "release_area": "runtime",
+      "source_relative_path": "sona/cli.py",
+      "source_sha256": "13DAC04DE8B0CF06F359A3333A467DB79D988F11172299D5ADC89E549422393D"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "sona/developer_intelligence/__init__.py",
+      "destination_sha256": "E10ECBF900A2E9703AF78B9E8560B3EB1AD307DBD58786A458A6A7EDB1B79866",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from sona/developer_intelligence/__init__.py.",
+      "release_area": "runtime",
+      "source_relative_path": "sona/developer_intelligence/__init__.py",
+      "source_sha256": "E10ECBF900A2E9703AF78B9E8560B3EB1AD307DBD58786A458A6A7EDB1B79866"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "sona/developer_intelligence/cognitive.py",
+      "destination_sha256": "F13CB8E3B87B80CEB4E3E38EA16FBE3CE84AE2B51BDC6129710D2B31AD135B52",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from sona/developer_intelligence/cognitive.py.",
+      "release_area": "runtime",
+      "source_relative_path": "sona/developer_intelligence/cognitive.py",
+      "source_sha256": "F13CB8E3B87B80CEB4E3E38EA16FBE3CE84AE2B51BDC6129710D2B31AD135B52"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "sona/developer_intelligence/compat.py",
+      "destination_sha256": "F9B18D858AA2CF1C1017AF83A9CE65AB813797BBF6AE8FCA71E34F465354CD8B",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from sona/developer_intelligence/compat.py.",
+      "release_area": "runtime",
+      "source_relative_path": "sona/developer_intelligence/compat.py",
+      "source_sha256": "F9B18D858AA2CF1C1017AF83A9CE65AB813797BBF6AE8FCA71E34F465354CD8B"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "sona/developer_intelligence/config.py",
+      "destination_sha256": "6EAB2ACD65FF17C69B0CB41C105CD2E3D009603592DB41B4166928760D68D4B0",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from sona/developer_intelligence/config.py.",
+      "release_area": "runtime",
+      "source_relative_path": "sona/developer_intelligence/config.py",
+      "source_sha256": "6EAB2ACD65FF17C69B0CB41C105CD2E3D009603592DB41B4166928760D68D4B0"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "sona/developer_intelligence/contracts.py",
+      "destination_sha256": "035F470B2CB4E6BA1D4AD877CB25308F7BA938AC8192812F4DB459834C6D6FF2",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from sona/developer_intelligence/contracts.py.",
+      "release_area": "runtime",
+      "source_relative_path": "sona/developer_intelligence/contracts.py",
+      "source_sha256": "035F470B2CB4E6BA1D4AD877CB25308F7BA938AC8192812F4DB459834C6D6FF2"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "sona/developer_intelligence/deterministic.py",
+      "destination_sha256": "A83A518E8169684B31A7676145460F1066465CAD43790560B8A6DB461EBAB79F",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from sona/developer_intelligence/deterministic.py.",
+      "release_area": "runtime",
+      "source_relative_path": "sona/developer_intelligence/deterministic.py",
+      "source_sha256": "A83A518E8169684B31A7676145460F1066465CAD43790560B8A6DB461EBAB79F"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "sona/developer_intelligence/diagnostics.py",
+      "destination_sha256": "5F3DC55852059406665853135D4A95B478DCAB229ECD01457BE5438C4AEEEAEB",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from sona/developer_intelligence/diagnostics.py.",
+      "release_area": "runtime",
+      "source_relative_path": "sona/developer_intelligence/diagnostics.py",
+      "source_sha256": "5F3DC55852059406665853135D4A95B478DCAB229ECD01457BE5438C4AEEEAEB"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "sona/developer_intelligence/execution.py",
+      "destination_sha256": "EECF3D5773676C24D27D3740F4AB200A98F0D4DE8EEFBF363ED06344BA5A9F30",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from sona/developer_intelligence/execution.py.",
+      "release_area": "runtime",
+      "source_relative_path": "sona/developer_intelligence/execution.py",
+      "source_sha256": "EECF3D5773676C24D27D3740F4AB200A98F0D4DE8EEFBF363ED06344BA5A9F30"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "sona/developer_intelligence/frontend.py",
+      "destination_sha256": "8E248E7655FF2708D0999BD3B8CEF4C46A82E951D442055D6D07AABE964CE000",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from sona/developer_intelligence/frontend.py.",
+      "release_area": "runtime",
+      "source_relative_path": "sona/developer_intelligence/frontend.py",
+      "source_sha256": "8E248E7655FF2708D0999BD3B8CEF4C46A82E951D442055D6D07AABE964CE000"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "sona/developer_intelligence/governance.py",
+      "destination_sha256": "68D275B7872B2E5C5728242A5A8831855DA85DC06057EDF751D1AC4FFF41283C",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from sona/developer_intelligence/governance.py.",
+      "release_area": "runtime",
+      "source_relative_path": "sona/developer_intelligence/governance.py",
+      "source_sha256": "68D275B7872B2E5C5728242A5A8831855DA85DC06057EDF751D1AC4FFF41283C"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "sona/developer_intelligence/models.py",
+      "destination_sha256": "ADBE714C4BF127235487A44FF7DBCA7E5F501B083C2D42FDD03B514F49F2B61B",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from sona/developer_intelligence/models.py.",
+      "release_area": "runtime",
+      "source_relative_path": "sona/developer_intelligence/models.py",
+      "source_sha256": "ADBE714C4BF127235487A44FF7DBCA7E5F501B083C2D42FDD03B514F49F2B61B"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "sona/developer_intelligence/providers.py",
+      "destination_sha256": "C0E4A028246D710A46B341C9D28A165D57D2ADE25A9610908B61F0258F6AADA7",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from sona/developer_intelligence/providers.py.",
+      "release_area": "runtime",
+      "source_relative_path": "sona/developer_intelligence/providers.py",
+      "source_sha256": "C0E4A028246D710A46B341C9D28A165D57D2ADE25A9610908B61F0258F6AADA7"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "sona/developer_intelligence/receipts.py",
+      "destination_sha256": "3587824C09691353913AF2150F3AB59B89A96A9ADCC3B6AAE91F2DCCD8F4B2A4",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from sona/developer_intelligence/receipts.py.",
+      "release_area": "runtime",
+      "source_relative_path": "sona/developer_intelligence/receipts.py",
+      "source_sha256": "3587824C09691353913AF2150F3AB59B89A96A9ADCC3B6AAE91F2DCCD8F4B2A4"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "sona/developer_intelligence/redaction.py",
+      "destination_sha256": "87DB3C868C368634BBED24C66CDE82088B6DC76105BD456A00EE76B831CC962B",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from sona/developer_intelligence/redaction.py.",
+      "release_area": "runtime",
+      "source_relative_path": "sona/developer_intelligence/redaction.py",
+      "source_sha256": "87DB3C868C368634BBED24C66CDE82088B6DC76105BD456A00EE76B831CC962B"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "sona/developer_intelligence/routing.py",
+      "destination_sha256": "FBCE681C8888B9CDE5E402EFF73DB96291F05584C752AA3E4D12743B4FE3CEFA",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from sona/developer_intelligence/routing.py.",
+      "release_area": "runtime",
+      "source_relative_path": "sona/developer_intelligence/routing.py",
+      "source_sha256": "FBCE681C8888B9CDE5E402EFF73DB96291F05584C752AA3E4D12743B4FE3CEFA"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "sona/developer_intelligence/service.py",
+      "destination_sha256": "6CCF065F31BDB83063ECE9A6DC8F1C40B34B6DFC97FD115B71751D81E6BEA430",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from sona/developer_intelligence/service.py.",
+      "release_area": "runtime",
+      "source_relative_path": "sona/developer_intelligence/service.py",
+      "source_sha256": "6CCF065F31BDB83063ECE9A6DC8F1C40B34B6DFC97FD115B71751D81E6BEA430"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "sona/errors.py",
+      "destination_sha256": "E72043E7F387D1337463B83BC9380072A9047B46E5E7CEC5DEFC940AD46EA79A",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from sona/errors.py.",
+      "release_area": "runtime",
+      "source_relative_path": "sona/errors.py",
+      "source_sha256": "E72043E7F387D1337463B83BC9380072A9047B46E5E7CEC5DEFC940AD46EA79A"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "sona/grammar.lark",
+      "destination_sha256": "4B138AA6A4EB3CB856FE2831054D392C574E9E9000ABA9712D916C6795B5CDB8",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from sona/grammar.lark.",
+      "release_area": "runtime",
+      "source_relative_path": "sona/grammar.lark",
+      "source_sha256": "4B138AA6A4EB3CB856FE2831054D392C574E9E9000ABA9712D916C6795B5CDB8"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "sona/interpreter.py",
+      "destination_sha256": "A08C2E38311DB356D30A878216E6A44026CD2AE976964317584D4CDDD73890AD",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from sona/interpreter.py.",
+      "release_area": "runtime",
+      "source_relative_path": "sona/interpreter.py",
+      "source_sha256": "A08C2E38311DB356D30A878216E6A44026CD2AE976964317584D4CDDD73890AD"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "sona/lsp_server.py",
+      "destination_sha256": "DCFC0EB59B480F9A673DB422383C06EBA6394D8E337D7ABEACBB1730B198408F",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from sona/lsp_server.py.",
+      "release_area": "runtime",
+      "source_relative_path": "sona/lsp_server.py",
+      "source_sha256": "DCFC0EB59B480F9A673DB422383C06EBA6394D8E337D7ABEACBB1730B198408F"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "sona/parser_v090.py",
+      "destination_sha256": "FD9D5F47D361CE5F6D7DCE438509A12A51673F13E4AC9B6B7337F311F63B6791",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from sona/parser_v090.py.",
+      "release_area": "runtime",
+      "source_relative_path": "sona/parser_v090.py",
+      "source_sha256": "FD9D5F47D361CE5F6D7DCE438509A12A51673F13E4AC9B6B7337F311F63B6791"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "sona/perf/logging.py",
+      "destination_sha256": "D2C26E7D6C8550DCA3F3E7F98C963654CB58D7536063DD34F27489449C91D971",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from sona/perf/logging.py.",
+      "release_area": "runtime",
+      "source_relative_path": "sona/perf/logging.py",
+      "source_sha256": "D2C26E7D6C8550DCA3F3E7F98C963654CB58D7536063DD34F27489449C91D971"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "sona/receipts.py",
+      "destination_sha256": "A9B317D05C7D09C94EA50076A048F004D51D4A06089FAF22E6EC71FA08D197C2",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from sona/receipts.py.",
+      "release_area": "runtime",
+      "source_relative_path": "sona/receipts.py",
+      "source_sha256": "A9B317D05C7D09C94EA50076A048F004D51D4A06089FAF22E6EC71FA08D197C2"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "sona/setup_azure.py",
+      "destination_sha256": "91A82CAF76A42E8C0183329CA254906D7FCB61EFF9423BABAF2DD6E9DC1602A0",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from sona/setup_azure.py.",
+      "release_area": "runtime",
+      "source_relative_path": "sona/setup_azure.py",
+      "source_sha256": "91A82CAF76A42E8C0183329CA254906D7FCB61EFF9423BABAF2DD6E9DC1602A0"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "sona/spm.py",
+      "destination_sha256": "87F7497E87CC088E59481BB0C723ACF0F8D2C1E3397521FF07E7A7BC4499E071",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from sona/spm.py.",
+      "release_area": "runtime",
+      "source_relative_path": "sona/spm.py",
+      "source_sha256": "87F7497E87CC088E59481BB0C723ACF0F8D2C1E3397521FF07E7A7BC4499E071"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "sona/stdlib/MANIFEST.json",
+      "destination_sha256": "B31F29DA88FC7FE63B1EEEF1D08E759E5CF7A894F9010B72E620D9C71B217CFD",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from sona/stdlib/MANIFEST.json.",
+      "release_area": "runtime",
+      "source_relative_path": "sona/stdlib/MANIFEST.json",
+      "source_sha256": "B31F29DA88FC7FE63B1EEEF1D08E759E5CF7A894F9010B72E620D9C71B217CFD"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "sona/stdlib/__init__.py",
+      "destination_sha256": "A5BF9EA674E63651EBA345D8858AA4928E84708D6668054B1BFA85037F992788",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from sona/stdlib/__init__.py.",
+      "release_area": "runtime",
+      "source_relative_path": "sona/stdlib/__init__.py",
+      "source_sha256": "A5BF9EA674E63651EBA345D8858AA4928E84708D6668054B1BFA85037F992788"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "sona/stdlib/native_bridge.py",
+      "destination_sha256": "108789CD402303C97975F054E6D9EBA822B535D354A1FDE2506CCD21736A40FD",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from sona/stdlib/native_bridge.py.",
+      "release_area": "runtime",
+      "source_relative_path": "sona/stdlib/native_bridge.py",
+      "source_sha256": "108789CD402303C97975F054E6D9EBA822B535D354A1FDE2506CCD21736A40FD"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "sona/stdlib/native_guardian.py",
+      "destination_sha256": "54FE8CF59609D1591A6B1E18BDEC9F85717D6EC1ADD24014D3156A43E5574E89",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from sona/stdlib/native_guardian.py.",
+      "release_area": "runtime",
+      "source_relative_path": "sona/stdlib/native_guardian.py",
+      "source_sha256": "54FE8CF59609D1591A6B1E18BDEC9F85717D6EC1ADD24014D3156A43E5574E89"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "sona/stdlib/native_log.py",
+      "destination_sha256": "A6C7F5AB9DE466E9EC3F71D329B9577317B42DA4C01CCFC4FFE33511B407329F",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from sona/stdlib/native_log.py.",
+      "release_area": "runtime",
+      "source_relative_path": "sona/stdlib/native_log.py",
+      "source_sha256": "A6C7F5AB9DE466E9EC3F71D329B9577317B42DA4C01CCFC4FFE33511B407329F"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "spec/bytecode.md",
+      "destination_sha256": "7F98B376A406F0F0CBA8866B46B85BECA5CDB46C211F81B80D32D9CC060EDDA2",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from spec/bytecode.md.",
+      "release_area": "docs",
+      "source_relative_path": "spec/bytecode.md",
+      "source_sha256": "7F98B376A406F0F0CBA8866B46B85BECA5CDB46C211F81B80D32D9CC060EDDA2"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "spec/compatibility.md",
+      "destination_sha256": "52B901331DA1FBCE94E544BD9189AB9ECF2CEC6206A36E4738586B215259B92E",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from spec/compatibility.md.",
+      "release_area": "docs",
+      "source_relative_path": "spec/compatibility.md",
+      "source_sha256": "52B901331DA1FBCE94E544BD9189AB9ECF2CEC6206A36E4738586B215259B92E"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "spec/control-flow.md",
+      "destination_sha256": "7EA6F50409ECCFF9A3F6696FFADC0A6F8436C3A0AE4D3922A60DB97938AD0298",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from spec/control-flow.md.",
+      "release_area": "docs",
+      "source_relative_path": "spec/control-flow.md",
+      "source_sha256": "7EA6F50409ECCFF9A3F6696FFADC0A6F8436C3A0AE4D3922A60DB97938AD0298"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "spec/errors.md",
+      "destination_sha256": "3E4E8B8142F896D5815CB8CF82EC448BF10C6E3D0EDBD527AE5ECCD33E6D2556",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from spec/errors.md.",
+      "release_area": "docs",
+      "source_relative_path": "spec/errors.md",
+      "source_sha256": "3E4E8B8142F896D5815CB8CF82EC448BF10C6E3D0EDBD527AE5ECCD33E6D2556"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "spec/functions.md",
+      "destination_sha256": "09576F580A182C7249EA0D02851B4819166DBD6A033864B8865994104385F131",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from spec/functions.md.",
+      "release_area": "docs",
+      "source_relative_path": "spec/functions.md",
+      "source_sha256": "09576F580A182C7249EA0D02851B4819166DBD6A033864B8865994104385F131"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "spec/lexical-grammar.md",
+      "destination_sha256": "621A8FFD3458B4B28A3C330E4A4E32B48FEF428F08B9BC68863DB9D631178AEC",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from spec/lexical-grammar.md.",
+      "release_area": "docs",
+      "source_relative_path": "spec/lexical-grammar.md",
+      "source_sha256": "621A8FFD3458B4B28A3C330E4A4E32B48FEF428F08B9BC68863DB9D631178AEC"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "spec/modules.md",
+      "destination_sha256": "89947D16C0BD01E4ABD66886ADDA23508EB686559E521A7226B7FCE99F597D82",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from spec/modules.md.",
+      "release_area": "docs",
+      "source_relative_path": "spec/modules.md",
+      "source_sha256": "89947D16C0BD01E4ABD66886ADDA23508EB686559E521A7226B7FCE99F597D82"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "spec/operators.md",
+      "destination_sha256": "E2C6EE5EAEB598879125E8C0548B6494A39AD9F176B410C9BA17961074BC931F",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from spec/operators.md.",
+      "release_area": "docs",
+      "source_relative_path": "spec/operators.md",
+      "source_sha256": "E2C6EE5EAEB598879125E8C0548B6494A39AD9F176B410C9BA17961074BC931F"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "spec/runtime.md",
+      "destination_sha256": "E532DE358CD29D4204E6374AA210B934C818D7CD69E058D9296CB64AA683F23F",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from spec/runtime.md.",
+      "release_area": "docs",
+      "source_relative_path": "spec/runtime.md",
+      "source_sha256": "E532DE358CD29D4204E6374AA210B934C818D7CD69E058D9296CB64AA683F23F"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "spec/scope.md",
+      "destination_sha256": "B3E63EF6A692D54F21300AA5AECD01FF9196BD81E676D9EFA0ACD5C59977D3A0",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from spec/scope.md.",
+      "release_area": "docs",
+      "source_relative_path": "spec/scope.md",
+      "source_sha256": "B3E63EF6A692D54F21300AA5AECD01FF9196BD81E676D9EFA0ACD5C59977D3A0"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "spec/syntax-grammar.md",
+      "destination_sha256": "3E83DF81D3BB1395ACBBAF34EB27EB48877B798F9BE65E86375110C454AA54BE",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from spec/syntax-grammar.md.",
+      "release_area": "docs",
+      "source_relative_path": "spec/syntax-grammar.md",
+      "source_sha256": "3E83DF81D3BB1395ACBBAF34EB27EB48877B798F9BE65E86375110C454AA54BE"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "spec/values.md",
+      "destination_sha256": "64704EE6CAE7AAE85845334E18F6735863E88E6163297F304A8D72EBF1AB04DC",
+      "reason": "Include reviewed Sona 0.15.3 docs implementation from spec/values.md.",
+      "release_area": "docs",
+      "source_relative_path": "spec/values.md",
+      "source_sha256": "64704EE6CAE7AAE85845334E18F6735863E88E6163297F304A8D72EBF1AB04DC"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "stdlib/guardian.smod",
+      "destination_sha256": "8E81597190C4C79B9F16C211FB4947339222D8DAED8FDD8E85A15E7D5296F59A",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from stdlib/guardian.smod.",
+      "release_area": "runtime",
+      "source_relative_path": "stdlib/guardian.smod",
+      "source_sha256": "8E81597190C4C79B9F16C211FB4947339222D8DAED8FDD8E85A15E7D5296F59A"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "stdlib/utils/validate/validate.smod",
+      "destination_sha256": "52737DF2FAB4DB951DCA760B4A83BED178C18E4F59894C6F0FAB08B1A907F87D",
+      "reason": "Include reviewed Sona 0.15.3 runtime implementation from stdlib/utils/validate/validate.smod.",
+      "release_area": "runtime",
+      "source_relative_path": "stdlib/utils/validate/validate.smod",
+      "source_sha256": "52737DF2FAB4DB951DCA760B4A83BED178C18E4F59894C6F0FAB08B1A907F87D"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "tests/cli/test_setup_azure.py",
+      "destination_sha256": "FD86498E33BD4AD2DC5306EB6E96286BBA2179D39A9B6AABD611F0867F44220B",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/cli/test_setup_azure.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/cli/test_setup_azure.py",
+      "source_sha256": "FD86498E33BD4AD2DC5306EB6E96286BBA2179D39A9B6AABD611F0867F44220B"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/bindings/assignment.expected.json",
+      "destination_sha256": "8A596A1B2F312C4D751413C0C986931863CCC19316B2BFB2150988C590C64434",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/bindings/assignment.expected.json.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/bindings/assignment.expected.json",
+      "source_sha256": "8A596A1B2F312C4D751413C0C986931863CCC19316B2BFB2150988C590C64434"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/bindings/assignment.sona",
+      "destination_sha256": "0BFAB0483DDBD560D6C460E28F9413F8DE6D3534C762B924863FDD2FED41BF0E",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/bindings/assignment.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/bindings/assignment.sona",
+      "source_sha256": "0BFAB0483DDBD560D6C460E28F9413F8DE6D3534C762B924863FDD2FED41BF0E"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/bindings/const_read.expected.json",
+      "destination_sha256": "FC6FEE20DD886E2FA5B1D4C2382C55CF63D89ACEB6152701DABF73D9AC4D5E9E",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/bindings/const_read.expected.json.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/bindings/const_read.expected.json",
+      "source_sha256": "FC6FEE20DD886E2FA5B1D4C2382C55CF63D89ACEB6152701DABF73D9AC4D5E9E"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/bindings/const_read.sona",
+      "destination_sha256": "767498950C4FFFFDB045A691C8CBAD0B12284EE0C27F396F8D34FF427F80256E",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/bindings/const_read.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/bindings/const_read.sona",
+      "source_sha256": "767498950C4FFFFDB045A691C8CBAD0B12284EE0C27F396F8D34FF427F80256E"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/collections/list_concat.expected.json",
+      "destination_sha256": "1FAF9C1B817A8CD5FF496D11F249C3A001424F4795FD40120460F5DC186F5E26",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/collections/list_concat.expected.json.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/collections/list_concat.expected.json",
+      "source_sha256": "1FAF9C1B817A8CD5FF496D11F249C3A001424F4795FD40120460F5DC186F5E26"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/collections/list_concat.sona",
+      "destination_sha256": "E715BEE97809CD3DF0F949DD1F322B0DC3EDC5E6CF3993D10DFDB7B212F5E926",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/collections/list_concat.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/collections/list_concat.sona",
+      "source_sha256": "E715BEE97809CD3DF0F949DD1F322B0DC3EDC5E6CF3993D10DFDB7B212F5E926"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/collections/map_member.expected.json",
+      "destination_sha256": "2C04ECA552F15AED4F1A204464B771222D8A94B51CB50AAE23693AE85EF3198B",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/collections/map_member.expected.json.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/collections/map_member.expected.json",
+      "source_sha256": "2C04ECA552F15AED4F1A204464B771222D8A94B51CB50AAE23693AE85EF3198B"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/collections/map_member.sona",
+      "destination_sha256": "6E87BAEF84DD5DC7979457DB75017715BED24195DEFD241F168FCAB5E6D2CD10",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/collections/map_member.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/collections/map_member.sona",
+      "source_sha256": "6E87BAEF84DD5DC7979457DB75017715BED24195DEFD241F168FCAB5E6D2CD10"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/control_flow/if_else.expected.json",
+      "destination_sha256": "0E4FFFD6E6964B8FA987F558E9A573414FA0EEC928F08211B8D10910996A8CEB",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/control_flow/if_else.expected.json.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/control_flow/if_else.expected.json",
+      "source_sha256": "0E4FFFD6E6964B8FA987F558E9A573414FA0EEC928F08211B8D10910996A8CEB"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/control_flow/if_else.sona",
+      "destination_sha256": "22FBCADB380B8225D3AE763F8A4D0B8E4DD40CF82B86FFDEDD9D98DA2D9D1A1E",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/control_flow/if_else.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/control_flow/if_else.sona",
+      "source_sha256": "22FBCADB380B8225D3AE763F8A4D0B8E4DD40CF82B86FFDEDD9D98DA2D9D1A1E"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/control_flow/native_while_if.expected.json",
+      "destination_sha256": "BAC59922007C5E6280710AE315B50D4980A89345AA046BE9A08E454D1C08998D",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/control_flow/native_while_if.expected.json.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/control_flow/native_while_if.expected.json",
+      "source_sha256": "BAC59922007C5E6280710AE315B50D4980A89345AA046BE9A08E454D1C08998D"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/control_flow/native_while_if.sona",
+      "destination_sha256": "D11D3CF23CF0E8B99A2BB5C4904B3FC2911B5775D00474ACDB0F81BE0CC3BC39",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/control_flow/native_while_if.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/control_flow/native_while_if.sona",
+      "source_sha256": "D11D3CF23CF0E8B99A2BB5C4904B3FC2911B5775D00474ACDB0F81BE0CC3BC39"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/diagnostics/legacy_fn.expected.json",
+      "destination_sha256": "0176BCA721B36FB0A31286A4BD1D5AABDFAC4567D5312B85AEBDCBC0149CFE56",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/diagnostics/legacy_fn.expected.json.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/diagnostics/legacy_fn.expected.json",
+      "source_sha256": "0176BCA721B36FB0A31286A4BD1D5AABDFAC4567D5312B85AEBDCBC0149CFE56"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/diagnostics/legacy_fn.sona",
+      "destination_sha256": "47E25937F8FBF2518AFAEFCE133AB17FC750EA52E087C56782795CA7EC272CA4",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/diagnostics/legacy_fn.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/diagnostics/legacy_fn.sona",
+      "source_sha256": "47E25937F8FBF2518AFAEFCE133AB17FC750EA52E087C56782795CA7EC272CA4"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/diagnostics/legacy_use.expected.json",
+      "destination_sha256": "09689420DA9BFEC02D2018435E811AC9BE71410A086D791FC940FEAA236D2EC1",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/diagnostics/legacy_use.expected.json.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/diagnostics/legacy_use.expected.json",
+      "source_sha256": "09689420DA9BFEC02D2018435E811AC9BE71410A086D791FC940FEAA236D2EC1"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/diagnostics/legacy_use.sona",
+      "destination_sha256": "02A7D2F46B44F5C8D60D0D2B5C66B938388A18AE3BD23FF035A1A866A186A73B",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/diagnostics/legacy_use.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/diagnostics/legacy_use.sona",
+      "source_sha256": "02A7D2F46B44F5C8D60D0D2B5C66B938388A18AE3BD23FF035A1A866A186A73B"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/expressions/boolean_not.expected.json",
+      "destination_sha256": "C39EF14CFFEC8CA4EFD47D1321004A64A47BC256E71BFF2DCC97BC4818ABBA81",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/expressions/boolean_not.expected.json.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/expressions/boolean_not.expected.json",
+      "source_sha256": "C39EF14CFFEC8CA4EFD47D1321004A64A47BC256E71BFF2DCC97BC4818ABBA81"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/expressions/boolean_not.sona",
+      "destination_sha256": "D0999C44E11D68D5B6B443987396AF9CD8BFD160747CA8B1247EE22FD377E1F6",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/expressions/boolean_not.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/expressions/boolean_not.sona",
+      "source_sha256": "D0999C44E11D68D5B6B443987396AF9CD8BFD160747CA8B1247EE22FD377E1F6"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/expressions/comparison.expected.json",
+      "destination_sha256": "1B7F8AB764212D862FF53495C710192025CF6049AB9AAF613A1F3224CC9B4247",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/expressions/comparison.expected.json.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/expressions/comparison.expected.json",
+      "source_sha256": "1B7F8AB764212D862FF53495C710192025CF6049AB9AAF613A1F3224CC9B4247"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/expressions/comparison.sona",
+      "destination_sha256": "A87D07F9688598341B37490812F08979144CF4E9A2B47A709AD2888A7119924E",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/expressions/comparison.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/expressions/comparison.sona",
+      "source_sha256": "A87D07F9688598341B37490812F08979144CF4E9A2B47A709AD2888A7119924E"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/expressions/modulo.expected.json",
+      "destination_sha256": "8308C1B3D3C2702F0867ACDC2464751ADAE2C5A42B3FF58CFC4286BC634D29EF",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/expressions/modulo.expected.json.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/expressions/modulo.expected.json",
+      "source_sha256": "8308C1B3D3C2702F0867ACDC2464751ADAE2C5A42B3FF58CFC4286BC634D29EF"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/expressions/modulo.sona",
+      "destination_sha256": "10D5E73965FFC0BAC5EE6099286F29AB0409EDD11E2579FFE0A319BA434AA63A",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/expressions/modulo.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/expressions/modulo.sona",
+      "source_sha256": "10D5E73965FFC0BAC5EE6099286F29AB0409EDD11E2579FFE0A319BA434AA63A"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/expressions/native_arithmetic.expected.json",
+      "destination_sha256": "9EBD494F812DE812BA74ABF47FCEB62667F9F30148137C1820EA194FFBE9986C",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/expressions/native_arithmetic.expected.json.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/expressions/native_arithmetic.expected.json",
+      "source_sha256": "9EBD494F812DE812BA74ABF47FCEB62667F9F30148137C1820EA194FFBE9986C"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/expressions/native_arithmetic.sona",
+      "destination_sha256": "D15E43BFF5F0F89A65BBBB145842B80C29C8EF3C424BAD72BCB80914C975A805",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/expressions/native_arithmetic.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/expressions/native_arithmetic.sona",
+      "source_sha256": "D15E43BFF5F0F89A65BBBB145842B80C29C8EF3C424BAD72BCB80914C975A805"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/expressions/parentheses.expected.json",
+      "destination_sha256": "DF065B2F0FBDDA10709B32C0CFB5DAC7CF65A211FD0A359F84B3443A132792E8",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/expressions/parentheses.expected.json.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/expressions/parentheses.expected.json",
+      "source_sha256": "DF065B2F0FBDDA10709B32C0CFB5DAC7CF65A211FD0A359F84B3443A132792E8"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/expressions/parentheses.sona",
+      "destination_sha256": "5D5A922BB75995782EA49635E58B322F10445A71BF3143FAC8D3FB2FA3DD138F",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/expressions/parentheses.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/expressions/parentheses.sona",
+      "source_sha256": "5D5A922BB75995782EA49635E58B322F10445A71BF3143FAC8D3FB2FA3DD138F"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/expressions/power_right_associative.expected.json",
+      "destination_sha256": "0AB9B559C1FD8F62DE7EBF86137C674C868A249788E4F154F6E214A9F142EEDE",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/expressions/power_right_associative.expected.json.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/expressions/power_right_associative.expected.json",
+      "source_sha256": "0AB9B559C1FD8F62DE7EBF86137C674C868A249788E4F154F6E214A9F142EEDE"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/expressions/power_right_associative.sona",
+      "destination_sha256": "CC41967EFFD67A930E23E6C8D2E169F09FBBCCC19955359D44B076C640884244",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/expressions/power_right_associative.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/expressions/power_right_associative.sona",
+      "source_sha256": "CC41967EFFD67A930E23E6C8D2E169F09FBBCCC19955359D44B076C640884244"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/expressions/string_concat.expected.json",
+      "destination_sha256": "6800C5ED3CCE481226B5ACA1986749BC3F081B25B6F7F6AC8FCF0B87F94E40B4",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/expressions/string_concat.expected.json.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/expressions/string_concat.expected.json",
+      "source_sha256": "6800C5ED3CCE481226B5ACA1986749BC3F081B25B6F7F6AC8FCF0B87F94E40B4"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/expressions/string_concat.sona",
+      "destination_sha256": "6F4C57496176CC41A598A6A7275AEFBBBC9F7F0EFB3B325E001CBD92E7D8C1BD",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/expressions/string_concat.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/expressions/string_concat.sona",
+      "source_sha256": "6F4C57496176CC41A598A6A7275AEFBBBC9F7F0EFB3B325E001CBD92E7D8C1BD"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/expressions/unary.expected.json",
+      "destination_sha256": "F939FB7BC828557FF60DEE4EA0184F3BCF5207D4E7F5A33791A04C1F8A9E5151",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/expressions/unary.expected.json.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/expressions/unary.expected.json",
+      "source_sha256": "F939FB7BC828557FF60DEE4EA0184F3BCF5207D4E7F5A33791A04C1F8A9E5151"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/expressions/unary.sona",
+      "destination_sha256": "C758EE9050F0DC805C5D289359C3D25590A3DC1967B7ACF8D5AF0CC70DCFDAE0",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/expressions/unary.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/expressions/unary.sona",
+      "source_sha256": "C758EE9050F0DC805C5D289359C3D25590A3DC1967B7ACF8D5AF0CC70DCFDAE0"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/functions/default_parameter.expected.json",
+      "destination_sha256": "336E0422CCF9B4F87BACF340D718BE1725AF2733C720F9235A4223464B2A27AB",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/functions/default_parameter.expected.json.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/functions/default_parameter.expected.json",
+      "source_sha256": "336E0422CCF9B4F87BACF340D718BE1725AF2733C720F9235A4223464B2A27AB"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/functions/default_parameter.sona",
+      "destination_sha256": "E83C74651DD972DD8C92C63872BA317B1A98EEA3E72DCF1B3A4D0F13D51E24BD",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/functions/default_parameter.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/functions/default_parameter.sona",
+      "source_sha256": "E83C74651DD972DD8C92C63872BA317B1A98EEA3E72DCF1B3A4D0F13D51E24BD"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/functions/native_function_call.expected.json",
+      "destination_sha256": "DF897172DBFCF868A6F6144FAF497C376F74F49DCC56245AEF77B71249D0C507",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/functions/native_function_call.expected.json.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/functions/native_function_call.expected.json",
+      "source_sha256": "DF897172DBFCF868A6F6144FAF497C376F74F49DCC56245AEF77B71249D0C507"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/functions/native_function_call.sona",
+      "destination_sha256": "804D8DF1238FD803740D9B63AC378879C77B643F6E8D5C869D3BB0D49A900C66",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/functions/native_function_call.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/functions/native_function_call.sona",
+      "source_sha256": "804D8DF1238FD803740D9B63AC378879C77B643F6E8D5C869D3BB0D49A900C66"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/functions/nested_call.expected.json",
+      "destination_sha256": "33CFD8733ACA37624541A5434B68FD1DD3D88B7C0B7CA1047CDBACDABF15A20B",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/functions/nested_call.expected.json.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/functions/nested_call.expected.json",
+      "source_sha256": "33CFD8733ACA37624541A5434B68FD1DD3D88B7C0B7CA1047CDBACDABF15A20B"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/functions/nested_call.sona",
+      "destination_sha256": "7DCDC7C6288BEE333E8A579CDC5B6C456A53C698A4FE3E4C6092A14E8BEB0D60",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/functions/nested_call.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/functions/nested_call.sona",
+      "source_sha256": "7DCDC7C6288BEE333E8A579CDC5B6C456A53C698A4FE3E4C6092A14E8BEB0D60"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/modules/.sona_modules/mathcore.smod",
+      "destination_sha256": "3E40290B1621AE29C641EBDABAE428DF5838E60AD2CA8CE13FDC5D4A2D1126B9",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/modules/.sona_modules/mathcore.smod.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/modules/.sona_modules/mathcore.smod",
+      "source_sha256": "3E40290B1621AE29C641EBDABAE428DF5838E60AD2CA8CE13FDC5D4A2D1126B9"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/modules/mathcore.smod",
+      "destination_sha256": "3E40290B1621AE29C641EBDABAE428DF5838E60AD2CA8CE13FDC5D4A2D1126B9",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/modules/mathcore.smod.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/modules/mathcore.smod",
+      "source_sha256": "3E40290B1621AE29C641EBDABAE428DF5838E60AD2CA8CE13FDC5D4A2D1126B9"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/modules/native_module_import.expected.json",
+      "destination_sha256": "CA12047DEA15C25EBFB000AED462A5553A5180EFB34D2577C2DA58611AA52785",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/modules/native_module_import.expected.json.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/modules/native_module_import.expected.json",
+      "source_sha256": "CA12047DEA15C25EBFB000AED462A5553A5180EFB34D2577C2DA58611AA52785"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/modules/native_module_import.sona",
+      "destination_sha256": "30E0A26551880BE0F904C8B29C3ACA18286F389C54701F2CD2F4DE8F9FA90991",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/modules/native_module_import.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/modules/native_module_import.sona",
+      "source_sha256": "30E0A26551880BE0F904C8B29C3ACA18286F389C54701F2CD2F4DE8F9FA90991"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/conformance/run_0153_differential_conformance.py",
+      "destination_sha256": "162A2B120CD408EA139B698D1112850D60D8DD174D5308415419774FBE783B48",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/conformance/run_0153_differential_conformance.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/conformance/run_0153_differential_conformance.py",
+      "source_sha256": "162A2B120CD408EA139B698D1112850D60D8DD174D5308415419774FBE783B48"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/developer_intelligence/test_ai_compat_0152.py",
+      "destination_sha256": "4450EB46D9856A1494F89A1A5B273225FBC11F4A3AC56B01EBAD85E1E17A7935",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/developer_intelligence/test_ai_compat_0152.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/developer_intelligence/test_ai_compat_0152.py",
+      "source_sha256": "4450EB46D9856A1494F89A1A5B273225FBC11F4A3AC56B01EBAD85E1E17A7935"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/developer_intelligence/test_cognitive_0152.py",
+      "destination_sha256": "7A8095793C6409C184D1989DB79B41F5FC7A90977B799729032C1084290E4E75",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/developer_intelligence/test_cognitive_0152.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/developer_intelligence/test_cognitive_0152.py",
+      "source_sha256": "7A8095793C6409C184D1989DB79B41F5FC7A90977B799729032C1084290E4E75"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/developer_intelligence/test_contracts_governance_registry_0152.py",
+      "destination_sha256": "763590B91CF68B3BF1FF4C280AF078EDFAF7A1FA7216D93808158961543A7D5D",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/developer_intelligence/test_contracts_governance_registry_0152.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/developer_intelligence/test_contracts_governance_registry_0152.py",
+      "source_sha256": "763590B91CF68B3BF1FF4C280AF078EDFAF7A1FA7216D93808158961543A7D5D"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/developer_intelligence/test_execution_0152.py",
+      "destination_sha256": "95EF0469AC6FD9CF017B791917C2A432A4EC26EA6BBFA33780E78FE45CFCDADD",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/developer_intelligence/test_execution_0152.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/developer_intelligence/test_execution_0152.py",
+      "source_sha256": "95EF0469AC6FD9CF017B791917C2A432A4EC26EA6BBFA33780E78FE45CFCDADD"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/developer_intelligence/test_lsp_parity_0152.py",
+      "destination_sha256": "687E7237A5B572D4FF6E3FB4B58BC1FA3550E2D33ED9CC19410B68C234239C05",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/developer_intelligence/test_lsp_parity_0152.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/developer_intelligence/test_lsp_parity_0152.py",
+      "source_sha256": "687E7237A5B572D4FF6E3FB4B58BC1FA3550E2D33ED9CC19410B68C234239C05"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/developer_intelligence/test_receipts_config_0152.py",
+      "destination_sha256": "85868A84BD866EFC4E5E61C40E00DC438F2AE77A6BA9F5C21356F350CAA6E0E9",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/developer_intelligence/test_receipts_config_0152.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/developer_intelligence/test_receipts_config_0152.py",
+      "source_sha256": "85868A84BD866EFC4E5E61C40E00DC438F2AE77A6BA9F5C21356F350CAA6E0E9"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/developer_intelligence/test_routing_providers_0152.py",
+      "destination_sha256": "9C3CDE00FCA1961C13D0C9626AB6D470111B2C6478EE5F47C657D8975BBB0CDF",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/developer_intelligence/test_routing_providers_0152.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/developer_intelligence/test_routing_providers_0152.py",
+      "source_sha256": "9C3CDE00FCA1961C13D0C9626AB6D470111B2C6478EE5F47C657D8975BBB0CDF"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/developer_intelligence/test_run_receipt_upgrade_0152.py",
+      "destination_sha256": "9B28066DE211C205DD5104E0B939B340CC556C383633170DF404F0369924B26A",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/developer_intelligence/test_run_receipt_upgrade_0152.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/developer_intelligence/test_run_receipt_upgrade_0152.py",
+      "source_sha256": "9B28066DE211C205DD5104E0B939B340CC556C383633170DF404F0369924B26A"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/grammar/comments/line_comment.sona",
+      "destination_sha256": "17EBD87D6835D24A22F8CD1A93BAB5CCA5839B1CFD1A593569C9827112F78D8D",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/grammar/comments/line_comment.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/grammar/comments/line_comment.sona",
+      "source_sha256": "17EBD87D6835D24A22F8CD1A93BAB5CCA5839B1CFD1A593569C9827112F78D8D"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/grammar/control_flow/while.sona",
+      "destination_sha256": "6AC9B9EE65138ABA82A32A170A6F79E384E2E61CFB07D77E43642DD15DCDE82F",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/grammar/control_flow/while.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/grammar/control_flow/while.sona",
+      "source_sha256": "6AC9B9EE65138ABA82A32A170A6F79E384E2E61CFB07D77E43642DD15DCDE82F"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/grammar/functions/implicit_value.sona",
+      "destination_sha256": "78283199C71E40CFEEA673CBD2B6561CA368D44374F6DDD33EBDAD8C0D5D93F7",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/grammar/functions/implicit_value.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/grammar/functions/implicit_value.sona",
+      "source_sha256": "78283199C71E40CFEEA673CBD2B6561CA368D44374F6DDD33EBDAD8C0D5D93F7"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/grammar/imports/stdlib.sona",
+      "destination_sha256": "B2E3A165317E637A517B776236C6D1CBBE16E412EED597F8585EE4A5D6BDC110",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/grammar/imports/stdlib.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/grammar/imports/stdlib.sona",
+      "source_sha256": "B2E3A165317E637A517B776236C6D1CBBE16E412EED597F8585EE4A5D6BDC110"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/grammar/invalid/missing_delimiter.json",
+      "destination_sha256": "3048539BA1794CC0496215817B03AFFCF7970B22DB738F056BD262D0071D6353",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/grammar/invalid/missing_delimiter.json.",
+      "release_area": "tests",
+      "source_relative_path": "tests/grammar/invalid/missing_delimiter.json",
+      "source_sha256": "3048539BA1794CC0496215817B03AFFCF7970B22DB738F056BD262D0071D6353"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/grammar/invalid/missing_delimiter.sona",
+      "destination_sha256": "04204547531D51ACC54061A823706DBDF25B7B33E1EB392879D5495020E54580",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/grammar/invalid/missing_delimiter.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/grammar/invalid/missing_delimiter.sona",
+      "source_sha256": "04204547531D51ACC54061A823706DBDF25B7B33E1EB392879D5495020E54580"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/grammar/precedence/power.sona",
+      "destination_sha256": "4C232AC87B0A94481C64C6699F922A720B8F68BE85B9C0F28D8D824DF41B870B",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/grammar/precedence/power.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/grammar/precedence/power.sona",
+      "source_sha256": "4C232AC87B0A94481C64C6699F922A720B8F68BE85B9C0F28D8D824DF41B870B"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/grammar/strings/escapes.sona",
+      "destination_sha256": "EF899D609443E992285EDFCE17535DCADE22328BBBDD76AD79FBC19C2E8AAED6",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/grammar/strings/escapes.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/grammar/strings/escapes.sona",
+      "source_sha256": "EF899D609443E992285EDFCE17535DCADE22328BBBDD76AD79FBC19C2E8AAED6"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/grammar/test_certification_0152.py",
+      "destination_sha256": "2631B5E36742F4E969852495C0F7A63920069403BD7D125F1FA2AF83DE37866E",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/grammar/test_certification_0152.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/grammar/test_certification_0152.py",
+      "source_sha256": "2631B5E36742F4E969852495C0F7A63920069403BD7D125F1FA2AF83DE37866E"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/grammar/test_fn_migration_diagnostic_0153.py",
+      "destination_sha256": "33256E6AA6DF2ACB7B08467DBA096DD35FDB85A34AAC991534756C68F43488BB",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/grammar/test_fn_migration_diagnostic_0153.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/grammar/test_fn_migration_diagnostic_0153.py",
+      "source_sha256": "33256E6AA6DF2ACB7B08467DBA096DD35FDB85A34AAC991534756C68F43488BB"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/grammar/valid/basic.sona",
+      "destination_sha256": "2CCCCB91D3BE79B6A38E4AA8DC3DA39D6AB5658B9262D649206AA26E3998EEA5",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/grammar/valid/basic.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/grammar/valid/basic.sona",
+      "source_sha256": "2CCCCB91D3BE79B6A38E4AA8DC3DA39D6AB5658B9262D649206AA26E3998EEA5"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "tests/guardian/test_guardian_mvp_015.py",
+      "destination_sha256": "7C318706E054C85BFBCEDC85EAC24EF016FB80E8239210599D29631AF82AA434",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/guardian/test_guardian_mvp_015.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/guardian/test_guardian_mvp_015.py",
+      "source_sha256": "7C318706E054C85BFBCEDC85EAC24EF016FB80E8239210599D29631AF82AA434"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/language_certification/test_cli_lsp_parity_0152.py",
+      "destination_sha256": "56C84E273BA059FAD3DA26A38970122A2432897512EB41CF8147C05DDAD00A57",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/language_certification/test_cli_lsp_parity_0152.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/language_certification/test_cli_lsp_parity_0152.py",
+      "source_sha256": "56C84E273BA059FAD3DA26A38970122A2432897512EB41CF8147C05DDAD00A57"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/language_certification/test_generated_language_0152.py",
+      "destination_sha256": "B838EB5C62E8330D251F5E9ED33D52D3BF0476F85A5DBBBEC63D4B5D7BEB6945",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/language_certification/test_generated_language_0152.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/language_certification/test_generated_language_0152.py",
+      "source_sha256": "B838EB5C62E8330D251F5E9ED33D52D3BF0476F85A5DBBBEC63D4B5D7BEB6945"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/language_certification/test_grammar_ast_certification_0152.py",
+      "destination_sha256": "5F04B07D51ED63F0697814229E42ED98320ADB390B6E89E66212E6AABF13B722",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/language_certification/test_grammar_ast_certification_0152.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/language_certification/test_grammar_ast_certification_0152.py",
+      "source_sha256": "5F04B07D51ED63F0697814229E42ED98320ADB390B6E89E66212E6AABF13B722"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/language_certification/test_interpreter_semantics_0152.py",
+      "destination_sha256": "40085824FF6E7C8DA1116B0998C265612CF41A0EBD73B741528DACD1BF60225B",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/language_certification/test_interpreter_semantics_0152.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/language_certification/test_interpreter_semantics_0152.py",
+      "source_sha256": "40085824FF6E7C8DA1116B0998C265612CF41A0EBD73B741528DACD1BF60225B"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/language_certification/test_repl_certification_0152.py",
+      "destination_sha256": "0E7CFBBF39D02B8F4112514FB565C624DEEA57822CDFD4F254BD204EAE5511BA",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/language_certification/test_repl_certification_0152.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/language_certification/test_repl_certification_0152.py",
+      "source_sha256": "0E7CFBBF39D02B8F4112514FB565C624DEEA57822CDFD4F254BD204EAE5511BA"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/modules/test_module_certification_0152.py",
+      "destination_sha256": "3CFC8C99A26BA2F45BE5ED7B0BBBE070A243617F33B42755931C0B181ACEED95",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/modules/test_module_certification_0152.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/modules/test_module_certification_0152.py",
+      "source_sha256": "3CFC8C99A26BA2F45BE5ED7B0BBBE070A243617F33B42755931C0B181ACEED95"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/release/SONA_0153_NATIVE_STANDALONE_GATE.sh",
+      "destination_sha256": "80F7FEBAF6069142A1D97FC4985F11D2C6406431BC57357B8CD69176BD923366",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/release/SONA_0153_NATIVE_STANDALONE_GATE.sh.",
+      "release_area": "tests",
+      "source_relative_path": "tests/release/SONA_0153_NATIVE_STANDALONE_GATE.sh",
+      "source_sha256": "80F7FEBAF6069142A1D97FC4985F11D2C6406431BC57357B8CD69176BD923366"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/release/SONA_0153_RELEASE_GATE.sh",
+      "destination_sha256": "3FA9FB1FC03D8553EEE57769221256B51AF2D2BC17FA151ED3031C5B5A1B7B2C",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/release/SONA_0153_RELEASE_GATE.sh.",
+      "release_area": "tests",
+      "source_relative_path": "tests/release/SONA_0153_RELEASE_GATE.sh",
+      "source_sha256": "3FA9FB1FC03D8553EEE57769221256B51AF2D2BC17FA151ED3031C5B5A1B7B2C"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/release/cases/negative_cognitive_spread.expected.json",
+      "destination_sha256": "FD8066627D3D447F58EBB00929B9604AA368D32354D79F24BBA0ED8A6C100AA7",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/release/cases/negative_cognitive_spread.expected.json.",
+      "release_area": "tests",
+      "source_relative_path": "tests/release/cases/negative_cognitive_spread.expected.json",
+      "source_sha256": "FD8066627D3D447F58EBB00929B9604AA368D32354D79F24BBA0ED8A6C100AA7"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/release/cases/negative_cognitive_spread.sona",
+      "destination_sha256": "8136B872FF1514FE6A93200A6FC51F98973CB3733C466A3BC5B53B06583D0B0F",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/release/cases/negative_cognitive_spread.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/release/cases/negative_cognitive_spread.sona",
+      "source_sha256": "8136B872FF1514FE6A93200A6FC51F98973CB3733C466A3BC5B53B06583D0B0F"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/release/cases/negative_division_by_zero.expected.json",
+      "destination_sha256": "50ADEF73F4C791830EA6E67CBFCF21C68EF1C00F5BDBD03676E8D40A65C9CAE4",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/release/cases/negative_division_by_zero.expected.json.",
+      "release_area": "tests",
+      "source_relative_path": "tests/release/cases/negative_division_by_zero.expected.json",
+      "source_sha256": "50ADEF73F4C791830EA6E67CBFCF21C68EF1C00F5BDBD03676E8D40A65C9CAE4"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/release/cases/negative_division_by_zero.sona",
+      "destination_sha256": "8E0772335800E367BE7EDD64F16DB488E95BEDA383474BF628277E674CCB5F6B",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/release/cases/negative_division_by_zero.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/release/cases/negative_division_by_zero.sona",
+      "source_sha256": "8E0772335800E367BE7EDD64F16DB488E95BEDA383474BF628277E674CCB5F6B"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/release/cases/negative_legacy_fn.expected.json",
+      "destination_sha256": "1F771E39A77198C4F528A4CEDD8707B5986AD56E3889043BEB43DEC2F2CA0B17",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/release/cases/negative_legacy_fn.expected.json.",
+      "release_area": "tests",
+      "source_relative_path": "tests/release/cases/negative_legacy_fn.expected.json",
+      "source_sha256": "1F771E39A77198C4F528A4CEDD8707B5986AD56E3889043BEB43DEC2F2CA0B17"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/release/cases/negative_legacy_fn.sona",
+      "destination_sha256": "CE6B7EBEA99DAAFB38E9047EEBCA34184D7F7425DDF7502D1D15BFBE4723B3BA",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/release/cases/negative_legacy_fn.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/release/cases/negative_legacy_fn.sona",
+      "source_sha256": "CE6B7EBEA99DAAFB38E9047EEBCA34184D7F7425DDF7502D1D15BFBE4723B3BA"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/release/cases/negative_legacy_use.expected.json",
+      "destination_sha256": "B7A6B76A3CC9D7718519B741D1172C7D148A0EF3B11A3BAE74CFCB60921F196D",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/release/cases/negative_legacy_use.expected.json.",
+      "release_area": "tests",
+      "source_relative_path": "tests/release/cases/negative_legacy_use.expected.json",
+      "source_sha256": "B7A6B76A3CC9D7718519B741D1172C7D148A0EF3B11A3BAE74CFCB60921F196D"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/release/cases/negative_legacy_use.sona",
+      "destination_sha256": "02A7D2F46B44F5C8D60D0D2B5C66B938388A18AE3BD23FF035A1A866A186A73B",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/release/cases/negative_legacy_use.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/release/cases/negative_legacy_use.sona",
+      "source_sha256": "02A7D2F46B44F5C8D60D0D2B5C66B938388A18AE3BD23FF035A1A866A186A73B"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/release/cases/negative_undefined_function.expected.json",
+      "destination_sha256": "981C39ACC4A037DFC06801A07482370493CAFD13E5EF3DD241D68E740A66CFF2",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/release/cases/negative_undefined_function.expected.json.",
+      "release_area": "tests",
+      "source_relative_path": "tests/release/cases/negative_undefined_function.expected.json",
+      "source_sha256": "981C39ACC4A037DFC06801A07482370493CAFD13E5EF3DD241D68E740A66CFF2"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/release/cases/negative_undefined_function.sona",
+      "destination_sha256": "C4601AFBF24C25AEEC08429BF0528A5D9CF97DDE5F6BDB6274326857A21D0F28",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/release/cases/negative_undefined_function.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/release/cases/negative_undefined_function.sona",
+      "source_sha256": "C4601AFBF24C25AEEC08429BF0528A5D9CF97DDE5F6BDB6274326857A21D0F28"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/release/cases/positive_canonical_func.expected.json",
+      "destination_sha256": "7F4E96009BB6EFB40F23C32C3BC5965918118CAD420084D2FD042B7CCFA43455",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/release/cases/positive_canonical_func.expected.json.",
+      "release_area": "tests",
+      "source_relative_path": "tests/release/cases/positive_canonical_func.expected.json",
+      "source_sha256": "7F4E96009BB6EFB40F23C32C3BC5965918118CAD420084D2FD042B7CCFA43455"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/release/cases/positive_canonical_func.sona",
+      "destination_sha256": "031595B4AB2D81562D2A0BD3BEBFBEC62742FCD008D7CB17B633560607BD58DC",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/release/cases/positive_canonical_func.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/release/cases/positive_canonical_func.sona",
+      "source_sha256": "031595B4AB2D81562D2A0BD3BEBFBEC62742FCD008D7CB17B633560607BD58DC"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/release/cases/positive_cognitive_empty.expected.json",
+      "destination_sha256": "38FCC519B0FDF6162D3A4D513DFC846E94A520313A8B3E0F0CD7DDBD80BE40EE",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/release/cases/positive_cognitive_empty.expected.json.",
+      "release_area": "tests",
+      "source_relative_path": "tests/release/cases/positive_cognitive_empty.expected.json",
+      "source_sha256": "38FCC519B0FDF6162D3A4D513DFC846E94A520313A8B3E0F0CD7DDBD80BE40EE"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/release/cases/positive_cognitive_empty.sona",
+      "destination_sha256": "BE6AE7C8DCD9E9F67FB5CE3A632D506A8F86A704DBC2D3F0698D193702A13128",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/release/cases/positive_cognitive_empty.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/release/cases/positive_cognitive_empty.sona",
+      "source_sha256": "BE6AE7C8DCD9E9F67FB5CE3A632D506A8F86A704DBC2D3F0698D193702A13128"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/release/cases/positive_core_language.expected.json",
+      "destination_sha256": "BAA5B5DC4BD8B2F5AD82A2B34223E817730D615D9262017263AD4938CF223818",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/release/cases/positive_core_language.expected.json.",
+      "release_area": "tests",
+      "source_relative_path": "tests/release/cases/positive_core_language.expected.json",
+      "source_sha256": "BAA5B5DC4BD8B2F5AD82A2B34223E817730D615D9262017263AD4938CF223818"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/release/cases/positive_core_language.sona",
+      "destination_sha256": "6D601268C219F8F59AEC4CA2413D723153A7B4F0A19059A0B3CD3CD4B952A227",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/release/cases/positive_core_language.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/release/cases/positive_core_language.sona",
+      "source_sha256": "6D601268C219F8F59AEC4CA2413D723153A7B4F0A19059A0B3CD3CD4B952A227"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/release/cases/positive_guardian_check.expected.json",
+      "destination_sha256": "E5E42DB085D94BDA114971F9EDF8CC3F8AEF7598C00A3DC01624C017BBCB4CDC",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/release/cases/positive_guardian_check.expected.json.",
+      "release_area": "tests",
+      "source_relative_path": "tests/release/cases/positive_guardian_check.expected.json",
+      "source_sha256": "E5E42DB085D94BDA114971F9EDF8CC3F8AEF7598C00A3DC01624C017BBCB4CDC"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/release/cases/positive_guardian_check.sona",
+      "destination_sha256": "AB8B5CF4AD87F105E59CC4517E7D79070591AA331DCD1B5B37C92E364C40AE9C",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/release/cases/positive_guardian_check.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/release/cases/positive_guardian_check.sona",
+      "source_sha256": "AB8B5CF4AD87F105E59CC4517E7D79070591AA331DCD1B5B37C92E364C40AE9C"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/release/cases/positive_module_repr.expected.json",
+      "destination_sha256": "C84E18F772C858E87FA966B192F747515BB4B1306EF38F9324FD457E2B8E2771",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/release/cases/positive_module_repr.expected.json.",
+      "release_area": "tests",
+      "source_relative_path": "tests/release/cases/positive_module_repr.expected.json",
+      "source_sha256": "C84E18F772C858E87FA966B192F747515BB4B1306EF38F9324FD457E2B8E2771"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/release/cases/positive_module_repr.sona",
+      "destination_sha256": "E0F61E7D97F1C56848F395D80B612ED8115B44BBA04578E2A28BB7DE3F459281",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/release/cases/positive_module_repr.sona.",
+      "release_area": "tests",
+      "source_relative_path": "tests/release/cases/positive_module_repr.sona",
+      "source_sha256": "E0F61E7D97F1C56848F395D80B612ED8115B44BBA04578E2A28BB7DE3F459281"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/release/native-scratch.Dockerfile",
+      "destination_sha256": "F05FCA892896418D7742346262E3F11C893FE3F10A8E133E934CB2DC3765F602",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/release/native-scratch.Dockerfile.",
+      "release_area": "tests",
+      "source_relative_path": "tests/release/native-scratch.Dockerfile",
+      "source_sha256": "F05FCA892896418D7742346262E3F11C893FE3F10A8E133E934CB2DC3765F602"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/release/run_0153_native_standalone_gate.py",
+      "destination_sha256": "EC6DE602C34DA90B188DEDA49C60F0BDA0D3CB7FD692859B55627086DC8344EA",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/release/run_0153_native_standalone_gate.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/release/run_0153_native_standalone_gate.py",
+      "source_sha256": "EC6DE602C34DA90B188DEDA49C60F0BDA0D3CB7FD692859B55627086DC8344EA"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/release/run_0153_release_gate.py",
+      "destination_sha256": "EB12A01338D32CC1AC193A3FFA970CA39626892583B5D2B7104F9A0D75014D4B",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/release/run_0153_release_gate.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/release/run_0153_release_gate.py",
+      "source_sha256": "EB12A01338D32CC1AC193A3FFA970CA39626892583B5D2B7104F9A0D75014D4B"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/release/test_0153_artifacts.py",
+      "destination_sha256": "C1ABD871B0CBEBC0C347DD4F418C061B6BC464F8C7AC3FF4A44C1E209DD39A57",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/release/test_0153_artifacts.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/release/test_0153_artifacts.py",
+      "source_sha256": "C1ABD871B0CBEBC0C347DD4F418C061B6BC464F8C7AC3FF4A44C1E209DD39A57"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/release/test_0153_certification_orchestrator.py",
+      "destination_sha256": "DBA6B496EA4A37168CBA59E273BA8DF842C6A0725F5C429EB328EC14D9C2D67F",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/release/test_0153_certification_orchestrator.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/release/test_0153_certification_orchestrator.py",
+      "source_sha256": "DBA6B496EA4A37168CBA59E273BA8DF842C6A0725F5C429EB328EC14D9C2D67F"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/release/test_0153_ci_contract.py",
+      "destination_sha256": "927883E2C369DB667EDB64F8137C67EBB07F6ADD06C57E1D4C9051D4B398C1AA",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/release/test_0153_ci_contract.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/release/test_0153_ci_contract.py",
+      "source_sha256": "927883E2C369DB667EDB64F8137C67EBB07F6ADD06C57E1D4C9051D4B398C1AA"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/release/test_0153_native_gates.py",
+      "destination_sha256": "24D67AF975B95D0CF8A8F4A431DB6E9252D783D030A64501B2A3BD21CEA4D81C",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/release/test_0153_native_gates.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/release/test_0153_native_gates.py",
+      "source_sha256": "24D67AF975B95D0CF8A8F4A431DB6E9252D783D030A64501B2A3BD21CEA4D81C"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/release/test_0153_promotion_controls.py",
+      "destination_sha256": "295C3299BB335F336CA847F4F90171BFB88D1C502B3A6A716121ADE3B1E8E77F",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/release/test_0153_promotion_controls.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/release/test_0153_promotion_controls.py",
+      "source_sha256": "295C3299BB335F336CA847F4F90171BFB88D1C502B3A6A716121ADE3B1E8E77F"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/release/test_0153_publication_controls.py",
+      "destination_sha256": "725FBDAB7E78B0B772430BA523649BC10DDB9DEF2C4FF98DE8FAD27471B11821",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/release/test_0153_publication_controls.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/release/test_0153_publication_controls.py",
+      "source_sha256": "725FBDAB7E78B0B772430BA523649BC10DDB9DEF2C4FF98DE8FAD27471B11821"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/release/test_0153_release_finalizer.py",
+      "destination_sha256": "2F190CEF1236A4E8BAEB5FF74B7BBDC9A52A6756D2BC1AC7176B629D30409CC6",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/release/test_0153_release_finalizer.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/release/test_0153_release_finalizer.py",
+      "source_sha256": "2F190CEF1236A4E8BAEB5FF74B7BBDC9A52A6756D2BC1AC7176B629D30409CC6"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/release/test_0153_release_gate_runner.py",
+      "destination_sha256": "E6740B45380042BAAE211F35184C8DB1EA33DC89231E4649120BD999FB276B30",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/release/test_0153_release_gate_runner.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/release/test_0153_release_gate_runner.py",
+      "source_sha256": "E6740B45380042BAAE211F35184C8DB1EA33DC89231E4649120BD999FB276B30"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/release/test_0153_source_manifest.py",
+      "destination_sha256": "817C0AC5354860D099D3722C8CCE0A0CDB59CA57A1B89B20424A8EB992E36F44",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/release/test_0153_source_manifest.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/release/test_0153_source_manifest.py",
+      "source_sha256": "817C0AC5354860D099D3722C8CCE0A0CDB59CA57A1B89B20424A8EB992E36F44"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "tests/release/test_015_clean_install_public_surface.py",
+      "destination_sha256": "C661AEE45815CFED3AF80AAA6D713290725A1F5B83B05A87DCFFC14FA1382C31",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/release/test_015_clean_install_public_surface.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/release/test_015_clean_install_public_surface.py",
+      "source_sha256": "C661AEE45815CFED3AF80AAA6D713290725A1F5B83B05A87DCFFC14FA1382C31"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/release_edges/test_abnormal_dependencies_0152.py",
+      "destination_sha256": "93CD5A6A32EF95FCE717C8717A74B3A117B7695FB032159DA7264876A594A46B",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/release_edges/test_abnormal_dependencies_0152.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/release_edges/test_abnormal_dependencies_0152.py",
+      "source_sha256": "93CD5A6A32EF95FCE717C8717A74B3A117B7695FB032159DA7264876A594A46B"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/runtime/test_0151_behavior_characterization_0152.py",
+      "destination_sha256": "AA83AECFE145B5F76EA413FF31417C7CC2785927BCDDC5FDB9071BBB957F6BB2",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/runtime/test_0151_behavior_characterization_0152.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/runtime/test_0151_behavior_characterization_0152.py",
+      "source_sha256": "AA83AECFE145B5F76EA413FF31417C7CC2785927BCDDC5FDB9071BBB957F6BB2"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/runtime/test_0153_reliability_regressions.py",
+      "destination_sha256": "6DEDF8B6DF427805984B384E96E62422F201C8581D774029F6EDD0721B1060EC",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/runtime/test_0153_reliability_regressions.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/runtime/test_0153_reliability_regressions.py",
+      "source_sha256": "6DEDF8B6DF427805984B384E96E62422F201C8581D774029F6EDD0721B1060EC"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/runtime/test_runtime_hardening_0152.py",
+      "destination_sha256": "9F300A055E364F202427BC20B38033D9E690F685EDD90FCD68710F5C90322CA7",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/runtime/test_runtime_hardening_0152.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/runtime/test_runtime_hardening_0152.py",
+      "source_sha256": "9F300A055E364F202427BC20B38033D9E690F685EDD90FCD68710F5C90322CA7"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/smod_validation/run_smod_certification.py",
+      "destination_sha256": "0B441A4AC90BED1B40482EB2DC6F58D93B39C85F6730773B277EE5909DCB90DC",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/smod_validation/run_smod_certification.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/smod_validation/run_smod_certification.py",
+      "source_sha256": "0B441A4AC90BED1B40482EB2DC6F58D93B39C85F6730773B277EE5909DCB90DC"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tests/stdlib/test_stable_stdlib_certification_0152.py",
+      "destination_sha256": "F140182D89F98AF11D81B5BE792FE009873B45C9FC831D4C81D324FB746DF0F4",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/stdlib/test_stable_stdlib_certification_0152.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/stdlib/test_stable_stdlib_certification_0152.py",
+      "source_sha256": "F140182D89F98AF11D81B5BE792FE009873B45C9FC831D4C81D324FB746DF0F4"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "tests/test_sona_native_stdlib_0141.py",
+      "destination_sha256": "872FC05137531ED1FCE71CE49E42B877C89EFEBA07BECBEEE25A067CA4E6E5B1",
+      "reason": "Include reviewed Sona 0.15.3 tests implementation from tests/test_sona_native_stdlib_0141.py.",
+      "release_area": "tests",
+      "source_relative_path": "tests/test_sona_native_stdlib_0141.py",
+      "source_sha256": "872FC05137531ED1FCE71CE49E42B877C89EFEBA07BECBEEE25A067CA4E6E5B1"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tools/release/artifacts_0153.py",
+      "destination_sha256": "DBB3C772301DE98A54FBA4A61C8A66C05A13DF7AFE104C42F5D56E255DF5F675",
+      "reason": "Include reviewed Sona 0.15.3 packaging implementation from tools/release/artifacts_0153.py.",
+      "release_area": "packaging",
+      "source_relative_path": "tools/release/artifacts_0153.py",
+      "source_sha256": "DBB3C772301DE98A54FBA4A61C8A66C05A13DF7AFE104C42F5D56E255DF5F675"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tools/release/certify_0153.py",
+      "destination_sha256": "0B29330E054C1F1E8245872C01E275DA55AF3C53D7CF937E72D27C96321F3A9E",
+      "reason": "Include reviewed Sona 0.15.3 packaging implementation from tools/release/certify_0153.py.",
+      "release_area": "packaging",
+      "source_relative_path": "tools/release/certify_0153.py",
+      "source_sha256": "0B29330E054C1F1E8245872C01E275DA55AF3C53D7CF937E72D27C96321F3A9E"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tools/release/finalize_0153_release.py",
+      "destination_sha256": "EE1361B901FBF8D64C912772E39C71710B523B256F62E0B30AF9F35B2D57489B",
+      "reason": "Include reviewed Sona 0.15.3 packaging implementation from tools/release/finalize_0153_release.py.",
+      "release_area": "packaging",
+      "source_relative_path": "tools/release/finalize_0153_release.py",
+      "source_sha256": "EE1361B901FBF8D64C912772E39C71710B523B256F62E0B30AF9F35B2D57489B"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tools/release/promote_0153.py",
+      "destination_sha256": "D497859B385D193684F5FE5E61E94E67536CC8DB9C6D518A67BA008C9266033F",
+      "reason": "Include reviewed Sona 0.15.3 packaging implementation from tools/release/promote_0153.py.",
+      "release_area": "packaging",
+      "source_relative_path": "tools/release/promote_0153.py",
+      "source_sha256": "D497859B385D193684F5FE5E61E94E67536CC8DB9C6D518A67BA008C9266033F"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "tools/release/publish_0153.py",
+      "destination_sha256": "FA912C69FCB74432160F5DBBB23240C4270C4A248036B0FDD108984F16D3A606",
+      "reason": "Include reviewed Sona 0.15.3 packaging implementation from tools/release/publish_0153.py.",
+      "release_area": "packaging",
+      "source_relative_path": "tools/release/publish_0153.py",
+      "source_sha256": "FA912C69FCB74432160F5DBBB23240C4270C4A248036B0FDD108984F16D3A606"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "tools/run_examples.py",
+      "destination_sha256": "B71CD745E17D62D0983ECA2567BFD33FD6E6D65F746486540750871A543C4758",
+      "reason": "Include reviewed Sona 0.15.3 packaging implementation from tools/run_examples.py.",
+      "release_area": "packaging",
+      "source_relative_path": "tools/run_examples.py",
+      "source_sha256": "B71CD745E17D62D0983ECA2567BFD33FD6E6D65F746486540750871A543C4758"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "tools/validate_release_metadata.py",
+      "destination_sha256": "9529D933DD3860215ABFEB2B7DCA24D7A799FBC93017A2321DECC8FF7854AF26",
+      "reason": "Include reviewed Sona 0.15.3 packaging implementation from tools/validate_release_metadata.py.",
+      "release_area": "packaging",
+      "source_relative_path": "tools/validate_release_metadata.py",
+      "source_sha256": "9529D933DD3860215ABFEB2B7DCA24D7A799FBC93017A2321DECC8FF7854AF26"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "vscode-extension/.vscodeignore",
+      "destination_sha256": "646C197370354CD597783A5BF40CC092BA89CFDD826DF78A67CCA50AB6643081",
+      "reason": "Include reviewed Sona 0.15.3 extension implementation from vscode-extension/.vscodeignore.",
+      "release_area": "extension",
+      "source_relative_path": "vscode-extension/.vscodeignore",
+      "source_sha256": "646C197370354CD597783A5BF40CC092BA89CFDD826DF78A67CCA50AB6643081"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "vscode-extension/CHANGELOG.md",
+      "destination_sha256": "2F16884F157DEECEC4922F2C3E791C470AA7823448ABADEBC8861DBD8FC8FB04",
+      "reason": "Include reviewed Sona 0.15.3 extension implementation from vscode-extension/CHANGELOG.md.",
+      "release_area": "extension",
+      "source_relative_path": "vscode-extension/CHANGELOG.md",
+      "source_sha256": "2F16884F157DEECEC4922F2C3E791C470AA7823448ABADEBC8861DBD8FC8FB04"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "vscode-extension/README.md",
+      "destination_sha256": "DAD15FC41E8126EB85192CB64AE4454FCC203CA9168D92DFA5FF625881CFA76A",
+      "reason": "Include reviewed Sona 0.15.3 extension implementation from vscode-extension/README.md.",
+      "release_area": "extension",
+      "source_relative_path": "vscode-extension/README.md",
+      "source_sha256": "DAD15FC41E8126EB85192CB64AE4454FCC203CA9168D92DFA5FF625881CFA76A"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "vscode-extension/out/aiConsole/agentRegistry.js",
+      "destination_sha256": "9623D2BC0AFC6ABD272DBE8B65451681034C334AE1AD88F790E12740B6A90B98",
+      "reason": "Include reviewed Sona 0.15.3 extension implementation from vscode-extension/out/aiConsole/agentRegistry.js.",
+      "release_area": "extension",
+      "source_relative_path": "vscode-extension/out/aiConsole/agentRegistry.js",
+      "source_sha256": "9623D2BC0AFC6ABD272DBE8B65451681034C334AE1AD88F790E12740B6A90B98"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "vscode-extension/out/aiConsole/backendTransport.js",
+      "destination_sha256": "F3B8604ECD7F07E05E909D1BA59F07FC21165A5AFFBDE362F15FBBCF461C3687",
+      "reason": "Include reviewed Sona 0.15.3 extension implementation from vscode-extension/out/aiConsole/backendTransport.js.",
+      "release_area": "extension",
+      "source_relative_path": "vscode-extension/out/aiConsole/backendTransport.js",
+      "source_sha256": "F3B8604ECD7F07E05E909D1BA59F07FC21165A5AFFBDE362F15FBBCF461C3687"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "vscode-extension/out/aiConsole/contextCollector.js",
+      "destination_sha256": "2B5CE065A81F71AC5D136B6C4A1022360A2BAA039D3178DD6BDEF24C14219D32",
+      "reason": "Include reviewed Sona 0.15.3 extension implementation from vscode-extension/out/aiConsole/contextCollector.js.",
+      "release_area": "extension",
+      "source_relative_path": "vscode-extension/out/aiConsole/contextCollector.js",
+      "source_sha256": "2B5CE065A81F71AC5D136B6C4A1022360A2BAA039D3178DD6BDEF24C14219D32"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "vscode-extension/out/aiConsole/providers.js",
+      "destination_sha256": "3D18B3BDF5B6DFA14F5BC847E5BEFC91D40A133A1ED2F8AECFFC185ABEA8044F",
+      "reason": "Include reviewed Sona 0.15.3 extension implementation from vscode-extension/out/aiConsole/providers.js.",
+      "release_area": "extension",
+      "source_relative_path": "vscode-extension/out/aiConsole/providers.js",
+      "source_sha256": "3D18B3BDF5B6DFA14F5BC847E5BEFC91D40A133A1ED2F8AECFFC185ABEA8044F"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "vscode-extension/out/aiConsole/sonaAiConsoleView.js",
+      "destination_sha256": "ED643B5BB1F16F423D02AB0241E590E21413BF7D784A67D40A7E5F8A03C40C83",
+      "reason": "Include reviewed Sona 0.15.3 extension implementation from vscode-extension/out/aiConsole/sonaAiConsoleView.js.",
+      "release_area": "extension",
+      "source_relative_path": "vscode-extension/out/aiConsole/sonaAiConsoleView.js",
+      "source_sha256": "ED643B5BB1F16F423D02AB0241E590E21413BF7D784A67D40A7E5F8A03C40C83"
+    },
+    {
+      "classification": "deleted",
+      "destination_relative_path": "vscode-extension/out/aiIntegration.js",
+      "destination_sha256": null,
+      "reason": "Remove superseded extension content as reviewed for Sona 0.15.3.",
+      "release_area": "extension",
+      "source_relative_path": "vscode-extension/out/aiIntegration.js",
+      "source_sha256": "CDD1A13CD8C57A09A1E342DCEC0D23CAD1866E78F9ACB8019FEE2736FD3C6B0A"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "vscode-extension/out/extension.js",
+      "destination_sha256": "5053D823788CA0223681CDB97629CE498AA2223849265BED0B7906A193A20DB8",
+      "reason": "Include reviewed Sona 0.15.3 extension implementation from vscode-extension/out/extension.js.",
+      "release_area": "extension",
+      "source_relative_path": "vscode-extension/out/extension.js",
+      "source_sha256": "5053D823788CA0223681CDB97629CE498AA2223849265BED0B7906A193A20DB8"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "vscode-extension/out/lspClient.js",
+      "destination_sha256": "91E2F8D72945FDF9F0123F0DAFBD9E7D1CD12C36CBF97E94BD2BAC4DB0744771",
+      "reason": "Include reviewed Sona 0.15.3 extension implementation from vscode-extension/out/lspClient.js.",
+      "release_area": "extension",
+      "source_relative_path": "vscode-extension/out/lspClient.js",
+      "source_sha256": "91E2F8D72945FDF9F0123F0DAFBD9E7D1CD12C36CBF97E94BD2BAC4DB0744771"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "vscode-extension/out/sonaCliIntegration.js",
+      "destination_sha256": "494D40B0460428A56A09072705FE5E162FD6B22E027EF15AD9A840B934E9DCC0",
+      "reason": "Include reviewed Sona 0.15.3 extension implementation from vscode-extension/out/sonaCliIntegration.js.",
+      "release_area": "extension",
+      "source_relative_path": "vscode-extension/out/sonaCliIntegration.js",
+      "source_sha256": "494D40B0460428A56A09072705FE5E162FD6B22E027EF15AD9A840B934E9DCC0"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "vscode-extension/package-lock.json",
+      "destination_sha256": "38EC99CB1C689601BB436394C656AC46435B24F8A923968478CCEE8BB40C7922",
+      "reason": "Include reviewed Sona 0.15.3 extension implementation from vscode-extension/package-lock.json.",
+      "release_area": "extension",
+      "source_relative_path": "vscode-extension/package-lock.json",
+      "source_sha256": "38EC99CB1C689601BB436394C656AC46435B24F8A923968478CCEE8BB40C7922"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "vscode-extension/package.json",
+      "destination_sha256": "59FF4827CFD411DD32BC2EE6E10C7B29983E2989D84A3A30B5054681458A4596",
+      "reason": "Include reviewed Sona 0.15.3 extension implementation from vscode-extension/package.json.",
+      "release_area": "extension",
+      "source_relative_path": "vscode-extension/package.json",
+      "source_sha256": "59FF4827CFD411DD32BC2EE6E10C7B29983E2989D84A3A30B5054681458A4596"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "vscode-extension/scripts/smoke-ai-console.js",
+      "destination_sha256": "9B78535BFF3A28054DAB84E03E38B14FF75DBB3C7EBEF3715FADC612DA9819A2",
+      "reason": "Include reviewed Sona 0.15.3 extension implementation from vscode-extension/scripts/smoke-ai-console.js.",
+      "release_area": "extension",
+      "source_relative_path": "vscode-extension/scripts/smoke-ai-console.js",
+      "source_sha256": "9B78535BFF3A28054DAB84E03E38B14FF75DBB3C7EBEF3715FADC612DA9819A2"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "vscode-extension/src/aiConsole/backendTransport.ts",
+      "destination_sha256": "B0476F4EBECA8A304ADDB3532990FCEF7365D9AB540AEF572463A904B4C3FB90",
+      "reason": "Include reviewed Sona 0.15.3 extension implementation from vscode-extension/src/aiConsole/backendTransport.ts.",
+      "release_area": "extension",
+      "source_relative_path": "vscode-extension/src/aiConsole/backendTransport.ts",
+      "source_sha256": "B0476F4EBECA8A304ADDB3532990FCEF7365D9AB540AEF572463A904B4C3FB90"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "vscode-extension/src/aiConsole/providers.ts",
+      "destination_sha256": "CCE509B91417DDE65C317DFD2CFB0E3EFBA431FC2A4E0E1AA073A84C50C58410",
+      "reason": "Include reviewed Sona 0.15.3 extension implementation from vscode-extension/src/aiConsole/providers.ts.",
+      "release_area": "extension",
+      "source_relative_path": "vscode-extension/src/aiConsole/providers.ts",
+      "source_sha256": "CCE509B91417DDE65C317DFD2CFB0E3EFBA431FC2A4E0E1AA073A84C50C58410"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "vscode-extension/src/aiConsole/sonaAiConsoleView.ts",
+      "destination_sha256": "EDBB4C8172E5215771A38EFBCBA3EAE64FC5E9AF58B6ED4E4CCC855AE6D91D62",
+      "reason": "Include reviewed Sona 0.15.3 extension implementation from vscode-extension/src/aiConsole/sonaAiConsoleView.ts.",
+      "release_area": "extension",
+      "source_relative_path": "vscode-extension/src/aiConsole/sonaAiConsoleView.ts",
+      "source_sha256": "EDBB4C8172E5215771A38EFBCBA3EAE64FC5E9AF58B6ED4E4CCC855AE6D91D62"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "vscode-extension/src/extension.ts",
+      "destination_sha256": "E321DCB47EEFA3F519FEBC266D94E30B1EB663E4D9F42EBAEA4273D8D54B9191",
+      "reason": "Include reviewed Sona 0.15.3 extension implementation from vscode-extension/src/extension.ts.",
+      "release_area": "extension",
+      "source_relative_path": "vscode-extension/src/extension.ts",
+      "source_sha256": "E321DCB47EEFA3F519FEBC266D94E30B1EB663E4D9F42EBAEA4273D8D54B9191"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "vscode-extension/src/lspClient.ts",
+      "destination_sha256": "159F2CC593FA9F5427091903F4516E1B5DBF9B77D79925B597AD3AD2E9F8EDDF",
+      "reason": "Include reviewed Sona 0.15.3 extension implementation from vscode-extension/src/lspClient.ts.",
+      "release_area": "extension",
+      "source_relative_path": "vscode-extension/src/lspClient.ts",
+      "source_sha256": "159F2CC593FA9F5427091903F4516E1B5DBF9B77D79925B597AD3AD2E9F8EDDF"
+    },
+    {
+      "classification": "new",
+      "destination_relative_path": "vscode-extension/src/sonaCliIntegration.ts",
+      "destination_sha256": "0293D97244E1FD209C69ECC844B744E2FCD4CED19370F66181DDDAA5F3E8B55F",
+      "reason": "Include reviewed Sona 0.15.3 extension implementation from vscode-extension/src/sonaCliIntegration.ts.",
+      "release_area": "extension",
+      "source_relative_path": "vscode-extension/src/sonaCliIntegration.ts",
+      "source_sha256": "0293D97244E1FD209C69ECC844B744E2FCD4CED19370F66181DDDAA5F3E8B55F"
+    },
+    {
+      "classification": "modified",
+      "destination_relative_path": "vscode-extension/tsconfig.json",
+      "destination_sha256": "A8B290606344F21A2431829F10A7EDA877412F09EB29809D9908728CA7A2BA2A",
+      "reason": "Include reviewed Sona 0.15.3 extension implementation from vscode-extension/tsconfig.json.",
+      "release_area": "extension",
+      "source_relative_path": "vscode-extension/tsconfig.json",
+      "source_sha256": "A8B290606344F21A2431829F10A7EDA877412F09EB29809D9908728CA7A2BA2A"
+    }
+  ],
+  "excluded_paths": [
+    ".release-artifacts/**",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "**/.env",
+    "**/.env.*",
+    "**/node_modules/**",
+    "**/target/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/coverage/**",
+    "**/*.vsix",
+    "extensions/**",
+    "**/*.map",
+    "RELEASE_NOTES_v0.15.0.md",
+    "RELEASE_NOTES_v0.15.1.md",
+    "RELEASE_NOTES_v0.15.2.md",
+    "docs/release-notes/**"
+  ],
+  "release_version": "0.15.3",
+  "schema": 1,
+  "schema_id": "sona.source-import-manifest.schema-1",
+  "source_workspace_baseline": "191506849968cbd9c94879a17342f2ea7fdd1689"
+}

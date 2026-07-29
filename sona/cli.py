@@ -1,5 +1,5 @@
 """
-Sona v0.15.1 Command Line Interface with AI Integration
+Sona v0.15.3 Command Line Interface with AI Integration
 
 Enhanced CLI with profile, benchmark, suggest, and explain commands
 powered by GPT-2 and cognitive assistance features.
@@ -136,15 +136,19 @@ KNOWN_COMMANDS = {
     'ai-mode',
     'setup',
     'perf-log',
+    'ai',
+    'model',
+    'govern',
+    'guardian',
 }
 
 
-def _load_default_interpreter():
+def _load_default_interpreter(project_root: str | Path | None = None):
     """Instantiate the preferred interpreter with graceful fallback."""
     try:
         from sona.interpreter import SonaInterpreter
         _update_interpreter_status("cognitive", message=None, fallback_reason=None, hint=None)
-        return SonaInterpreter()
+        return SonaInterpreter(project_root=project_root)
     except Exception as core_error:  # pragma: no cover - defensive
         fallback_reason = _summarize_interpreter_error(core_error)
         raise RuntimeError(
@@ -446,6 +450,20 @@ def _render_user_diagnostic(
     source: str | None = None,
 ) -> None:
     """Render compact, stable CLI diagnostics without changing interpreter behavior."""
+    diagnostic = getattr(exc, "diagnostic", None)
+    if diagnostic is not None:
+        diagnostic_id = getattr(diagnostic, "diagnostic_id", None)
+        code = getattr(getattr(diagnostic, "code", None), "value", None)
+        prefix = f"{diagnostic_id}: " if diagnostic_id else ""
+        code_text = f"error[{code}]" if code else "error"
+        safe_error(f"{type(exc).__name__}: {prefix}{code_text}: {diagnostic.message}")
+        location = getattr(diagnostic, "location", None)
+        if location is not None:
+            safe_error(f"  at {location}")
+        if getattr(diagnostic, "suggestion", ""):
+            safe_error(f"  hint: {diagnostic.suggestion}")
+        return
+
     cause = _select_trace_exception(exc)
     message = str(cause) or str(exc) or "Unexpected error"
     header, hint = _classify_user_error(cause, message)
@@ -634,6 +652,7 @@ def _handle_direct_file_invocation(argv: list[str]) -> int | None:
         types = None
         types_log = 'all'
         summary = False
+        compatibility = 'auto'
 
     return handle_run_command(DirectArgs())
 
@@ -643,12 +662,19 @@ def execute_sona(
     safe_mode: bool = False,
     file_path: str | None = None,
     debug: bool = False,
+    compatibility_mode: str = "auto",
 ) -> any:
     """Execute Sona code using the default interpreter."""
-    global default_interpreter
-    if default_interpreter is None:
-        default_interpreter = _load_default_interpreter()
-    interpreter = default_interpreter
+    # Each file execution receives isolated state. The REPL owns its persistent
+    # interpreter separately.
+    project_root = Path(file_path).resolve().parent if file_path else Path.cwd()
+    interpreter = _load_default_interpreter(project_root=project_root)
+    interpreter.compatibility_mode = compatibility_mode
+    if safe_mode:
+        interpreter.maximum_call_depth = 128
+        interpreter.maximum_loop_iterations = 100_000
+        interpreter.maximum_execution_time_ms = 30_000
+        interpreter.maximum_output_bytes = 1_048_576
     stats = ExecutionStats(safe_mode=safe_mode, file_path=file_path)
 
     # Support embedded Python functions with @check_types decorator.
@@ -706,10 +732,10 @@ def execute_sona(
             raise
         except Exception as e:
             try:
-                from .interpreter import SonaRuntimeError
+                from .errors import SonaError
             except Exception:
-                SonaRuntimeError = None
-            if SonaRuntimeError and isinstance(e, SonaRuntimeError):
+                SonaError = None  # type: ignore
+            if SonaError and isinstance(e, SonaError):
                 raise
             raise RuntimeError(f"Interpretation error: {e}") from e
 
@@ -838,7 +864,7 @@ ENHANCED_COMMANDS = None  # lazy-loaded mapping
 
 
 # Version information
-SONA_VERSION = "0.15.1"
+SONA_VERSION = "0.15.3"
 AI_FEATURES_VERSION = "1.0.0"
 DEFAULT_OFFLINE_MODEL = "qwen2.5-coder:7b"
 
@@ -867,7 +893,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
     """Create the main argument parser for Sona CLI"""
     parser = SonaArgumentParser(
         prog='sona',
-        description='Sona Cognitive Programming Language v0.15.1',
+        description='Sona Cognitive Programming Language v0.15.3',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
             "Usage:\n"
@@ -906,6 +932,10 @@ def create_argument_parser() -> argparse.ArgumentParser:
         '--safe',
         action='store_true',
         help='Enable safe mode',
+    )
+    run_parser.add_argument(
+        '--compatibility', choices=['auto', 'sona', 'python'], default='auto',
+        help='Frontend compatibility mode; auto preserves legacy fallback behavior',
     )
     run_parser.add_argument(
         '--debug',
@@ -1028,6 +1058,10 @@ def create_argument_parser() -> argparse.ArgumentParser:
         action='store_true',
         help='Use the configured AI backend; default is fast local analysis',
     )
+    suggest_parser.add_argument('--format', choices=['text', 'json'], default='text')
+    suggest_parser.add_argument('--json', action='store_true', help=argparse.SUPPRESS)
+    suggest_parser.add_argument('--provider', default=None)
+    suggest_parser.add_argument('--model', default=None)
 
     # Explain command
     explain_parser = subparsers.add_parser(
@@ -1041,6 +1075,10 @@ def create_argument_parser() -> argparse.ArgumentParser:
         default='simple',
         help='Explanation style',
     )
+    explain_parser.add_argument('--format', choices=['text', 'json'], default='text')
+    explain_parser.add_argument('--json', action='store_true', help=argparse.SUPPRESS)
+    explain_parser.add_argument('--provider', default=None)
+    explain_parser.add_argument('--model', default=None)
     explain_parser.add_argument(
         '--ai',
         action='store_true',
@@ -1053,6 +1091,8 @@ def create_argument_parser() -> argparse.ArgumentParser:
     # Check command
     check_parser = subparsers.add_parser('check', help='Check Sona syntax')
     check_parser.add_argument('file', help='Sona file to check')
+    check_parser.add_argument('--format', choices=['text', 'json'], default='text')
+    check_parser.add_argument('--json', action='store_true', help=argparse.SUPPRESS)
     # Setup command
     setup_parser = subparsers.add_parser(
         'setup',
@@ -1082,6 +1122,10 @@ def create_argument_parser() -> argparse.ArgumentParser:
         action='store_true',
         help='Manual setup without Azure CLI',
     )
+    setup_azure_parser.add_argument(
+        '--write-env-secret', action='store_true',
+        help='Explicitly permit writing the provider key to workspace .env',
+    )
     # Setup -> Manual
     setup_manual_parser = setup_sub.add_parser(
         'manual',
@@ -1096,6 +1140,10 @@ def create_argument_parser() -> argparse.ArgumentParser:
         '--workspace',
         help='Workspace directory to update .env',
         default=None,
+    )
+    setup_manual_parser.add_argument(
+        '--write-env-secret', action='store_true',
+        help='Explicitly permit writing the provider key to workspace .env',
     )
 
     # Package command (v0.10 platform bridge)
@@ -1275,6 +1323,88 @@ def create_argument_parser() -> argparse.ArgumentParser:
         help=f"Model name to download (default: {DEFAULT_OFFLINE_MODEL})",
     )
 
+    # Canonical developer-intelligence task API.
+    ai_parser = subparsers.add_parser('ai', help='Experimental structured developer-intelligence tasks')
+    ai_sub = ai_parser.add_subparsers(dest='ai_cmd')
+    ai_task = ai_sub.add_parser('task', help='Run a preview-first developer task')
+    ai_task.add_argument('--type', dest='task_type', choices=[
+        'complete', 'explain', 'diagnose', 'suggest', 'refactor', 'edit',
+        'generate_tests', 'review', 'fix', 'document',
+    ])
+    ai_task.add_argument('--instruction', default='')
+    ai_task.add_argument('--file', dest='files', action='append', default=[])
+    ai_task.add_argument('--provider', default=None)
+    ai_task.add_argument('--model', default=None)
+    ai_task.add_argument('--request', default=None, help="Read a schema-1 request from a path or '-' for stdin")
+    ai_task.add_argument('--format', choices=['text', 'json'], default='json')
+    ai_task.add_argument('--no-receipt', action='store_true')
+
+    model_parser = subparsers.add_parser('model', help='Inspect and register developer-intelligence models')
+    model_sub = model_parser.add_subparsers(dest='model_cmd')
+    model_sub.add_parser('list', help='List registered models')
+    model_inspect = model_sub.add_parser('inspect', help='Inspect a model descriptor')
+    model_inspect.add_argument('model_id')
+    model_register = model_sub.add_parser('register', help='Register a schema-1 model manifest')
+    model_register.add_argument('manifest')
+    model_register.add_argument('--scope', choices=['workspace', 'user'], default='workspace')
+    model_test = model_sub.add_parser('test', help='Validate model configuration')
+    model_test.add_argument('model_id')
+    model_health = model_sub.add_parser('health', help='Show model registry health')
+    model_health.add_argument('--format', choices=['text', 'json'], default='json')
+
+    govern_parser = subparsers.add_parser('govern', help='Validate and explain governance policy')
+    govern_sub = govern_parser.add_subparsers(dest='govern_cmd')
+    govern_validate = govern_sub.add_parser('validate')
+    govern_validate.add_argument('--policy', default=None)
+    for govern_name in ('check', 'explain'):
+        govern_action = govern_sub.add_parser(govern_name)
+        govern_action.add_argument('--task', required=True)
+        govern_action.add_argument('--provider', default=None)
+        govern_action.add_argument('--model', default=None)
+        govern_action.add_argument('--capability', default=None)
+        govern_action.add_argument('--format', choices=['text', 'json'], default='json')
+    govern_audit = govern_sub.add_parser('audit')
+    govern_audit.add_argument('--last', type=int, default=20)
+    govern_sub.add_parser('policy')
+
+    # Canonical Guardian name; the existing `guard` family remains compatible.
+    guardian_parser = subparsers.add_parser('guardian', help='Guardian project resilience commands')
+    guardian_sub = guardian_parser.add_subparsers(dest='guard_cmd')
+    for name in ('init', 'status', 'verify', 'diff', 'doctor', 'graph', 'audit'):
+        sub = guardian_sub.add_parser(name)
+        sub.add_argument('--project-root', default=None)
+        if name == 'verify':
+            sub.add_argument('--run-validation', action='store_true')
+        if name == 'audit':
+            sub.add_argument('--limit', type=int, default=50)
+    guardian_heal = guardian_sub.add_parser('heal')
+    guardian_heal.add_argument('--project-root', default=None)
+    guardian_heal.add_argument('--apply', action='store_true')
+    guardian_heal.add_argument('--approve', action='store_true')
+    guardian_repair = guardian_sub.add_parser('repair')
+    guardian_repair.add_argument('--project-root', default=None)
+    guardian_repair.add_argument('--apply', action='store_true')
+    guardian_repair.add_argument('--approve', action='store_true')
+    guardian_rollback = guardian_sub.add_parser('rollback')
+    guardian_rollback.add_argument('--project-root', default=None)
+    guardian_rollback.add_argument('--snapshot-id', default=None)
+    guardian_rollback.add_argument('--dry-run', action='store_true')
+    guardian_rollback.add_argument('--apply', action='store_true')
+    guardian_rollback.add_argument('--approve', action='store_true')
+    guardian_history = guardian_sub.add_parser('history')
+    guardian_history.add_argument('--project-root', default=None)
+    guardian_history.add_argument('--limit', type=int, default=50)
+    guardian_snapshot = guardian_sub.add_parser('snapshot')
+    guardian_snapshot.add_argument('--project-root', default=None)
+    guardian_snapshot.add_argument('--name', default=None)
+    guardian_quarantine = guardian_sub.add_parser('quarantine')
+    guardian_quarantine.add_argument('--project-root', default=None)
+    guardian_quarantine.add_argument('paths', nargs='*')
+    guardian_quarantine.add_argument('--reason', default='manual')
+    guardian_report = guardian_sub.add_parser('report')
+    guardian_report.add_argument('--project-root', default=None)
+    guardian_report.add_argument('--json', action='store_true')
+
     # AI mode convenience command
     ai_mode_parser = subparsers.add_parser(
         'ai-mode', help='Enable or inspect local AI mode features'
@@ -1376,6 +1506,9 @@ def create_argument_parser() -> argparse.ArgumentParser:
     rollback_parser = guard_sub.add_parser('rollback', help='Restore the last known-good snapshot')
     add_guard_root(rollback_parser)
     rollback_parser.add_argument('--snapshot-id', default=None, help='Snapshot id to restore')
+    rollback_parser.add_argument('--dry-run', action='store_true', help='Preview rollback (default)')
+    rollback_parser.add_argument('--apply', action='store_true', help='Apply the approved rollback plan')
+    rollback_parser.add_argument('--approve', action='store_true', help='Grant approval for this rollback')
 
     heal_parser = guard_sub.add_parser('heal', help='Recommend or apply Guardian recovery')
     add_guard_root(heal_parser)
@@ -1384,6 +1517,12 @@ def create_argument_parser() -> argparse.ArgumentParser:
         action='store_true',
         help='Quarantine suspect state and restore the last known-good snapshot',
     )
+    heal_parser.add_argument('--approve', action='store_true', help='Grant approval for this repair')
+
+    repair_parser = guard_sub.add_parser('repair', help='Compatibility name for Guardian healing')
+    add_guard_root(repair_parser)
+    repair_parser.add_argument('--apply', action='store_true', help='Apply the approved repair plan')
+    repair_parser.add_argument('--approve', action='store_true', help='Grant approval for this repair')
 
     report_parser = guard_sub.add_parser('report', help='Print a Guardian report')
     add_guard_root(report_parser)
@@ -1462,6 +1601,7 @@ def handle_run_command(args) -> int:
             safe_mode=args.safe,
             file_path=args.file,
             debug=args.debug,
+            compatibility_mode=getattr(args, 'compatibility', 'auto'),
         )
 
         if args.debug:
@@ -1890,28 +2030,61 @@ def handle_info_command(args) -> int:
 
 def handle_check_command(args) -> int:
     """Handle the check command"""
-    if not Path(args.file).exists():
+    output_format = 'json' if getattr(args, 'json', False) else getattr(args, 'format', 'text')
+    target = Path(args.file)
+    if not target.exists():
+        if output_format == 'json':
+            import json
+            print(json.dumps({"schema_version": 1, "command": "check", "status": "failed", "diagnostics": [{"diagnostic_id": "SONA-MODULE-001", "category": "module", "severity": "error", "message": f"File not found: {args.file}", "file": args.file, "start_line": 1, "start_column": 1}]}))
+            return 1
         safe_error(f"SonaFileError: file not found: {args.file}")
         safe_error("  hint: check the path and run the command again.")
+        return 1
+    if not target.is_file():
+        if output_format == 'json':
+            import json
+            print(json.dumps({"schema_version": 1, "command": "check", "status": "failed", "diagnostics": [{"diagnostic_id": "SONA-MODULE-003", "category": "module", "severity": "error", "message": "The check target is not a regular file.", "file": str(args.file), "start_line": 1, "start_column": 1, "hint": "Pass a .sona or .smod file path."}]}))
+            return 1
+        safe_error(f"SonaFileError: not a regular file: {args.file}")
+        safe_error("  hint: pass a .sona or .smod file path.")
         return 1
 
     try:
         code = read_text_safe(args.file)
         from .parser_v090 import create_parser
-    except Exception as e:
-        safe_print(f"[ERROR] Failed to load parser: {e}")
+    except (OSError, UnicodeError, ImportError):
+        if output_format == 'json':
+            import json
+            print(json.dumps({"schema_version": 1, "command": "check", "status": "failed", "diagnostics": [{"diagnostic_id": "SONA-PARSE-099", "category": "internal", "severity": "error", "message": "The source or canonical parser could not be loaded.", "file": str(args.file), "start_line": 1, "start_column": 1, "hint": "Verify file permissions and the Sona installation."}]}))
+            return 1
+        safe_error("[ERROR] The source or canonical parser could not be loaded.")
         return 1
 
     try:
         parser = create_parser()
         result = parser.validate_syntax(code)
-    except Exception as e:
-        safe_print(f"[ERROR] Syntax check failed: {e}")
+    except Exception:
+        if output_format == 'json':
+            import json
+            print(json.dumps({"schema_version": 1, "command": "check", "status": "failed", "diagnostics": [{"diagnostic_id": "SONA-PARSE-099", "category": "internal", "severity": "error", "message": "The syntax check encountered an internal failure.", "file": str(args.file), "start_line": 1, "start_column": 1, "hint": "Source was not executed; report this failure."}]}))
+            return 1
+        safe_error("[ERROR] The syntax check encountered an internal failure.")
         return 1
 
     errors = result.get('errors', []) if isinstance(result, dict) else []
     warnings = result.get('warnings', []) if isinstance(result, dict) else []
     suggestions = result.get('suggestions', []) if isinstance(result, dict) else []
+
+    if output_format == 'json':
+        import json
+        from sona.developer_intelligence.frontend import analyze_frontend
+        structured = [item.to_dict() for item in analyze_frontend(code, file=str(args.file))]
+        print(json.dumps({
+            "schema_version": 1, "command": "check",
+            "status": "failed" if any(item.get("severity") == "error" for item in structured) else "ok", "file": str(args.file),
+            "diagnostics": structured,
+        }, ensure_ascii=False, sort_keys=True))
+        return 1 if errors else 0
 
     if errors:
         safe_print(f"[ERROR] Syntax check failed for {args.file}")
@@ -2030,6 +2203,39 @@ def handle_transpile_command(args) -> int:
         return 1
 
 
+def _repl_source_complete(source: str) -> bool:
+    """Return whether a REPL buffer has balanced strings and delimiters."""
+    pairs = {")": "(", "]": "[", "}": "{"}
+    stack: list[str] = []
+    quote: str | None = None
+    escaped = False
+    comment = False
+    for character in source:
+        if comment:
+            if character == "\n":
+                comment = False
+            continue
+        if quote is not None:
+            if escaped:
+                escaped = False
+            elif character == "\\":
+                escaped = True
+            elif character == quote:
+                quote = None
+            continue
+        if character in {'"', "'"}:
+            quote = character
+        elif character == "#":
+            comment = True
+        elif character in "([{":
+            stack.append(character)
+        elif character in pairs:
+            if not stack or stack[-1] != pairs[character]:
+                return True  # Let the parser report the extra delimiter now.
+            stack.pop()
+    return quote is None and not stack
+
+
 def handle_repl_command(args) -> int:
     """Handle the repl command"""
     safe_print("[INFO] Starting Sona REPL...")
@@ -2038,7 +2244,7 @@ def handle_repl_command(args) -> int:
         from sona.interpreter import SonaInterpreter
         interpreter = SonaInterpreter()
 
-        safe_print("Sona REPL v0.15.1 - Type 'exit' to quit")
+        safe_print("Sona REPL v0.15.3 - Type 'exit' to quit; ':reset' clears state")
         if args.ai:
             try:
                 interpreter.enable_ai()
@@ -2046,19 +2252,35 @@ def handle_repl_command(args) -> int:
             except Exception as e:
                 safe_print(f"[WARN] Failed to enable AI assistance: {e}")
 
+        buffer: list[str] = []
         while True:
             try:
-                user_input = input("sona> ")
-                if user_input.strip().lower() in ['exit', 'quit']:
+                user_input = input("...> " if buffer else "sona> ")
+                command = user_input.strip().lower()
+                if not buffer and command in ['exit', 'quit']:
                     break
+                if not buffer and command == ':reset':
+                    interpreter.reset()
+                    safe_print("[OK] REPL state reset")
+                    continue
 
-                if user_input.strip():
+                if user_input.strip() or buffer:
+                    buffer.append(user_input)
+                    source = "\n".join(buffer)
+                    if not _repl_source_complete(source):
+                        continue
                     try:
-                        result = interpreter.interpret(user_input, filename="<repl>")
+                        result = interpreter.interpret(source, filename="<repl>")
                         if result is not None:
                             safe_print(f"=> {result}")
                     except Exception as e:
-                        safe_print(f"[ERROR] {e}")
+                        diagnostic_id = getattr(
+                            getattr(e, "diagnostic", None), "diagnostic_id", None
+                        )
+                        prefix = f"{diagnostic_id}: " if diagnostic_id else ""
+                        safe_print(f"[ERROR] {prefix}{e}")
+                    finally:
+                        buffer.clear()
 
             except KeyboardInterrupt:
                 safe_print("\n[BYE] Goodbye!")
@@ -2066,6 +2288,7 @@ def handle_repl_command(args) -> int:
             except EOFError:
                 break
 
+        interpreter.close()
         return 0
 
     except Exception as e:
@@ -2085,6 +2308,39 @@ def _ensure_enhanced_loaded():
 def handle_enhanced_command(command: str, args) -> int:
     """Handle enhanced AI commands (lazy import of heavy deps)."""
     try:
+        output_format = 'json' if getattr(args, 'json', False) else getattr(args, 'format', 'text')
+        if command in {'explain', 'suggest'}:
+            from sona.developer_intelligence import (
+                ContextEnvelope,
+                DeveloperIntelligenceService,
+                TaskConstraints,
+                TaskRequest,
+                TaskType,
+            )
+            from sona.developer_intelligence.config import resolve_config
+            task_type = TaskType.EXPLAIN if command == 'explain' else TaskType.SUGGEST
+            provider_id = getattr(args, 'provider', None)
+            model_id = getattr(args, 'model', None)
+            if getattr(args, 'ai', False) and not provider_id and not model_id:
+                configured = resolve_config(Path.cwd()).get('providers', {})
+                provider_id = configured.get('selected') or configured.get('backend')
+            source = read_text_safe(args.file)
+            request = TaskRequest(
+                task_type=task_type,
+                instruction=f"{command} the target file for a developer",
+                target_files=(str(args.file),),
+                provider_id=provider_id,
+                model_id=model_id,
+                context=ContextEnvelope(active_file=str(args.file), target_files=(str(args.file),), selected_text=source, origin='cli'),
+                constraints=TaskConstraints(allow_network=bool(provider_id or model_id)),
+                governance_metadata={'style': getattr(args, 'style', 'simple')},
+            )
+            result = DeveloperIntelligenceService(Path.cwd()).execute(request, write_task_receipt=False)
+            if output_format == 'json':
+                print(result.to_json(canonical=True))
+            else:
+                safe_print(result.summary)
+            return 0 if result.status.value in {'ok', 'proposed'} else 1
         _ensure_enhanced_loaded()
         cmds = ENHANCED_COMMANDS or {}
         if command not in cmds:  # type: ignore
@@ -2118,6 +2374,149 @@ def handle_enhanced_command(command: str, args) -> int:
         return result if isinstance(result, int) else 0
     except Exception as e:  # pragma: no cover - defensive
         safe_print(f"[ERROR] Command failed: {e}")
+        return 1
+
+
+def handle_ai_task_command(args) -> int:
+    import json
+    from sona.developer_intelligence import DeveloperIntelligenceService, TaskRequest, TaskType
+
+    try:
+        if getattr(args, 'request', None):
+            raw = sys.stdin.read() if args.request == '-' else Path(args.request).read_text(encoding='utf-8')
+            request = TaskRequest.from_dict(json.loads(raw))
+        else:
+            if not getattr(args, 'task_type', None):
+                raise ValueError("--type is required when --request is not used")
+            request = TaskRequest(
+                task_type=TaskType(args.task_type), instruction=str(args.instruction or ''),
+                target_files=tuple(args.files or ()), provider_id=args.provider, model_id=args.model,
+            )
+        result = DeveloperIntelligenceService(Path.cwd()).execute(
+            request, write_task_receipt=not getattr(args, 'no_receipt', False)
+        )
+        if getattr(args, 'format', 'json') == 'json':
+            print(result.to_json(canonical=True))
+        else:
+            safe_print(f"[{result.status.value}] {result.summary}")
+            if result.receipt_path:
+                safe_print(f"Receipt: {result.receipt_path}")
+        return 0 if result.status.value in {'ok', 'proposed'} else 1
+    except Exception as exc:
+        payload = {"schema_version": 1, "status": "failed", "diagnostics": [{"diagnostic_id": "SONA-AI-001", "category": "provider", "severity": "error", "message": str(exc)}]}
+        if getattr(args, 'format', 'json') == 'json':
+            print(json.dumps(payload, sort_keys=True))
+        else:
+            safe_error(f"[ERROR] {exc}")
+        return 1
+
+
+def _registry_for_workspace():
+    from sona.developer_intelligence import ModelRegistry
+    registry = ModelRegistry()
+    sona_home = Path(os.getenv('SONA_HOME', Path.home() / '.sona'))
+    registry.load_directory(sona_home / 'models', override=True)
+    registry.load_directory(Path.cwd() / '.sona' / 'models', override=True)
+    return registry
+
+
+def handle_model_command(args) -> int:
+    import json
+    import shutil
+    from sona.developer_intelligence.models import descriptor_from_manifest
+    from sona.developer_intelligence.redaction import redact
+    try:
+        registry = _registry_for_workspace()
+        command = getattr(args, 'model_cmd', None)
+        if command == 'list':
+            print(json.dumps(redact({"schema_version": 1, "models": [item.to_dict() for item in registry.list()]}), indent=2, default=str))
+            return 0
+        if command == 'inspect':
+            item = registry.get(args.model_id)
+            if item is None:
+                raise ValueError(f"unknown model: {args.model_id}")
+            print(json.dumps(redact(item.to_dict()), indent=2, default=str))
+            return 0
+        if command == 'register':
+            source = Path(args.manifest).resolve()
+            payload = json.loads(source.read_text(encoding='utf-8'))
+            descriptor = descriptor_from_manifest(payload)
+            destination_root = (Path.cwd() / '.sona' / 'models') if args.scope == 'workspace' else Path(os.getenv('SONA_HOME', Path.home() / '.sona')) / 'models'
+            destination_root.mkdir(parents=True, exist_ok=True)
+            destination = destination_root / (descriptor.model_id.replace(':', '__') + '.json')
+            destination.write_text(json.dumps(payload, sort_keys=True, indent=2) + '\n', encoding='utf-8')
+            safe_print(str(destination))
+            return 0
+        if command in {'test', 'health'}:
+            if command == 'test' and registry.get(args.model_id) is None:
+                raise ValueError(f"unknown model: {args.model_id}")
+            selected = [registry.get(args.model_id)] if command == 'test' else registry.list()
+            records = []
+            for item in selected:
+                if item is None:
+                    continue
+                if item.provider_id in {'claude', 'codex'}:
+                    state, detail = 'unavailable', 'Provider is intentionally unavailable in 0.15.3.'
+                elif not item.enabled:
+                    state, detail = 'disabled', 'Descriptor is disabled.'
+                elif item.provider_id == 'deterministic':
+                    state, detail = 'available', 'Local deterministic provider is ready.'
+                elif item.provider_id == 'ollama':
+                    from sona.ai.local_models import ensure_local_model
+                    status = ensure_local_model(item.provider_model_name, quiet=True, timeout=0.25)
+                    ready = bool(status.get('ollama_running') and status.get('installed'))
+                    state, detail = ('available', 'Ollama is running and the model is installed.') if ready else ('unavailable', 'Ollama is stopped or the model is not installed; pulling remains explicit.')
+                elif item.provider_id == 'huggingface' and item.locality == 'local':
+                    ready = Path(str(item.configuration.get('local_path') or '')).exists()
+                    state, detail = ('available', 'Configured local path exists.') if ready else ('unavailable', 'Configured local path does not exist.')
+                else:
+                    ready = bool(item.configuration.get('endpoint'))
+                    state, detail = ('configured', 'Endpoint configuration is present; no request was sent.') if ready else ('unavailable', 'Required endpoint configuration is missing.')
+                records.append({'model_id': item.model_id, 'provider_id': item.provider_id, 'status': state, 'detail': detail})
+            payload = {'schema_version': 1, 'status': 'ok', 'registered': len(registry.list()), 'models': records}
+            if getattr(args, 'format', 'json') == 'text':
+                for record in records:
+                    safe_print(f"{record['model_id']}: {record['status']} - {record['detail']}")
+            else:
+                print(json.dumps(payload, sort_keys=True))
+            return 0 if command == 'health' or all(item['status'] in {'available', 'configured'} for item in records) else 1
+        raise ValueError("missing model command")
+    except Exception as exc:
+        safe_error(f"[ERROR] model command failed: {exc}")
+        return 1
+
+
+def handle_govern_command(args) -> int:
+    import json
+    from sona.developer_intelligence.governance import append_audit, evaluate, load_policy, policy_hash, validate_policy
+    try:
+        command = getattr(args, 'govern_cmd', None)
+        if command == 'validate' and getattr(args, 'policy', None):
+            policy = json.loads(Path(args.policy).read_text(encoding='utf-8'))
+            source = str(Path(args.policy).resolve())
+            validate_policy(policy)
+        else:
+            policy, source = load_policy(Path.cwd())
+            validate_policy(policy)
+        if command == 'validate':
+            print(json.dumps({"schema_version": 1, "status": "ok", "source": source, "policy_hash": policy_hash(policy)}, sort_keys=True))
+            return 0
+        if command in {'check', 'explain'}:
+            result = evaluate(policy, source=source, task_type=args.task, provider=args.provider, model=args.model, capability=args.capability)
+            append_audit(Path.cwd(), result)
+            print(json.dumps({"schema_version": 1, "decision": result.to_dict()}, sort_keys=True))
+            return 1 if result.blocked else 0
+        if command == 'policy':
+            print(json.dumps({"schema_version": 1, "source": source, "policy_hash": policy_hash(policy), "policy": policy}, indent=2, sort_keys=True))
+            return 0
+        if command == 'audit':
+            path = Path.cwd() / '.sona' / 'governance' / 'audit.jsonl'
+            lines = path.read_text(encoding='utf-8').splitlines() if path.exists() else []
+            print(json.dumps({"schema_version": 1, "records": [json.loads(line) for line in lines[-args.last:]]}, indent=2, sort_keys=True))
+            return 0
+        raise ValueError("missing govern command")
+    except Exception as exc:
+        safe_error(f"[ERROR] governance command failed: {exc}")
         return 1
 
 
@@ -2344,12 +2743,26 @@ def handle_guard_command(args) -> int:
     try:
         import json
         from .stdlib import native_guardian as guardian
+        from sona.developer_intelligence.redaction import redact
 
         command = getattr(args, 'guard_cmd', None)
         project_root = getattr(args, 'project_root', None)
         if not command:
             safe_print("[ERROR] Missing Guardian command. Try: sona guard --help")
             return 1
+
+        authorization = None
+        if command in {'rollback', 'heal', 'repair'} and bool(getattr(args, 'apply', False)):
+            from sona.developer_intelligence.governance import append_audit, authorize_mutation, load_policy
+            authorization_root = Path(project_root or '.').resolve()
+            policy, source = load_policy(authorization_root)
+            authorization = authorize_mutation(
+                policy, source=source, task_type=f'guardian_{command}',
+                capabilities=('write_workspace', 'execute_code'),
+                approval_granted=bool(getattr(args, 'approve', False)),
+                approval_scope=f'guardian:{command}:{authorization_root}',
+            )
+            append_audit(authorization_root, authorization)
 
         if command == 'init':
             result = guardian.guardian_init(project_root)
@@ -2373,12 +2786,21 @@ def handle_guard_command(args) -> int:
                 getattr(args, 'reason', 'manual'),
             )
         elif command == 'rollback':
-            result = guardian.guardian_rollback(project_root, getattr(args, 'snapshot_id', None))
-        elif command == 'heal':
-            result = guardian.guardian_heal(project_root, apply=getattr(args, 'apply', False))
+            apply = bool(getattr(args, 'apply', False))
+            result = guardian.guardian_rollback(
+                project_root, getattr(args, 'snapshot_id', None),
+                dry_run=not apply, approved=bool(getattr(args, 'approve', False)),
+                authorization=authorization,
+            )
+        elif command in {'heal', 'repair'}:
+            result = guardian.guardian_heal(
+                project_root, apply=getattr(args, 'apply', False),
+                approved=bool(getattr(args, 'approve', False)),
+                authorization=authorization,
+            )
         elif command == 'graph':
             result = guardian.guardian_graph(project_root)
-        elif command == 'audit':
+        elif command in {'audit', 'history'}:
             result = guardian.guardian_audit_history(project_root, getattr(args, 'limit', 50))
         elif command == 'report':
             if getattr(args, 'json', False):
@@ -2390,8 +2812,9 @@ def handle_guard_command(args) -> int:
             safe_print(f"[ERROR] Unknown Guardian command: {command}")
             return 1
 
-        print(json.dumps(result, indent=2, sort_keys=True))
-        return 0
+        print(json.dumps(redact(result), indent=2, sort_keys=True))
+        status = result.get('status') if isinstance(result, dict) else None
+        return 1 if status in {'denied', 'failed', 'blocked', 'approval-required'} else 0
     except Exception as e:  # pragma: no cover
         safe_print(f"[ERROR] guardian command error: {e}")
         return 1
@@ -2707,6 +3130,18 @@ def main() -> int:
     elif args.command == 'ai-model':
         return handle_ai_model_command(args)
 
+    elif args.command == 'ai':
+        if getattr(args, 'ai_cmd', None) == 'task':
+            return handle_ai_task_command(args)
+        safe_error("[ERROR] Missing AI command. Try: sona ai task --help")
+        return 1
+
+    elif args.command == 'model':
+        return handle_model_command(args)
+
+    elif args.command == 'govern':
+        return handle_govern_command(args)
+
     elif args.command == 'ai-mode':
         return handle_ai_mode_command(args)
     elif args.command == 'lock':
@@ -2731,7 +3166,8 @@ def main() -> int:
             code = setup_azure(
                 dry_run=getattr(args, 'dry_run', False),
                 workspace_dir=workspace_dir,
-                manual_mode=manual_mode
+                manual_mode=manual_mode,
+                write_env_secret=getattr(args, 'write_env_secret', False),
             )
             return code
         elif args.setup_cmd == 'manual':
@@ -2744,7 +3180,8 @@ def main() -> int:
             code = setup_azure(
                 dry_run=getattr(args, 'dry_run', False),
                 workspace_dir=workspace_dir,
-                manual_mode=True
+                manual_mode=True,
+                write_env_secret=getattr(args, 'write_env_secret', False),
             )
             return code
         else:
@@ -2776,7 +3213,7 @@ def main() -> int:
         return handle_ai_review_command(args)
     elif args.command == 'probe':
         return handle_probe_command(args)
-    elif args.command == 'guard':
+    elif args.command in {'guard', 'guardian'}:
         return handle_guard_command(args)
     elif args.command == 'doctor':
         return handle_doctor_command(args)

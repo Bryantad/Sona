@@ -1,20 +1,45 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.stopSonaLsp = exports.startSonaLsp = void 0;
-const vscode = require("vscode");
-const node_1 = require("vscode-languageclient/node");
+exports.startSonaLsp = startSonaLsp;
+exports.stopSonaLsp = stopSonaLsp;
+const fs = __importStar(require("fs"));
+const path = __importStar(require("path"));
 const child_process_1 = require("child_process");
-const fs = require("fs");
-const path = require("path");
+const vscode = __importStar(require("vscode"));
+const node_1 = require("vscode-languageclient/node");
 let client;
 let outputChannel;
 let lspStartupBlocked = false;
@@ -22,7 +47,7 @@ let lspBlockReason;
 let dependencyPromptShown = false;
 function ensureOutputChannel() {
     if (!outputChannel) {
-        outputChannel = vscode.window.createOutputChannel('Sona LSP');
+        outputChannel = vscode.window.createOutputChannel("Sona LSP", { log: true });
     }
     return outputChannel;
 }
@@ -44,16 +69,16 @@ function showDependencyError(pythonPath, details) {
     }
     dependencyPromptShown = true;
     const installCmd = `${quoteForShell(pythonPath)} -m pip install pygls`;
-    const message = 'Sona LSP requires pygls in the selected Python environment. Install pygls, then reload VS Code.';
+    const message = "Sona LSP requires pygls in the selected Python environment. Install pygls, then reload VS Code.";
     void vscode.window
-        .showErrorMessage(message, 'Copy install command', 'Open Sona LSP output')
-        .then((choice) => {
-        if (choice === 'Copy install command') {
+        .showErrorMessage(message, "Copy install command", "Open Sona LSP output")
+        .then(choice => {
+        if (choice === "Copy install command") {
             void vscode.env.clipboard.writeText(installCmd);
-            void vscode.window.showInformationMessage('Copied install command for Sona LSP dependency.');
+            void vscode.window.showInformationMessage("Copied install command for Sona LSP dependency.");
             return;
         }
-        if (choice === 'Open Sona LSP output') {
+        if (choice === "Open Sona LSP output") {
             ensureOutputChannel().show(true);
         }
     });
@@ -62,18 +87,18 @@ function showDependencyError(pythonPath, details) {
 }
 function runDependencyPreflight(pythonPath) {
     try {
-        const probe = (0, child_process_1.spawnSync)(pythonPath, ['-c', 'import pygls'], {
-            encoding: 'utf8',
+        const probe = (0, child_process_1.spawnSync)(pythonPath, ["-c", "import pygls"], {
+            encoding: "utf8",
             timeout: 5000,
             windowsHide: true
         });
         if (probe.error) {
             return { ok: false, reason: probe.error.message || String(probe.error) };
         }
-        if (typeof probe.status === 'number' && probe.status !== 0) {
-            const stderr = (probe.stderr || '').trim();
-            const stdout = (probe.stdout || '').trim();
-            const combined = [stderr, stdout].filter(Boolean).join(' | ');
+        if (typeof probe.status === "number" && probe.status !== 0) {
+            const stderr = (probe.stderr || "").trim();
+            const stdout = (probe.stdout || "").trim();
+            const combined = [stderr, stdout].filter(Boolean).join(" | ");
             return { ok: false, reason: combined || `python exited with status ${probe.status}` };
         }
         return { ok: true };
@@ -83,31 +108,30 @@ function runDependencyPreflight(pythonPath) {
     }
 }
 function resolvePythonPath() {
-    var _a, _b;
-    const cfg = vscode.workspace.getConfiguration('sona');
-    const configured = cfg.get('pythonPath') || cfg.get('cli.pythonPath');
+    const cfg = vscode.workspace.getConfiguration("sona");
+    const configured = cfg.get("pythonPath") || cfg.get("cli.pythonPath");
     if (configured && configured.trim()) {
         return configured.trim();
     }
-    const workspace = (_b = (_a = vscode.workspace.workspaceFolders) === null || _a === void 0 ? void 0 : _a[0]) === null || _b === void 0 ? void 0 : _b.uri.fsPath;
+    const workspace = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
     if (workspace) {
-        const winCandidate = path.join(workspace, '.venv', 'Scripts', 'python.exe');
-        const posixCandidate = path.join(workspace, '.venv', 'bin', 'python');
-        if (process.platform === 'win32' && fs.existsSync(winCandidate)) {
+        const winCandidate = path.join(workspace, ".venv", "Scripts", "python.exe");
+        const posixCandidate = path.join(workspace, ".venv", "bin", "python");
+        if (process.platform === "win32" && fs.existsSync(winCandidate)) {
             return winCandidate;
         }
-        if (process.platform !== 'win32' && fs.existsSync(posixCandidate)) {
+        if (process.platform !== "win32" && fs.existsSync(posixCandidate)) {
             return posixCandidate;
         }
     }
-    return 'python';
+    return "python";
 }
 function startSonaLsp(context) {
     if (client) {
         return;
     }
     if (lspStartupBlocked) {
-        appendOutput(`[sona-lsp] start skipped: ${lspBlockReason || 'startup blocked'}`);
+        appendOutput(`[sona-lsp] start skipped: ${lspBlockReason || "startup blocked"}`);
         return;
     }
     const pythonPath = resolvePythonPath();
@@ -117,23 +141,18 @@ function startSonaLsp(context) {
     if (!preflight.ok) {
         lspStartupBlocked = true;
         lspBlockReason = preflight.reason;
-        showDependencyError(pythonPath, preflight.reason || 'missing pygls dependency');
+        showDependencyError(pythonPath, preflight.reason || "missing pygls dependency");
         return;
     }
     appendOutput(`[sona-lsp] starting: ${pythonPath} -m sona.lsp_server --stdio`);
-    const serverOptions = {
-        command: pythonPath,
-        args: ['-m', 'sona.lsp_server', '--stdio']
-    };
-    const clientOptions = {
-        documentSelector: [{ scheme: 'file', language: 'sona' }],
+    client = new node_1.LanguageClient("sona-lsp", "Sona Language Server", { command: pythonPath, args: ["-m", "sona.lsp_server", "--stdio"] }, {
+        documentSelector: [{ scheme: "file", language: "sona" }],
         outputChannel: ensureOutputChannel()
-    };
-    client = new node_1.LanguageClient('sona-lsp', 'Sona Language Server', serverOptions, clientOptions);
-    client.onDidChangeState((event) => {
+    });
+    client.onDidChangeState(event => {
         appendOutput(`[sona-lsp] state: ${event.oldState} -> ${event.newState}`);
     });
-    client.start().catch((err) => {
+    client.start().catch(err => {
         lspStartupBlocked = true;
         lspBlockReason = err instanceof Error ? err.message : String(err);
         appendOutput(`[sona-lsp] failed to start: ${lspBlockReason}`);
@@ -144,20 +163,16 @@ function startSonaLsp(context) {
         }
     });
 }
-exports.startSonaLsp = startSonaLsp;
-function stopSonaLsp() {
-    return __awaiter(this, void 0, void 0, function* () {
-        if (!client)
-            return;
-        const toStop = client;
-        client = undefined;
-        try {
-            yield toStop.stop();
-        }
-        catch (err) {
-            appendOutput(`[sona-lsp] stop failed: ${err instanceof Error ? err.message : String(err)}`);
-        }
-    });
+async function stopSonaLsp() {
+    if (!client) {
+        return;
+    }
+    const toStop = client;
+    client = undefined;
+    try {
+        await toStop.stop();
+    }
+    catch (err) {
+        appendOutput(`[sona-lsp] stop failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
 }
-exports.stopSonaLsp = stopSonaLsp;
-//# sourceMappingURL=lspClient.js.map

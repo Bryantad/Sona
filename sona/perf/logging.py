@@ -63,7 +63,8 @@ def log_perf(event: str, **fields: Any) -> None:
     ts = time.time()
     record = {"ts": ts, "event": event}
     record.update(fields)
-    line = json.dumps(record, ensure_ascii=False)
+    from sona.developer_intelligence.redaction import redact
+    line = json.dumps(redact(record), ensure_ascii=False)
     with _lock:
         _ensure_file(ts)
         if _file_handle is None:

@@ -33,6 +33,8 @@ DEFAULT_EXCLUDES = [
     "*.p12",
     "*.pfx",
     ".sona/guardian/**",
+    ".sona/receipts/**",
+    ".sona/governance/**",
 ]
 
 CONFIG_NAME = "sona.guard.json"
@@ -86,18 +88,95 @@ def _is_excluded(rel_path: str, extra_excludes: list[str] | None = None) -> bool
 
 
 def _audit(root: Path, event: str, payload: dict[str, Any]) -> None:
+    from sona.developer_intelligence.governance import load_policy, policy_hash
+    from sona.developer_intelligence.redaction import redact
+    policy, _source = load_policy(root)
     audit_dir = _state_dir(root) / "audit"
     audit_dir.mkdir(parents=True, exist_ok=True)
     record = {
+        "schema_version": 1,
         "timestamp": _now(),
         "event": event,
-        "payload": payload,
+        "policy_hash": policy_hash(policy),
+        "payload": redact(payload),
     }
     with (audit_dir / "audit.jsonl").open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(record, sort_keys=True) + "\n")
 
 
-def _safe_resolve(root: Path, path: Path | str, action: str) -> Path:
+def _guardian_receipt(root: Path, action: str, result: dict[str, Any], authorization: dict[str, Any]) -> str:
+    """Write a redacted schema-1 receipt for a canonical Guardian operation."""
+    from sona.developer_intelligence.redaction import redact
+    policy_digest = str(authorization.get("policy_hash") or "")
+    post_write_hashes = dict(result.get("post_write_hashes", {}) or {})
+    for removed in result.get("removed", []) or []:
+        post_write_hashes[str(removed)] = None
+    receipt = {
+        "schema_version": 1,
+        "receipt_type": "guardian",
+        "timestamp": _now(),
+        "task_id": f"guardian:{action}",
+        "task_type": action,
+        "status": str(result.get("status", "failed")),
+        "policy_hash": policy_digest,
+        "governance": authorization,
+        "approval": {
+            "status": "granted" if authorization.get("approval_granted") else "denied",
+            "scope": authorization.get("approval_scope"),
+        },
+        "files_changed": sorted(set(
+            list(result.get("restored", []) or [])
+            + list(result.get("removed", []) or [])
+            + list(result.get("files_changed", []) or [])
+        )),
+        "post_write_hashes": post_write_hashes,
+        "output": str(result.get("reason") or result.get("message") or result.get("status", ""))[:4000],
+    }
+    clean = redact(receipt)
+    encoded = json.dumps(clean, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
+    clean["receipt_hash"] = "sha256:" + hashlib.sha256(encoded).hexdigest()
+    destination = _state_dir(root) / "receipts" / f"{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')}-{action}.json"
+    _write_json(destination, clean)
+    return str(destination)
+
+
+def _valid_receipt_changed_paths(root: Path) -> dict[str, str | None]:
+    expected: dict[str, str | None] = {}
+    roots = [root / ".sona" / "receipts", _state_dir(root) / "receipts"]
+    for receipt_root in roots:
+        if not receipt_root.exists():
+            continue
+        for path in receipt_root.rglob("*.json"):
+            try:
+                data = json.loads(path.read_text(encoding="utf-8"))
+                supplied = data.pop("receipt_hash")
+                encoded = json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
+                if supplied != "sha256:" + hashlib.sha256(encoded).hexdigest():
+                    continue
+                approval = data.get("approval") or {}
+                if str(approval.get("status", "")).lower() not in {"approved", "granted"}:
+                    continue
+                if data.get("receipt_type") == "guardian":
+                    governance = data.get("governance") or {}
+                    if not governance.get("authorized") or not str(approval.get("scope") or "").startswith("guardian:"):
+                        continue
+                else:
+                    patch_digest = data.get("patch_hash")
+                    task_id = data.get("task_id")
+                    if not patch_digest or approval.get("patch_hash") != patch_digest or approval.get("task_id") != task_id:
+                        continue
+                    if approval.get("scope") not in {task_id, f"task:{task_id}", f"patch:{patch_digest}"}:
+                        continue
+                for changed in data.get("files_changed", []) or []:
+                    candidate = _safe_resolve(root, str(changed), "receipt-classification", audit=False)
+                    relative = _relative(root, candidate)
+                    expected[relative] = (data.get("post_write_hashes") or {}).get(str(changed))
+            except (OSError, ValueError, TypeError, KeyError, json.JSONDecodeError):
+                continue
+    return expected
+
+
+def _safe_resolve(root: Path, path: Path | str, action: str, *, audit: bool = True) -> Path:
     root = root.resolve()
     source = Path(path)
     original = source if source.is_absolute() else root / source
@@ -107,19 +186,22 @@ def _safe_resolve(root: Path, path: Path | str, action: str) -> Path:
             target.relative_to(root)
         except ValueError as exc:
             rel = original.relative_to(root).as_posix() if original.is_relative_to(root) else str(original)
-            _audit(root, "guardian.path.reject", {"action": action, "path": rel, "reason": "symlink-escape"})
+            if audit:
+                _audit(root, "guardian.path.reject", {"action": action, "path": rel, "reason": "symlink-escape"})
             raise ValueError(f"Guardian rejected symlink escape: {rel}") from exc
     candidate = (root / source).resolve(strict=False) if not source.is_absolute() else source.resolve(strict=False)
     try:
         candidate.relative_to(root)
     except ValueError as exc:
-        _audit(root, "guardian.path.reject", {"action": action, "path": str(candidate), "reason": "outside-project-root"})
+        if audit:
+            _audit(root, "guardian.path.reject", {"action": action, "path": str(candidate), "reason": "outside-project-root"})
         raise ValueError(f"Guardian rejected path outside project root: {candidate}") from exc
-    _audit(root, "guardian.path.allow", {"action": action, "path": _relative(root, candidate)})
+    if audit:
+        _audit(root, "guardian.path.allow", {"action": action, "path": _relative(root, candidate)})
     return candidate
 
 
-def _assert_no_symlink_escape(root: Path, path: Path, action: str) -> None:
+def _assert_no_symlink_escape(root: Path, path: Path, action: str, *, audit: bool = True) -> None:
     if not path.is_symlink():
         return
     target = path.resolve(strict=False)
@@ -127,7 +209,8 @@ def _assert_no_symlink_escape(root: Path, path: Path, action: str) -> None:
         target.relative_to(root)
     except ValueError as exc:
         rel = _relative(root, path)
-        _audit(root, "guardian.path.reject", {"action": action, "path": rel, "reason": "symlink-escape"})
+        if audit:
+            _audit(root, "guardian.path.reject", {"action": action, "path": rel, "reason": "symlink-escape"})
         raise ValueError(f"Guardian rejected symlink escape: {rel}") from exc
 
 
@@ -215,7 +298,7 @@ def _circuit_status(root: Path) -> dict[str, Any]:
 
 
 def _set_circuit(root: Path, reason: str, payload: dict[str, Any]) -> dict[str, Any]:
-    state = {"active": True, "reason": reason, "timestamp": _now(), "payload": payload}
+    state = {"schema_version": 1, "active": True, "reason": reason, "timestamp": _now(), "payload": payload}
     _write_json(_circuit_path(root), state)
     _audit(root, "guardian.circuit.open", state)
     return state
@@ -224,13 +307,13 @@ def _set_circuit(root: Path, reason: str, payload: dict[str, Any]) -> dict[str, 
 def _inventory(root: Path, extra_excludes: list[str] | None = None) -> list[dict[str, Any]]:
     records: list[dict[str, Any]] = []
     for path in sorted(root.rglob("*")):
-        safe = _safe_resolve(root, path, "inventory")
+        safe = _safe_resolve(root, path, "inventory", audit=False)
         rel = _relative(root, safe)
         if _is_excluded(rel, extra_excludes):
             continue
         if safe.is_dir():
             continue
-        _assert_no_symlink_escape(root, safe, "inventory")
+        _assert_no_symlink_escape(root, safe, "inventory", audit=False)
         records.append({
             "path": rel,
             "sha256": _hash_file(safe),
@@ -306,6 +389,7 @@ def _verify_snapshot_integrity(root: Path, snapshot: dict[str, Any]) -> dict[str
 
 def _write_baseline(root: Path, manifest: dict[str, Any]) -> None:
     baseline = {
+        "schema_version": 1,
         "version": STATE_VERSION,
         "created_at": manifest.get("created_at", _now()),
         "project_root": str(root),
@@ -350,7 +434,8 @@ def _parg_graph(root: Path, records: list[dict[str, Any]]) -> dict[str, Any]:
     return {"nodes": nodes, "edges": edges}
 
 
-def _run_validation_commands(root: Path, trusted_config: dict[str, Any]) -> list[dict[str, Any]]:
+def _run_validation_commands(root: Path, trusted_config: dict[str, Any], *, audit: bool = True) -> list[dict[str, Any]]:
+    from sona.developer_intelligence.redaction import redact_text
     results = []
     for command in trusted_config.get("validation_commands", []):
         normalized = _normalize_command(command)
@@ -369,10 +454,11 @@ def _run_validation_commands(root: Path, trusted_config: dict[str, Any]) -> list
             "command": normalized,
             "exit_code": proc.returncode,
             "duration_seconds": elapsed,
-            "stdout": proc.stdout[-4000:],
-            "stderr": proc.stderr[-4000:],
+            "stdout": redact_text(proc.stdout[-4000:]),
+            "stderr": redact_text(proc.stderr[-4000:]),
         }
-        _audit(root, "guardian.validation", result)
+        if audit:
+            _audit(root, "guardian.validation", result)
         results.append(result)
     return results
 
@@ -464,6 +550,7 @@ def guardian_snapshot(project_root: Any = None, name: Any = None) -> dict[str, A
     destination = _snapshot_root(root) / snapshot_id / "files"
     copied = [_copy_project_file(root, item["path"], destination, "snapshot") for item in files]
     manifest = {
+        "schema_version": 1,
         "version": STATE_VERSION,
         "snapshot_id": snapshot_id,
         "created_at": _now(),
@@ -487,6 +574,7 @@ def guardian_init(project_root: Any = None) -> dict[str, Any]:
     state.mkdir(parents=True, exist_ok=True)
     working_config = _load_working_config(root)
     trusted_config = {
+        "schema_version": 1,
         "version": STATE_VERSION,
         "created_at": _now(),
         "config_hash": _config_hash(root),
@@ -527,6 +615,7 @@ def guardian_quarantine(project_root: Any = None, paths: Any = None, reason: Any
             continue
         records.append(_copy_project_file(root, rel_path, destination, "quarantine"))
     manifest = {
+        "schema_version": 1,
         "version": STATE_VERSION,
         "quarantine_id": quarantine_id,
         "created_at": _now(),
@@ -549,10 +638,36 @@ def guardian_verify(project_root: Any = None, run_validation: Any = False) -> di
     current = _inventory(root, trusted_config.get("excludes", []))
     diff = _diff_records(current, baseline.get("files", []))
     config_drift = _config_drift(root, trusted_config)
-    if config_drift["drift"] and _config_path(root).exists():
-        guardian_quarantine(root, [CONFIG_NAME], "config-drift")
-    validations = _run_validation_commands(root, trusted_config) if run_validation else []
+    # Verification is strictly read-only. Config drift is reported and any
+    # quarantine is deferred to an approved repair plan.
+    validations = []
+    if run_validation:
+        validations = [
+            {
+                "schema_version": 1,
+                "status": "not-executed",
+                "diagnostic_id": "SONA-GUARD-003",
+                "command": _normalize_command(command),
+                "message": "guardian verify is read-only; trusted commands run only during approved recovery verification",
+            }
+            for command in trusted_config.get("validation_commands", [])
+        ]
     status = "ok" if not any(diff.values()) and not config_drift["drift"] else "drift"
+    drift_paths = sorted(set(diff["added"] + diff["missing"] + diff["changed"] + ([CONFIG_NAME] if config_drift["drift"] else [])))
+    approved_paths = _valid_receipt_changed_paths(root)
+    current_map = _inventory_map(current)
+    expected = []
+    suspicious = []
+    for path in drift_paths:
+        approved_hash = approved_paths.get(path, "__missing_receipt__")
+        current_hash = current_map.get(path, {}).get("sha256")
+        if isinstance(approved_hash, str) and approved_hash.startswith("sha256:"):
+            approved_hash = approved_hash.split(":", 1)[1]
+        matches_receipt = (
+            path in approved_paths
+            and ((approved_hash is None and current_hash is None) or approved_hash == current_hash)
+        )
+        (expected if matches_receipt else suspicious).append(path)
     result = {
         "status": status,
         "project_root": str(root),
@@ -562,16 +677,27 @@ def guardian_verify(project_root: Any = None, run_validation: Any = False) -> di
         "config_drift": config_drift,
         "validation_results": validations,
         "policy_source": "trusted-baseline",
+        "drift_classification": {
+            "expected": expected,
+            "suspicious": suspicious,
+            "classification": "suspicious" if suspicious else ("expected" if expected else "none"),
+        },
     }
     result["accessibility"] = _accessibility_event(root, "verify", result)
-    _audit(root, "guardian.verify", {
-        "status": result["status"],
-        "added": len(diff["added"]),
-        "missing": len(diff["missing"]),
-        "changed": len(diff["changed"]),
-        "config_drift": config_drift["drift"],
-    })
     return result
+
+
+def guardian_check(project_root: Any = None) -> dict[str, Any]:
+    """Compatibility alias for read-only Guardian verification."""
+    try:
+        return guardian_verify(project_root)
+    except ValueError as exc:
+        return {
+            "schema_version": 1,
+            "status": "invalid-project-root",
+            "diagnostic_id": "SONA-GUARD-001",
+            "message": str(exc),
+        }
 
 
 def guardian_diff(project_root: Any = None) -> dict[str, Any]:
@@ -587,21 +713,56 @@ def guardian_diff(project_root: Any = None) -> dict[str, Any]:
     return diff
 
 
-def guardian_rollback(project_root: Any = None, snapshot_id: Any = None) -> dict[str, Any]:
+def guardian_rollback(
+    project_root: Any = None,
+    snapshot_id: Any = None,
+    *,
+    dry_run: Any = True,
+    approved: Any = False,
+    authorization: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     root = _project_root(project_root)
+
+    def finish(result: dict[str, Any]) -> dict[str, Any]:
+        if authorization is not None:
+            result["receipt_path"] = _guardian_receipt(root, "rollback", result, authorization)
+        return result
+
+    if authorization is not None and not authorization.get("authorized"):
+        return finish({
+            "schema_version": 1, "status": "denied",
+            "reason": str(authorization.get("reason") or "Guardian mutation was denied by governance."),
+            "governance": authorization,
+        })
     circuit = _circuit_status(root)
     if circuit.get("active"):
         result = {"status": "blocked", "reason": "circuit-breaker-active", "circuit_breaker": circuit}
         result["accessibility"] = _accessibility_event(root, "rollback", result)
-        return result
+        return finish(result)
     snapshot = _load_snapshot(root, str(snapshot_id) if snapshot_id else None)
     integrity = _verify_snapshot_integrity(root, snapshot)
     if not integrity["ok"]:
         breaker = _set_circuit(root, "snapshot-integrity-failed", integrity)
         result = {"status": "failed", "snapshot_id": snapshot["snapshot_id"], "circuit_breaker": breaker}
         result["accessibility"] = _accessibility_event(root, "rollback", result)
-        return result
+        return finish(result)
     before = guardian_verify(root)
+    plan = {
+        "schema_version": 1,
+        "summary": "Restore the selected Guardian snapshot.",
+        "snapshot_id": snapshot["snapshot_id"],
+        "files_to_restore": [item["path"] for item in snapshot.get("files", [])],
+        "files_to_remove": list(before.get("added", [])),
+        "required_capabilities": ["write_workspace", "execute_code"],
+        "approval_required": True,
+    }
+    if dry_run or not approved:
+        return finish({
+            "schema_version": 1,
+            "status": "dry-run" if dry_run else "approval-required",
+            "plan": plan,
+            "governance": {"decision": "require_approval", "blocked": True},
+        })
     quarantine = guardian_quarantine(root, reason="pre-rollback")
     snapshot_files = _inventory_map(snapshot.get("files", []))
     snapshot_source = _snapshot_root(root) / snapshot["snapshot_id"] / "files"
@@ -616,8 +777,9 @@ def guardian_rollback(project_root: Any = None, snapshot_id: Any = None) -> dict
             breaker = _set_circuit(root, "restore-hash-mismatch", {"path": rel_path})
             result = {"status": "failed", "snapshot_id": snapshot["snapshot_id"], "quarantine": quarantine, "circuit_breaker": breaker}
             result["accessibility"] = _accessibility_event(root, "rollback", result)
-            return result
-    for rel_path in before.get("added", []):
+            return finish(result)
+    removed = list(before.get("added", []))
+    for rel_path in removed:
         target = _safe_resolve(root, rel_path, "rollback-remove-added")
         if target.exists() and target.is_file():
             target.unlink()
@@ -630,20 +792,29 @@ def guardian_rollback(project_root: Any = None, snapshot_id: Any = None) -> dict
         breaker = _set_circuit(root, "post-rollback-verification-failed", {"verify": after, "validation_results": validations})
         result = {"status": "failed", "snapshot_id": snapshot["snapshot_id"], "quarantine": quarantine, "verify": after, "validation_results": validations, "circuit_breaker": breaker}
         result["accessibility"] = _accessibility_event(root, "rollback", result)
-        return result
+        return finish(result)
     _audit(root, "guardian.rollback", {"snapshot_id": snapshot["snapshot_id"], "quarantine_id": quarantine["quarantine_id"]})
+    restored = [item["path"] for item in snapshot.get("files", [])]
+    post_hashes = {
+        item["path"]: _hash_file(_safe_resolve(root, item["path"], "rollback-post-hash"))
+        for item in snapshot.get("files", [])
+    }
     result = {
+        "schema_version": 1,
         "status": "rolled-back",
         "snapshot_id": snapshot["snapshot_id"],
         "quarantine": quarantine,
         "verify": after,
         "validation_results": validations,
+        "restored": restored,
+        "removed": removed,
+        "post_write_hashes": post_hashes,
     }
     result["accessibility"] = _accessibility_event(root, "rollback", result)
-    return result
+    return finish(result)
 
 
-def guardian_heal(project_root: Any = None, apply: Any = False) -> dict[str, Any]:
+def guardian_heal(project_root: Any = None, apply: Any = False, approved: Any = False, authorization: dict[str, Any] | None = None) -> dict[str, Any]:
     root = _project_root(project_root)
     verify = guardian_verify(root)
     if verify.get("status") == "ok":
@@ -653,12 +824,16 @@ def guardian_heal(project_root: Any = None, apply: Any = False) -> dict[str, Any
     if not apply:
         result = {
             "status": "recommend-apply",
-            "message": "Guardian detected drift. Run `sona guard heal --apply` to quarantine and restore the last known-good snapshot.",
+            "message": "Guardian detected drift. Review the plan, then run `sona guardian heal --apply --approve`.",
             "verify": verify,
+            "plan": guardian_rollback(root, dry_run=True).get("plan"),
         }
         result["accessibility"] = _accessibility_event(root, "heal", result)
         return result
-    return guardian_rollback(root)
+    return guardian_rollback(root, dry_run=False, approved=approved, authorization=authorization)
+
+
+guardian_repair = guardian_heal
 
 
 def guardian_doctor(project_root: Any = None) -> dict[str, Any]:
@@ -725,6 +900,7 @@ def guardian_report_plain(project_root: Any = None) -> str:
 
 __all__ = [
     "guardian_audit_history",
+    "guardian_check",
     "guardian_diff",
     "guardian_doctor",
     "guardian_graph",
@@ -734,6 +910,7 @@ __all__ = [
     "guardian_report_json",
     "guardian_report_plain",
     "guardian_rollback",
+    "guardian_repair",
     "guardian_snapshot",
     "guardian_status",
     "guardian_verify",

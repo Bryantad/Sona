@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "name": "const-read",
+  "classification": "identical",
+  "source": "tests/conformance/bindings/const_read.sona",
+  "timeout_seconds": 30,
+  "expected": {
+    "python-compat": {"exit_code": 0, "stdout": "7\n", "stderr": ""},
+    "native": {"exit_code": 0, "stdout": "7\n", "stderr": ""}
+  }
+}

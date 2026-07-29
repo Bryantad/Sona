@@ -36,11 +36,11 @@ class SonaLanguageAdapter:
                 'func validate_input(data) {\n    if data.isEmpty() {\n        return false\n    }\n    return true\n}'
             ],
             'class_patterns': [
-                'class Person {\n    constructor(name) {\n        self.name = name\n    }\n    \n    def greet() {\n        print("Hello, I\'m " + self.name)\n    }\n}',
-                'class Calculator {\n    constructor() {\n        self.result = 0\n    }\n    \n    def add(value) {\n        self.result += value\n        return self\n    }\n}'
+                '// classes are unsupported in the canonical 0.15.x language',
+                '// use functions and modules for current Sona code'
             ],
             'cognitive_patterns': [
-                'working_memory {\n    let data = process_input()\n    remember("current_data", data)\n    focus_mode("analysis")\n}',
+                'working_memory(action="store", key="current_data", value=data)',
                 'remember("user_preferences", settings)',
                 'focus_mode("concentrated_coding")',
                 'encompassing: [user_interface, data_processing, validation]'
@@ -89,10 +89,7 @@ class SonaLanguageAdapter:
     visual_metaphor: "{metaphor}"
     complexity_level: {level}
     
-    working_memory {{
-        let data = gather_information()
-        remember("analysis_data", data)
-    }}
+    working_memory(action="store", key="analysis_data", value=gather_information())
 }}''',
             
             'function_creation': '''func {name}({params}) {{
@@ -122,7 +119,8 @@ class SonaLanguageAdapter:
 - remember() for working memory
 - focus_mode() for attention management
 - working_memory blocks for structured thinking
-- Standard syntax: func, class, let, if, for, while
+- Standard syntax: func, let, if, for, while
+- Classes and block-style working_memory syntax are not canonical in 0.15.x
 - Neurodivergent-friendly design patterns
 
 Generate Sona code that follows these patterns:"""
@@ -164,13 +162,13 @@ Generate Sona code that follows these patterns:"""
             completion = 'process_data(input) {\n    // Process the input\n    return result\n}'
         
         elif prompt.strip().endswith('class '):
-            completion = 'MyClass {\n    constructor() {\n        // Initialize\n    }\n}'
+            completion = '// classes are unsupported; use func/module syntax'
         
         elif prompt.strip().endswith('let '):
             completion = 'variable = "value"'
         
         elif 'working_memory' in prompt and prompt.strip().endswith('{'):
-            completion = '\n    let data = process_input()\n    remember("current_state", data)\n    focus_mode("analysis")\n}'
+            completion = '\n// working_memory uses call syntax: working_memory(action="store", key="current_state", value=data)'
         
         # If we have base GPT-2, use it with enhanced prompt
         elif self.base_gpt2:
@@ -224,9 +222,9 @@ Generate Sona code that follows these patterns:"""
             'remember(': '"data", value)',
             'focus_mode(': '"coding")',
             'func ': 'myFunction() {\n    // Function body\n}',
-            'class ': 'MyClass {\n    constructor() {\n        // Constructor\n    }\n}',
+            'class ': '// classes are unsupported; use func/module syntax',
             'let ': 'variable = "default"',
-            'working_memory': ' {\n    // Working memory block\n}'
+            'working_memory': '(action="store", key="current_state", value=value)'
         }
         
         for pattern, completion in fallbacks.items():
@@ -389,7 +387,7 @@ def test_sona_adapter():
         "func calculate_",
         "class Person",
         "let message =",
-        "working_memory {"
+        "working_memory("
     ]
     
     print("📝 Testing code completions:")

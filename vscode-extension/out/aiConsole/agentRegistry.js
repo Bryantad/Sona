@@ -1,6 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAgent = exports.getAgents = exports.normalizeAgentId = exports.isSonaAgentId = exports.ALL_AGENT_IDS = void 0;
+exports.ALL_AGENT_IDS = void 0;
+exports.isSonaAgentId = isSonaAgentId;
+exports.normalizeAgentId = normalizeAgentId;
+exports.getAgents = getAgents;
+exports.getAgent = getAgent;
 const AGENT_DEFINITIONS = [
     {
         id: "sona",
@@ -37,18 +41,15 @@ exports.ALL_AGENT_IDS = AGENT_DEFINITIONS.map(agent => agent.id);
 function isSonaAgentId(value) {
     return typeof value === "string" && exports.ALL_AGENT_IDS.includes(value);
 }
-exports.isSonaAgentId = isSonaAgentId;
 function normalizeAgentId(value, fallback = "sona") {
     return isSonaAgentId(value) ? value : fallback;
 }
-exports.normalizeAgentId = normalizeAgentId;
 function getAgents(config = {}) {
     return AGENT_DEFINITIONS.map(agent => ({
         ...agent,
         configured: isAgentConfigured(agent.id, config)
     }));
 }
-exports.getAgents = getAgents;
 function getAgent(id, config = {}) {
     const agent = getAgents(config).find(candidate => candidate.id === id);
     if (!agent) {
@@ -56,7 +57,6 @@ function getAgent(id, config = {}) {
     }
     return agent;
 }
-exports.getAgent = getAgent;
 function isAgentConfigured(id, config) {
     if (id === "sona" || id === "local") {
         return true;
@@ -72,4 +72,3 @@ function isAgentConfigured(id, config) {
     }
     return false;
 }
-//# sourceMappingURL=agentRegistry.js.map

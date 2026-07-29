@@ -1,6 +1,6 @@
 //
-// Sona Language Grammar v1.0.0 - CRITICAL PARSER FIXES
-// Fixed multi-parameter support, string escaping, and expression handling
+// Sona Language Grammar v0.15.x certified frontend.
+// Historical productions may be recognized for migration diagnostics.
 //
 
 start: statement_list
@@ -12,7 +12,8 @@ _statement_item: block_stmt
               | simple_stmt ";"?
               | ";"  // Allow standalone semicolons
 
-// Block statements - no semicolon required after closing brace
+// Block statements - no semicolon required after closing brace.
+// Some historical productions below are rejected by the parser before runtime.
 ?block_stmt: enhanced_if_stmt
            | enhanced_while_stmt
            | enhanced_for_stmt
@@ -39,9 +40,8 @@ _statement_item: block_stmt
             | return_stmt
             | break_stmt
             | continue_stmt
-            | cognitive_stmt
 
-// ======== Enhanced Control Flow (v1.0.0) ========
+// ======== Control Flow ========
 
 // Enhanced if/else/elif with complete support
 enhanced_if_stmt: "if" expr "{" statement_list? "}" elif_clause* else_clause? -> enhanced_if_stmt
@@ -65,7 +65,7 @@ return_stmt: "return" [expr] -> return_stmt
 break_stmt: "break" -> break_stmt
 continue_stmt: "continue" -> continue_stmt
 
-// REMOVED: AI functions now use regular function_call syntax instead of special statements
+// AI functions use ordinary postfix call syntax instead of special statements.
 // This allows proper runtime parameter validation instead of parse-time errors
 
 // Cognitive programming statements - FIXED to support function call syntax  
@@ -95,16 +95,17 @@ profile_stmt: "profile" "(" [arguments] ")" -> profile_stmt
 focus_block_stmt: "focus" ["(" [arguments] ")"] "{" statement_list? "}" -> focus_block_stmt
 
 // ======== Variable Assignments ========
-var_assignment: ("let" | "const") NAME "=" expr -> var_assignment
+BINDING_KIND.20: "let" | "const"
+var_assignment: BINDING_KIND NAME "=" expr -> var_assignment
 bare_assignment: NAME "=" expr -> bare_assignment
 
 // FIXED: Support destructuring with proper expression handling
-destructuring_assignment: ("let" | "const") destructuring_pattern "=" expr -> destructuring_assignment
+destructuring_assignment: BINDING_KIND destructuring_pattern "=" expr -> destructuring_assignment
 destructuring_pattern: "{" destructuring_list "}"
                                   | "[" destructuring_list "]"
 destructuring_list: NAME ("," NAME)*
 
-// ======== Enhanced Expressions (v1.0.0) ========
+// ======== Expressions ========
 // FIXED: Proper operator precedence and complex expression support
 // Support both symbol (&&, ||) and keyword (and, or) forms
 
@@ -115,12 +116,14 @@ destructuring_list: NAME ("," NAME)*
 ?equality_expr: comparison_expr (EQUALITY_OP comparison_expr)*
 ?comparison_expr: additive_expr (COMPARISON_OP additive_expr)*
 ?additive_expr: multiplicative_expr (ADDITIVE_OP multiplicative_expr)*
-?multiplicative_expr: power_expr (MULTIPLICATIVE_OP power_expr)*
-?power_expr: unary_expr (POW_OP unary_expr)*
-?unary_expr: (UNARY_OP | ADDITIVE_OP) unary_expr | postfix_expr
+?multiplicative_expr: unary_expr (MULTIPLICATIVE_OP unary_expr)*
+?unary_expr: (UNARY_OP | ADDITIVE_OP) unary_expr | power_expr
+?power_expr: postfix_expr [POW_OP unary_expr]
 ?postfix_expr: atom_expr (call_suffix | index_suffix | prop_suffix)*
 
-call_suffix: "(" [arguments] ")"
+// Priority prevents an optional-semicolon statement split from interpreting
+// `callee(args)` as two adjacent expressions.
+call_suffix.100: "(" [arguments] ")"
 index_suffix: "[" expr "]"
 prop_suffix: "." prop_name
 
@@ -148,20 +151,13 @@ prop_name: NAME
         | when_expr
         | list_literal
         | dict_literal
-        | function_call
-        | method_call
 
 // When expression
 when_expr: "when" "{" when_expr_cases "}" -> when_expr
 when_expr_cases: when_expr_case (";" when_expr_case)* [";"]
 when_expr_case: expr "=>" expr -> when_expr_case
 
-// ======== Function and Method Calls (FIXED) ========
-function_call: NAME "(" [arguments] ")" -> func_call
-method_call: atom "." prop_name "(" [arguments] ")" -> method_call
-property_access: atom "." prop_name -> prop_access
-
-// REMOVED: AI functions now use regular function_call syntax
+// Calls, indexing, and member access are handled only by postfix_expr.
 
 // Enhanced: keyword args + spread args
 arguments: argument ("," argument)* -> arg_list

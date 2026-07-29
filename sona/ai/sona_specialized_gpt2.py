@@ -168,7 +168,7 @@ class SonaSpecializedGPT2:
             "thinking(": "thinking(",
             "remember(": "remember(",
             "focus_mode(": "focus_mode(",
-            "working_memory": "working_memory {",
+            "working_memory": "working_memory(",
             "encompasses:": "encompasses: [",
             "visual_metaphor:": 'visual_metaphor: "'
         }

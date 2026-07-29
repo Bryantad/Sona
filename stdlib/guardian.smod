@@ -17,6 +17,10 @@ func verify(project_root=nil) {
     return guardian_verify(project_root)
 }
 
+func check(project_root=nil) {
+    return guardian_check(project_root)
+}
+
 func snapshot(project_root=nil, name=nil) {
     return guardian_snapshot(project_root, name)
 }

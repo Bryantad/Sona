@@ -2,7 +2,7 @@
 
 let demo_name = "guardian-recovery"
 
-fn describe_demo() {
+func describe_demo() {
     return "Guardian watches this fixture and restores known-good state."
 }
 

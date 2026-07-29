@@ -448,7 +448,7 @@ def generate_static_accessibility_suggestions(code: str) -> list[str]:
 def _extract_function_names(code: str) -> list[str]:
     import re
 
-    return re.findall(r'\b(?:func|function|fn|def)\s+(\w+)', code)
+    return re.findall(r'\b(?:func|def)\s+(\w+)', code)
 
 
 def simulate_execution(code: str) -> float:

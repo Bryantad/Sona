@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "name": "while-if",
+  "classification": "identical",
+  "source": "tests/conformance/control_flow/native_while_if.sona",
+  "timeout_seconds": 30,
+  "expected": {
+    "python-compat": {"exit_code": 0, "stdout": "ok\n", "stderr": ""},
+    "native": {"exit_code": 0, "stdout": "ok\n", "stderr": ""}
+  }
+}

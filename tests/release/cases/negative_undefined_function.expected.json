@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "name": "undefined-function",
+  "kind": "negative",
+  "execution_mode": "python-compat",
+  "source": "tests/release/cases/negative_undefined_function.sona",
+  "timeout_seconds": 30,
+  "expected": {
+    "exit_code": 1,
+    "exception_classification": "SonaRuntimeError",
+    "diagnostic_id": "SONA-RUNTIME-003",
+    "e_code": "E0402",
+    "primary_message": "Function 'unknown_function' is not defined.",
+    "file": "tests/release/cases/negative_undefined_function.sona",
+    "line": 1,
+    "column": 1,
+    "hint": "Declare or import the function before calling it.",
+    "stdout": "",
+    "stderr": "SonaRuntimeError: SONA-RUNTIME-003: error[E0402]: Function 'unknown_function' is not defined.\n  at tests/release/cases/negative_undefined_function.sona:1:1\n  hint: Declare or import the function before calling it.\n",
+    "ansi": false,
+    "traceback": false,
+    "host_exception": false,
+    "rust_panic": false,
+    "unrelated_log": false
+  }
+}

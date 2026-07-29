@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sona-lang"
-version = "0.15.1"
+version = "0.15.3"
 description = "Sona Programming Language with Cognitive Accessibility and Neurodivergent-First Features"
 authors = [{name = "WayCore Inc.", email = "info@waycore.com"}]
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.13"
 license = "MIT"
 keywords = [
 	"programming-language",
@@ -18,7 +18,7 @@ keywords = [
 	"smod",
 ]
 dependencies = [
-	"lark-parser>=0.12.0",
+	"lark-parser==0.12.0",
 	"pygls>=1.3.1,<2",
 ]
 classifiers = [
@@ -54,7 +54,17 @@ stdlib = ["*.smod", "utils/*.smod", "utils/validate/*.smod"]
 
 [project.optional-dependencies]
 ai = [
-	"torch>=2.2; platform_system!='Windows'",
+	"torch>=2.2",
+	"transformers>=4.43",
+	"accelerate>=0.33",
+]
+huggingface = [
+	"torch>=2.2",
+	"transformers>=4.43",
+	"accelerate>=0.33",
+]
+local-ai = [
+	"torch>=2.2",
 	"transformers>=4.43",
 	"accelerate>=0.33",
 ]
@@ -101,6 +111,19 @@ extend-exclude = '''
 
 [tool.ruff]
 target-version = "py311"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+norecursedirs = [
+	"_worktrees",
+	".git",
+	".venv*",
+	"build",
+	"dist",
+	"native/target",
+	"vscode-extension/out",
+	"extensions",
+]
 
 [tool.ruff.lint]
 select = ["E","F","I","UP","B","SIM","RUF"]

@@ -117,6 +117,15 @@ class SourceLocation:
     @classmethod
     def from_node(cls, node: Any, file: str = "<unknown>") -> "SourceLocation":
         """Create location from AST node with line/column attrs."""
+        span = getattr(node, "span", None)
+        if span is not None:
+            return cls(
+                file=getattr(span, "file", file),
+                line=getattr(span, "start_line", 1),
+                column=getattr(span, "start_column", 1),
+                end_line=getattr(span, "end_line", None),
+                end_column=getattr(span, "end_column", None),
+            )
         line = getattr(node, "line", 1) or 1
         col = getattr(node, "column", 1) or 1
         end_line = getattr(node, "end_line", None)
@@ -150,6 +159,8 @@ class Diagnostic:
     source_line: str = ""
     suggestion: str = ""
     related: list["Diagnostic"] = field(default_factory=list)
+    diagnostic_id: str | None = None
+    call_stack: tuple[str, ...] = ()
     
     def format(self, color: bool = False) -> str:
         """
@@ -206,8 +217,10 @@ class Diagnostic:
     
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
-        return {
+        from .developer_intelligence.redaction import redact
+        return redact({
             "code": self.code.value,
+            "diagnostic_id": self.diagnostic_id,
             "severity": self.severity.value,
             "message": self.message,
             "location": {
@@ -220,7 +233,8 @@ class Diagnostic:
             "source_line": self.source_line,
             "suggestion": self.suggestion,
             "related": [r.to_dict() for r in self.related],
-        }
+            "call_stack": list(self.call_stack),
+        })
 
 
 class SonaError(Exception):
@@ -237,6 +251,8 @@ class SonaError(Exception):
         location: SourceLocation | None = None,
         source_line: str = "",
         suggestion: str = "",
+        diagnostic_id: str | None = None,
+        call_stack: tuple[str, ...] = (),
     ):
         self.diagnostic = Diagnostic(
             code=code,
@@ -245,6 +261,8 @@ class SonaError(Exception):
             location=location or SourceLocation.unknown(),
             source_line=source_line,
             suggestion=suggestion,
+            diagnostic_id=diagnostic_id,
+            call_stack=call_stack,
         )
         super().__init__(self.diagnostic.format())
     
@@ -270,11 +288,15 @@ class SonaSyntaxError(SonaError):
         source_line: str = "",
         suggestion: str = "",
         code: ErrorCode = ErrorCode.SYNTAX_ERROR,
+        diagnostic_id: str = "SONA-PARSE-001",
     ):
-        super().__init__(message, code, location, source_line, suggestion)
+        super().__init__(
+            message, code, location, source_line, suggestion,
+            diagnostic_id=diagnostic_id,
+        )
 
 
-class SonaImportError(SonaError):
+class SonaImportError(SonaError, ImportError):
     """Import/module error."""
     
     def __init__(
@@ -287,12 +309,19 @@ class SonaImportError(SonaError):
     ):
         if not suggestion and module_name:
             suggestion = f"check that module '{module_name}' exists in stdlib or .sona_modules/"
+        lowered = message.lower()
+        stable_id = (
+            "SONA-MODULE-002" if "circular" in lowered else
+            "SONA-MODULE-003" if "invalid" in lowered or "private" in lowered else
+            "SONA-MODULE-001"
+        )
         super().__init__(
             message,
             ErrorCode.MODULE_NOT_FOUND,
             location,
             source_line,
             suggestion,
+            stable_id,
         )
         self.module_name = module_name
 

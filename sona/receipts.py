@@ -52,7 +52,7 @@ def _utc_timestamp() -> str:
 
 @dataclass(frozen=True)
 class ReceiptConfig:
-    receipt_version: str = "0.1"
+    receipt_version: str = "1"
     env_allowlist: tuple[str, ...] = ()
     include_lockfile: bool = True
     include_git: bool = True
@@ -69,6 +69,7 @@ def build_receipt(
     error_text: Optional[str],
     config: ReceiptConfig,
     pre_events: list[dict[str, Any]] | None = None,
+    timestamp_utc: str | None = None,
 ) -> dict[str, Any]:
     entry_file = entry_file.resolve()
     project_root = project_root.resolve()
@@ -93,10 +94,19 @@ def build_receipt(
         events = events[:-1]
     events.append({"t": int(duration_ms), "kind": "end"})
 
+    try:
+        from sona.developer_intelligence.governance import load_policy, policy_hash
+        active_policy, _source = load_policy(project_root)
+        governance_hash = policy_hash(active_policy)
+    except Exception:
+        governance_hash = None
+
     receipt: dict[str, Any] = {
+        "schema_version": 1,
         "sona_version": str(sona_version),
         "receipt_version": str(config.receipt_version),
-        "timestamp_utc": _utc_timestamp(),
+        "timestamp_utc": timestamp_utc or _utc_timestamp(),
+        "policy_hash": governance_hash,
         "code": {
             "entry_file": str(entry_file),
             "file_hash": code_hash,
@@ -122,7 +132,16 @@ def build_receipt(
         },
     }
 
-    return receipt
+    return _seal_receipt(receipt)
+
+
+def _seal_receipt(receipt: dict[str, Any]) -> dict[str, Any]:
+    from sona.developer_intelligence.redaction import redact
+    clean = redact(receipt)
+    clean.pop("receipt_hash", None)
+    encoded = json.dumps(clean, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
+    clean["receipt_hash"] = "sha256:" + hashlib.sha256(encoded).hexdigest()
+    return clean
 
 
 def set_active_receipt(receipt: dict[str, Any]) -> None:
@@ -223,6 +242,9 @@ def write_receipt_json(receipt: dict[str, Any], out_path: Path) -> None:
     out_path = out_path.resolve()
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
+    sealed = _seal_receipt(receipt)
+    receipt.clear()
+    receipt.update(sealed)
     payload = (
         json.dumps(
             receipt,

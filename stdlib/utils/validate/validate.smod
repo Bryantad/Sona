@@ -4,28 +4,28 @@ const module_format = "smod-runtime"
 const runtime_backend = "smod"
 
 # Core validation functions
-let is_number = fn(x) { 
+func is_number(x) {
     return type(x) == "number" 
 }
 
-let is_string = fn(x) { 
+func is_string(x) {
     return type(x) == "string" 
 }
 
-let is_empty = fn(x) { 
+func is_empty(x) {
     return x == "" or x == [] or x == null 
 }
 
-let has_length = fn(x) { 
+func has_length(x) {
     return type(x) == "string" or type(x) == "array" 
 }
 
-let in_range = fn(x, min, max) {  
+func in_range(x, min, max) {
     return x >= min and x <= max 
 }
 
 # Email validation
-let is_email = fn(email) { 
+func is_email(email) {
     if not is_string(email) { return false }
     return string.match(email, "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
 }

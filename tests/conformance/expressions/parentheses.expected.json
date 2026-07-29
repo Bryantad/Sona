@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "name": "parentheses",
+  "classification": "identical",
+  "source": "tests/conformance/expressions/parentheses.sona",
+  "timeout_seconds": 30,
+  "expected": {
+    "python-compat": {"exit_code": 0, "stdout": "20\n", "stderr": ""},
+    "native": {"exit_code": 0, "stdout": "20\n", "stderr": ""}
+  }
+}

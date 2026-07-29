@@ -1,0 +1,9 @@
+let total = 0;
+let items = [1, 2, 3];
+for item in items {
+    total = total + item;
+};
+func add(left, right=6) {
+    return left + right;
+};
+print(add(total));

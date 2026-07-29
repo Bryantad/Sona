@@ -9,36 +9,25 @@ from __future__ import annotations
 from datetime import datetime, timezone
 import json
 from typing import Any
+from sona.developer_intelligence.redaction import redact, redact_text
 
 
 _LEVELS = {"debug": 10, "info": 20, "warn": 30, "error": 40}
 _level = "info"
 _format = "plain"
 _events: list[dict[str, Any]] = []
-_SECRET_KEYS = {"api_key", "apikey", "authorization", "password", "secret", "token"}
 
 
 def _timestamp() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def _redact(value: Any) -> Any:
-    if isinstance(value, dict):
-        return {
-            str(key): ("[redacted]" if str(key).lower() in _SECRET_KEYS else _redact(item))
-            for key, item in value.items()
-        }
-    if isinstance(value, list):
-        return [_redact(item) for item in value]
-    return value
-
-
 def _record(level: str, message: Any, fields: Any = None, *, name: str | None = None) -> dict[str, Any]:
     event = {
         "timestamp": _timestamp(),
         "level": level,
-        "message": str(message),
-        "fields": _redact(fields if isinstance(fields, dict) else {}),
+        "message": redact_text(str(message)),
+        "fields": redact(fields if isinstance(fields, dict) else {}),
     }
     if name is not None:
         event["name"] = str(name)
@@ -108,7 +97,7 @@ def log_clear() -> bool:
 
 def log_format_event(event: Any, mode: Any = None) -> str:
     target = str(mode or _format).lower()
-    payload = event if isinstance(event, dict) else {"message": str(event)}
+    payload = redact(event if isinstance(event, dict) else {"message": str(event)})
     if target == "json":
         return json.dumps(payload, sort_keys=True, separators=(",", ":"))
     if target == "compact":

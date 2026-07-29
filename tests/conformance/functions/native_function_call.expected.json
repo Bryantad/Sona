@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "name": "function-call",
+  "classification": "identical",
+  "source": "tests/conformance/functions/native_function_call.sona",
+  "timeout_seconds": 30,
+  "expected": {
+    "python-compat": {"exit_code": 0, "stdout": "12\n", "stderr": ""},
+    "native": {"exit_code": 0, "stdout": "12\n", "stderr": ""}
+  }
+}

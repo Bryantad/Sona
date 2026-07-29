@@ -24,6 +24,7 @@ def test_setup_manual_writes_config_and_workspace_env(tmp_path):
             "sona",
             "setup",
             "manual",
+            "--write-env-secret",
             "--workspace",
             str(workspace),
         ],
@@ -42,7 +43,7 @@ def test_setup_manual_writes_config_and_workspace_env(tmp_path):
     config = json.loads((sona_home / "config.json").read_text(encoding="utf-8"))
     assert config == {
         "endpoint": "https://example.openai.azure.com/",
-        "api_key": "secret-key",
+        "credential_env": "AZURE_OPENAI_API_KEY",
         "deployment": "chat-prod",
     }
 
@@ -75,6 +76,17 @@ def test_update_env_file_preserves_existing_content(tmp_path):
     assert "AZURE_OPENAI_ENDPOINT=https://new.example/" in content
     assert "AZURE_OPENAI_API_KEY=key" in content
     assert "AZURE_OPENAI_DEPLOYMENT=deploy" in content
+
+
+def test_manual_azure_does_not_persist_secret_without_explicit_consent(monkeypatch, tmp_path):
+    workspace = tmp_path / "workspace"
+    monkeypatch.setenv("SONA_HOME", str(tmp_path / "sona-home"))
+    answers = iter(["https://example.openai.azure.com/", "secret-key", "chat-prod"])
+    monkeypatch.setattr(setup_azure, "_input", lambda _prompt: next(answers))
+    assert setup_azure._manual_azure_setup(False, workspace) == 0
+    assert not (workspace / ".env").exists()
+    config = json.loads((tmp_path / "sona-home" / "config.json").read_text(encoding="utf-8"))
+    assert "api_key" not in config
 
 
 def test_setup_manual_local_writes_ollama_config(monkeypatch, tmp_path, capsys):

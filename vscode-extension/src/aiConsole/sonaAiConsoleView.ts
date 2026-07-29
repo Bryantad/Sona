@@ -16,6 +16,7 @@ import {
   resolveQwenConfig,
   routeAgentRequest
 } from "./providers";
+import { CliDeveloperIntelligenceTransport } from "./backendTransport";
 
 type WebviewMessage =
   | { type: "selectAgent"; agentId: unknown }
@@ -165,6 +166,7 @@ export class SonaAiConsoleViewProvider implements vscode.WebviewViewProvider {
 
   private getProviderConfig(): ProviderConfig {
     const cfg = vscode.workspace.getConfiguration("sona");
+    const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
     return {
       qwenEnabled: cfg.get<boolean>("ai.qwen.enabled", false),
       qwenModel: cfg.get<string>("ai.qwen.model", "qwen2.5-coder:7b"),
@@ -172,7 +174,12 @@ export class SonaAiConsoleViewProvider implements vscode.WebviewViewProvider {
       claudeEnabled: cfg.get<boolean>("ai.claude.enabled", false),
       codexEnabled: cfg.get<boolean>("ai.codex.enabled", false),
       workspaceFolderPaths: (vscode.workspace.workspaceFolders || []).map(folder => folder.uri.fsPath),
-      timeoutMs: cfg.get<number>("cli.timeout", 30000)
+      timeoutMs: cfg.get<number>("cli.timeout", 30000),
+      transport: new CliDeveloperIntelligenceTransport(
+        cfg.get<string>("cli.pythonPath", "python"),
+        workspacePath,
+        cfg.get<number>("cli.timeout", 30000)
+      )
     };
   }
 

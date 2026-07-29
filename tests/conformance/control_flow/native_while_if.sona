@@ -1,0 +1,12 @@
+let count = 0;
+let total = 0;
+while count < 4 {
+    total = total + count;
+    count = count + 1;
+};
+if total == 6 {
+    print("ok");
+} else {
+    print("bad");
+};
+

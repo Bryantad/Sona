@@ -57,6 +57,99 @@ def parse_pyproject_version() -> str:
     return payload["project"]["version"]
 
 
+def tracked_source_maps(root: Path = ROOT) -> list[str]:
+    worktree = subprocess.run(
+        ["git", "rev-parse", "--is-inside-work-tree"],
+        cwd=root,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        shell=False,
+        check=False,
+    )
+    if worktree.returncode == 0 and worktree.stdout.strip() == "true":
+        listed = subprocess.run(
+            ["git", "ls-files", "*.map"],
+            cwd=root,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            shell=False,
+            check=True,
+        ).stdout.splitlines()
+        return sorted(path.replace("\\", "/") for path in listed if path)
+    return sorted(
+        path.relative_to(root).as_posix()
+        for path in root.rglob("*.map")
+        if path.is_file()
+    )
+
+
+def validate_dependency_and_toolchain_contracts() -> None:
+    pyproject = tomllib.loads(read("pyproject.toml"))
+    project = pyproject["project"]
+    if project.get("requires-python") != ">=3.11,<3.13":
+        fail("pyproject.toml must constrain Python to >=3.11,<3.13")
+    if "lark-parser==0.12.0" not in project.get("dependencies", []):
+        fail("pyproject.toml must pin lark-parser==0.12.0")
+    if read(".nvmrc").strip() != "20.19.5":
+        fail(".nvmrc must pin Node 20.19.5")
+    toolchain = tomllib.loads(read("rust-toolchain.toml"))
+    if toolchain.get("toolchain", {}).get("channel") != "1.94.0":
+        fail("rust-toolchain.toml must pin Rust 1.94.0")
+    if not (ROOT / "native" / "Cargo.lock").is_file():
+        fail("native/Cargo.lock must be committed")
+
+    extension = json.loads(read("vscode-extension/package.json"))
+    if extension.get("engines", {}).get("vscode") != "^1.91.0":
+        fail("VS Code engine floor must be ^1.91.0")
+    if extension.get("dependencies", {}).get("vscode-languageclient") != "10.1.0":
+        fail("vscode-languageclient must be pinned to 10.1.0")
+    if extension.get("devDependencies", {}).get("@vscode/vsce") != "3.9.2":
+        fail("@vscode/vsce must be pinned to 3.9.2")
+    if extension.get("devDependencies", {}).get("esbuild") != "0.25.8":
+        fail("esbuild must be pinned to 0.25.8")
+    security_overrides = extension.get("overrides", {})
+    for package, version in {
+        "brace-expansion": "5.0.8",
+        "minimatch": "10.2.6",
+        "cheerio": "1.0.0-rc.12",
+        "undici": "7.29.0",
+    }.items():
+        if security_overrides.get(package) != version:
+            fail(f"extension security override must pin {package} {version}")
+    lock = json.loads(read("vscode-extension/package-lock.json"))
+    root_package = lock.get("packages", {}).get("", {})
+    if root_package.get("dependencies", {}).get("vscode-languageclient") != "10.1.0":
+        fail("extension lockfile does not pin vscode-languageclient 10.1.0")
+    if root_package.get("devDependencies", {}).get("@vscode/vsce") != "3.9.2":
+        fail("extension lockfile does not pin @vscode/vsce 3.9.2")
+    if root_package.get("devDependencies", {}).get("esbuild") != "0.25.8":
+        fail("extension lockfile does not pin esbuild 0.25.8")
+    for package, version in {
+        "brace-expansion": "5.0.8",
+        "minimatch": "10.2.6",
+    }.items():
+        locked = lock.get("packages", {}).get(f"node_modules/{package}", {})
+        if locked.get("version") != version:
+            fail(f"extension lockfile does not pin {package} {version}")
+    cheerio = lock.get("packages", {}).get(
+        "node_modules/@vscode/vsce/node_modules/cheerio",
+        {},
+    )
+    if cheerio.get("version") != "1.0.0-rc.12":
+        fail("extension lockfile does not pin VSCE Cheerio 1.0.0-rc.12")
+    if any(
+        path.endswith("/whatwg-encoding")
+        for path in lock.get("packages", {})
+    ):
+        fail("extension lockfile retains deprecated whatwg-encoding")
+
+    tracked_maps = tracked_source_maps()
+    if tracked_maps:
+        fail(f"source maps must not be tracked: {', '.join(tracked_maps)}")
+
+
 def parse_init_version() -> str:
     text = read("sona/__init__.py")
     match = re.search(r'^__version__\s*=\s*"([^"]+)"', text, re.MULTILINE)
@@ -156,7 +249,10 @@ def main() -> int:
     require_contains("docs/stdlib/catalog.json", f'"version": "{expected}"')
     require_contains("docs/packages/manifest.md", f"v{expected}")
     require_contains("sona/stdlib/MANIFEST.json", "0150_cognitive_runtime_guardian")
+    require_contains("vscode-extension/src/extension.ts", f"Sona {expected} Extension")
+    require_contains("vscode-extension/src/sonaCliIntegration.ts", f"Sona {expected}")
 
+    validate_dependency_and_toolchain_contracts()
     check_no_stale_active_references(expected, active_scan)
     print(f"Release metadata validated for {expected}.")
     return 0

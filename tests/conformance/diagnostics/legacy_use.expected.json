@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "name": "legacy-use-unsupported-native",
+  "classification": "unsupported_native",
+  "source": "tests/conformance/diagnostics/legacy_use.sona",
+  "timeout_seconds": 30,
+  "expected": {
+    "python-compat": {
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "SonaSyntaxError: SONA-PARSE-001: error[E0001]: 'use' module syntax is not supported by the certified Sona 0.15.x frontend.\n  at tests/conformance/diagnostics/legacy_use.sona:1:1\n  hint: Use canonical module syntax, for example: import math;\n"
+    },
+    "native": {
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "error[E0001] SONA-NATIVE-PARSE-002: 'use' module syntax is not supported.\n  --> tests/conformance/diagnostics/legacy_use.sona:1:1\n  hint: Use canonical module syntax: import module;\n"
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "name": "if-else",
+  "classification": "identical",
+  "source": "tests/conformance/control_flow/if_else.sona",
+  "timeout_seconds": 30,
+  "expected": {
+    "python-compat": {"exit_code": 0, "stdout": "yes\n", "stderr": ""},
+    "native": {"exit_code": 0, "stdout": "yes\n", "stderr": ""}
+  }
+}

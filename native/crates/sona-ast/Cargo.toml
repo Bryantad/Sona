@@ -1,0 +1,13 @@
+[package]
+name = "sona-ast"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+sona-diagnostics = { path = "../sona-diagnostics" }
+
+[lib]
+path = "src/lib.rs"
+

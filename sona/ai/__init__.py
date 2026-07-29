@@ -12,11 +12,11 @@ from typing import Any
 
 __version__ = "0.8.2"
 _LAZY_SYMBOLS = {
-    "get_ai_backend": ".ai_backend",
-    "CodeCompletion": ".code_completion",
+    "get_ai_backend": "sona.developer_intelligence.compat",
+    "CodeCompletion": "sona.developer_intelligence.compat",
     "CognitiveAssistant": ".cognitive_assistant",
     "GPT2Integration": ".gpt2_integration",
-    "NaturalLanguageProcessor": ".natural_language",
+    "NaturalLanguageProcessor": "sona.developer_intelligence.compat",
     "OllamaIntegration": ".ollama_integration",
 }
 
@@ -34,7 +34,7 @@ def __getattr__(name: str) -> Any:
     module_name = _LAZY_SYMBOLS.get(name)
     if module_name is None:
         raise AttributeError(name)
-    module = import_module(module_name, __name__)
+    module = import_module(module_name, __name__) if module_name.startswith(".") else import_module(module_name)
     value = getattr(module, name)
     globals()[name] = value
     return value

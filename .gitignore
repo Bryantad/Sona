@@ -58,6 +58,7 @@ __tmp_*
 __smod_*
 _worktrees/
 node_modules/
+native/target/
 *.backup
 *_OLD.md
 _run_test.py
@@ -65,6 +66,7 @@ _test_grammar_debug.py
 test.sona
 
 # Local artifacts
+.release-artifacts/
 .spm_tmp/
 reports/
 _test_output_*.txt

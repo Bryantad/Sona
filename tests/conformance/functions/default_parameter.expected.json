@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "name": "default-parameter",
+  "classification": "identical",
+  "source": "tests/conformance/functions/default_parameter.sona",
+  "timeout_seconds": 30,
+  "expected": {
+    "python-compat": {"exit_code": 0, "stdout": "10\n", "stderr": ""},
+    "native": {"exit_code": 0, "stdout": "10\n", "stderr": ""}
+  }
+}

@@ -1,16 +1,15 @@
 import * as vscode from "vscode";
 
 import { SonaAiConsoleViewProvider } from "./aiConsole/sonaAiConsoleView";
-
-const sonaCliIntegration = require("../out/sonaCliIntegration");
-const lspClient = require("../out/lspClient");
+import * as lspClient from "./lspClient";
+import * as sonaCliIntegration from "./sonaCliIntegration";
 
 function shouldStartLsp(doc: vscode.TextDocument | undefined): boolean {
   return Boolean(doc && doc.languageId === "sona");
 }
 
 export function activate(context: vscode.ExtensionContext): void {
-  console.log("Sona 0.15.1 Extension is now active.");
+  console.log("Sona 0.15.3 Extension is now active.");
 
   sonaCliIntegration.activate(context);
 
@@ -46,7 +45,7 @@ export function activate(context: vscode.ExtensionContext): void {
     setTimeout(() => {
       vscode.window
         .showInformationMessage(
-          "Welcome to Sona 0.15.1. Cognitive Diagnostics are ready to use.",
+          "Welcome to Sona 0.15.3. Cognitive Diagnostics are ready to use.",
           "Get Started",
           "Documentation"
         )
