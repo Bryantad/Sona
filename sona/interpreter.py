@@ -1,5 +1,5 @@
 """
-Sona v0.15.1 - Enhanced Interpreter with Full Loop Support
+Sona v0.15.3 - Enhanced Interpreter with Full Loop Support
 ========================================================
 
 Production-grade interpreter with complete language feature support.
@@ -18,10 +18,15 @@ Features:
 """
 
 import ast
+import hashlib
+import os
+import warnings
 import json
 import sys
 import time
 import traceback
+from collections.abc import MutableMapping, Iterator
+from dataclasses import dataclass
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
 from typing import Any  # Ruff UP035: will migrate away from Dict/List
@@ -31,67 +36,15 @@ from typing import Any  # Ruff UP035: will migrate away from Dict/List
 if str(Path(__file__).parent) not in sys.path:
     sys.path.append(str(Path(__file__).parent))
 
-# Import parser
-try:
-    from .parser_v090 import SonaParserv090
-except ImportError:
-    try:
-        from parser_v090 import SonaParserv090
-    except ImportError:
-        SonaParserv090 = None
-
-# Import AST nodes
-try:
-    from .ast_nodes import (
-        AICompleteStatement,
-        AIDebugStatement,
-        AIExplainStatement,
-        AIOptimizeStatement,
-        ReturnValue,
-    )
-except ImportError:
-    try:
-        from ast_nodes import (
-            AICompleteStatement,
-            AIDebugStatement,
-            AIExplainStatement,
-            AIOptimizeStatement,
-            ReturnValue,
-        )
-    except ImportError:
-        # Create placeholder classes
-
-        class AICompleteStatement:
-            pass
-
-        class AIExplainStatement:
-            pass
-
-        class AIDebugStatement:
-            pass
-
-        class AIOptimizeStatement:
-            pass
-
-# Import Cognitive Assistant
-try:
-    from .ai.cognitive_assistant import CognitiveAssistant
-except ImportError:
-    try:
-        from ai.cognitive_assistant import CognitiveAssistant
-    except ImportError:
-        class CognitiveAssistant:
-            def __init__(self):
-                pass
-
-            def analyze_working_memory(self, *args, **kwargs):
-                return {'cognitive_load': 'medium', 'suggestions': []}
-
-            def detect_hyperfocus(self, *args, **kwargs):
-                return {'hyperfocus_detected': False}
-
-            def analyze_executive_function(self, *args, **kwargs):
-                return {'task_breakdown': [], 'support_strategies': []}
+from .parser_v090 import SonaParserv090
+from .ast_nodes import (
+    AICompleteStatement,
+    AIDebugStatement,
+    AIExplainStatement,
+    AIOptimizeStatement,
+    ReturnValue,
+)
+from .ai.cognitive_assistant import CognitiveAssistant
 
 
 # Import structured error system
@@ -132,6 +85,18 @@ class ContinueException(Exception):
     pass
 
 
+class SonaModule(ModuleType):
+    """Module object with a stable Sona-facing representation."""
+
+    def __repr__(self) -> str:
+        display = getattr(self, "__sona_display_name__", None)
+        if not display:
+            display = self.__name__.removeprefix("sona.stdlib.native_")
+            display = display.removeprefix("sona.stdlib.")
+            display = display.removeprefix("sona.smod.")
+        return f"<module '{display}'>"
+
+
 class SimpleModuleSystem:
     """Simple module system for loading stdlib modules"""
 
@@ -145,6 +110,7 @@ class SimpleModuleSystem:
         self.interpreter = interpreter
         self.loaded_modules = {}
         self.loaded_by_path = {}
+        self.import_stack: list[str] = []
         self.project_root = Path(project_root) if project_root else Path.cwd()
         self.modules_path = self.project_root / ".sona_modules"
         self.stdlib_path = Path(__file__).parent / "stdlib"
@@ -178,6 +144,15 @@ class SimpleModuleSystem:
                     # If the module uses unusual descriptors, skip aliasing.
                     pass
 
+    def _wrap_module(self, module_obj, display_name: str):
+        try:
+            setattr(module_obj, "__sona_display_name__", display_name)
+            if isinstance(module_obj, ModuleType) and not isinstance(module_obj, SonaModule):
+                module_obj.__class__ = SonaModule
+        except Exception:
+            pass
+        return module_obj
+
     def _attach_cognitive_metadata(self, module_obj) -> None:
         monitor = getattr(self.interpreter, "cognitive_monitor", None)
         if not monitor:
@@ -201,13 +176,13 @@ class SimpleModuleSystem:
         native_prefix: str | None = None
     ):
         if not module_file.exists():
-            raise ImportError(f"Module file not found: {module_file}")
+            raise SonaImportError(f"Module file not found: {module_file}", module_name=module_id)
 
         import importlib.util
 
         spec = importlib.util.spec_from_file_location(module_id, module_file)
         if not spec or not spec.loader:
-            raise ImportError(f"Could not load module spec for {module_id}")
+            raise SonaImportError(f"Could not load module spec for {module_id}", module_name=module_id)
 
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
@@ -216,19 +191,39 @@ class SimpleModuleSystem:
             self._expose_native_aliases(module, native_prefix)
 
         self._attach_cognitive_metadata(module)
-        return module
+        display_name = native_prefix or module_id.removeprefix("sona.stdlib.native_").removeprefix("sona.stdlib.")
+        return self._wrap_module(module, display_name)
 
     def _resolve_smod_path(self, module_path: str) -> Path:
+        if not module_path or any(part in {"", ".", ".."} for part in module_path.replace("\\", "/").split("/")):
+            raise SonaImportError("Invalid module path", module_name=module_path)
+        if "/" in module_path or "\\" in module_path or ":" in module_path:
+            raise SonaImportError("Invalid module path", module_name=module_path)
         parts = module_path.split(".")
         # Prefer project-local installed packages first.
         local = self.modules_path.joinpath(*parts).with_suffix(".smod")
         if local.exists():
-            return local
+            return self._confined_module_path(local, self.modules_path, module_path)
         local_pkg = self.modules_path.joinpath(*parts) / "__init__.smod"
         if local_pkg.exists():
-            return local_pkg
+            return self._confined_module_path(local_pkg, self.modules_path, module_path)
 
-        return self.smod_path.joinpath(*parts).with_suffix(".smod")
+        candidate = self.smod_path.joinpath(*parts).with_suffix(".smod")
+        return self._confined_module_path(candidate, self.smod_path, module_path)
+
+    @staticmethod
+    def _confined_module_path(candidate: Path, root: Path, module_path: str) -> Path:
+        """Resolve symlinks while keeping module files inside their allowed root."""
+        try:
+            resolved_root = root.resolve()
+            resolved = candidate.resolve()
+            resolved.relative_to(resolved_root)
+        except (OSError, ValueError) as error:
+            raise SonaImportError(
+                f"Invalid module path outside the allowed root: {module_path}",
+                module_name=module_path,
+            ) from error
+        return resolved
 
     def _load_smod_module(
         self,
@@ -239,7 +234,7 @@ class SimpleModuleSystem:
         native_mode: str = "default",
     ):
         if not module_file.exists():
-            raise ImportError(f"Module file not found: {module_file}")
+            raise SonaImportError(f"Module file not found: {module_file}", module_name=module_path)
 
         from .stdlib.native_bridge import NativeBridge
 
@@ -253,8 +248,13 @@ class SimpleModuleSystem:
         source = "\n".join(source_lines)
 
         original_globals = self.interpreter.memory.global_scope
+        original_global_consts = self.interpreter.memory.global_consts
+        original_global_const_spans = self.interpreter.memory.global_const_spans
         original_functions = self.interpreter.functions
-        module_globals = dict(original_globals)
+        builtin_names = set(getattr(self.interpreter, "_builtin_names", ()))
+        module_globals = BindingFrame({name: original_globals[name] for name in builtin_names if name in original_globals})
+        module_consts = {name for name in original_global_consts if name in builtin_names}
+        module_const_spans = {name: span for name, span in original_global_const_spans.items() if name in builtin_names}
 
         class _NullNativeBridge:
             def __getattr__(self, name: str):
@@ -281,7 +281,9 @@ class SimpleModuleSystem:
 
         previous_context = getattr(self.interpreter, "_module_context", None)
         self.interpreter.memory.global_scope = module_globals
-        self.interpreter.functions = dict(original_functions)
+        self.interpreter.memory.global_consts = module_consts
+        self.interpreter.memory.global_const_spans = module_const_spans
+        self.interpreter.functions = {}
         self.interpreter._module_context = module_globals
 
         try:
@@ -289,6 +291,8 @@ class SimpleModuleSystem:
         finally:
             self.interpreter._module_context = previous_context
             self.interpreter.memory.global_scope = original_globals
+            self.interpreter.memory.global_consts = original_global_consts
+            self.interpreter.memory.global_const_spans = original_global_const_spans
             self.interpreter.functions = original_functions
 
         exports = {
@@ -302,7 +306,8 @@ class SimpleModuleSystem:
             if not name.startswith("__")
         }
 
-        module = ModuleType(f"sona.smod.{module_path}")
+        module = SonaModule(f"sona.smod.{module_path}")
+        module.__sona_display_name__ = module_path
         for name, value in exports.items():
             setattr(module, name, value)
         def _module_getattr(attr_name: str, _bridge=native_bridge):
@@ -352,81 +357,107 @@ class SimpleModuleSystem:
 
     def _load_module(self, module_path: str, *, force_smod: bool = False):
         if self._is_private_stdlib_module(module_path):
-            raise ImportError(f"Module '{module_path}' is private and cannot be imported")
+            raise SonaImportError(f"Module '{module_path}' is private and cannot be imported", module_name=module_path)
 
         if module_path in self.loaded_by_path:
             return self.loaded_by_path[module_path]
+        if module_path in self.import_stack:
+            trace = " -> ".join([*self.import_stack, module_path])
+            raise SonaImportError(f"Circular import detected: {trace}", module_name=module_path)
+        self.import_stack.append(module_path)
 
-        parts = module_path.split(".")
-        smod_file = self._resolve_smod_path(module_path)
-        metadata = self._module_metadata(module_path)
-        source = metadata.get("source", "") if metadata else ""
+        try:
+            parts = module_path.split(".")
+            smod_file = self._resolve_smod_path(module_path)
+            metadata = self._module_metadata(module_path)
+            source = metadata.get("source", "") if metadata else ""
 
-        if source == "sona":
-            module = self._load_smod_module(
+            if source == "sona":
+                module = self._load_smod_module(
                 module_path,
                 smod_file,
                 allow_missing_native=True,
                 native_mode="none",
             )
-        elif source == "sona+intrinsic":
-            module = self._load_smod_module(
+            elif source == "sona+intrinsic":
+                module = self._load_smod_module(
                 module_path,
                 smod_file,
                 allow_missing_native=False,
                 native_mode="intrinsic",
             )
-        elif module_path.startswith("native_"):
-            module_file = self.stdlib_path / f"{module_path}.py"
-            module = self._load_module_from_file(
-                f"sona.stdlib.{module_path}",
-                module_file
-            )
-        elif force_smod:
-            allow_missing_native = False
-            try:
-                allow_missing_native = smod_file.is_relative_to(self.modules_path)
-            except Exception:
-                allow_missing_native = str(smod_file).startswith(str(self.modules_path))
-            module = self._load_smod_module(
-                module_path,
-                smod_file,
-                allow_missing_native=allow_missing_native,
-            )
-        elif smod_file.exists():
-            allow_missing_native = False
-            try:
-                allow_missing_native = smod_file.is_relative_to(self.modules_path)
-            except Exception:
-                allow_missing_native = str(smod_file).startswith(str(self.modules_path))
-            module = self._load_smod_module(
-                module_path,
-                smod_file,
-                allow_missing_native=allow_missing_native,
-            )
-        elif len(parts) > 1:
-            module_file = self.stdlib_path.joinpath(*parts).with_suffix(".py")
-            module = self._load_module_from_file(
-                f"sona.stdlib.{module_path}",
-                module_file
-            )
-        else:
-            native_module_path = self.stdlib_path / f"native_{module_path}.py"
-            if native_module_path.exists():
+            elif module_path.startswith("native_"):
+                module_file = self.stdlib_path / f"{module_path}.py"
                 module = self._load_module_from_file(
+                f"sona.stdlib.{module_path}",
+                module_file
+            )
+            elif force_smod:
+                allow_missing_native = False
+                try:
+                    allow_missing_native = smod_file.is_relative_to(self.modules_path)
+                except Exception:
+                    allow_missing_native = str(smod_file).startswith(str(self.modules_path))
+                module = self._load_smod_module(
+                module_path,
+                smod_file,
+                allow_missing_native=allow_missing_native,
+            )
+            elif smod_file.exists():
+                allow_missing_native = False
+                try:
+                    allow_missing_native = smod_file.is_relative_to(self.modules_path)
+                except Exception:
+                    allow_missing_native = str(smod_file).startswith(str(self.modules_path))
+                module = self._load_smod_module(
+                module_path,
+                smod_file,
+                allow_missing_native=allow_missing_native,
+            )
+            elif len(parts) > 1:
+                module_file = self.stdlib_path.joinpath(*parts).with_suffix(".py")
+                module = self._load_module_from_file(
+                f"sona.stdlib.{module_path}",
+                module_file
+            )
+            else:
+                native_module_path = self.stdlib_path / f"native_{module_path}.py"
+                if native_module_path.exists():
+                    module = self._load_module_from_file(
                     f"sona.stdlib.native_{module_path}",
                     native_module_path,
                     native_prefix=module_path
                 )
-            else:
-                regular_module_path = self.stdlib_path / f"{module_path}.py"
-                module = self._load_module_from_file(
+                else:
+                    regular_module_path = self.stdlib_path / f"{module_path}.py"
+                    module = self._load_module_from_file(
                     f"sona.stdlib.{module_path}",
                     regular_module_path
                 )
 
-        self.loaded_by_path[module_path] = module
-        return module
+            self.loaded_by_path[module_path] = module
+            return module
+        except SonaImportError:
+            raise
+        except SonaSyntaxError as error:
+            if error.diagnostic.diagnostic_id == "SONA-PARSE-099":
+                raise
+            raise SonaImportError(
+                f"Invalid module syntax in '{module_path}'",
+                module_name=module_path,
+                location=error.location,
+                suggestion="Correct the module syntax and import it again.",
+            ) from error
+        except SonaRuntimeError as error:
+            raise SonaImportError(
+                f"Invalid module runtime behavior in '{module_path}': {error.diagnostic.message}",
+                module_name=module_path,
+                location=error.location,
+                suggestion="Correct the module initialization failure and import it again.",
+            ) from error
+        finally:
+            if self.import_stack and self.import_stack[-1] == module_path:
+                self.import_stack.pop()
 
     def _register_stdlib_namespace(self, module_path: str, module_obj) -> None:
         parts = module_path.split(".")
@@ -501,12 +532,17 @@ class SimpleModuleSystem:
         if self._manifest_payload is not None:
             return self._manifest_payload
         if not manifest_path.exists():
-            self._manifest_payload = {}
-            return self._manifest_payload
+            raise SonaImportError(
+                "Invalid Sona installation: stdlib manifest is missing",
+                module_name="stdlib",
+            )
         try:
             self._manifest_payload = json.loads(manifest_path.read_text(encoding="utf-8"))
-        except Exception:
-            self._manifest_payload = {}
+        except (OSError, UnicodeError, json.JSONDecodeError) as error:
+            raise SonaImportError(
+                "Invalid Sona installation: stdlib manifest is unreadable or corrupt",
+                module_name="stdlib",
+            ) from error
         return self._manifest_payload
 
     def _manifest_module_entries(self) -> list[dict[str, Any]]:
@@ -609,7 +645,7 @@ class SimpleModuleSystem:
             force_smod = True
 
         if self._is_private_stdlib_module(module_path):
-            raise ImportError(f"Module '{module_path}' is private and cannot be imported")
+            raise SonaImportError(f"Module '{module_path}' is private and cannot be imported", module_name=module_path)
 
         module_name = alias if alias else module_path
 
@@ -628,38 +664,165 @@ class SimpleModuleSystem:
         return module_obj
 
 
+@dataclass
+class BindingRecord:
+    value: Any
+    is_const: bool = False
+    definition_span: Any = None
+
+
+class BindingFrame(MutableMapping[str, Any]):
+    """Compatibility mapping backed by first-class binding records."""
+
+    def __init__(self, initial: dict[str, Any] | None = None):
+        self._bindings: dict[str, BindingRecord] = {}
+        for name, value in (initial or {}).items():
+            self._bindings[name] = BindingRecord(value)
+
+    def __getitem__(self, key: str) -> Any:
+        return self._bindings[key].value
+
+    def __setitem__(self, key: str, value: Any) -> None:
+        record = self._bindings.get(key)
+        if record is None:
+            self._bindings[key] = BindingRecord(value)
+        else:
+            record.value = value
+
+    def __delitem__(self, key: str) -> None:
+        del self._bindings[key]
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self._bindings)
+
+    def __len__(self) -> int:
+        return len(self._bindings)
+
+    def declare(self, name: str, value: Any, *, is_const: bool = False, definition_span: Any = None) -> None:
+        self._bindings[name] = BindingRecord(value, is_const, definition_span)
+
+    def record(self, name: str) -> BindingRecord | None:
+        return self._bindings.get(name)
+
+    def clone(self) -> "BindingFrame":
+        frame = BindingFrame()
+        frame._bindings = {
+            name: BindingRecord(record.value, record.is_const, record.definition_span)
+            for name, record in self._bindings.items()
+        }
+        return frame
+
+
 class SonaMemoryManager:
     """Manages memory and variable scoping for Sona interpreter"""
 
     def __init__(self):
-        self.global_scope = {}
-        self.local_scopes = []
+        self.global_scope = BindingFrame()
+        self.local_scopes: list[BindingFrame] = []
         self.call_stack = []
+        self.global_consts: set[str] = set()
+        self.local_const_scopes: list[set[str]] = []
+        self.global_const_spans: dict[str, Any] = {}
+        self.local_const_spans: list[dict[str, Any]] = []
 
     def push_scope(self, scope_name: str = "local"):
         """Push a new local scope"""
-        self.local_scopes.append({})
+        self.local_scopes.append(BindingFrame())
+        self.local_const_scopes.append(set())
+        self.local_const_spans.append({})
+        self.call_stack.append(scope_name)
+
+    def push_frame(self, frame: BindingFrame, scope_name: str) -> None:
+        """Temporarily activate a persistent lexical frame."""
+        self.local_scopes.append(frame)
+        const_names = {
+            name for name in frame
+            if (frame.record(name) is not None and frame.record(name).is_const)
+        }
+        self.local_const_scopes.append(const_names)
+        self.local_const_spans.append({
+            name: frame.record(name).definition_span for name in const_names
+        })
         self.call_stack.append(scope_name)
 
     def pop_scope(self):
         """Pop the current local scope"""
         if self.local_scopes:
             self.local_scopes.pop()
+            self.local_const_scopes.pop()
+            self.local_const_spans.pop()
             self.call_stack.pop()
 
-    def set_variable(self, name: str, value: Any, global_scope: bool = False):
+    def declare_variable(self, name: str, value: Any, *, is_const: bool = False, definition_span: Any = None):
+        """Declare a binding in the current frame and retain const metadata."""
+        if self.local_scopes:
+            self.local_scopes[-1].declare(name, value, is_const=is_const, definition_span=definition_span)
+            if is_const:
+                self.local_const_scopes[-1].add(name)
+                self.local_const_spans[-1][name] = definition_span
+        else:
+            self.global_scope.declare(name, value, is_const=is_const, definition_span=definition_span)
+            if is_const:
+                self.global_consts.add(name)
+                self.global_const_spans[name] = definition_span
+
+    def set_variable(self, name: str, value: Any, global_scope: bool = False, assignment_span: Any = None):
         """Set a variable in the appropriate scope"""
         if global_scope or not self.local_scopes:
+            record = self.global_scope.record(name)
+            if (record and record.is_const) or name in self.global_consts:
+                raise SonaRuntimeError(
+                    f"Cannot reassign const binding '{name}' (SONA-SEM-001).",
+                    code=ErrorCode.VALUE_ERROR,
+                    location=SourceLocation(
+                        file=getattr(assignment_span, "file", "<unknown>"),
+                        line=getattr(assignment_span, "start_line", 1),
+                        column=getattr(assignment_span, "start_column", 1),
+                    ),
+                    suggestion="Declare a mutable value with let if reassignment is required.",
+                    diagnostic_id="SONA-SEM-001",
+                )
             self.global_scope[name] = value
             return
 
         # Assignment updates the nearest existing lexical binding. This matters
         # for loops inside functions: accumulator variables declared before a
         # loop must be updated, not shadowed in the loop scope.
-        for scope in reversed(self.local_scopes):
+        for index in range(len(self.local_scopes) - 1, -1, -1):
+            scope = self.local_scopes[index]
             if name in scope:
+                record = scope.record(name)
+                if (record and record.is_const) or name in self.local_const_scopes[index]:
+                    raise SonaRuntimeError(
+                        f"Cannot reassign const binding '{name}' (SONA-SEM-001).",
+                        code=ErrorCode.VALUE_ERROR,
+                        location=SourceLocation(
+                            file=getattr(assignment_span, "file", "<unknown>"),
+                            line=getattr(assignment_span, "start_line", 1),
+                            column=getattr(assignment_span, "start_column", 1),
+                        ),
+                        suggestion="Declare a mutable value with let if reassignment is required.",
+                        diagnostic_id="SONA-SEM-001",
+                    )
                 scope[name] = value
                 return
+
+        if name in self.global_scope:
+            record = self.global_scope.record(name)
+            if (record and record.is_const) or name in self.global_consts:
+                raise SonaRuntimeError(
+                    f"Cannot reassign const binding '{name}' (SONA-SEM-001).",
+                    code=ErrorCode.VALUE_ERROR,
+                    location=SourceLocation(
+                        file=getattr(assignment_span, "file", "<unknown>"),
+                        line=getattr(assignment_span, "start_line", 1),
+                        column=getattr(assignment_span, "start_column", 1),
+                    ),
+                    suggestion="Declare a mutable value with let if reassignment is required.",
+                    diagnostic_id="SONA-SEM-001",
+                )
+            self.global_scope[name] = value
+            return
 
         self.local_scopes[-1][name] = value
 
@@ -742,7 +905,11 @@ class CognitiveMonitor:
         task = str(params.get('task') or params.get('arg0') or "")
         context = params.get('context') or params.get('code') or params.get('arg1') or ""
 
-        if self.assistant and hasattr(self.assistant, 'analyze_working_memory'):
+        if (
+            os.getenv("SONA_COGNITIVE_AI") == "1"
+            and self.assistant
+            and hasattr(self.assistant, 'analyze_working_memory')
+        ):
             try:
                 analysis = self.assistant.analyze_working_memory(task, str(context))
             except Exception:
@@ -797,9 +964,30 @@ class CognitiveMonitor:
 
     def manage_working_memory(self, params: dict[str, Any]) -> dict[str, Any]:
         """Handle working_memory(...) operations."""
-        action = (params.get('action') or '').lower() or 'store'
-        key = params.get('key') or params.get('name') or params.get('arg0')
-        value = params.get('value') if 'value' in params else params.get('arg1')
+        positional_action = str(params.get('arg0') or '').lower()
+        known_actions = {'store', 'remember', 'recall', 'get', 'clear', 'status'}
+        if not params:
+            action = 'status'
+            positional_offset = 0
+        elif params.get('action') is not None:
+            action = str(params.get('action')).lower()
+            positional_offset = 0
+        elif positional_action in known_actions:
+            action = positional_action
+            positional_offset = 1
+        else:
+            action = 'store'
+            positional_offset = 0
+
+        key = (
+            params.get('key')
+            or params.get('name')
+            or params.get(f'arg{positional_offset}')
+        )
+        if 'value' in params:
+            value = params.get('value')
+        else:
+            value = params.get(f'arg{positional_offset + 1}')
 
         if action in ('store', 'remember'):
             if key is None:
@@ -817,7 +1005,7 @@ class CognitiveMonitor:
             self._record_trace("working_memory", {"action": "clear"})
             return {"status": "ok", "cleared": True}
 
-        # Default: status
+        # Default/status
         status = {
             "status": "ok",
             "size": len(self.working_memory),
@@ -1075,22 +1263,25 @@ class SonaFunction:
                 extra_positional.append(value)
 
         if extra_positional and not self.varargs_param:
-            raise ValueError(
+            raise SonaRuntimeError(
                 f"Function '{self.name}' expects {len(self.parameters)} "
-                f"arguments, got {len(arguments)}"
+                f"arguments, got {len(arguments)}",
+                diagnostic_id="SONA-RUNTIME-001",
             )
 
         # Bind keyword arguments
         for key, value in keyword_arguments.items():
             if key in bound:
-                raise ValueError(
-                    f"Function '{self.name}' got multiple values for argument '{key}'"
+                raise SonaRuntimeError(
+                    f"Function '{self.name}' got multiple values for argument '{key}'",
+                    diagnostic_id="SONA-RUNTIME-001",
                 )
             if key in self.parameters:
                 bound[key] = value
             else:
-                raise ValueError(
-                    f"Function '{self.name}' got an unexpected keyword argument '{key}'"
+                raise SonaRuntimeError(
+                    f"Function '{self.name}' got an unexpected keyword argument '{key}'",
+                    diagnostic_id="SONA-RUNTIME-001",
                 )
 
         # Fill missing parameters from defaults
@@ -1098,8 +1289,9 @@ class SonaFunction:
             if param in bound:
                 continue
             if param not in self.default_values:
-                raise ValueError(
-                    f"Function '{self.name}' missing required argument: {param}"
+                raise SonaRuntimeError(
+                    f"Function '{self.name}' missing required argument: {param}",
+                    diagnostic_id="SONA-RUNTIME-001",
                 )
 
             default_expr = self.default_values[param]
@@ -1114,15 +1306,11 @@ class SonaFunction:
             bound[self.varargs_param] = extra_positional
 
         # Push new scope for function execution
+        self.interpreter._enter_call(self.name)
         closure_active = False
-        if self.closure:
-            self.interpreter.memory.push_scope(f"closure:{self.name}")
+        if self.closure is not None:
+            self.interpreter.memory.push_frame(self.closure, f"closure:{self.name}")
             closure_active = True
-            global_scope = self.interpreter.memory.global_scope
-            for key, value in self.closure.items():
-                if key in global_scope:
-                    continue
-                self.interpreter.memory.set_variable(key, value)
 
         self.interpreter.memory.push_scope(f"function:{self.name}")
 
@@ -1142,11 +1330,20 @@ class SonaFunction:
             return result
         except ReturnValue as ret:
             return ret.value
+        except Exception as exc:
+            stack = tuple(self.interpreter.memory.call_stack)
+            if isinstance(exc, SonaError):
+                if not exc.diagnostic.call_stack:
+                    exc.diagnostic.call_stack = stack
+            else:
+                exc._sona_call_stack = stack
+            raise
         finally:
             # Always pop the function scope
             self.interpreter.memory.pop_scope()
             if closure_active:
                 self.interpreter.memory.pop_scope()
+            self.interpreter._leave_call()
 
 
 class SonaUnifiedInterpreter:
@@ -1161,6 +1358,12 @@ class SonaUnifiedInterpreter:
         project_root: str | Path | None = None,
         resume_from_latest_checkpoint: bool = False,
         preload_stdlib: bool = False,
+        persistent_memory: bool | None = None,
+        maximum_call_depth: int = 512,
+        maximum_loop_iterations: int = 10_000_000,
+        maximum_execution_time_ms: int = 300_000,
+        maximum_output_bytes: int = 10_485_760,
+        compatibility_mode: str = "auto",
     ):
         """Initialize the interpreter with all necessary components"""
         self.memory = SonaMemoryManager()
@@ -1169,6 +1372,29 @@ class SonaUnifiedInterpreter:
         self.ai_enabled = False
         self.debug_mode = False
         self.execution_stack = []
+        self.maximum_call_depth = int(maximum_call_depth)
+        self.maximum_loop_iterations = int(maximum_loop_iterations)
+        self.maximum_execution_time_ms = int(maximum_execution_time_ms)
+        self.maximum_output_bytes = int(maximum_output_bytes)
+        self._call_depth = 0
+        self._loop_iterations = 0
+        self._output_bytes = 0
+        self._execution_started = time.monotonic()
+        if compatibility_mode not in {"auto", "sona", "python"}:
+            raise ValueError("compatibility_mode must be auto, sona, or python")
+        self.compatibility_mode = compatibility_mode
+        self._init_options = {
+            "project_root": project_root,
+            "resume_from_latest_checkpoint": resume_from_latest_checkpoint,
+            "preload_stdlib": preload_stdlib,
+            "persistent_memory": persistent_memory,
+            "maximum_call_depth": maximum_call_depth,
+            "maximum_loop_iterations": maximum_loop_iterations,
+            "maximum_execution_time_ms": maximum_execution_time_ms,
+            "maximum_output_bytes": maximum_output_bytes,
+            "compatibility_mode": compatibility_mode,
+        }
+        self._closed = False
         self.focus_block_stack = []
         self.focus_block_active = False
         self.suppress_diagnostics = False
@@ -1180,7 +1406,8 @@ class SonaUnifiedInterpreter:
         self.restored_checkpoint = None
 
         # Initialize module system
-        self.project_root = Path(project_root) if project_root else Path.cwd()
+        self.project_root = (Path(project_root) if project_root else Path.cwd()).resolve()
+        self._init_options["project_root"] = self.project_root
         self.module_system = SimpleModuleSystem(self, project_root=self.project_root)
 
         # Initialize cognitive assistant
@@ -1188,10 +1415,16 @@ class SonaUnifiedInterpreter:
         self.cognitive_monitor = CognitiveMonitor(self, self.cognitive_assistant)
         self.session_start_time = time.time()
         self.current_context = ""
-        self._setup_runtime_memory()
+        if persistent_memory is None:
+            persistent_memory = os.getenv("SONA_RUNTIME_MEMORY", "").strip().lower() in {"1", "true", "yes", "on"}
+        self.persistent_memory = bool(persistent_memory)
+        self._init_options["persistent_memory"] = self.persistent_memory
+        if self.persistent_memory:
+            self._setup_runtime_memory()
 
         # Initialize built-in functions
         self._setup_builtins()
+        self._builtin_names = set(self.memory.global_scope)
 
         # Stdlib modules resolve on demand. Preloading remains available for
         # tooling, but default startup stays light for CLI execution.
@@ -1249,6 +1482,40 @@ class SonaUnifiedInterpreter:
             policy_kernel=self.runtime_policy_kernel,
             audit_kernel=self.runtime_audit_kernel,
         )
+
+    def _check_deadline(self) -> None:
+        elapsed_ms = (time.monotonic() - self._execution_started) * 1000
+        if elapsed_ms > self.maximum_execution_time_ms:
+            raise SonaRuntimeError(
+                "Maximum execution time exceeded.",
+                code=ErrorCode.TIMEOUT_ERROR,
+                suggestion="Increase the limit only for trusted programs.",
+                diagnostic_id="SONA-RUNTIME-012",
+            )
+
+    def _enter_call(self, name: str) -> None:
+        self._check_deadline()
+        if self._call_depth >= self.maximum_call_depth:
+            raise SonaRuntimeError(
+                f"Maximum call depth exceeded while calling '{name}'.",
+                code=ErrorCode.RECURSION_LIMIT,
+                diagnostic_id="SONA-RUNTIME-010",
+            )
+        self._call_depth += 1
+
+    def _leave_call(self) -> None:
+        self._call_depth = max(0, self._call_depth - 1)
+
+    def _record_loop_iteration(self) -> None:
+        self._check_deadline()
+        self._loop_iterations += 1
+        if self._loop_iterations > self.maximum_loop_iterations:
+            raise SonaRuntimeError(
+                "Maximum loop iteration count exceeded.",
+                code=ErrorCode.TIMEOUT_ERROR,
+                suggestion="Review loop termination or raise the governed limit.",
+                diagnostic_id="SONA-RUNTIME-011",
+            )
 
     def record_memory_episode(
         self,
@@ -1483,7 +1750,7 @@ class SonaUnifiedInterpreter:
                                  global_scope=True)
 
         # Built-in variables
-        self.memory.set_variable('__version__', '0.15.1', global_scope=True)
+        self.memory.set_variable('__version__', '0.15.3', global_scope=True)
         self.memory.set_variable('__sona__', True, global_scope=True)
         self.memory.set_variable('True', True, global_scope=True)
         self.memory.set_variable('False', False, global_scope=True)
@@ -1492,6 +1759,15 @@ class SonaUnifiedInterpreter:
 
     def _builtin_print(self, *args):
         """Built-in print function"""
+        text = " ".join(str(arg) for arg in args) + "\n"
+        self._output_bytes += len(text.encode("utf-8", errors="replace"))
+        if self._output_bytes > self.maximum_output_bytes:
+            raise SonaRuntimeError(
+                "Maximum output size exceeded.",
+                code=ErrorCode.RUNTIME_ERROR,
+                suggestion="Reduce output or raise the governed output limit.",
+                diagnostic_id="SONA-RUNTIME-013",
+            )
         print(*args)
         return None
 
@@ -1732,13 +2008,15 @@ class SonaUnifiedInterpreter:
                     )
                 )
             else:
-                raise TypeError(
-                    f"range() takes 1-3 arguments, got {len(arguments)}"
+                raise SonaRuntimeError(
+                    f"range() takes 1-3 arguments, got {len(arguments)}",
+                    diagnostic_id="SONA-RUNTIME-001",
                 )
         elif name == "len":
             if len(arguments) != 1:
-                raise TypeError(
-                    f"len() takes exactly 1 argument, got {len(arguments)}"
+                raise SonaRuntimeError(
+                    f"len() takes exactly 1 argument, got {len(arguments)}",
+                    diagnostic_id="SONA-RUNTIME-001",
                 )
             return len(arguments[0])
 
@@ -1788,7 +2066,12 @@ class SonaUnifiedInterpreter:
         Returns:
             The result of the interpretation
         """
+        self._execution_started = time.monotonic()
+        self._loop_iterations = 0
+        self._output_bytes = 0
         try:
+            if self.compatibility_mode == "python":
+                return self.execute_python_like(code, filename)
             self.record_memory_episode(
                 kind="user_input",
                 source_type="runtime",
@@ -1796,17 +2079,12 @@ class SonaUnifiedInterpreter:
                 payload={
                     "filename": filename,
                     "line_count": len(str(code or "").splitlines()),
-                    "text": str(code or "")[:240],
+                    "source_sha256": hashlib.sha256(
+                        str(code or "").encode("utf-8", errors="replace")
+                    ).hexdigest(),
                 },
             )
-            # Use Sona parser if available and code contains Sona syntax
-            if SonaParserv090 and self._is_sona_syntax(code):
-                return self._execute_sona_code(code, filename)
-            else:
-                # Fallback to Python-like compatibility mode
-                if not SonaParserv090:
-                    print("[WARN] Sona parser not available, using Python compatibility mode")
-                return self.execute_python_like(code, filename)
+            return self._execute_sona_code(code, filename)
         except Exception as e:
             try:
                 self.record_memory_episode(
@@ -1816,16 +2094,23 @@ class SonaUnifiedInterpreter:
                     payload={
                         "filename": filename,
                         "error_type": type(e).__name__,
-                        "message": str(e),
+                        "error_sha256": hashlib.sha256(str(e).encode("utf-8", errors="replace")).hexdigest(),
                     },
                 )
             except Exception:
                 pass
             if self.debug_mode:
                 traceback.print_exc()
+            if isinstance(e, SonaError):
+                self._restore_focus_after_error()
+                raise
             message = self._explain_exception(e, code=code, filename=filename)
             self._restore_focus_after_error()
-            err = SonaRuntimeError(message)
+            err = SonaRuntimeError(
+                message,
+                diagnostic_id="SONA-SEM-002" if isinstance(e, (BreakException, ContinueException, ReturnValue)) else None,
+                call_stack=tuple(getattr(e, "_sona_call_stack", ())),
+            )
             err._sona_explained = True
             raise err from e
 
@@ -1876,226 +2161,79 @@ class SonaUnifiedInterpreter:
 
         return False
 
-    def _convert_sona_to_python(self, code: str) -> str:
-        """Convert Sona C-style syntax to Python for compatibility"""
-        import re
-
-        # First, convert boolean/null literals throughout the code
-        # Use word boundaries to avoid matching inside other words
-        code = re.sub(r'\btrue\b', 'True', code)
-        code = re.sub(r'\bfalse\b', 'False', code)
-        code = re.sub(r'\bnull\b', 'None', code)
-
-        # Handle line-by-line conversion of keywords
-        lines = code.split('\n')
-        result_lines = []
-        i = 0
-        indent_level = 0
-
-        while i < len(lines):
-            line = lines[i]
-            stripped = line.strip()
-
-            # Skip empty lines
-            if not stripped:
-                result_lines.append('')
-                i += 1
-                continue
-
-            # Remove trailing semicolons
-            if stripped.endswith(';'):
-                stripped = stripped[:-1]
-
-            # Handle "} else {" on same line
-            if stripped == '} else {':
-                indent_level = max(0, indent_level - 1)
-                result_lines.append('    ' * indent_level + 'else:')
-                indent_level += 1
-                i += 1
-                continue
-
-            # Handle "} else if (condition) {" on same line
-            match = re.match(r'\}\s*else\s+if\s*\((.+?)\)\s*\{', stripped)
-            if match:
-                indent_level = max(0, indent_level - 1)
-                condition = match.group(1).strip()
-                result_lines.append('    ' * indent_level + f'elif {condition}:')
-                indent_level += 1
-                i += 1
-                continue
-
-            # Handle closing braces (including "} else" split across lines)
-            if stripped.startswith('}'):
-                indent_level = max(0, indent_level - 1)
-                i += 1
-                continue
-
-            # Handle standalone "else {"
-            if stripped == 'else {' or re.match(r'^else\s*\{$', stripped):
-                result_lines.append('    ' * indent_level + 'else:')
-                indent_level += 1
-                i += 1
-                continue
-
-            # Handle "else if (condition) {" (elif)
-            match = re.match(r'^else\s+if\s*\((.+?)\)\s*\{', stripped)
-            if match:
-                condition = match.group(1).strip()
-                result_lines.append('    ' * indent_level + f'elif {condition}:')
-                indent_level += 1
-                i += 1
-                continue
-
-            # Convert while (condition) { to while condition:
-            if 'while' in stripped and '{' in stripped:
-                # Extract condition
-                match = re.search(
-                    r'while\s*\(?\s*(.+?)\s*\)?\s*\{',
-                    stripped
-                )
-                if match:
-                    condition = match.group(1).strip()
-                    result_lines.append(
-                        '    ' * indent_level + f'while {condition}:'
-                    )
-                    indent_level += 1
-                    i += 1
-                    continue
-
-            # Convert if (condition) { to if condition:
-            if stripped.startswith('if') and '{' in stripped:
-                match = re.search(
-                    r'if\s*\((.+?)\)\s*\{',
-                    stripped
-                )
-                if match:
-                    condition = match.group(1).strip()
-                    result_lines.append(
-                        '    ' * indent_level + f'if {condition}:'
-                    )
-                    indent_level += 1
-                    i += 1
-                    continue
-
-            # Convert repeat N times { to for _ in range(N):
-            if 'repeat' in stripped and 'times' in stripped and '{' in stripped:
-                match = re.search(
-                    r'repeat\s+(.+?)\s+times\s*\{',
-                    stripped
-                )
-                if match:
-                    count = match.group(1).strip()
-                    result_lines.append(
-                        '    ' * indent_level + f'for _ in range({count}):'
-                    )
-                    indent_level += 1
-                    i += 1
-                    continue
-
-            # Convert repeat N { to for _ in range(N):
-            if 'repeat' in stripped and '{' in stripped and 'times' not in stripped:
-                match = re.search(
-                    r'repeat\s+(.+?)\s*\{',
-                    stripped
-                )
-                if match:
-                    count = match.group(1).strip()
-                    result_lines.append(
-                        '    ' * indent_level + f'for _ in range({count}):'
-                    )
-                    indent_level += 1
-                    i += 1
-                    continue
-
-            # Convert for x in y { to for x in y:
-            if 'for' in stripped and 'in' in stripped and '{' in stripped:
-                match = re.search(
-                    r'for\s+(\w+)\s+in\s+(.+?)\s*\{',
-                    stripped
-                )
-                if match:
-                    var = match.group(1).strip()
-                    iter_expr = match.group(2).strip()
-                    result_lines.append(
-                        '    ' * indent_level + f'for {var} in {iter_expr}:'
-                    )
-                    indent_level += 1
-                    i += 1
-                    continue
-
-            # Regular statement (add indentation)
-            result_lines.append('    ' * indent_level + stripped)
-            i += 1
-
-        return '\n'.join(result_lines)
+    @staticmethod
+    def _looks_like_legacy_python(code: str) -> bool:
+        """Recognize explicit Python-only syntax before compatibility execution."""
+        try:
+            tree = ast.parse(code)
+        except SyntaxError:
+            return False
+        python_only_nodes = (
+            ast.Lambda, ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef,
+            ast.If, ast.For, ast.AsyncFor, ast.While, ast.Try, ast.With,
+            ast.AsyncWith, ast.ListComp, ast.SetComp, ast.DictComp,
+            ast.GeneratorExp, ast.Yield, ast.YieldFrom, ast.Await,
+        )
+        return any(isinstance(node, python_only_nodes) for node in ast.walk(tree))
 
     def _execute_sona_code(self, code: str, filename: str = "<string>") -> Any:
         """Execute Sona code using the proper Sona parser"""
+        previous_filename = getattr(self, "current_filename", "<unknown>")
+        self.current_filename = filename
         # Create parser instance
         parser = SonaParserv090()
 
         def _fallback(parse_error: Exception):
-            if self.debug_mode:
-                print(f"DEBUG: Exception in _execute_sona_code: {parse_error}")
-                print(f"DEBUG: Exception type: {type(parse_error)}")
-
-            # If Sona parsing fails, try converting to Python
-            has_braces = '{' in code
-            has_keywords = any(
-                kw in code for kw in ['while', 'for', 'if', 'repeat']
+            diagnostic_id = getattr(
+                getattr(parse_error, "diagnostic", None),
+                "diagnostic_id",
+                None,
             )
-
-            if self.debug_mode:
-                print(f"DEBUG: has_braces={has_braces}, has_keywords={has_keywords}")
-
-            if has_braces and has_keywords:
-                try:
-                    if self.debug_mode:
-                        print("DEBUG: Converting Sona to Python...")
-                    converted_code = self._convert_sona_to_python(code)
-                    if self.debug_mode:
-                        print("DEBUG: Conversion successful, executing converted code...")
-                    result = self.execute_python_like(
-                        converted_code,
-                        filename
-                    )
-                    if self.debug_mode:
-                        print("DEBUG: Converted code executed successfully!")
-                    return result
-                except Exception as convert_error:
-                    if self.debug_mode:
-                        print(f"Convert error: {convert_error}")
-                        import traceback
-                        traceback.print_exc()
-
-            # If Sona parsing fails, try Python compatibility mode
-            if not self.debug_mode:
-                return self.execute_python_like(code, filename)
-            print(f"[WARN] Sona parsing failed: {parse_error}")
-            print("   Falling back to Python compatibility mode")
+            if diagnostic_id in {"SONA-SEM-099", "SONA-PARSE-099"}:
+                # Recognized-but-uncertified Sona syntax must never be reinterpreted
+                # as Python; doing so could silently give it different semantics.
+                raise parse_error
+            if self.compatibility_mode == "sona":
+                raise parse_error
+            if not self._looks_like_legacy_python(code):
+                raise parse_error
+            warnings.warn(
+                "Legacy Python compatibility fallback was used. Migrate to canonical Sona syntax or select compatibility_mode='python' explicitly.",
+                FutureWarning,
+                stacklevel=2,
+            )
             return self.execute_python_like(code, filename)
 
         # Parse Sona code into AST nodes
         try:
             ast_nodes = parser.parse(code, filename)
         except Exception as e:
-            return _fallback(e)
+            try:
+                return _fallback(e)
+            finally:
+                self.current_filename = previous_filename
 
         if ast_nodes is None:
-            return _fallback(SonaRuntimeError(f"Failed to parse Sona code in {filename}"))
+            try:
+                return _fallback(SonaRuntimeError(f"Failed to parse Sona code in {filename}"))
+            finally:
+                self.current_filename = previous_filename
 
-        # Execute AST nodes (runtime errors should NOT trigger Python fallback)
-        result = None
-        for node in ast_nodes:
-            if hasattr(node, 'execute'):
-                result = node.execute(self)
-            elif hasattr(node, 'evaluate'):
-                result = node.evaluate(self)
-            else:
-                # Handle raw values or simple nodes
-                result = self._handle_simple_node(node)
+        try:
+            # Execute AST nodes (runtime errors should NOT trigger Python fallback)
+            result = None
+            for node in ast_nodes:
+                if hasattr(node, 'execute'):
+                    result = node.execute(self)
+                elif hasattr(node, 'evaluate'):
+                    result = node.evaluate(self)
+                else:
+                    # Handle raw values or simple nodes
+                    result = self._handle_simple_node(node)
 
-        return result
+            return result
+        finally:
+            self.current_filename = previous_filename
 
     def _handle_simple_node(self, node) -> Any:
         """Handle simple AST nodes that don't have execute/evaluate methods"""
@@ -2103,15 +2241,17 @@ class SonaUnifiedInterpreter:
             return node.value
         elif isinstance(node, (int, float, str, bool)):
             return node
-        else:
-            return str(node)
+        raise SonaRuntimeError(
+            "The parser produced an uncertified runtime object; source was not executed.",
+            diagnostic_id="SONA-PARSE-099",
+        )
 
     def execute_python_like(
         self,
         code: str,
         filename: str = "<string>"
     ) -> Any:
-        """Execute Python-like code (temporary implementation)"""
+        """Execute source through the explicit legacy Python compatibility path."""
         try:
             # Parse as Python AST for now
             tree = ast.parse(code, filename=filename)
@@ -2125,21 +2265,25 @@ class SonaUnifiedInterpreter:
     ) -> Any:
         """Execute a parse tree (main entry point for CLI)"""
         try:
-            # For now, if it's a Lark tree, convert to string and parse as Python
+            # Raw parser objects are infrastructure defects, never executable source.
             if hasattr(tree, 'pretty'):
-                # Lark tree - convert to string representation
-                tree_str = str(tree.pretty())
-                return self.execute_python_like(tree_str)
+                raise SonaRuntimeError(
+                    "Raw parser trees cannot be executed.",
+                    diagnostic_id="SONA-PARSE-099",
+                )
             elif hasattr(tree, 'data'):
-                # Lark tree node - basic handling
-                return self.execute_python_like(str(tree))
+                raise SonaRuntimeError(
+                    "Raw parser nodes cannot be executed.",
+                    diagnostic_id="SONA-PARSE-099",
+                )
             elif isinstance(tree, str):
-                # String code
-                return self.execute_python_like(tree)
+                return self.interpret(tree)
             else:
                 # Assume it's an AST node
                 return self.execute_ast_node(tree)
         except Exception as e:
+            if isinstance(e, SonaError):
+                raise
             if self.debug_mode:
                 traceback.print_exc()
             message = self._explain_exception(e)
@@ -2250,7 +2394,7 @@ class SonaUnifiedInterpreter:
             elif isinstance(func, SonaFunction):
                 return func.call(args)
             else:
-                raise SonaRuntimeError(f"'{func}' is not callable")
+                raise SonaRuntimeError(f"'{func}' is not callable", diagnostic_id="SONA-RUNTIME-002")
 
         elif isinstance(node, ast.If):
             condition = self.execute_ast_node(node.test)
@@ -2593,8 +2737,30 @@ class SonaUnifiedInterpreter:
         self._pending_focus_restore = None
 
     def reset(self):
-        """Reset the interpreter state"""
-        self.__init__()
+        """Deterministically discard state while preserving configured limits."""
+        options = dict(self._init_options)
+        self.close()
+        self.__init__(**options)
+
+    def close(self) -> None:
+        """Release optional runtime resources and clear transient execution state."""
+        if self._closed:
+            return
+        store = getattr(self, "runtime_memory_store", None)
+        close = getattr(store, "close", None)
+        if callable(close):
+            close()
+        self.memory.local_scopes.clear()
+        self.memory.call_stack.clear()
+        self._call_depth = 0
+        self._closed = True
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, _exc_type, _exc, _traceback):
+        self.close()
+        return False
 
     def get_state(self) -> dict[str, Any]:
         """Get the current interpreter state"""
@@ -3647,6 +3813,8 @@ __all__ = [
     'SonaUnifiedInterpreter',
     'SonaFunction',
     'SonaMemoryManager',
+    'BindingFrame',
+    'BindingRecord',
     'SonaRuntimeError',
     'default_interpreter'
 ]

@@ -7,16 +7,12 @@ from __future__ import annotations
 
 import argparse
 import ast
-import json
 import re
 import sys
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 from typing import Iterable, Optional
-
-from lark import Lark
-from lark.exceptions import UnexpectedInput
 
 try:
     from pygls.server import LanguageServer  # type: ignore[import-not-found]
@@ -58,8 +54,6 @@ except ImportError:  # pragma: no cover
 
 SONA_ROOT = Path(__file__).resolve().parent.parent
 STDLIB_ROOT = SONA_ROOT / "sona" / "stdlib"
-MANIFEST_PATH = STDLIB_ROOT / "MANIFEST.json"
-GRAMMAR_PATH = SONA_ROOT / "sona" / "grammar.lark"
 
 
 def _eprint(msg: str) -> None:
@@ -70,49 +64,14 @@ def _read_text(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
-def _make_parser() -> Lark:
-    grammar = _read_text(GRAMMAR_PATH)
-    return Lark(
-        grammar,
-        parser="earley",
-        lexer="standard",
-        propagate_positions=True,
-        maybe_placeholders=True,
-        debug=False,
-    )
-
-
-@lru_cache(maxsize=1)
-def _stdlib_manifest() -> dict:
-    if MANIFEST_PATH.exists():
-        return json.loads(_read_text(MANIFEST_PATH))
-    return {"modules": []}
+def canonical_diagnostics(uri: str, text: str):
+    """Return the same canonical schema-1 diagnostics used by CLI tooling."""
+    from .developer_intelligence.frontend import analyze_frontend
+    return analyze_frontend(text, file=uri)
 
 
 def _stdlib_modules() -> list[str]:
-    try:
-        from .stdlib_manifest import user_module_names
-    except Exception:
-        modules = _stdlib_manifest().get("modules", [])
-        result: list[str] = []
-        if isinstance(modules, list):
-            for module in modules:
-                if isinstance(module, str):
-                    name = module
-                    user_facing = True
-                elif isinstance(module, dict) and isinstance(module.get("name"), str):
-                    name = module["name"]
-                    user_facing = module.get("user_facing") is not False
-                else:
-                    continue
-                if not user_facing:
-                    continue
-                if name in {"intrinsics", "native_intrinsics", "native_bridge"}:
-                    continue
-                if name.startswith("native_"):
-                    continue
-                result.append(name)
-        return result
+    from .stdlib_manifest import user_module_names
     return user_module_names()
 
 
@@ -142,73 +101,6 @@ def _word_at(text: str, line: int, character: int) -> str:
     while right < len(s) and (s[right].isalnum() or s[right] == "_"):
         right += 1
     return s[left:right]
-
-
-def _first_position(text: str, token: str) -> tuple[int, int]:
-    for idx, line in enumerate(text.splitlines(), start=1):
-        col = line.find(token)
-        if col != -1:
-            return idx, col + 1
-    return 1, 1
-
-
-def _cognitive_lint_diagnostics(text: str) -> list[Diagnostic]:
-    diags: list[Diagnostic] = []
-    lower = text.lower()
-
-    intent_present = "intent(" in lower
-    decision_present = "decision(" in lower
-    check_present = "cognitive_check(" in lower or "explain_step(" in lower
-
-    if intent_present and not check_present:
-        line, col = _first_position(lower, "intent(")
-        diags.append(
-            Diagnostic(
-                range=_range_from_point(line, col),
-                message="Intent declared without drift checks (add cognitive_check or explain_step)",
-                severity=DiagnosticSeverity.Warning,
-                source="sona",
-            )
-        )
-
-    risky_tokens = ("delete", "drop", "truncate", "rm ", "remove", "wipe")
-    if any(tok in lower for tok in risky_tokens) and not decision_present:
-        line, col = _first_position(lower, "delete")
-        diags.append(
-            Diagnostic(
-                range=_range_from_point(line, col),
-                message="Risky operation detected without decision rationale",
-                severity=DiagnosticSeverity.Warning,
-                source="sona",
-            )
-        )
-
-    lines = [line for line in text.splitlines() if line.strip()]
-    if len(lines) > 200:
-        diags.append(
-            Diagnostic(
-                range=_range_from_point(1, 1),
-                message="High line count (200+): consider cognitive_scope or refactor",
-                severity=DiagnosticSeverity.Warning,
-                source="sona",
-            )
-        )
-
-    profile_match = re.search(r"profile\s*\(\s*[\"']([^\"']+)[\"']\s*\)", lower)
-    if profile_match:
-        profile = profile_match.group(1)
-        if profile not in ("neurotypical", "adhd", "dyslexia"):
-            line, col = _first_position(lower, "profile(")
-            diags.append(
-                Diagnostic(
-                    range=_range_from_point(line, col),
-                    message=f"Unknown profile '{profile}' (expected neurotypical, adhd, dyslexia)",
-                    severity=DiagnosticSeverity.Warning,
-                    source="sona",
-                )
-            )
-
-    return diags
 
 
 def _completion_context(
@@ -308,32 +200,33 @@ if _PYGLS_AVAILABLE:
 
     class SonaLsp(LanguageServer):
         def __init__(self):
-            super().__init__("sona-lsp", "0.15.1")
-            self._parser = _make_parser()
+            super().__init__("sona-lsp", "0.15.3")
 
         def validate(self, uri: str, text: str) -> None:
             diags: list[Diagnostic] = []
             try:
-                self._parser.parse(text)
-                diags.extend(_cognitive_lint_diagnostics(text))
-            except UnexpectedInput as exc:
-                line_1 = getattr(exc, "line", 1) or 1
-                col_1 = getattr(exc, "column", 1) or 1
-                diags.append(
-                    Diagnostic(
-                        range=_range_from_point(line_1, col_1),
-                        message=str(exc),
-                        severity=DiagnosticSeverity.Error,
-                        source="sona",
+                for item in canonical_diagnostics(uri, text):
+                    severity = (
+                        DiagnosticSeverity.Error if item.severity == "error" else
+                        DiagnosticSeverity.Warning if item.severity == "warning" else
+                        DiagnosticSeverity.Information
                     )
-                )
-            except Exception as exc:
+                    diags.append(Diagnostic(
+                        range=Range(
+                            start=_pos(item.span.start_line, item.span.start_column),
+                            end=_pos(item.span.end_line or item.span.start_line, item.span.end_column or item.span.start_column + 1),
+                        ),
+                        message=item.message + (f" Hint: {item.hint}" if item.hint else ""),
+                        severity=severity, source="sona", code=item.diagnostic_id,
+                    ))
+            except Exception:
                 diags.append(
                     Diagnostic(
                         range=_range_from_point(1, 1),
-                        message=f"Parser error: {exc}",
+                        message="The canonical diagnostic pipeline encountered an infrastructure failure.",
                         severity=DiagnosticSeverity.Error,
                         source="sona",
+                        code="SONA-PARSE-099",
                     )
                 )
 
@@ -470,22 +363,9 @@ if _PYGLS_AVAILABLE:
         # Search for function/class definitions
         for i, line in enumerate(lines):
             stripped = line.strip()
-            # Match: fn name(...) or fn name(
-            if stripped.startswith(f"fn {word}(") or stripped.startswith(f"fn {word} ("):
-                col = line.find(f"fn {word}") + 3  # Position at name
-                locations.append(Location(
-                    uri=params.text_document.uri,
-                    range=Range(
-                        start=Position(line=i, character=col),
-                        end=Position(line=i, character=col + len(word))
-                    )
-                ))
-            # Match: class Name or class Name {
-            elif stripped.startswith(f"class {word}") and (
-                len(stripped) == len(f"class {word}") or
-                stripped[len(f"class {word}")] in " {(:"
-            ):
-                col = line.find(f"class {word}") + 6
+            # Match the canonical function declaration spelling.
+            if stripped.startswith(f"func {word}(") or stripped.startswith(f"func {word} ("):
+                col = line.find(f"func {word}") + 5  # Position at name
                 locations.append(Location(
                     uri=params.text_document.uri,
                     range=Range(
@@ -545,8 +425,7 @@ if _PYGLS_AVAILABLE:
         symbols: list[SymbolInformation] = []
         import re
 
-        fn_pattern = re.compile(r'^\s*fn\s+(\w+)\s*\(')
-        class_pattern = re.compile(r'^\s*class\s+(\w+)')
+        fn_pattern = re.compile(r'^\s*func\s+(\w+)\s*\(')
         import_pattern = re.compile(r'^\s*import\s+(\w+)')
         var_pattern = re.compile(r'^(\w+)\s*=\s*')
 
@@ -555,28 +434,10 @@ if _PYGLS_AVAILABLE:
             fn_match = fn_pattern.match(line)
             if fn_match:
                 name = fn_match.group(1)
-                col = line.find(f"fn {name}") + 3
+                col = line.find(f"func {name}") + 5
                 symbols.append(SymbolInformation(
                     name=name,
                     kind=SymbolKind.Function,
-                    location=Location(
-                        uri=params.text_document.uri,
-                        range=Range(
-                            start=Position(line=i, character=col),
-                            end=Position(line=i, character=col + len(name))
-                        )
-                    )
-                ))
-                continue
-
-            # Classes
-            class_match = class_pattern.match(line)
-            if class_match:
-                name = class_match.group(1)
-                col = line.find(f"class {name}") + 6
-                symbols.append(SymbolInformation(
-                    name=name,
-                    kind=SymbolKind.Class,
                     location=Location(
                         uri=params.text_document.uri,
                         range=Range(
@@ -610,7 +471,7 @@ if _PYGLS_AVAILABLE:
                 var_match = var_pattern.match(line)
                 if var_match:
                     name = var_match.group(1)
-                    if name not in ('if', 'for', 'while', 'match', 'when', 'try', 'class', 'fn'):
+                    if name not in ('if', 'for', 'while', 'match', 'when', 'try', 'class', 'func', 'def'):
                         symbols.append(SymbolInformation(
                             name=name,
                             kind=SymbolKind.Variable,
@@ -675,7 +536,7 @@ if _PYGLS_AVAILABLE:
             formatted = stripped
             
             # Ensure space after keywords
-            for kw in ['if', 'elif', 'else', 'for', 'while', 'fn', 'class', 'return', 'import', 'from', 'match', 'when', 'try', 'catch', 'finally']:
+            for kw in ['if', 'elif', 'else', 'for', 'while', 'func', 'def', 'class', 'return', 'import', 'from', 'match', 'when', 'try', 'catch', 'finally']:
                 if formatted.startswith(kw) and len(formatted) > len(kw):
                     next_char = formatted[len(kw)]
                     if next_char not in ' \t({':

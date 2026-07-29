@@ -1,0 +1,20 @@
+[package]
+name = "sona-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "sona"
+path = "src/main.rs"
+
+[dependencies]
+sona-bytecode = { path = "../sona-bytecode" }
+sona-diagnostics = { path = "../sona-diagnostics" }
+sona-ir = { path = "../sona-ir" }
+sona-lexer = { path = "../sona-lexer" }
+sona-parser = { path = "../sona-parser" }
+sona-runtime = { path = "../sona-runtime" }
+sona-source = { path = "../sona-source" }
+sona-vm = { path = "../sona-vm" }

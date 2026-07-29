@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "name": "division-by-zero",
+  "kind": "negative",
+  "execution_mode": "python-compat",
+  "source": "tests/release/cases/negative_division_by_zero.sona",
+  "timeout_seconds": 30,
+  "expected": {
+    "exit_code": 1,
+    "exception_classification": "SonaRuntimeError",
+    "diagnostic_id": "SONA-RUNTIME-004",
+    "e_code": "E0301",
+    "primary_message": "Division or modulo by zero.",
+    "file": "tests/release/cases/negative_division_by_zero.sona",
+    "line": 1,
+    "column": 7,
+    "hint": "Use a nonzero divisor.",
+    "stdout": "",
+    "stderr": "SonaRuntimeError: SONA-RUNTIME-004: error[E0301]: Division or modulo by zero.\n  at tests/release/cases/negative_division_by_zero.sona:1:7\n  hint: Use a nonzero divisor.\n",
+    "ansi": false,
+    "traceback": false,
+    "host_exception": false,
+    "rust_panic": false,
+    "unrelated_log": false
+  }
+}

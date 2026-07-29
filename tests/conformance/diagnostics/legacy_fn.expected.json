@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "name": "legacy-fn-diagnostic",
+  "classification": "shared_diagnostic",
+  "source": "tests/conformance/diagnostics/legacy_fn.sona",
+  "timeout_seconds": 30,
+  "expected": {
+    "python-compat": {
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "SonaSyntaxError: SONA-PARSE-001: error[E0001]: The 'fn' keyword is not supported in Sona.\n  at tests/conformance/diagnostics/legacy_fn.sona:1:1\n  hint: Use 'func' to declare a function.\n"
+    },
+    "native": {
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "error[E0001] SONA-PARSE-001: The 'fn' keyword is not supported in Sona.\n  --> tests/conformance/diagnostics/legacy_fn.sona:1:1\n  hint: Use 'func' to declare a function.\n"
+    }
+  }
+}

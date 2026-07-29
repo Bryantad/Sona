@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "name": "core-language",
+  "kind": "positive",
+  "execution_mode": "python-compat",
+  "source": "tests/release/cases/positive_core_language.sona",
+  "timeout_seconds": 30,
+  "expected": {
+    "exit_code": 0,
+    "exception_classification": null,
+    "diagnostic_id": null,
+    "e_code": null,
+    "primary_message": null,
+    "file": null,
+    "line": null,
+    "column": null,
+    "hint": null,
+    "stdout": "12\n",
+    "stderr": "",
+    "ansi": false,
+    "traceback": false,
+    "host_exception": false,
+    "rust_panic": false,
+    "unrelated_log": false
+  }
+}

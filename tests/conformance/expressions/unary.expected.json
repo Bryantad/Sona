@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "name": "unary",
+  "classification": "identical",
+  "source": "tests/conformance/expressions/unary.sona",
+  "timeout_seconds": 30,
+  "expected": {
+    "python-compat": {"exit_code": 0, "stdout": "3\n", "stderr": ""},
+    "native": {"exit_code": 0, "stdout": "3\n", "stderr": ""}
+  }
+}

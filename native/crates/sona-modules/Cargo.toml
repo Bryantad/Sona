@@ -1,0 +1,17 @@
+[package]
+name = "sona-modules"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+sona-bytecode = { path = "../sona-bytecode" }
+sona-diagnostics = { path = "../sona-diagnostics" }
+sona-ir = { path = "../sona-ir" }
+sona-parser = { path = "../sona-parser" }
+sona-source = { path = "../sona-source" }
+
+[lib]
+path = "src/lib.rs"
+

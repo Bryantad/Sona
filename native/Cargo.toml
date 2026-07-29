@@ -1,0 +1,22 @@
+[workspace]
+resolver = "2"
+members = [
+  "crates/sona-source",
+  "crates/sona-diagnostics",
+  "crates/sona-lexer",
+  "crates/sona-ast",
+  "crates/sona-parser",
+  "crates/sona-ir",
+  "crates/sona-bytecode",
+  "crates/sona-runtime",
+  "crates/sona-modules",
+  "crates/sona-vm",
+  "crates/sona-cli",
+]
+
+[workspace.package]
+version = "0.15.3"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/Bryantad/Sona"
+

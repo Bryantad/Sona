@@ -1,0 +1,16 @@
+[package]
+name = "sona-parser"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+sona-ast = { path = "../sona-ast" }
+sona-diagnostics = { path = "../sona-diagnostics" }
+sona-lexer = { path = "../sona-lexer" }
+sona-source = { path = "../sona-source" }
+
+[lib]
+path = "src/lib.rs"
+

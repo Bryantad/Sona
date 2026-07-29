@@ -1,9 +1,15 @@
 *.vsix
 node_modules/.cache/**
 src/**
+**/*.ts
 scripts/**
 tsconfig.json
 *.map
 **/*.map
+node_modules/**
+out/aiConsole/**
+out/lspClient.js
+out/sonaCliIntegration.js
+out/aiIntegration.js
 .vscode/**
 .vscode-test/**

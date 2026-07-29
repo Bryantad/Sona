@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "name": "boolean-not",
+  "classification": "identical",
+  "source": "tests/conformance/expressions/boolean_not.sona",
+  "timeout_seconds": 30,
+  "expected": {
+    "python-compat": {"exit_code": 0, "stdout": "yes\n", "stderr": ""},
+    "native": {"exit_code": 0, "stdout": "yes\n", "stderr": ""}
+  }
+}

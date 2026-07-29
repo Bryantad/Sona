@@ -1,0 +1,21 @@
+[package]
+name = "sona-vm"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+sona-ast = { path = "../sona-ast" }
+sona-bytecode = { path = "../sona-bytecode" }
+sona-diagnostics = { path = "../sona-diagnostics" }
+sona-modules = { path = "../sona-modules" }
+sona-runtime = { path = "../sona-runtime" }
+
+[dev-dependencies]
+sona-ir = { path = "../sona-ir" }
+sona-parser = { path = "../sona-parser" }
+sona-source = { path = "../sona-source" }
+
+[lib]
+path = "src/lib.rs"

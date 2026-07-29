@@ -1,0 +1,5 @@
+let total = 2 + 3 * 4;
+print(total);
+print("hello" + 5);
+print(true + 5);
+

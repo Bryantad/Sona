@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "name": "power-right-associative",
+  "classification": "identical",
+  "source": "tests/conformance/expressions/power_right_associative.sona",
+  "timeout_seconds": 30,
+  "expected": {
+    "python-compat": {"exit_code": 0, "stdout": "512\n", "stderr": ""},
+    "native": {"exit_code": 0, "stdout": "512\n", "stderr": ""}
+  }
+}

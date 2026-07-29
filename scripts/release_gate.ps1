@@ -1,71 +1,29 @@
 param(
-    [string]$ExpectedVersion = "0.15.1"
+    [string]$ExpectedVersion = "0.15.3",
+    [string]$CertRoot = $env:SONA_CERT_ROOT
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+$RepoRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot ".."))
 
-function Read-ProjectVersion {
-    $line = (Get-Content pyproject.toml | Where-Object { $_ -match '^version\s*=' } | Select-Object -First 1)
-    if (-not $line) {
-        throw "Could not find version in pyproject.toml"
-    }
-    if ($line -match '"([^"]+)"') {
-        return $Matches[1]
-    }
-    throw "Could not parse version line in pyproject.toml: $line"
+if ($ExpectedVersion -ne "0.15.3") {
+    throw "The schema-2 release gate is defined only for Sona 0.15.3."
 }
+if ([string]::IsNullOrWhiteSpace($CertRoot)) {
+    throw "Set SONA_CERT_ROOT or pass -CertRoot with an absolute path outside the repository."
+}
+$ResolvedCertRoot = [System.IO.Path]::GetFullPath($CertRoot)
+$env:SONA_CERT_ROOT = $ResolvedCertRoot
 
-function Read-InitVersion {
-    $line = (Get-Content sona/__init__.py | Where-Object { $_ -match '^__version__\s*=' } | Select-Object -First 1)
-    if (-not $line) {
-        throw "Could not find __version__ in sona/__init__.py"
+Push-Location $RepoRoot
+try {
+    & python tools/release/certify_0153.py `
+        --cert-root $ResolvedCertRoot `
+        --phases python,gates
+    if ($LASTEXITCODE -ne 0) {
+        throw "Sona 0.15.3 release certification failed with exit code $LASTEXITCODE."
     }
-    if ($line -match '"([^"]+)"') {
-        return $Matches[1]
-    }
-    throw "Could not parse __version__ line in sona/__init__.py: $line"
+} finally {
+    Pop-Location
 }
-
-function Assert-Exists([string]$Path) {
-    if (-not (Test-Path $Path)) {
-        throw "Missing required file: $Path"
-    }
-}
-
-Write-Host "== Sona release gate =="
-
-$projectVersion = Read-ProjectVersion
-$initVersion = Read-InitVersion
-
-if ($projectVersion -ne $ExpectedVersion) {
-    throw "pyproject.toml version '$projectVersion' does not match expected '$ExpectedVersion'"
-}
-if ($initVersion -ne $ExpectedVersion) {
-    throw "sona/__init__.py version '$initVersion' does not match expected '$ExpectedVersion'"
-}
-
-Assert-Exists "RELEASE_NOTES_v0.15.1.md"
-
-Write-Host "Version checks passed ($ExpectedVersion)."
-Write-Host "Running smoke/test gates..."
-
-python tools/validate_release_metadata.py --version $ExpectedVersion
-if ($LASTEXITCODE -ne 0) { throw "validate_release_metadata.py failed with exit code $LASTEXITCODE" }
-
-python -m sona --version
-if ($LASTEXITCODE -ne 0) { throw "python -m sona --version failed with exit code $LASTEXITCODE" }
-
-python -m pytest -q tests -x
-if ($LASTEXITCODE -ne 0) { throw "pytest failed with exit code $LASTEXITCODE" }
-
-python -m sona probe stdlib
-if ($LASTEXITCODE -ne 0) { throw "python -m sona probe stdlib failed with exit code $LASTEXITCODE" }
-
-python -m sona build-info
-if ($LASTEXITCODE -ne 0) { throw "python -m sona build-info failed with exit code $LASTEXITCODE" }
-
-python tools/run_examples.py
-if ($LASTEXITCODE -ne 0) { throw "tools/run_examples.py failed with exit code $LASTEXITCODE" }
-
-Write-Host "Release gate passed."

@@ -1,43 +1,166 @@
-name: CI
+name: Sona 0.15.3 certification
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, release/0.15.3]
   pull_request:
-    branches: [main, master]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
-  smoke:
+  python:
     name: Python ${{ matrix.python-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ["3.11", "3.12"]
+    env:
+      SONA_CERT_ROOT: ${{ runner.temp }}/sona-cert-python-${{ matrix.python-version }}
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install package
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -e .
+      - name: Certify Python and exact release gate externally
+        run: >-
+          python tools/release/certify_0153.py
+          --cert-root "${{ env.SONA_CERT_ROOT }}"
+          --phases python,gates
 
-      - name: Check CLI
-        run: |
-          python -m sona --version
-          python -m sona --help
+      - name: Preserve platform certification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-${{ matrix.os }}-${{ matrix.python-version }}-evidence
+          path: |
+            ${{ env.SONA_CERT_ROOT }}/reports/
+            ${{ env.SONA_CERT_ROOT }}/evidence/
+          if-no-files-found: error
 
-      - name: Run local hello file
-        run: |
-          python -c 'from pathlib import Path; Path("hello.sona").write_text("print(\"Hello, Sona!\")\n", encoding="utf-8")'
-          python -m sona hello.sona
+  native:
+    name: Native Core on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    env:
+      SONA_CERT_ROOT: ${{ runner.temp }}/sona-cert-native
 
-      - name: Run official examples
-        run: python tools/run_examples.py
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Linux static-proof prerequisites
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes musl-tools file
+
+      - name: Enable the Visual Studio PE inspection tools
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Certify locked Native Core, bounded conformance, and Python-free proof
+        run: >-
+          python tools/release/certify_0153.py
+          --cert-root "${{ env.SONA_CERT_ROOT }}"
+          --phases native,gates
+
+      - name: Preserve native certification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-${{ matrix.os }}-evidence
+          path: |
+            ${{ env.SONA_CERT_ROOT }}/reports/
+            ${{ env.SONA_CERT_ROOT }}/evidence/
+            ${{ env.SONA_CERT_ROOT }}/artifacts/
+          if-no-files-found: error
+
+  extension-security:
+    name: Extension compile, production audit, and VSIX inspection
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      SONA_CERT_ROOT: ${{ runner.temp }}/sona-cert-extension
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Compile from external staging and inspect the VSIX
+        run: >-
+          python tools/release/certify_0153.py
+          --cert-root "${{ env.SONA_CERT_ROOT }}"
+          --phases extension
+
+      - name: Preserve extension security evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-security-evidence
+          path: |
+            ${{ env.SONA_CERT_ROOT }}/reports/
+            ${{ env.SONA_CERT_ROOT }}/evidence/
+            ${{ env.SONA_CERT_ROOT }}/artifacts/
+          if-no-files-found: error
+
+  packaging:
+    name: Python build, metadata, clean install, and archive inspection
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      SONA_CERT_ROOT: ${{ runner.temp }}/sona-cert-packaging
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build and inspect Python distributions externally
+        run: >-
+          python tools/release/certify_0153.py
+          --cert-root "${{ env.SONA_CERT_ROOT }}"
+          --phases packaging
+
+      - name: Preserve package evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: packaging-evidence
+          path: |
+            ${{ env.SONA_CERT_ROOT }}/reports/
+            ${{ env.SONA_CERT_ROOT }}/evidence/
+            ${{ env.SONA_CERT_ROOT }}/artifacts/
+          if-no-files-found: error

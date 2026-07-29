@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "name": "cognitive-malformed-spread",
+  "kind": "negative",
+  "execution_mode": "python-compat",
+  "source": "tests/release/cases/negative_cognitive_spread.sona",
+  "timeout_seconds": 30,
+  "expected": {
+    "exit_code": 1,
+    "exception_classification": "SonaRuntimeError",
+    "diagnostic_id": "SONA-COG-001",
+    "e_code": "E0501",
+    "primary_message": "Cognitive spread arguments must evaluate to a list or map.",
+    "file": "tests/release/cases/negative_cognitive_spread.sona",
+    "line": 1,
+    "column": 1,
+    "hint": "Use literal, positional, keyword, or list/map spread arguments.",
+    "stdout": "",
+    "stderr": "SonaRuntimeError: SONA-COG-001: error[E0501]: Cognitive spread arguments must evaluate to a list or map.\n  at tests/release/cases/negative_cognitive_spread.sona:1:1\n  hint: Use literal, positional, keyword, or list/map spread arguments.\n",
+    "ansi": false,
+    "traceback": false,
+    "host_exception": false,
+    "rust_panic": false,
+    "unrelated_log": false
+  }
+}

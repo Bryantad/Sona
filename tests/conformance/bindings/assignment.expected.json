@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "name": "assignment",
+  "classification": "identical",
+  "source": "tests/conformance/bindings/assignment.sona",
+  "timeout_seconds": 30,
+  "expected": {
+    "python-compat": {"exit_code": 0, "stdout": "5\n", "stderr": ""},
+    "native": {"exit_code": 0, "stdout": "5\n", "stderr": ""}
+  }
+}

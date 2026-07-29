@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "release": "0.15.3",
+  "modules": [
+    {
+      "module": "math",
+      "current_backend": "python-compat",
+      "target_backend": "native-rust",
+      "language_surface": "stable",
+      "native_ready": false,
+      "blocks_standalone_runtime": true
+    },
+    {
+      "module": "guardian",
+      "current_backend": "python-compat",
+      "target_backend": "external-service-boundary",
+      "language_surface": "stable",
+      "native_ready": false,
+      "blocks_standalone_runtime": false
+    },
+    {
+      "module": "receipt",
+      "current_backend": "python-compat",
+      "target_backend": "native-rust",
+      "language_surface": "stable",
+      "native_ready": false,
+      "blocks_standalone_runtime": false
+    },
+    {
+      "module": "mathcore",
+      "current_backend": "native-rust-preview-smod",
+      "target_backend": "native-rust",
+      "language_surface": "native-conformance-fixture",
+      "native_ready": true,
+      "blocks_standalone_runtime": false
+    }
+  ]
+}
+

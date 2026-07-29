@@ -1,0 +1,2 @@
+let values = {"answer": 42};
+print(values.answer);

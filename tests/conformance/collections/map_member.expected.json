@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "name": "map-member",
+  "classification": "identical",
+  "source": "tests/conformance/collections/map_member.sona",
+  "timeout_seconds": 30,
+  "expected": {
+    "python-compat": {"exit_code": 0, "stdout": "42\n", "stderr": ""},
+    "native": {"exit_code": 0, "stdout": "42\n", "stderr": ""}
+  }
+}

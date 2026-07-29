@@ -1,0 +1,3 @@
+import guardian;
+let status = guardian.check(".");
+print(status.status);

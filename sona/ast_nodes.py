@@ -1,20 +1,7 @@
-"""
-Sona v0.9.0 - Enhanced AST Nodes for Control Flow
-================================================
+"""Typed AST nodes used by the canonical Sona 0.15.x frontend.
 
-This module defines the Abstract Syntax Tree (AST) nodes for Sona v0.9.0's
-enhanced control flow features including:
-
-1. Enhanced if/else/elif statements
-2. Enhanced for/while loops with break/continue
-3. Try/catch/finally exception handling
-4. Module system imports/exports
-5. AI integration statements
-6. Cognitive programming constructs
-
-Author: Sona Development Team
-Version: 0.9.0
-Date: August 2025
+Historical node names remain import-compatible. Executable parser paths are
+limited to nodes certified by the canonical transformer.
 """
 
 from abc import ABC, abstractmethod
@@ -39,6 +26,106 @@ def _should_retry_legacy_call_signature(exc: TypeError) -> bool:
         "takes ",
     )
     return any(marker in message for marker in signature_markers)
+
+
+def _cognitive_error(message: str, node: Any | None = None):
+    from .errors import ErrorCode, SourceLocation
+    from .interpreter import SonaRuntimeError
+
+    file = "<unknown>"
+    if node is not None:
+        span = getattr(node, "span", None)
+        if span is not None:
+            file = getattr(span, "file", file)
+        else:
+            file = getattr(getattr(node, "_runtime_vm", None), "current_filename", file)
+
+    raise SonaRuntimeError(
+        message,
+        code=ErrorCode.INVALID_ARGUMENT,
+        location=SourceLocation.from_node(node, file=file) if node is not None else SourceLocation.unknown(),
+        suggestion="Use literal, positional, keyword, or list/map spread arguments.",
+        diagnostic_id="SONA-COG-001",
+    )
+
+
+def _evaluate_cognitive_value(vm, value: Any, node: Any | None = None) -> Any:
+    if value is None:
+        return None
+
+    positional = globals().get("PositionalArgument")
+    keyword = globals().get("KeywordArgument")
+    spread = globals().get("SpreadArgument")
+    if positional is not None and isinstance(value, positional):
+        return _evaluate_cognitive_value(vm, value.value, node)
+    if keyword is not None and isinstance(value, keyword):
+        return _evaluate_cognitive_value(vm, value.value, node)
+    if spread is not None and isinstance(value, spread):
+        return _evaluate_cognitive_value(vm, value.value, node)
+
+    if hasattr(value, "evaluate"):
+        return value.evaluate(vm)
+    if isinstance(value, dict):
+        return {
+            key: _evaluate_cognitive_value(vm, item, node)
+            for key, item in value.items()
+        }
+    if isinstance(value, list):
+        return [_evaluate_cognitive_value(vm, item, node) for item in value]
+    if isinstance(value, tuple):
+        return tuple(_evaluate_cognitive_value(vm, item, node) for item in value)
+    return value
+
+
+def _evaluate_cognitive_body(vm, body: Any, node: Any | None = None) -> dict[str, Any]:
+    """Evaluate a cognitive statement payload without leaking host exceptions."""
+    if node is not None:
+        try:
+            setattr(node, "_runtime_vm", vm)
+        except Exception:
+            pass
+    if body is None:
+        return {}
+    if not isinstance(body, dict):
+        _cognitive_error("Malformed cognitive statement payload.", node)
+
+    evaluated: dict[str, Any] = {}
+    next_arg = 0
+    for key, expr in body.items():
+        name = str(key)
+        if name.startswith("arg"):
+            try:
+                next_arg = max(next_arg, int(name[3:]) + 1)
+            except ValueError:
+                pass
+        if name.startswith("spread"):
+            spread_value = _evaluate_cognitive_value(vm, expr, node)
+            if isinstance(spread_value, dict):
+                evaluated.update({str(k): v for k, v in spread_value.items()})
+            elif isinstance(spread_value, (list, tuple)):
+                for item in spread_value:
+                    while f"arg{next_arg}" in evaluated:
+                        next_arg += 1
+                    evaluated[f"arg{next_arg}"] = item
+                    next_arg += 1
+            else:
+                _cognitive_error("Cognitive spread arguments must evaluate to a list or map.", node)
+            continue
+        evaluated[name] = _evaluate_cognitive_value(vm, expr, node)
+    return evaluated
+
+
+def _attach_call_site_diagnostic(exc: Exception, node: Any, suggestion: str) -> None:
+    from .errors import SourceLocation
+
+    diagnostic = getattr(exc, "diagnostic", None)
+    if diagnostic is None:
+        return
+    location = getattr(diagnostic, "location", None)
+    if location is None or getattr(location, "file", "<unknown>") == "<unknown>":
+        diagnostic.location = SourceLocation.from_node(node)
+    if not getattr(diagnostic, "suggestion", ""):
+        diagnostic.suggestion = suggestion
 
 
 # ========================================================================
@@ -122,7 +209,6 @@ class ElifClause(ASTNode):
         return vm.execute_statements(self.body)
 
 @dataclass
-@dataclass
 class EnhancedForLoop(Statement):
     """Enhanced for loop with break/continue support"""
     iterator_var: str = ""
@@ -146,12 +232,15 @@ class EnhancedForLoop(Statement):
         
         # Push new scope for loop
         interpreter.memory.push_scope(f"for_loop")
+        interpreter.memory.declare_variable(self.iterator_var, None)
         
         try:
             result = None
             for item in iterable_value:
+                if hasattr(interpreter, "_record_loop_iteration"):
+                    interpreter._record_loop_iteration()
                 # Set iterator variable
-                interpreter.memory.set_variable(self.iterator_var, item)
+                interpreter.memory.set_local_variable(self.iterator_var, item)
                 
                 # Execute loop body
                 try:
@@ -188,6 +277,8 @@ class EnhancedWhileLoop(Statement):
         
         result = None
         while self.condition.evaluate(vm):
+            if hasattr(vm, "_record_loop_iteration"):
+                vm._record_loop_iteration()
             try:
                 result = vm.execute_statements(self.body)
             except BreakException:
@@ -526,6 +617,7 @@ class VariableAssignment(Statement):
     name: str
     value: Any  # Expression that evaluates to the value
     is_const: bool = False  # True for const, False for let
+    is_declaration: bool = True
     line_number: int | None = None
     
     def accept(self, visitor):
@@ -540,7 +632,16 @@ class VariableAssignment(Statement):
             evaluated_value = self.value
             
         # Store in memory
-        vm.memory.set_variable(self.name, evaluated_value)
+        if self.is_declaration and hasattr(vm.memory, "declare_variable"):
+            vm.memory.declare_variable(
+                self.name, evaluated_value, is_const=self.is_const,
+                definition_span=getattr(self, "span", None),
+            )
+        else:
+            vm.memory.set_variable(
+                self.name, evaluated_value,
+                assignment_span=getattr(self, "span", None),
+            )
         
         return evaluated_value
 
@@ -659,17 +760,13 @@ class CognitiveCheckStatement(Statement):
     
     def execute(self, vm):
         """Execute cognitive check"""
+        evaluated_body = _evaluate_cognitive_body(vm, self.body, self)
         if hasattr(vm, 'cognitive_monitor'):
-            # Evaluate all body expressions
-            evaluated_body = {}
-            for key, expr in self.body.items():
-                evaluated_body[key] = expr.evaluate(vm.current_scope)
-            
             return vm.cognitive_monitor.check_cognitive_load(evaluated_body)
         else:
             # Basic execution without cognitive monitoring
-            for key, expr in self.body.items():
-                vm.current_scope[key] = expr.evaluate(vm.current_scope)
+            for key, value in evaluated_body.items():
+                vm.current_scope[key] = value
             return None
 
 @dataclass
@@ -683,17 +780,13 @@ class FocusModeStatement(Statement):
     
     def execute(self, vm):
         """Execute focus mode configuration"""
+        evaluated_body = _evaluate_cognitive_body(vm, self.body, self)
         if hasattr(vm, 'cognitive_monitor'):
-            # Evaluate all body expressions
-            evaluated_body = {}
-            for key, expr in self.body.items():
-                evaluated_body[key] = expr.evaluate(vm.current_scope)
-            
             return vm.cognitive_monitor.configure_focus_mode(evaluated_body)
         else:
             # Basic execution without cognitive features
-            for key, expr in self.body.items():
-                vm.current_scope[key] = expr.evaluate(vm.current_scope)
+            for key, value in evaluated_body.items():
+                vm.current_scope[key] = value
             return None
 
 @dataclass
@@ -707,17 +800,13 @@ class WorkingMemoryStatement(Statement):
     
     def execute(self, vm):
         """Execute working memory management"""
+        evaluated_body = _evaluate_cognitive_body(vm, self.body, self)
         if hasattr(vm, 'cognitive_monitor'):
-            # Evaluate all body expressions
-            evaluated_body = {}
-            for key, expr in self.body.items():
-                evaluated_body[key] = expr.evaluate(vm.current_scope)
-            
             return vm.cognitive_monitor.manage_working_memory(evaluated_body)
         else:
             # Basic execution without cognitive features
-            for key, expr in self.body.items():
-                vm.current_scope[key] = expr.evaluate(vm.current_scope)
+            for key, value in evaluated_body.items():
+                vm.current_scope[key] = value
             return None
 
 @dataclass
@@ -736,7 +825,7 @@ class FocusBlockStatement(Statement):
         return value
 
     def execute(self, vm):
-        meta_vals = {k: self._eval_value(vm, v) for k, v in self.meta.items()}
+        meta_vals = _evaluate_cognitive_body(vm, self.meta, self)
         enter = getattr(vm, '_enter_focus_block', None)
         exit_block = getattr(vm, '_exit_focus_block', None)
         state = None
@@ -762,13 +851,7 @@ class IntentStatement(Statement):
         return visitor.visit_intent_statement(self)
 
     def _evaluate_body(self, vm) -> dict[str, Any]:
-        evaluated = {}
-        for key, expr in self.body.items():
-            if hasattr(expr, 'evaluate'):
-                evaluated[key] = expr.evaluate(vm)
-            else:
-                evaluated[key] = expr
-        return evaluated
+        return _evaluate_cognitive_body(vm, self.body, self)
 
     def execute(self, vm):
         values = self._evaluate_body(vm)
@@ -802,13 +885,7 @@ class DecisionStatement(Statement):
         return visitor.visit_decision_statement(self)
 
     def _evaluate_body(self, vm) -> dict[str, Any]:
-        evaluated = {}
-        for key, expr in self.body.items():
-            if hasattr(expr, 'evaluate'):
-                evaluated[key] = expr.evaluate(vm)
-            else:
-                evaluated[key] = expr
-        return evaluated
+        return _evaluate_cognitive_body(vm, self.body, self)
 
     def execute(self, vm):
         values = self._evaluate_body(vm)
@@ -827,9 +904,7 @@ class CognitiveTraceStatement(Statement):
 
     def execute(self, vm):
         if hasattr(vm, 'cognitive_monitor'):
-            evaluated = {}
-            for key, expr in self.body.items():
-                evaluated[key] = expr.evaluate(vm) if hasattr(expr, 'evaluate') else expr
+            evaluated = _evaluate_cognitive_body(vm, self.body, self)
             return vm.cognitive_monitor.toggle_trace(evaluated)
         return None
 
@@ -844,9 +919,7 @@ class ExplainStepStatement(Statement):
 
     def execute(self, vm):
         if hasattr(vm, 'cognitive_monitor'):
-            evaluated = {}
-            for key, expr in self.body.items():
-                evaluated[key] = expr.evaluate(vm) if hasattr(expr, 'evaluate') else expr
+            evaluated = _evaluate_cognitive_body(vm, self.body, self)
             return vm.cognitive_monitor.explain_step(evaluated)
         return None
 
@@ -861,9 +934,7 @@ class ProfileStatement(Statement):
 
     def execute(self, vm):
         if hasattr(vm, 'cognitive_monitor'):
-            evaluated = {}
-            for key, expr in self.body.items():
-                evaluated[key] = expr.evaluate(vm) if hasattr(expr, 'evaluate') else expr
+            evaluated = _evaluate_cognitive_body(vm, self.body, self)
             return vm.cognitive_monitor.set_profile(evaluated)
         return None
 
@@ -879,14 +950,12 @@ class CognitiveScopeStatement(Statement):
         return visitor.visit_cognitive_scope_statement(self)
 
     def _eval_value(self, vm, value):
-        if hasattr(value, 'evaluate'):
-            return value.evaluate(vm)
-        return value
+        return _evaluate_cognitive_value(vm, value, self)
 
     def execute(self, vm):
         monitor = getattr(vm, 'cognitive_monitor', None)
         name_val = self._eval_value(vm, self.name)
-        meta_vals = {k: self._eval_value(vm, v) for k, v in self.meta.items()}
+        meta_vals = _evaluate_cognitive_body(vm, self.meta, self)
 
         if not monitor:
             return vm.execute_block(self.body) if hasattr(vm, 'execute_block') else None
@@ -918,7 +987,18 @@ class VariableExpression(Expression):
         """Get variable value from interpreter"""
         if hasattr(interpreter, 'memory'):
             # It's a SonaInterpreter
-            return interpreter.memory.get_variable(self.name)
+            try:
+                return interpreter.memory.get_variable(self.name)
+            except NameError as error:
+                from .errors import ErrorCode, SourceLocation
+                from .interpreter import SonaRuntimeError
+                raise SonaRuntimeError(
+                    f"Undefined name '{self.name}'.",
+                    code=ErrorCode.UNDEFINED_VARIABLE,
+                    location=SourceLocation.from_node(self),
+                    suggestion="Declare the name before using it.",
+                    diagnostic_id="SONA-RUNTIME-003",
+                ) from error
         elif isinstance(interpreter, dict):
             # It's a scope dict (backward compatibility)
             if self.name in interpreter:
@@ -957,43 +1037,109 @@ class BinaryOperatorExpression(Expression):
         return self.evaluate(interpreter)
     
     def evaluate(self, interpreter) -> Any:
-        left_val = self.left.evaluate(interpreter)
-        right_val = self.right.evaluate(interpreter)
-        
-        if self.operator == "+":
-            # Auto-convert to string if either operand is a string
-            if isinstance(left_val, str) or isinstance(right_val, str):
-                return str(left_val) + str(right_val)
-            return left_val + right_val
-        elif self.operator == "-":
-            return left_val - right_val
-        elif self.operator == "*":
-            return left_val * right_val
-        elif self.operator == "/":
-            return left_val / right_val
-        elif self.operator == "%":
-            return left_val % right_val
-        elif self.operator == "**":
-            return left_val ** right_val
-        elif self.operator == "==":
-            return left_val == right_val
-        elif self.operator == "!=":
-            return left_val != right_val
-        elif self.operator == "<":
-            return left_val < right_val
-        elif self.operator == ">":
-            return left_val > right_val
-        elif self.operator == "<=":
-            return left_val <= right_val
-        elif self.operator == ">=":
-            return left_val >= right_val
-        elif self.operator == "&&":
-            return left_val and right_val
-        elif self.operator == "||":
-            return left_val or right_val
-        else:
-            print(f"ERROR: Unknown operator: '{self.operator}' (type={type(self.operator)}, repr={repr(self.operator)})")
-            raise RuntimeError(f"Unknown binary operator: {self.operator}")
+        try:
+            left_val = self.left.evaluate(interpreter)
+            if self.operator in {"&&", "and"} and not left_val:
+                return left_val
+            if self.operator in {"||", "or"} and left_val:
+                return left_val
+            right_val = self.right.evaluate(interpreter)
+
+            if self.operator == "+":
+                if isinstance(left_val, str) or isinstance(right_val, str):
+                    return str(left_val) + str(right_val)
+                return left_val + right_val
+            if self.operator == "-":
+                return left_val - right_val
+            if self.operator == "*":
+                return left_val * right_val
+            if self.operator == "/":
+                return left_val / right_val
+            if self.operator == "%":
+                return left_val % right_val
+            if self.operator == "**":
+                return left_val ** right_val
+            if self.operator == "==":
+                return left_val == right_val
+            if self.operator == "!=":
+                return left_val != right_val
+            if self.operator == "<":
+                return left_val < right_val
+            if self.operator == ">":
+                return left_val > right_val
+            if self.operator == "<=":
+                return left_val <= right_val
+            if self.operator == ">=":
+                return left_val >= right_val
+            if self.operator in {"&&", "and"}:
+                return left_val and right_val
+            if self.operator in {"||", "or"}:
+                return left_val or right_val
+            raise TypeError(f"unknown operator {self.operator}")
+        except ZeroDivisionError as error:
+            from .errors import ErrorCode, SourceLocation
+            from .interpreter import SonaRuntimeError
+            raise SonaRuntimeError(
+                "Division or modulo by zero.",
+                code=ErrorCode.DIVISION_BY_ZERO,
+                location=SourceLocation.from_node(self),
+                suggestion="Use a nonzero divisor.",
+                diagnostic_id="SONA-RUNTIME-004",
+            ) from error
+        except TypeError as error:
+            from .errors import ErrorCode, SourceLocation
+            from .interpreter import SonaRuntimeError
+            raise SonaRuntimeError(
+                f"Operator '{self.operator}' does not support these operand types.",
+                code=ErrorCode.INVALID_OPERAND,
+                location=SourceLocation.from_node(self),
+                suggestion="Use operands supported by this operator or convert them explicitly.",
+                diagnostic_id="SONA-RUNTIME-005",
+            ) from error
+
+
+@dataclass
+class ChainedComparisonExpression(Expression):
+    """Evaluate comparisons left-to-right while evaluating each operand once."""
+
+    operands: list[Expression]
+    operators: list[str]
+    line_number: int | None = None
+
+    def accept(self, visitor):
+        method = getattr(visitor, "visit_chained_comparison_expression", None)
+        return method(self) if callable(method) else None
+
+    def execute(self, interpreter):
+        return self.evaluate(interpreter)
+
+    def evaluate(self, interpreter) -> bool:
+        if not self.operands:
+            return True
+        left = self.operands[0].evaluate(interpreter)
+        comparisons = {
+            "<": lambda a, b: a < b,
+            ">": lambda a, b: a > b,
+            "<=": lambda a, b: a <= b,
+            ">=": lambda a, b: a >= b,
+        }
+        try:
+            for operator, operand in zip(self.operators, self.operands[1:]):
+                right = operand.evaluate(interpreter)
+                if not comparisons[operator](left, right):
+                    return False
+                left = right
+        except TypeError as error:
+            from .errors import ErrorCode, SourceLocation
+            from .interpreter import SonaRuntimeError
+            raise SonaRuntimeError(
+                "Chained comparison operands are not mutually orderable.",
+                code=ErrorCode.INVALID_OPERAND,
+                location=SourceLocation.from_node(self),
+                suggestion="Compare values of compatible types.",
+                diagnostic_id="SONA-RUNTIME-005",
+            ) from error
+        return True
 
 @dataclass
 class UnaryOperatorExpression(Expression):
@@ -1020,7 +1166,6 @@ class UnaryOperatorExpression(Expression):
         else:
             raise RuntimeError(f"Unknown unary operator: {self.operator}")
 
-@dataclass
 @dataclass
 class FunctionCallExpression(Expression):
     """Function call expression"""
@@ -1068,15 +1213,39 @@ class FunctionCallExpression(Expression):
         try:
             func = interpreter.memory.get_variable(self.name)
             if callable(func):
-                return func(*pos_args, **kw_args)
+                try:
+                    return func(*pos_args, **kw_args)
+                except Exception as exc:
+                    _attach_call_site_diagnostic(
+                        exc,
+                        self,
+                        "Pass the arguments required by this function.",
+                    )
+                    raise
         except NameError:
             pass
         
         # Check if it's a user-defined function
         if self.name in interpreter.functions:
-            return interpreter.call_function(self.name, pos_args, kw_args)
+            try:
+                return interpreter.call_function(self.name, pos_args, kw_args)
+            except Exception as exc:
+                _attach_call_site_diagnostic(
+                    exc,
+                    self,
+                    "Pass the arguments required by this function.",
+                )
+                raise
         
-        raise NameError(f"Function '{self.name}' is not defined")
+        from .errors import ErrorCode, SourceLocation
+        from .interpreter import SonaRuntimeError
+        raise SonaRuntimeError(
+            f"Undefined function '{self.name}'.",
+            code=ErrorCode.UNDEFINED_FUNCTION,
+            location=SourceLocation.from_node(self),
+            suggestion="Declare or import the function before calling it.",
+            diagnostic_id="SONA-RUNTIME-003",
+        )
 
 
 @dataclass
@@ -1094,7 +1263,22 @@ class CallExpression(Expression):
         return self.evaluate(interpreter)
 
     def evaluate(self, interpreter) -> Any:
-        callee_value = self.callee.evaluate(interpreter)
+        try:
+            callee_value = self.callee.evaluate(interpreter)
+        except Exception as exc:
+            if isinstance(self.callee, VariableExpression):
+                diagnostic = getattr(exc, "diagnostic", None)
+                if getattr(diagnostic, "diagnostic_id", None) == "SONA-RUNTIME-003":
+                    from .errors import ErrorCode, SourceLocation
+                    from .interpreter import SonaRuntimeError
+                    raise SonaRuntimeError(
+                        f"Function '{self.callee.name}' is not defined.",
+                        code=ErrorCode.UNDEFINED_FUNCTION,
+                        location=SourceLocation.from_node(self),
+                        suggestion="Declare or import the function before calling it.",
+                        diagnostic_id="SONA-RUNTIME-003",
+                    ) from exc
+            raise
 
         pos_args: list[Any] = []
         kw_args: dict[str, Any] = {}
@@ -1125,7 +1309,14 @@ class CallExpression(Expression):
         if hasattr(callee_value, 'call') and callable(getattr(callee_value, 'call')):
             try:
                 return callee_value.call(pos_args, kw_args)
-            except TypeError as exc:
+            except Exception as exc:
+                if not isinstance(exc, TypeError):
+                    _attach_call_site_diagnostic(
+                        exc,
+                        self,
+                        "Pass the arguments required by this function.",
+                    )
+                    raise
                 if not _should_retry_legacy_call_signature(exc):
                     raise
                 # Backward compatibility for older call() signatures
@@ -1133,9 +1324,32 @@ class CallExpression(Expression):
                     return callee_value.call(pos_args)
                 except TypeError:
                     raise exc
+                except Exception as retry_exc:
+                    _attach_call_site_diagnostic(
+                        retry_exc,
+                        self,
+                        "Pass the arguments required by this function.",
+                    )
+                    raise
         if callable(callee_value):
-            return callee_value(*pos_args, **kw_args)
-        raise TypeError(f"Object of type '{type(callee_value).__name__}' is not callable")
+            try:
+                return callee_value(*pos_args, **kw_args)
+            except Exception as exc:
+                _attach_call_site_diagnostic(
+                    exc,
+                    self,
+                    "Pass the arguments required by this function.",
+                )
+                raise
+        from .errors import ErrorCode, SourceLocation
+        from .interpreter import SonaRuntimeError
+        raise SonaRuntimeError(
+            f"Object of type '{type(callee_value).__name__}' is not callable",
+            code=ErrorCode.RUNTIME_ERROR,
+            location=SourceLocation.from_node(self),
+            suggestion="Call a function value or remove the call parentheses.",
+            diagnostic_id="SONA-RUNTIME-002",
+        )
 
     def accept(self, visitor):
         # Keep visitor compatibility for code that doesn't know about CallExpression
@@ -1173,8 +1387,14 @@ class PropertyAccessExpression(Expression):
         if isinstance(submodules, dict) and self.property_name in submodules:
             return submodules[self.property_name]
 
-        raise AttributeError(
-            f"Object has no property '{self.property_name}'"
+        from .errors import ErrorCode, SourceLocation
+        from .interpreter import SonaRuntimeError
+        raise SonaRuntimeError(
+            f"Object has no property '{self.property_name}'.",
+            code=ErrorCode.RUNTIME_ERROR,
+            location=SourceLocation.from_node(self),
+            suggestion="Use an existing map key, module symbol, or object property.",
+            diagnostic_id="SONA-RUNTIME-007",
         )
     
     def accept(self, visitor):
@@ -1241,8 +1461,13 @@ class MethodCallExpression(Expression):
                         raise exc
             if callable(method):
                 return method(obj, *pos_args, **kw_args)
-            raise TypeError(
-                f"'{self.method_name}' is not a callable method"
+            from .errors import ErrorCode, SourceLocation
+            from .interpreter import SonaRuntimeError
+            raise SonaRuntimeError(
+                f"'{self.method_name}' is not a callable method.",
+                code=ErrorCode.NOT_CALLABLE,
+                location=SourceLocation.from_node(self),
+                diagnostic_id="SONA-RUNTIME-002",
             )
 
         # Get the method from the object
@@ -1260,12 +1485,23 @@ class MethodCallExpression(Expression):
                         raise exc
             if callable(method):
                 return method(*pos_args, **kw_args)
-            raise TypeError(
-                f"'{self.method_name}' is not a callable method"
+            from .errors import ErrorCode, SourceLocation
+            from .interpreter import SonaRuntimeError
+            raise SonaRuntimeError(
+                f"'{self.method_name}' is not a callable method.",
+                code=ErrorCode.NOT_CALLABLE,
+                location=SourceLocation.from_node(self),
+                diagnostic_id="SONA-RUNTIME-002",
             )
         
-        raise AttributeError(
-            f"Object has no method '{self.method_name}'"
+        from .errors import ErrorCode, SourceLocation
+        from .interpreter import SonaRuntimeError
+        raise SonaRuntimeError(
+            f"Object has no method '{self.method_name}'.",
+            code=ErrorCode.RUNTIME_ERROR,
+            location=SourceLocation.from_node(self),
+            suggestion="Call an existing method or inspect the module's public symbols.",
+            diagnostic_id="SONA-RUNTIME-007",
         )
     
     def accept(self, visitor):
@@ -1307,10 +1543,16 @@ class IndexExpression(Expression):
         # Handle list/dict/string indexing
         try:
             return obj[index_val]
-        except (KeyError, IndexError, TypeError) as e:
-            raise RuntimeError(
-                f"Indexing error: {e}"
-            )
+        except (KeyError, IndexError, TypeError) as error:
+            from .errors import ErrorCode, SourceLocation
+            from .interpreter import SonaRuntimeError
+            raise SonaRuntimeError(
+                "The requested index or key is not available for this value.",
+                code=ErrorCode.INDEX_OUT_OF_BOUNDS,
+                location=SourceLocation.from_node(self),
+                suggestion="Use an in-range index or an existing map key.",
+                diagnostic_id="SONA-RUNTIME-006",
+            ) from error
     
     def accept(self, visitor):
         return visitor.visit_index_expression(self)
@@ -1578,41 +1820,4 @@ class ASTVisitor(ABC):
     @abstractmethod
     def visit_function_call_expression(self, node: FunctionCallExpression):
         pass
-
-
-# ========================================================================
-# UTILITY FUNCTIONS
-# ========================================================================
-
-def create_ast_from_lark_tree(tree) -> ASTNode:
-    """
-    Convert a Lark parse tree to Sona AST nodes
-    
-    This function would be implemented to transform the parse tree
-    from the Lark parser into our typed AST nodes.
-    """
-    # This would be a comprehensive transformer implementation
-    # For now, just a placeholder
-    raise NotImplementedError("AST transformation not yet implemented")
-
-def validate_ast(node: ASTNode) -> bool:
-    """
-    Validate an AST node for correctness
-    
-    This function performs semantic validation on the AST,
-    checking for things like variable usage, type consistency, etc.
-    """
-    # This would implement semantic validation
-    # For now, just a placeholder
-    return True
-
-def optimize_ast(node: ASTNode) -> ASTNode:
-    """
-    Optimize an AST node for better performance
-    
-    This function applies various optimization techniques
-    to improve execution performance.
-    """
-    # This would implement AST optimization
-    # For now, just return the original node
-    return node
+# End of certified AST compatibility surface.

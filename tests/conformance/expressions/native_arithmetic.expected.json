@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "name": "arithmetic-precedence",
+  "classification": "identical",
+  "source": "tests/conformance/expressions/native_arithmetic.sona",
+  "timeout_seconds": 30,
+  "expected": {
+    "python-compat": {"exit_code": 0, "stdout": "14\n", "stderr": ""},
+    "native": {"exit_code": 0, "stdout": "14\n", "stderr": ""}
+  }
+}

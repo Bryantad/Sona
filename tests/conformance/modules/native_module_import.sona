@@ -1,0 +1,2 @@
+import mathcore;
+print(mathcore.answer());

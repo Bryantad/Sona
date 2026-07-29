@@ -1,0 +1,4 @@
+func value() {
+    7;
+};
+print(value());

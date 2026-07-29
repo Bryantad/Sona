@@ -79,6 +79,9 @@ class NativeModuleProxy:
         self._module = module
         self._prefix = prefix
 
+    def __repr__(self) -> str:
+        return f"<module '{self._prefix.rstrip('_')}'>"
+
     def __getattr__(self, name: str):
         if name.startswith("_"):
             raise AttributeError(name)
@@ -97,6 +100,9 @@ class NativeBridge:
         self._module_name = module_name
         self._native = self._load_native(module_name)
         self._proxy = NativeModuleProxy(self._native, f"{module_name}_")
+
+    def __repr__(self) -> str:
+        return f"<module '{self._module_name}'>"
 
     def _load_native(self, module_name: str):
         special = _SPECIAL_NATIVE_MODULES.get(module_name)

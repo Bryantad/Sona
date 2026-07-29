@@ -1,0 +1,6 @@
+let value = 3;
+if value == 3 {
+    print("yes");
+} else {
+    print("no");
+};

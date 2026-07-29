@@ -1,72 +1,60 @@
-"""
-Sona v0.9.0 - Enhanced Parser for New Language Features
-======================================================
+"""Canonical Lark frontend for the certified Sona 0.15.x language subset.
 
-This module provides the enhanced parser for Sona v0.9.0, built on top of Lark
-to handle the new control flow constructs, module system, AI integration,
-and cognitive programming features.
-
-The parser maintains full backward compatibility with existing Sona code while
-adding support for the advanced features introduced in v0.9.0.
-
-Author: Sona Development Team
-Version: 0.9.0
-Date: August 2025
+Advanced productions may be recognized for migration purposes, but only the
+constructs transformed into typed AST nodes are executable. Recognized but
+uncertified syntax is rejected with ``SONA-SEM-099``.
 """
 
 import os
+import re
+from dataclasses import fields, is_dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from .errors import ErrorCode, SonaSyntaxError, SourceLocation
 
+
+_LARK_IMPORT_ERROR: ImportError | None = None
 try:
     from lark import Lark, Token, Transformer, Tree, v_args
-    from lark.exceptions import ParseError, VisitError
-except ImportError:
-    print("⚠️  Warning: Lark parser not available. Install with: pip install lark")
+    from lark.exceptions import ParseError, UnexpectedInput, VisitError
+except ImportError as exc:
+    _LARK_IMPORT_ERROR = exc
     Lark = None
 
-# Import our AST nodes when available
-AST_NODES_AVAILABLE = False
-try:
-    from .ast_nodes import *
-    AST_NODES_AVAILABLE = True
-except ImportError:
-    # Fallback for development - define minimal placeholder classes
-    class ASTNode:
-        def accept(self, visitor): pass
-        def execute(self, vm): pass
-    
-    class Statement(ASTNode): pass
-    class Expression(ASTNode): 
-        def evaluate(self, scope): pass
-    
-    class LiteralExpression(Expression):
-        def __init__(self, value): self.value = value
-        def evaluate(self, scope): return self.value
-    
-    class VariableExpression(Expression):
-        def __init__(self, name): self.name = name
-        def evaluate(self, scope): return scope.get(self.name)
-    
-    print("ℹ️  Using placeholder AST nodes - full nodes not available")
+    class Token:  # type: ignore[no-redef]
+        pass
+
+    class Tree:  # type: ignore[no-redef]
+        pass
+
+    class Transformer:  # type: ignore[no-redef]
+        pass
+
+    class ParseError(Exception):  # type: ignore[no-redef]
+        pass
+
+    class UnexpectedInput(Exception):  # type: ignore[no-redef]
+        pass
+
+    class VisitError(Exception):  # type: ignore[no-redef]
+        pass
+
+    def v_args(*_args, **_kwargs):  # type: ignore[no-redef]
+        def decorator(function):
+            return function
+        return decorator
+
+from .ast_nodes import *
 
 class SonaParserv090:
-    """
-    Enhanced parser for Sona v0.9.0 with full feature support
-    
-    This parser handles all v0.9.0 language constructs including:
-    - Enhanced control flow (if/else/elif, loops, try/catch)
-    - Module system (import/export)
-    - AI integration statements
-    - Cognitive programming constructs
-    - Backward compatibility with existing syntax
-    """
+    """Canonical parser retained under its historical import name."""
     def __init__(self, grammar_file: str | None = None):
         """Initialize the enhanced parser"""
         self.grammar_file = grammar_file or self._get_default_grammar()
         self.parser = None
         self.transformer = None
+        self.initialization_error: str | None = None
         
         # Feature flags
         self.features_enabled = {
@@ -86,91 +74,22 @@ class SonaParserv090:
         # Canonical grammar (single source of truth)
         grammar_path = current_dir / "grammar.lark"
 
-        if grammar_path.exists():
-            return str(grammar_path)
-
-        # Final fallback to embedded grammar
-        return self._get_embedded_grammar()
-    
-    def _get_embedded_grammar(self) -> str:
-        """Get embedded grammar as fallback"""
-        return '''
-        // Embedded minimal grammar for Sona v0.9.0
-        start: statement*
-        
-        statement: if_statement
-                | for_statement  
-                | while_statement
-                | try_statement
-                | break_statement
-                | continue_statement
-                | import_statement
-                | assignment
-                | expression_statement
-        
-        if_statement: "if" expression ":" block ("elif" expression ":" block)* ("else" ":" block)?
-        for_statement: "for" IDENTIFIER "in" expression ":" block
-        while_statement: "while" expression ":" block
-        try_statement: "try" ":" block ("catch" IDENTIFIER? ":" block)* ("finally" ":" block)?
-        
-        break_statement: "break"
-        continue_statement: "continue"
-        
-        import_statement: "import" IDENTIFIER ("as" IDENTIFIER)?
-                       | "from" IDENTIFIER "import" IDENTIFIER ("," IDENTIFIER)*
-        
-        assignment: IDENTIFIER "=" expression
-        expression_statement: expression
-        
-        expression: term
-                  | expression "+" term
-                  | expression "-" term
-                  | expression "==" term
-                  | expression "!=" term
-                  | expression "<" term
-                  | expression ">" term
-                  | expression "<=" term
-                  | expression ">=" term
-                  | expression "&&" term
-                  | expression "||" term
-        
-        term: factor
-            | term "*" factor
-            | term "/" factor
-            | term "%" factor
-        
-        factor: "(" expression ")"
-              | NUMBER
-              | STRING
-              | IDENTIFIER
-              | function_call
-        
-        function_call: IDENTIFIER "(" (expression ("," expression)*)? ")"
-        
-        block: NEWLINE INDENT statement+ DEDENT
-             | statement
-        
-        %import common.CNAME -> IDENTIFIER
-        %import common.NUMBER
-        %import common.ESCAPED_STRING -> STRING
-        %import common.WS
-        %import common.NEWLINE
-        
-        %ignore WS
-        '''
+        return str(grammar_path)
     
     def _initialize_parser(self):
         """Initialize the Lark parser and transformer"""
         try:
             if Lark is None:
-                raise ImportError("Lark parser not available")
+                self.initialization_error = "The required Lark parser dependency is unavailable."
+                return
             
-            # Load grammar from file or use embedded
+            # Load the packaged canonical grammar. There is no embedded fallback.
             if Path(self.grammar_file).exists():
                 with open(self.grammar_file, encoding='utf-8') as f:
                     grammar_content = f.read()
             else:
-                grammar_content = self.grammar_file  # Assume it's the embedded grammar
+                self.initialization_error = "The packaged canonical grammar resource is unavailable."
+                return
             
             # Create parser with enhanced error reporting
             self.parser = Lark(
@@ -185,9 +104,8 @@ class SonaParserv090:
             # Initialize the transformer
             self.transformer = SonaASTTransformer(self.features_enabled)
             
-        except Exception as e:
-            print(f"[ERROR] Failed to initialize parser: {e}")
-            print("   Falling back to basic parsing mode")
+        except Exception:
+            self.initialization_error = "The canonical grammar could not be initialized."
             self.parser = None
             self.transformer = None
     
@@ -203,49 +121,293 @@ class SonaParserv090:
             List of AST nodes or None if parsing failed
         """
         if not self.parser:
-            return self._fallback_parse(source_code)
+            raise SonaSyntaxError(
+                self.initialization_error or "The canonical parser is unavailable.",
+                location=SourceLocation(file=filename, line=1, column=1),
+                suggestion="Install the base parser dependency and reinstall Sona if the packaged grammar is missing.",
+                diagnostic_id="SONA-PARSE-099",
+            )
+
+        legacy_use = re.search(r"(?m)^\s*use\s+([A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)?)\s*;?", source_code)
+        if legacy_use:
+            raise SonaSyntaxError(
+                "'use' module syntax is not supported by the certified Sona 0.15.x frontend.",
+                location=SourceLocation(
+                    file=filename,
+                    line=source_code[:legacy_use.start()].count("\n") + 1,
+                    column=legacy_use.start() - source_code.rfind("\n", 0, legacy_use.start()),
+                ),
+                suggestion="Use canonical module syntax, for example: import math;",
+                diagnostic_id="SONA-PARSE-001",
+            )
         
         try:
+            if self.transformer:
+                self.transformer.current_filename = filename
             # Parse the source code
             parse_tree = self.parser.parse(source_code)
+            unsupported = self._unsupported_production(parse_tree)
+            if unsupported:
+                feature, line, column = unsupported
+                raise SonaSyntaxError(
+                    f"SONA-SEM-099: '{feature}' syntax is recognized but is not certified for execution in Sona 0.15.3.",
+                    location=SourceLocation(file=filename, line=line, column=column),
+                    suggestion="Use certified 0.15.x syntax or retain legacy compatibility mode while migrating.",
+                    diagnostic_id="SONA-SEM-099",
+                )
             
             # Transform to AST
             if self.transformer:
                 ast_nodes = self.transformer.transform(parse_tree)
-                return ast_nodes if isinstance(ast_nodes, list) else [ast_nodes]
+                normalized = ast_nodes if isinstance(ast_nodes, list) else [ast_nodes]
+                leaked = self._find_raw_parser_object(normalized)
+                if leaked:
+                    raise SonaSyntaxError(
+                        f"The '{leaked}' construct is recognized but its executable transformation is not certified.",
+                        location=SourceLocation(file=filename, line=1, column=1),
+                        suggestion="Use a documented stable construct instead.",
+                        diagnostic_id="SONA-SEM-099",
+                    )
+                return normalized
             else:
-                return self._fallback_transform(parse_tree)
+                raise SonaSyntaxError(
+                    "The canonical AST transformer is unavailable.",
+                    location=SourceLocation(file=filename, line=1, column=1),
+                    diagnostic_id="SONA-PARSE-099",
+                )
                 
-        except ParseError as e:
-            self._handle_parse_error(e, source_code, filename)
+        except SonaSyntaxError:
+            raise
+        except VisitError as error:
+            original = getattr(error, "orig_exc", None)
+            if isinstance(original, SonaSyntaxError):
+                raise original
+            raise SonaSyntaxError(
+                "The canonical parser could not transform this source safely.",
+                location=SourceLocation(file=filename, line=1, column=1),
+                suggestion="Report this parser transformation failure with a minimal source example.",
+                diagnostic_id="SONA-PARSE-099",
+            ) from error
+        except (ParseError, UnexpectedInput) as error:
+            lines = source_code.splitlines()
+            line = int(getattr(error, "line", 1) or 1)
+            column = int(getattr(error, "column", 1) or 1)
+            legacy_fn = self._legacy_fn_declaration(source_code, error)
+            if legacy_fn is not None:
+                fn_line, fn_column = legacy_fn
+                source_line = lines[fn_line - 1] if 0 < fn_line <= len(lines) else ""
+                raise SonaSyntaxError(
+                    "The 'fn' keyword is not supported in Sona.",
+                    location=SourceLocation(
+                        file=filename,
+                        line=fn_line,
+                        column=fn_column,
+                    ),
+                    source_line=source_line,
+                    suggestion="Use 'func' to declare a function.",
+                    diagnostic_id="SONA-PARSE-001",
+                ) from error
+            if line < 1:
+                line = max(1, len(lines))
+            if column < 1:
+                column = 1
+            source_line = lines[line - 1] if 0 < line <= len(lines) else ""
+            diagnostic_id = (
+                "SONA-PARSE-003"
+                if self._has_unclosed_delimiter(source_code)
+                else "SONA-PARSE-001"
+            )
+            raise SonaSyntaxError(
+                "Unexpected or incomplete Sona syntax.",
+                location=SourceLocation(file=filename, line=line, column=column),
+                source_line=source_line,
+                suggestion="Check delimiters, operators, and incomplete statements near this location.",
+                diagnostic_id=diagnostic_id,
+            ) from error
+        except Exception as error:
+            raise SonaSyntaxError(
+                "The canonical parser encountered an internal infrastructure failure.",
+                location=SourceLocation(file=filename, line=1, column=1),
+                suggestion="Run with parser debugging enabled and report the failure; source was not executed.",
+                diagnostic_id="SONA-PARSE-099",
+            ) from error
+
+    def _legacy_fn_declaration(
+        self,
+        source_code: str,
+        original_error: Exception,
+    ) -> tuple[int, int] | None:
+        """Identify an ``fn name(...)`` parser blocker without substring matching.
+
+        The scanner ignores comments and string literals.  A candidate is
+        accepted only when replacing that exact token with ``func`` lets the
+        canonical parser advance beyond the original failure (or parse the
+        program completely).  This ties the migration diagnostic to a function
+        declaration position instead of treating every occurrence of ``fn`` as
+        reserved syntax.
+        """
+
+        if self.parser is None:
             return None
-        except Exception as e:
-            self._handle_general_error(e, source_code, filename)
-            return None
+        original_offset = int(
+            getattr(original_error, "pos_in_stream", len(source_code)) or 0
+        )
+        tokens = self._significant_tokens(source_code)
+        for index in range(len(tokens) - 2):
+            text, start, end, line, column = tokens[index]
+            next_text = tokens[index + 1][0]
+            after_text = tokens[index + 2][0]
+            if (
+                text != "fn"
+                or start > original_offset
+                or not next_text.isidentifier()
+                or after_text != "("
+            ):
+                continue
+            rewritten = source_code[:start] + "func" + source_code[end:]
+            try:
+                self.parser.parse(rewritten)
+            except (ParseError, UnexpectedInput) as rewritten_error:
+                rewritten_offset = int(
+                    getattr(rewritten_error, "pos_in_stream", 0) or 0
+                )
+                # ``func`` is one character longer, so advancing beyond the
+                # original parser failure proves that ``fn`` was the blocker.
+                if rewritten_offset <= original_offset:
+                    continue
+            except Exception:
+                continue
+            return line, column
+        return None
+
+    @staticmethod
+    def _significant_tokens(
+        source_code: str,
+    ) -> list[tuple[str, int, int, int, int]]:
+        """Return identifier and punctuation tokens outside trivia."""
+
+        tokens: list[tuple[str, int, int, int, int]] = []
+        index = 0
+        line = 1
+        column = 1
+        length = len(source_code)
+        while index < length:
+            character = source_code[index]
+            if character in " \t\r":
+                index += 1
+                column += 1
+                continue
+            if character == "\n":
+                index += 1
+                line += 1
+                column = 1
+                continue
+            if source_code.startswith("//", index) or character == "#":
+                while index < length and source_code[index] != "\n":
+                    index += 1
+                    column += 1
+                continue
+            if character in {'"', "'"}:
+                quote = character
+                index += 1
+                column += 1
+                escaped = False
+                while index < length:
+                    current = source_code[index]
+                    if current == "\n":
+                        line += 1
+                        column = 1
+                        index += 1
+                        escaped = False
+                        continue
+                    index += 1
+                    column += 1
+                    if escaped:
+                        escaped = False
+                    elif current == "\\":
+                        escaped = True
+                    elif current == quote:
+                        break
+                continue
+            start = index
+            token_line = line
+            token_column = column
+            if character.isalpha() or character == "_":
+                index += 1
+                column += 1
+                while index < length and (
+                    source_code[index].isalnum() or source_code[index] == "_"
+                ):
+                    index += 1
+                    column += 1
+            else:
+                index += 1
+                column += 1
+            tokens.append(
+                (
+                    source_code[start:index],
+                    start,
+                    index,
+                    token_line,
+                    token_column,
+                )
+            )
+        return tokens
+
+    @staticmethod
+    def _has_unclosed_delimiter(source_code: str) -> bool:
+        """Return whether source ends with an unmatched opening delimiter.
+
+        This deliberately ignores delimiters in strings and line comments.  It is
+        only used to refine a parser failure into the stable missing-delimiter
+        diagnostic; it never accepts or transforms source.
+        """
+        pairs = {")": "(", "]": "[", "}": "{"}
+        stack: list[str] = []
+        quote: str | None = None
+        escaped = False
+        comment = False
+        for character in source_code:
+            if comment:
+                if character == "\n":
+                    comment = False
+                continue
+            if quote is not None:
+                if escaped:
+                    escaped = False
+                elif character == "\\":
+                    escaped = True
+                elif character == quote:
+                    quote = None
+                continue
+            if character in {'"', "'"}:
+                quote = character
+            elif character == "#":
+                comment = True
+            elif character in "([{":
+                stack.append(character)
+            elif character in pairs:
+                if stack and stack[-1] == pairs[character]:
+                    stack.pop()
+        # Unterminated strings are lexical errors, even if they occur inside a
+        # call with an otherwise unmatched opening delimiter.
+        return quote is None and bool(stack)
     
     def parse_expression(self, expression_code: str) -> Expression | None:
         """Parse a single expression"""
-        if not self.parser:
-            return self._fallback_parse_expression(expression_code)
-        
-        try:
-            # Wrap expression in a minimal program
-            wrapped_code = f"result = {expression_code}"
-            parse_tree = self.parser.parse(wrapped_code)
-            
-            if self.transformer:
-                ast_nodes = self.transformer.transform(parse_tree)
-                # Extract the expression from the assignment
-                if ast_nodes and hasattr(ast_nodes[0], 'value'):
-                    return ast_nodes[0].value
-            
-            return None
-            
-        except Exception as e:
-            print(f"⚠️  Failed to parse expression '{expression_code}': {e}")
-            return None
+        wrapped_code = f"result = {expression_code}"
+        ast_nodes = self.parse(wrapped_code, filename="<expression>")
+        if ast_nodes and hasattr(ast_nodes[0], "value"):
+            return ast_nodes[0].value
+        raise SonaSyntaxError(
+            "The expression did not transform to an executable value.",
+            location=SourceLocation(file="<expression>", line=1, column=1),
+            diagnostic_id="SONA-PARSE-099",
+        )
     
-    def validate_syntax(self, source_code: str) -> dict[str, Any]:
+    def validate_syntax(
+        self, source_code: str, filename: str = "<validation>"
+    ) -> dict[str, Any]:
         """
         Validate syntax without creating AST
         
@@ -255,101 +417,85 @@ class SonaParserv090:
         result = {
             'valid': False,
             'errors': [],
+            'diagnostics': [],
             'warnings': [],
             'suggestions': []
         }
         
-        if not self.parser:
-            result['errors'].append("Parser not available")
-            return result
-        
         try:
-            # Try to parse
-            parse_tree = self.parser.parse(source_code)
+            self.parse(source_code, filename=filename)
             result['valid'] = True
-            
-            # Check for potential issues
-            warnings = self._analyze_parse_tree(parse_tree)
-            result['warnings'] = warnings
-            
-        except ParseError as e:
-            result['errors'].append(str(e))
-            result['suggestions'] = self._get_parse_suggestions(e, source_code)
-        except Exception as e:
-            result['errors'].append(f"Unexpected error: {e}")
+        except SonaSyntaxError as error:
+            item = error.diagnostic
+            diagnostic_id = item.diagnostic_id or "SONA-PARSE-001"
+            category = "semantic" if diagnostic_id.startswith("SONA-SEM-") else (
+                "internal" if diagnostic_id == "SONA-PARSE-099" else "syntax"
+            )
+            result['errors'].append(f"{diagnostic_id}: {item.message}")
+            result['diagnostics'].append({
+                "diagnostic_id": diagnostic_id,
+                "category": category,
+                "severity": "error",
+                "file": item.location.file,
+                "line": item.location.line,
+                "column": item.location.column,
+                "end_line": item.location.line,
+                "end_column": item.location.column + 1,
+                "message": item.message,
+                "hint": item.suggestion,
+            })
+            if item.suggestion:
+                result['suggestions'].append(item.suggestion)
         
         return result
-    
-    def _fallback_parse(self, source_code: str) -> list[ASTNode]:
-        """Fallback parsing when main parser is not available"""
-        print("ℹ️  Using fallback parser")
-        
-        # Very basic line-by-line parsing
-        lines = source_code.strip().split('\n')
-        ast_nodes = []
-        
-        for line in lines:
-            line = line.strip()
-            if not line or line.startswith('#'):
-                continue
-            
-            # Try to create basic AST nodes
-            node = self._parse_line_basic(line)
-            if node:
-                ast_nodes.append(node)
-        
-        return ast_nodes
-    
-    def _parse_line_basic(self, line: str) -> ASTNode | None:
-        """Parse a single line with basic logic"""
-        line = line.strip()
-        
-        # Assignment
-        if '=' in line and not any(op in line for op in ['==', '!=', '<=', '>=']):
-            parts = line.split('=', 1)
-            if len(parts) == 2:
-                var_name = parts[0].strip()
-                value_expr = parts[1].strip()
-                # Create a basic assignment node (would need proper implementation)
-                return None  # Placeholder
-        
-        # If statement
-        if line.startswith('if '):
-            # Create basic if node (would need proper implementation)
-            return None  # Placeholder
-        
-        # Return None for unrecognized lines
+
+    @staticmethod
+    def _unsupported_production(parse_tree) -> tuple[str, int, int] | None:
+        unsupported = {
+            "class_def": "class", "match_stmt": "match", "repeat_stmt": "repeat",
+            "destructuring_assignment": "destructuring", "export_stmt": "export",
+            "template_string": "template string", "show_stmt": "show",
+            "think_stmt": "think", "calculate_stmt": "calculate",
+            "when_stmt": "statement-form when",
+        }
+        for tree in parse_tree.iter_subtrees_topdown():
+            name = str(getattr(tree, "data", ""))
+            if name in unsupported:
+                meta = getattr(tree, "meta", None)
+                return unsupported[name], int(getattr(meta, "line", 1) or 1), int(getattr(meta, "column", 1) or 1)
+        for token in parse_tree.scan_values(lambda value: isinstance(value, Token)):
+            if getattr(token, "type", None) == "TEMPLATE_STRING":
+                return "template string", int(getattr(token, "line", 1) or 1), int(getattr(token, "column", 1) or 1)
         return None
-    
-    def _fallback_parse_expression(self, expression_code: str) -> Expression | None:
-        """Fallback expression parsing"""
-        # Very basic expression parsing
-        expression_code = expression_code.strip()
-        
-        # Number literal
-        try:
-            value = float(expression_code)
-            return LiteralExpression(value)
-        except ValueError:
-            pass
-        
-        # String literal
-        if (expression_code.startswith('"') and expression_code.endswith('"')) or \
-           (expression_code.startswith("'") and expression_code.endswith("'")):
-            return LiteralExpression(expression_code[1:-1])
-        
-        # Variable reference
-        if expression_code.isidentifier():
-            return VariableExpression(expression_code)
-        
-        # Could not parse
+
+    @classmethod
+    def _find_raw_parser_object(cls, value, seen: set[int] | None = None) -> str | None:
+        """Return the first leaked Lark production name in transformed output."""
+        seen = seen or set()
+        marker = id(value)
+        if marker in seen:
+            return None
+        seen.add(marker)
+        if isinstance(value, Tree):
+            return str(getattr(value, "data", "raw parse tree"))
+        if isinstance(value, Token):
+            return str(getattr(value, "type", "raw token"))
+        if is_dataclass(value):
+            for item in fields(value):
+                found = cls._find_raw_parser_object(getattr(value, item.name), seen)
+                if found:
+                    return found
+        elif isinstance(value, (list, tuple)):
+            for item in value:
+                found = cls._find_raw_parser_object(item, seen)
+                if found:
+                    return found
+        elif isinstance(value, dict):
+            for item in value.values():
+                found = cls._find_raw_parser_object(item, seen)
+                if found:
+                    return found
         return None
-    
-    def _fallback_transform(self, parse_tree) -> list[ASTNode]:
-        """Fallback transformation when transformer is not available"""
-        print("ℹ️  Using fallback transformation")
-        # This would implement basic tree-to-AST conversion
-        return []
     
     def _handle_parse_error(self, error: ParseError, source_code: str, filename: str):
         """Handle parsing errors with enhanced reporting"""
@@ -451,6 +597,55 @@ class SonaASTTransformer(Transformer):
         super().__init__()
         self.features_enabled = features_enabled
         self.current_line = 1
+        self.current_filename = "<string>"
+
+    def _with_span(self, node, token=None):
+        """Attach the canonical SourceSpan without changing legacy AST constructors."""
+        from .developer_intelligence.diagnostics import SourceSpan
+        line = int(getattr(token, "line", self.current_line) or 1)
+        column = int(getattr(token, "column", 1) or 1)
+        end_line = getattr(token, "end_line", line)
+        end_column = getattr(token, "end_column", column + len(str(token or "")))
+        node.line_number = line
+        node.span = SourceSpan(
+            file=self.current_filename, start_line=line, start_column=column,
+            end_line=end_line, end_column=end_column,
+            node_type=type(node).__name__,
+        )
+        return node
+
+    def _with_rule_span(self, node, meta):
+        """Attach the exact Lark rule span to an executable node."""
+        from .developer_intelligence.diagnostics import SourceSpan
+        line = int(getattr(meta, "line", 1) or 1)
+        column = int(getattr(meta, "column", 1) or 1)
+        node.line_number = line
+        node.span = SourceSpan(
+            file=self.current_filename,
+            start_line=line,
+            start_column=column,
+            end_line=int(getattr(meta, "end_line", line) or line),
+            end_column=int(getattr(meta, "end_column", column + 1) or (column + 1)),
+            node_type=type(node).__name__,
+        )
+        return node
+
+    def _inherit_span(self, node, source):
+        """Copy a source node's span to a normalized replacement node."""
+        span = getattr(source, "span", None)
+        if span is None:
+            return node
+        from .developer_intelligence.diagnostics import SourceSpan
+        node.line_number = span.start_line
+        node.span = SourceSpan(
+            file=span.file,
+            start_line=span.start_line,
+            start_column=span.start_column,
+            end_line=span.end_line,
+            end_column=span.end_column,
+            node_type=type(node).__name__,
+        )
+        return node
     
     # ========================================================================
     # PROGRAM STRUCTURE
@@ -488,17 +683,17 @@ class SonaASTTransformer(Transformer):
 
         def _make_call(callee, arg):
             if isinstance(callee, PropertyAccessExpression):
-                return MethodCallExpression(
+                return self._inherit_span(MethodCallExpression(
                     object=callee.object,
                     method_name=callee.property_name,
                     arguments=[PositionalArgument(arg)],
                     line_number=getattr(callee, "line_number", None),
-                )
-            return CallExpression(
+                ), callee)
+            return self._inherit_span(CallExpression(
                 callee=callee,
                 arguments=[PositionalArgument(arg)],
                 line_number=getattr(callee, "line_number", None),
-            )
+            ), callee)
 
         normalized = []
         i = 0
@@ -527,19 +722,20 @@ class SonaASTTransformer(Transformer):
                     )
                     skip_extra = 1
 
-                merged_expr = BinaryOperatorExpression(
+                merged_expr = self._inherit_span(BinaryOperatorExpression(
                     left=stmt.value,
                     operator=unary.operator,
                     right=operand,
                     line_number=getattr(stmt, "line_number", None),
-                )
+                ), stmt)
                 normalized.append(
-                    VariableAssignment(
+                    self._inherit_span(VariableAssignment(
                         name=stmt.name,
                         value=merged_expr,
                         is_const=stmt.is_const,
+                        is_declaration=stmt.is_declaration,
                         line_number=stmt.line_number,
-                    )
+                    ), stmt)
                 )
                 i += 2 + skip_extra
                 continue
@@ -558,19 +754,20 @@ class SonaASTTransformer(Transformer):
                     index=list_expr.elements[0],
                     line_number=getattr(stmt.value, "line_number", None),
                 )
-                merged_expr = BinaryOperatorExpression(
+                merged_expr = self._inherit_span(BinaryOperatorExpression(
                     left=stmt.value.left,
                     operator=stmt.value.operator,
                     right=indexed,
                     line_number=getattr(stmt.value, "line_number", None),
-                )
+                ), stmt.value)
                 normalized.append(
-                    VariableAssignment(
+                    self._inherit_span(VariableAssignment(
                         name=stmt.name,
                         value=merged_expr,
                         is_const=stmt.is_const,
+                        is_declaration=stmt.is_declaration,
                         line_number=stmt.line_number,
-                    )
+                    ), stmt)
                 )
                 i += 2
                 continue
@@ -614,12 +811,12 @@ class SonaASTTransformer(Transformer):
                     skip_extra = 1
 
                 normalized.append(
-                    BinaryOperatorExpression(
+                    self._inherit_span(BinaryOperatorExpression(
                         left=stmt,
                         operator=unary.operator,
                         right=operand,
                         line_number=getattr(stmt, "line_number", None),
-                    )
+                    ), stmt)
                 )
                 i += 2 + skip_extra
                 continue
@@ -636,6 +833,7 @@ class SonaASTTransformer(Transformer):
                         name=stmt.name,
                         value=call_expr,
                         is_const=stmt.is_const,
+                        is_declaration=stmt.is_declaration,
                         line_number=stmt.line_number,
                     )
                 )
@@ -676,10 +874,7 @@ class SonaASTTransformer(Transformer):
     
     @v_args(inline=True)
     def if_statement(self, condition, if_body, *rest):
-        """Transform enhanced if statement"""
-        if not self.features_enabled['enhanced_control_flow']:
-            return self._basic_if_statement(condition, if_body, rest)
-        
+        """Transform a certified conditional statement."""
         elif_clauses = []
         else_body = None
         
@@ -931,19 +1126,26 @@ class SonaASTTransformer(Transformer):
             return {}
         if isinstance(arguments, list) and len(arguments) == 1 and isinstance(arguments[0], list):
             arguments = arguments[0]
+        if isinstance(arguments, list) and all(item is None for item in arguments):
+            return {}
         if not isinstance(arguments, list):
             return {"arg0": arguments}
 
         mapping: dict[str, Any] = {}
+        positional_index = 0
         for idx, arg in enumerate(arguments):
+            if arg is None:
+                continue
             if KeywordArgument and isinstance(arg, KeywordArgument):
                 mapping[arg.name] = arg.value
             elif PositionalArgument and isinstance(arg, PositionalArgument):
-                mapping[f"arg{idx}"] = arg.value
+                mapping[f"arg{positional_index}"] = arg.value
+                positional_index += 1
             elif SpreadArgument and isinstance(arg, SpreadArgument):
                 mapping[f"spread{idx}"] = arg.value
             else:
-                mapping[f"arg{idx}"] = arg
+                mapping[f"arg{positional_index}"] = arg
+                positional_index += 1
         return mapping
 
     def _build_cognitive_statement(self, cls, arguments):
@@ -1052,16 +1254,17 @@ class SonaASTTransformer(Transformer):
     
     def var_assignment(self, items):
         """Transform variable assignment: let x = value"""
-        if len(items) == 2:
-            var_name, value = items
+        if len(items) == 3:
+            binding_kind, var_name, value = items
             # Create a variable assignment AST node
             from .ast_nodes import VariableAssignment
-            return VariableAssignment(
+            return self._with_span(VariableAssignment(
                 name=str(var_name),
                 value=value,
-                is_const=False,  # Will be updated for const
+                is_const=str(binding_kind) == "const",
+                is_declaration=True,
                 line_number=self.current_line
-            )
+            ), var_name)
         return None
     
     def bare_assignment(self, items):
@@ -1069,20 +1272,25 @@ class SonaASTTransformer(Transformer):
         if len(items) == 2:
             var_name, value = items
             from .ast_nodes import VariableAssignment
-            return VariableAssignment(
+            return self._with_span(VariableAssignment(
                 name=str(var_name),
                 value=value,
                 is_const=False,
+                is_declaration=False,
                 line_number=self.current_line
-            )
+            ), var_name)
         return None
-    
-    @v_args(inline=True)
-    def assignment(self, var_name, value):
-        """Transform assignment statement"""
-        # For now, create a basic assignment representation
-        # This would need proper assignment AST node
-        return None  # Placeholder
+
+    @v_args(meta=True)
+    def power_expr(self, children, meta):
+        """Transform right-associative exponentiation."""
+        if len(children) < 3 or children[1] is None:
+            return children[0]
+        from .ast_nodes import BinaryOperatorExpression
+        return self._with_rule_span(BinaryOperatorExpression(
+            left=children[0], operator=str(children[1]), right=children[2],
+            line_number=self.current_line,
+        ), meta)
     
     def expression_statement(self, children):
         """Transform expression statement"""
@@ -1113,15 +1321,6 @@ class SonaASTTransformer(Transformer):
         """Transform factor"""
         return value
     
-    @v_args(inline=True)
-    def function_call(self, function_name, *arguments):
-        """Transform function call"""
-        return FunctionCallExpression(
-            function_name=str(function_name),
-            arguments=list(arguments),
-            line_number=self.current_line
-        )
-    
     def block(self, statements):
         """Transform block of statements"""
         return [stmt for stmt in statements if stmt is not None]
@@ -1142,8 +1341,55 @@ class SonaASTTransformer(Transformer):
     
     def STRING(self, token):
         """Transform string literal"""
-        # Remove quotes
-        content = str(token)[1:-1]
+        import ast as python_ast
+        token_text = str(token)
+        content = token_text[1:-1]
+        index = 0
+        simple_escapes = set("\\\"'abfnrtv0")
+        while index < len(content):
+            if content[index] != "\\":
+                index += 1
+                continue
+            if index + 1 >= len(content):
+                valid = False
+                width = 1
+            else:
+                escape = content[index + 1]
+                if escape in simple_escapes:
+                    valid, width = True, 2
+                elif escape in {"x", "u", "U"}:
+                    digits = {"x": 2, "u": 4, "U": 8}[escape]
+                    payload = content[index + 2:index + 2 + digits]
+                    valid = len(payload) == digits and all(char in "0123456789abcdefABCDEF" for char in payload)
+                    width = 2 + digits
+                else:
+                    valid, width = False, 2
+            if not valid:
+                raise SonaSyntaxError(
+                    "Invalid string escape sequence.",
+                    code=ErrorCode.INVALID_ESCAPE,
+                    location=SourceLocation(
+                        file=self.current_filename,
+                        line=int(getattr(token, "line", 1) or 1),
+                        column=int(getattr(token, "column", 1) or 1) + index + 1,
+                    ),
+                    suggestion="Use a documented newline, tab, slash, quote, or Unicode escape.",
+                    diagnostic_id="SONA-PARSE-001",
+                )
+            index += width
+        try:
+            content = python_ast.literal_eval(token_text)
+        except (SyntaxError, ValueError) as error:
+            raise SonaSyntaxError(
+                "Invalid string literal.",
+                location=SourceLocation(
+                    file=self.current_filename,
+                    line=int(getattr(token, "line", 1) or 1),
+                    column=int(getattr(token, "column", 1) or 1),
+                ),
+                suggestion="Close the string and use valid escape sequences.",
+                diagnostic_id="SONA-PARSE-001",
+            ) from error
         return LiteralExpression(content)
     
     def IDENTIFIER(self, token):
@@ -1208,9 +1454,10 @@ class SonaASTTransformer(Transformer):
         """Transform variable reference"""
         name_token = children[0]
         from .ast_nodes import VariableExpression
-        return VariableExpression(str(name_token))
+        return self._with_span(VariableExpression(str(name_token)), name_token)
     
-    def postfix_expr(self, children):
+    @v_args(meta=True)
+    def postfix_expr(self, children, meta):
         """Transform postfix expressions (calls, indexing, props)"""
         from .ast_nodes import (
             VariableExpression,
@@ -1232,37 +1479,37 @@ class SonaASTTransformer(Transformer):
                     args = suffix_data if suffix_data else []
                     if isinstance(base, PropertyAccessExpression):
                         # Method call: obj.method()
-                        base = MethodCallExpression(
+                        base = self._with_rule_span(MethodCallExpression(
                             object=base.object,
                             method_name=base.property_name,
                             arguments=args,
                             line_number=self.current_line
-                        )
+                        ), meta)
                     else:
-                        base = CallExpression(
+                        base = self._with_rule_span(CallExpression(
                             callee=base,
                             arguments=args,
                             line_number=self.current_line
-                        )
+                        ), meta)
                         
                 elif suffix_type == "index":
                     # Array/dict indexing
                     index_expr = suffix_data
                     from .ast_nodes import IndexExpression
-                    base = IndexExpression(
+                    base = self._with_rule_span(IndexExpression(
                         object=base,
                         index=index_expr,
                         line_number=self.current_line
-                    )
+                    ), meta)
                     
                 elif suffix_type == "prop":
                     # Property access
                     prop_name = suffix_data
-                    base = PropertyAccessExpression(
+                    base = self._with_rule_span(PropertyAccessExpression(
                         object=base,
                         property_name=prop_name,
                         line_number=self.current_line
-                    )
+                    ), meta)
         
         return base
     
@@ -1295,7 +1542,8 @@ class SonaASTTransformer(Transformer):
         """Transform function call arguments"""
         return children  # Already a list of expressions
 
-    def unary_expr(self, children):
+    @v_args(meta=True)
+    def unary_expr(self, children, meta):
         """Transform unary expression (+x, -x, !x, not x)"""
         if len(children) == 1:
             return children[0]
@@ -1309,13 +1557,14 @@ class SonaASTTransformer(Transformer):
             operator = str(op_token)
 
         from .ast_nodes import UnaryOperatorExpression
-        return UnaryOperatorExpression(
+        return self._with_rule_span(UnaryOperatorExpression(
             operator=operator,
             operand=operand,
             line_number=self.current_line
-        )
+        ), meta)
     
-    def additive_expr(self, children):
+    @v_args(meta=True)
+    def additive_expr(self, children, meta):
         """Transform additive expression (+ or -)"""
         # Grammar: multiplicative_expr (ADDITIVE_OP multiplicative_expr)*
         if len(children) == 1:
@@ -1333,17 +1582,18 @@ class SonaASTTransformer(Transformer):
                 operator = str(op_token)
             right = children[i + 1]
             
-            result = BinaryOperatorExpression(
+            result = self._with_rule_span(BinaryOperatorExpression(
                 left=result,
                 operator=operator,
                 right=right,
                 line_number=self.current_line
-            )
+            ), meta)
             i += 2
         
         return result
     
-    def multiplicative_expr(self, children):
+    @v_args(meta=True)
+    def multiplicative_expr(self, children, meta):
         """Transform multiplicative expression (* / %)"""
         # Grammar: power_expr (MULTIPLICATIVE_OP power_expr)*
         if len(children) == 1:
@@ -1361,55 +1611,42 @@ class SonaASTTransformer(Transformer):
                 operator = str(op_token)
             right = children[i + 1]
             
-            result = BinaryOperatorExpression(
+            result = self._with_rule_span(BinaryOperatorExpression(
                 left=result,
                 operator=operator,
                 right=right,
                 line_number=self.current_line
-            )
+            ), meta)
             i += 2
         
         return result
     
-    def comparison_expr(self, children):
+    @v_args(meta=True)
+    def comparison_expr(self, children, meta):
         """Transform comparison expression (<= >= < >)"""
         # Grammar: additive_expr (COMPARISON_OP additive_expr)*
         # children = [expr] or [expr, TOKEN, expr, TOKEN, expr, ...]
         if len(children) == 1:
             return children[0]
         
-        # Build left-to-right: expr OP expr OP expr => (expr OP expr) OP expr
-        from .ast_nodes import BinaryOperatorExpression
-        
-        result = children[0]
-        i = 1
-        while i < len(children):
-            # Get operator token
-            op_token = children[i]
-            if isinstance(op_token, Token):
-                operator = str(op_token.value)
-            else:
-                operator = str(op_token)
-            
-            # Get right operand
-            right = children[i + 1]
-            
-            # Build binary expression
-            result = BinaryOperatorExpression(
-                left=result,
-                operator=operator,
-                right=right,
-                line_number=self.current_line
-            )
-            i += 2
-        
-        return result
+        from .ast_nodes import ChainedComparisonExpression
+        operands = [children[0], *children[2::2]]
+        operators = [
+            str(item.value) if isinstance(item, Token) else str(item)
+            for item in children[1::2]
+        ]
+        return self._with_rule_span(ChainedComparisonExpression(
+            operands=operands,
+            operators=operators,
+            line_number=self.current_line,
+        ), meta)
     
     # Note: operator helper functions (comparison_op, equality_op, etc.) 
     # are no longer used since operators are now extracted directly
     # from terminal tokens in the expression transformers above
     
-    def or_expr(self, children):
+    @v_args(meta=True)
+    def or_expr(self, children, meta):
         """Transform or expression (|| or 'or')"""
         # Grammar: and_expr (OR_OP and_expr)*
         if len(children) == 1:
@@ -1430,17 +1667,18 @@ class SonaASTTransformer(Transformer):
                 operator = '||'
             right = children[i + 1]
             
-            result = BinaryOperatorExpression(
+            result = self._with_rule_span(BinaryOperatorExpression(
                 left=result,
                 operator=operator,
                 right=right,
                 line_number=self.current_line
-            )
+            ), meta)
             i += 2
         
         return result
     
-    def and_expr(self, children):
+    @v_args(meta=True)
+    def and_expr(self, children, meta):
         """Transform and expression (&& or 'and')"""
         # Grammar: equality_expr (AND_OP equality_expr)*
         if len(children) == 1:
@@ -1461,17 +1699,18 @@ class SonaASTTransformer(Transformer):
                 operator = '&&'
             right = children[i + 1]
             
-            result = BinaryOperatorExpression(
+            result = self._with_rule_span(BinaryOperatorExpression(
                 left=result,
                 operator=operator,
                 right=right,
                 line_number=self.current_line
-            )
+            ), meta)
             i += 2
         
         return result
     
-    def equality_expr(self, children):
+    @v_args(meta=True)
+    def equality_expr(self, children, meta):
         """Transform equality expression (== !=)"""
         # Grammar: comparison_expr (EQUALITY_OP comparison_expr)*
         if len(children) == 1:
@@ -1489,12 +1728,12 @@ class SonaASTTransformer(Transformer):
                 operator = str(op_token)
             right = children[i + 1]
             
-            result = BinaryOperatorExpression(
+            result = self._with_rule_span(BinaryOperatorExpression(
                 left=result,
                 operator=operator,
                 right=right,
                 line_number=self.current_line
-            )
+            ), meta)
             i += 2
         
         return result
@@ -1538,20 +1777,8 @@ class SonaASTTransformer(Transformer):
         from .ast_nodes import SpreadArgument
         return SpreadArgument(children[0])
     
-    def func_call(self, children):
-        """Transform function call"""
-        name_token = children[0]
-        args = children[1] if len(children) > 1 else []
-        if args and not isinstance(args, list):
-            args = [args]
-        from .ast_nodes import VariableExpression, CallExpression
-        return CallExpression(
-            callee=VariableExpression(str(name_token), line_number=self.current_line),
-            arguments=args,
-            line_number=self.current_line
-        )
-    
-    def func_def(self, children):
+    @v_args(meta=True)
+    def func_def(self, children, meta):
         """Transform function definition"""
         name_token = children[0]
 
@@ -1596,14 +1823,14 @@ class SonaASTTransformer(Transformer):
             body = [body]
         
         from .ast_nodes import FunctionDefinition
-        return FunctionDefinition(
+        return self._with_rule_span(FunctionDefinition(
             name=str(name_token),
             parameters=param_names,
             default_values=default_values,
             varargs_param=varargs_param,
             body=body,
             line_number=self.current_line
-        )
+        ), meta)
     
     def param_list(self, children):
         """Transform parameter list"""
@@ -1625,21 +1852,24 @@ class SonaASTTransformer(Transformer):
         default_expr = children[1] if len(children) > 1 else None
         return (param_name, default_expr, True)
     
-    def return_stmt(self, children):
+    @v_args(meta=True)
+    def return_stmt(self, children, meta):
         """Transform return statement"""
         expr = children[0] if children else None
         from .ast_nodes import ReturnStatement
-        return ReturnStatement(expr, line_number=self.current_line)
+        return self._with_rule_span(ReturnStatement(expr, line_number=self.current_line), meta)
     
-    def break_stmt(self, children):
+    @v_args(meta=True)
+    def break_stmt(self, children, meta):
         """Transform break statement"""
         from .ast_nodes import BreakStatement
-        return BreakStatement(line_number=self.current_line)
+        return self._with_rule_span(BreakStatement(line_number=self.current_line), meta)
     
-    def continue_stmt(self, children):
+    @v_args(meta=True)
+    def continue_stmt(self, children, meta):
         """Transform continue statement"""
         from .ast_nodes import ContinueStatement
-        return ContinueStatement(line_number=self.current_line)
+        return self._with_rule_span(ContinueStatement(line_number=self.current_line), meta)
     
     def num(self, children):
         """Transform number literal"""
@@ -1732,16 +1962,17 @@ class SonaASTTransformer(Transformer):
         """Transform expression list"""
         return list(children)
     
-    def import_stmt(self, children):
+    @v_args(meta=True)
+    def import_stmt(self, children, meta):
         """Transform import statement"""
         module_path = children[0]
         alias = children[1] if len(children) > 1 else None
         from .ast_nodes import ImportStatement
-        return ImportStatement(
+        return self._with_rule_span(ImportStatement(
             module_path=str(module_path),
             alias=str(alias) if alias else None,
             line_number=self.current_line
-        )
+        ), meta)
     
     def module_path(self, children):
         """Transform module path"""
@@ -1751,7 +1982,8 @@ class SonaASTTransformer(Transformer):
         """Transform import path (v091 grammar)"""
         return '.'.join(str(child) for child in children)
     
-    def enhanced_for_stmt(self, children):
+    @v_args(meta=True)
+    def enhanced_for_stmt(self, children, meta):
         """Transform enhanced for loop"""
         iterator_var = str(children[0])  # NAME token
         iterable_expr = children[1]
@@ -1762,14 +1994,15 @@ class SonaASTTransformer(Transformer):
             body = [body]
         
         from .ast_nodes import EnhancedForLoop
-        return EnhancedForLoop(
+        return self._with_rule_span(EnhancedForLoop(
             iterator_var=iterator_var,
             iterable=iterable_expr,
             body=body,
             line_number=self.current_line
-        )
+        ), meta)
     
-    def enhanced_if_stmt(self, children):
+    @v_args(meta=True)
+    def enhanced_if_stmt(self, children, meta):
         """Transform enhanced if statement"""
         # Grammar: "if" expr "{" statement_list? "}" elif_clause* else_clause?
         # children[0] = condition expression
@@ -1778,34 +2011,31 @@ class SonaASTTransformer(Transformer):
         # First child is the condition - it should already be transformed
         condition = children[0]
         
-        # Find the if body, elif clauses, and else body
-        if_body = []
+        # The optional statement_list is still present as an empty list, so its
+        # position—not truthiness—distinguishes it from the else body.
+        if_body = children[1] if len(children) > 1 and isinstance(children[1], list) else []
         elif_clauses = []
         else_body = None
         
         # Process remaining children
-        for i in range(1, len(children)):
+        for i in range(2, len(children)):
             child = children[i]
             # Check if it's a list (statement_list)
             if isinstance(child, list):
-                # First list is if_body, others would be else_body
-                if not if_body:
-                    if_body = child
-                else:
-                    else_body = child
+                else_body = child
             # Check if it's an ElifClause
             elif hasattr(child, '__class__'):
                 if child.__class__.__name__ == 'ElifClause':
                     elif_clauses.append(child)
         
         from .ast_nodes import EnhancedIfStatement
-        return EnhancedIfStatement(
+        return self._with_rule_span(EnhancedIfStatement(
             condition=condition,
             if_body=if_body,
             elif_clauses=elif_clauses,
             else_body=else_body,
             line_number=self.current_line
-        )
+        ), meta)
     
     def elif_clause(self, children):
         """Transform elif clause"""
@@ -1830,7 +2060,8 @@ class SonaASTTransformer(Transformer):
             body = [body]
         return body
     
-    def enhanced_while_stmt(self, children):
+    @v_args(meta=True)
+    def enhanced_while_stmt(self, children, meta):
         """Transform enhanced while loop"""
         condition = children[0]
         body = children[1] if len(children) > 1 else []
@@ -1840,13 +2071,14 @@ class SonaASTTransformer(Transformer):
             body = [body]
         
         from .ast_nodes import EnhancedWhileLoop
-        return EnhancedWhileLoop(
+        return self._with_rule_span(EnhancedWhileLoop(
             condition=condition,
             body=body,
             line_number=self.current_line
-        )
+        ), meta)
     
-    def enhanced_try_stmt(self, children):
+    @v_args(meta=True)
+    def enhanced_try_stmt(self, children, meta):
         """Transform enhanced try statement"""
         try_body = children[0] if children else []
         catch_clauses = []
@@ -1870,12 +2102,12 @@ class SonaASTTransformer(Transformer):
             try_body = [try_body]
         
         from .ast_nodes import EnhancedTryStatement
-        return EnhancedTryStatement(
+        return self._with_rule_span(EnhancedTryStatement(
             try_body=try_body,
             catch_clauses=catch_clauses,
             finally_body=finally_body,
             line_number=self.current_line
-        )
+        ), meta)
     
     def catch_clause(self, children):
         """Transform catch clause"""
@@ -2019,16 +2251,17 @@ class SonaASTTransformer(Transformer):
         # Otherwise treat as expression
         return node
 
-    def when_expr(self, children):
+    @v_args(meta=True)
+    def when_expr(self, children, meta):
         cases = children[0] if children else []
         if cases and not isinstance(cases, list):
             cases = [cases]
 
         from .ast_nodes import WhenExpression
-        return WhenExpression(
+        return self._with_rule_span(WhenExpression(
             cases=cases,
             line_number=self.current_line
-        )
+        ), meta)
 
     def when_expr_cases(self, children):
         # Filter out separator tokens like ';'
@@ -2045,31 +2278,6 @@ class SonaASTTransformer(Transformer):
         from .ast_nodes import WhenExprCase
         return WhenExprCase(condition=condition, value=value)
     
-    # ========================================================================
-    # FALLBACK METHODS
-    # ========================================================================
-    
-    def _basic_if_statement(self, condition, if_body, rest):
-        """Basic if statement without enhanced features"""
-        # Implement basic if statement
-        return None  # Placeholder
-    
-    def _basic_for_statement(self, iterator_var, iterable, body):
-        """Basic for statement without enhanced features"""
-        # Implement basic for statement
-        return None  # Placeholder
-    
-    def _basic_while_statement(self, condition, body):
-        """Basic while statement without enhanced features"""
-        # Implement basic while statement
-        return None  # Placeholder
-    
-    def _basic_try_statement(self, try_body, rest):
-        """Basic try statement without enhanced features"""
-        # Implement basic try statement
-        return None  # Placeholder
-
-
 # ========================================================================
 # UTILITY FUNCTIONS
 # ========================================================================
@@ -2078,23 +2286,14 @@ def create_parser(grammar_file: str | None = None) -> SonaParserv090:
     """Create a new Sona v0.9.0 parser instance"""
     return SonaParserv090(grammar_file)
 
-def parse_file(file_path: str, parser: SonaParserv090 | None = None) -> list[ASTNode] | None:
+def parse_file(file_path: str, parser: SonaParserv090 | None = None) -> list[ASTNode]:
     """Parse a Sona file and return AST nodes"""
     if parser is None:
         parser = create_parser()
     
-    try:
-        with open(file_path, encoding='utf-8-sig') as f:
-            source_code = f.read()
-        
-        return parser.parse(source_code, file_path)
-    
-    except FileNotFoundError:
-        print(f"❌ File not found: {file_path}")
-        return None
-    except Exception as e:
-        print(f"❌ Error reading file {file_path}: {e}")
-        return None
+    with open(file_path, encoding='utf-8-sig') as f:
+        source_code = f.read()
+    return parser.parse(source_code, file_path)
 
 def parse_string(source_code: str, parser: SonaParserv090 | None = None) -> list[ASTNode] | None:
     """Parse Sona source code string and return AST nodes"""

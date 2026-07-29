@@ -1,0 +1,4 @@
+func add(left, right) {
+    return left + right;
+};
+print(add(2, 3));

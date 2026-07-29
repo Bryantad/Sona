@@ -151,7 +151,7 @@ def _write_user_config(endpoint: str, api_key: str, deployment: str) -> Path:
     config_path = config_dir / "config.json"
     payload = {
         "endpoint": endpoint,
-        "api_key": api_key,
+        "credential_env": "AZURE_OPENAI_API_KEY",
         "deployment": deployment,
     }
     config_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
@@ -344,6 +344,7 @@ def _manual_azure_setup(
     workspace_dir: str | os.PathLike[str] | None,
     *,
     endpoint: str | None = None,
+    write_env_secret: bool = False,
 ) -> int:
     print("[INFO] Manual Azure OpenAI setup")
     print("You'll need your Azure OpenAI endpoint, API key, and deployment name.")
@@ -372,8 +373,11 @@ def _manual_azure_setup(
     config_path = _write_user_config(endpoint, api_key, deployment)
     print(f"[OK] Wrote user config: {config_path}")
 
-    env_path = _update_env_file(workspace_dir or os.getcwd(), endpoint, api_key, deployment)
-    print(f"[OK] Updated workspace .env: {env_path}")
+    if write_env_secret:
+        env_path = _update_env_file(workspace_dir or os.getcwd(), endpoint, api_key, deployment)
+        print(f"[OK] Updated workspace .env: {env_path}")
+    else:
+        print("[INFO] API key was not persisted. Use the process environment or rerun with --write-env-secret.")
     print("[OK] Manual Azure setup complete.")
     return 0
 
@@ -436,7 +440,7 @@ def _manual_local_setup(
     return 0
 
 
-def _manual_setup(dry_run: bool, workspace_dir: str | os.PathLike[str] | None) -> int:
+def _manual_setup(dry_run: bool, workspace_dir: str | os.PathLike[str] | None, write_env_secret: bool = False) -> int:
     print("[INFO] Manual Sona AI setup")
     first_raw = _input("Provider [azure/local] (Enter for azure): ")
     if first_raw is None:
@@ -445,28 +449,29 @@ def _manual_setup(dry_run: bool, workspace_dir: str | os.PathLike[str] | None) -
 
     first = first_raw.strip()
     if not first:
-        return _manual_azure_setup(dry_run, workspace_dir)
+        return _manual_azure_setup(dry_run, workspace_dir, write_env_secret=write_env_secret)
 
     choice = _manual_provider_choice(first)
     if choice == "local":
         return _manual_local_setup(dry_run, workspace_dir)
     if choice == "azure":
-        return _manual_azure_setup(dry_run, workspace_dir)
+        return _manual_azure_setup(dry_run, workspace_dir, write_env_secret=write_env_secret)
     if _looks_like_local_model(first):
         return _manual_local_setup(dry_run, workspace_dir, initial_model=first)
 
     # Backward compatibility: older integrations send the Azure endpoint first.
-    return _manual_azure_setup(dry_run, workspace_dir, endpoint=first)
+    return _manual_azure_setup(dry_run, workspace_dir, endpoint=first, write_env_secret=write_env_secret)
 
 
 def setup_azure(
     dry_run: bool = False,
     workspace_dir: str | os.PathLike[str] | None = None,
     manual_mode: bool = False,
+    write_env_secret: bool = False,
 ) -> int:
     """Run interactive Azure OpenAI setup and return a process-style exit code."""
     if manual_mode:
-        return _manual_setup(dry_run, workspace_dir)
+        return _manual_setup(dry_run, workspace_dir, write_env_secret=write_env_secret)
 
     try:
         version = _run(["az", "version", "-o", "none"])
@@ -527,8 +532,11 @@ def setup_azure(
     config_path = _write_user_config(endpoint, api_key, deployment)
     print(f"[OK] Wrote user config: {config_path}")
 
-    env_path = _update_env_file(workspace_dir or os.getcwd(), endpoint, api_key, deployment)
-    print(f"[OK] Updated workspace .env: {env_path}")
+    if write_env_secret:
+        env_path = _update_env_file(workspace_dir or os.getcwd(), endpoint, api_key, deployment)
+        print(f"[OK] Updated workspace .env: {env_path}")
+    else:
+        print("[INFO] API key was not persisted. Use the process environment or rerun with --write-env-secret.")
     print("[OK] Azure setup complete.")
     return 0
 

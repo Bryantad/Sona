@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "name": "comparison",
+  "classification": "identical",
+  "source": "tests/conformance/expressions/comparison.sona",
+  "timeout_seconds": 30,
+  "expected": {
+    "python-compat": {"exit_code": 0, "stdout": "yes\n", "stderr": ""},
+    "native": {"exit_code": 0, "stdout": "yes\n", "stderr": ""}
+  }
+}

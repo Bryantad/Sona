@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "name": "legacy-use-syntax",
+  "kind": "negative",
+  "execution_mode": "python-compat",
+  "source": "tests/release/cases/negative_legacy_use.sona",
+  "timeout_seconds": 30,
+  "expected": {
+    "exit_code": 1,
+    "exception_classification": "SonaSyntaxError",
+    "diagnostic_id": "SONA-PARSE-001",
+    "e_code": "E0001",
+    "primary_message": "'use' module syntax is not supported by the certified Sona 0.15.x frontend.",
+    "file": "tests/release/cases/negative_legacy_use.sona",
+    "line": 1,
+    "column": 1,
+    "hint": "Use canonical module syntax, for example: import math;",
+    "stdout": "",
+    "stderr": "SonaSyntaxError: SONA-PARSE-001: error[E0001]: 'use' module syntax is not supported by the certified Sona 0.15.x frontend.\n  at tests/release/cases/negative_legacy_use.sona:1:1\n  hint: Use canonical module syntax, for example: import math;\n",
+    "ansi": false,
+    "traceback": false,
+    "host_exception": false,
+    "rust_panic": false,
+    "unrelated_log": false
+  }
+}
