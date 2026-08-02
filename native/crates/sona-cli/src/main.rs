@@ -7,6 +7,7 @@ use sona_diagnostics::{DiagnosticList, SonaResult};
 use sona_ir::lower;
 use sona_lexer::lex;
 use sona_parser::parse_source;
+use sona_runtime::RuntimeCapabilities;
 use sona_source::SourceFile;
 use sona_vm::Vm;
 
@@ -36,7 +37,7 @@ fn run(args: Vec<String>) -> SonaResult<i32> {
         "run" => {
             let file = positional(&args, 1, "run requires a .sona file")?;
             require_native_engine(&args)?;
-            run_file(Path::new(file))?;
+            run_file(Path::new(file), runtime_capabilities(&args))?;
             Ok(0)
         }
         "check" => {
@@ -55,7 +56,7 @@ fn run(args: Vec<String>) -> SonaResult<i32> {
         }
         "exec" => {
             let file = positional(&args, 1, "exec requires a .sbc file")?;
-            exec_bytecode(Path::new(file))?;
+            exec_bytecode(Path::new(file), runtime_capabilities(&args))?;
             Ok(0)
         }
         "inspect" => inspect(&args),
@@ -83,13 +84,18 @@ fn print_help() {
     println!("  sona exec app.sbc");
     println!("  sona inspect tokens|ast|ir|bytecode <file>");
     println!("  sona doctor native");
+    println!("Capabilities for run/exec:");
+    println!("  --allow-fs-read   allow native filesystem reads");
+    println!("  --allow-fs-write  allow native filesystem writes");
+    println!("  --allow-network   grant network policy (HTTP remains unavailable in 0.15.4)");
 }
 
-fn run_file(path: &Path) -> SonaResult<()> {
+fn run_file(path: &Path, capabilities: RuntimeCapabilities) -> SonaResult<()> {
     let source = SourceFile::read(0, path).map_err(io_error)?;
     let program = parse_source(&source)?;
     let bytecode = compile(lower(program)?, Some(source.text.clone()))?;
     let mut vm = Vm::new(Some(path.to_path_buf()));
+    vm.config.capabilities = capabilities;
     vm.execute(&bytecode)?;
     Ok(())
 }
@@ -109,13 +115,14 @@ fn compile_file(path: &Path, output: &Path) -> SonaResult<()> {
     Ok(())
 }
 
-fn exec_bytecode(path: &Path) -> SonaResult<()> {
+fn exec_bytecode(path: &Path, capabilities: RuntimeCapabilities) -> SonaResult<()> {
     let bytes = fs::read(path).map_err(io_error)?;
     let source_text = decode_source_backed(&bytes, path.display().to_string())?;
     let virtual_source = SourceFile::new(0, path.with_extension("sona"), source_text);
     let program = parse_source(&virtual_source)?;
     let bytecode = compile(lower(program)?, Some(virtual_source.text.clone()))?;
     let mut vm = Vm::new(Some(path.to_path_buf()));
+    vm.config.capabilities = capabilities;
     vm.execute(&bytecode)?;
     Ok(())
 }
@@ -176,8 +183,21 @@ fn doctor_native() {
     println!("feature_level=Sona Native Core preview");
     println!("python_required=false");
     println!("python_embedded=false");
+    // Preserve the machine-read 0.15.3 doctor fields through 0.15.x. The
+    // split grants are documented by --help and the schema-2 stdlib manifest.
     println!("default_capabilities=console:allow,filesystem:deny,network:deny,process:deny,environment:deny");
     println!("modules=smod-preview");
+}
+
+fn runtime_capabilities(args: &[String]) -> RuntimeCapabilities {
+    RuntimeCapabilities {
+        console: true,
+        filesystem_read: args.iter().any(|item| item == "--allow-fs-read"),
+        filesystem_write: args.iter().any(|item| item == "--allow-fs-write"),
+        network: args.iter().any(|item| item == "--allow-network"),
+        process: false,
+        environment: false,
+    }
 }
 
 fn positional<'a>(args: &'a [String], index: usize, message: &str) -> SonaResult<&'a str> {
@@ -230,4 +250,28 @@ fn io_error(err: std::io::Error) -> DiagnosticList {
         sona_diagnostics::SourceSpan::unknown(),
         "Check that the file exists and is readable.",
     ))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn native_capabilities_are_independent_and_opt_in() {
+        let defaults = runtime_capabilities(&["run".into(), "app.sona".into()]);
+        assert!(defaults.console);
+        assert!(!defaults.filesystem_read);
+        assert!(!defaults.filesystem_write);
+        assert!(!defaults.network);
+
+        let granted = runtime_capabilities(&[
+            "run".into(),
+            "app.sona".into(),
+            "--allow-fs-read".into(),
+            "--allow-network".into(),
+        ]);
+        assert!(granted.filesystem_read);
+        assert!(!granted.filesystem_write);
+        assert!(granted.network);
+    }
 }

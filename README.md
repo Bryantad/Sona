@@ -15,7 +15,7 @@ accessibility.
 [![GitHub Sponsors](https://img.shields.io/badge/GitHub%20Sponsors-Sponsor-ea4aaa?logo=githubsponsors\&logoColor=white)](https://github.com/sponsors/Bryantad)
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-Support-ff5e5b?logo=kofi\&logoColor=white)](https://ko-fi.com/YOUR_HANDLE)
 
-Current release: `0.15.1`
+Current release: `0.15.4`
 
 ## What Sona Provides
 
@@ -23,13 +23,16 @@ Current release: `0.15.1`
 * A stable first-run path for new developers.
 * Clear user-facing diagnostics with actionable hints.
 * A source-validated official example suite.
-* Standard library documentation for stable user-facing modules.
+* A manifest-backed standard library with canonical filesystem, HTTP, JSON,
+  date/time, random, stream, and input contracts.
+* Explicit runtime capabilities for safe Python-compatible runs and Native
+  Core filesystem/network access.
 * Cognitive accessibility references for supported developer workflows.
 * Guardian runtime documentation for local resilience and release trust surfaces.
 
 ## Install
 
-Sona requires Python 3.11 or newer.
+Sona requires Python 3.11 or 3.12.
 
 Install the published Python package:
 
@@ -46,7 +49,7 @@ sona --version
 Expected output shape:
 
 ```text
-Sona 0.15.1
+Sona 0.15.4
 ```
 
 > Note: the source repository may be ahead of the latest published PyPI package.
@@ -92,12 +95,13 @@ Both `sona run <file.sona>` and `sona <file.sona>` are supported for local files
 * [Quickstart](docs/QUICKSTART.md)
 * [Language Reference](docs/LANGUAGE_REFERENCE.md)
 * [Standard Library Reference](docs/STDLIB_REFERENCE.md)
+* [0.15.4 Standard Library Catalog](docs/reference/stdlib/README.md)
 * [Accessibility Reference](docs/ACCESSIBILITY_REFERENCE.md)
 * [Guardian Reference](docs/GUARDIAN_REFERENCE.md)
 * [Diagnostics Guide](docs/errors/v0.14-diagnostics.md)
 * [Package Manifest](docs/packages/manifest.md)
 * [Native Independence Roadmap](docs/roadmap/SONA_NATIVE_INDEPENDENCE.md)
-* [Release Notes](RELEASE_NOTES_v0.15.1.md)
+* [0.15.4 Release Notes](RELEASE_NOTES_v0.15.4.md)
 
 ## Official Examples
 

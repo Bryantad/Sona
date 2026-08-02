@@ -1,0 +1,4 @@
+import fs;
+fs.write_text("parity.txt", "sona");
+fs.append_text("parity.txt", "!");
+print(fs.read_text("parity.txt"));

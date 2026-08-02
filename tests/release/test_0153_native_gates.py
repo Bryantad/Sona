@@ -11,12 +11,13 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[2]
+CURRENT_VERSION = "0.15.4"
 
 
 @pytest.fixture(scope="module")
 def native_binary(tmp_path_factory: pytest.TempPathFactory) -> Path:
     cargo = shutil.which("cargo")
-    assert cargo is not None, "cargo is mandatory for the 0.15.3 native gates"
+    assert cargo is not None, "cargo is mandatory for the active native gates"
     target = tmp_path_factory.mktemp("native-target")
     environment = os.environ.copy()
     environment["CARGO_TARGET_DIR"] = str(target)
@@ -53,6 +54,8 @@ def test_native_standalone_gate_passes(tmp_path: Path, native_binary: Path):
             str(native_binary),
             "--output-dir",
             str(tmp_path),
+            "--sona-version",
+            CURRENT_VERSION,
         ],
         cwd=ROOT,
         text=True,
@@ -62,7 +65,7 @@ def test_native_standalone_gate_passes(tmp_path: Path, native_binary: Path):
     )
     assert process.returncode == 0, process.stdout + process.stderr
     summary = json.loads(
-        (tmp_path / "sona-0.15.3-native-standalone.json").read_text(
+        (tmp_path / f"sona-{CURRENT_VERSION}-native-standalone.json").read_text(
             encoding="utf-8"
         )
     )
@@ -87,6 +90,8 @@ def test_differential_conformance_has_exact_accounting(
             str(native_binary),
             "--output-dir",
             str(tmp_path),
+            "--sona-version",
+            CURRENT_VERSION,
         ],
         cwd=ROOT,
         text=True,
@@ -96,7 +101,7 @@ def test_differential_conformance_has_exact_accounting(
     )
     assert process.returncode == 0, process.stdout + process.stderr
     summary = json.loads(
-        (tmp_path / "sona-0.15.3-differential-conformance.json").read_text(
+        (tmp_path / f"sona-{CURRENT_VERSION}-differential-conformance.json").read_text(
             encoding="utf-8"
         )
     )

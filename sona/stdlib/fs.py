@@ -14,6 +14,12 @@ def read(path: str, encoding: str = "utf-8") -> str:
         return handle.read()
 
 
+def read_text(path: str, encoding: str = "utf-8") -> str:
+    """Read a text file using the canonical 0.15.4 spelling."""
+
+    return read(path, encoding)
+
+
 def read_bytes(path: str) -> bytes:
     with open(path, "rb") as handle:
         return handle.read()
@@ -26,6 +32,12 @@ def write(path: str, content: str, encoding: str = "utf-8") -> int:
     with open(path, "w", encoding=encoding) as handle:
         written = handle.write(content)
     return written
+
+
+def write_text(path: str, content: str, encoding: str = "utf-8") -> int:
+    """Write text, creating parent directories, and return characters written."""
+
+    return write(path, content, encoding)
 
 
 def write_bytes(path: str, data: bytes) -> int:
@@ -43,6 +55,12 @@ def append(path: str, content: str, encoding: str = "utf-8") -> int:
     return written
 
 
+def append_text(path: str, content: str, encoding: str = "utf-8") -> int:
+    """Append text and return the number of characters written."""
+
+    return append(path, content, encoding)
+
+
 def exists(path: str) -> bool:
     return Path(path).exists()
 
@@ -58,11 +76,11 @@ def is_dir(path: str) -> bool:
 def list_dir(path: str, *, recursive: bool = False) -> List[str]:
     root = Path(path)
     if not recursive:
-        return [entry.name for entry in root.iterdir()]
+        return sorted(entry.name for entry in root.iterdir())
     results: List[str] = []
     for entry in root.rglob("*"):
-        results.append(str(entry.relative_to(root)))
-    return results
+        results.append(entry.relative_to(root).as_posix())
+    return sorted(results)
 
 
 def mkdir(path: str, *, parents: bool = True, exist_ok: bool = True) -> str:
@@ -70,20 +88,23 @@ def mkdir(path: str, *, parents: bool = True, exist_ok: bool = True) -> str:
     return str(Path(path))
 
 
+def create_dir(path: str, *, parents: bool = True, exist_ok: bool = True) -> str:
+    """Create a directory using the canonical 0.15.4 spelling."""
+
+    return Path(mkdir(path, parents=parents, exist_ok=exist_ok)).as_posix()
+
+
 def remove(path: str, *, recursive: bool = True) -> bool:
     target = Path(path)
-    try:
-        if target.is_dir() and recursive:
-            shutil.rmtree(target)
-        elif target.is_dir():
-            target.rmdir()
-        elif target.exists():
-            target.unlink()
-        else:
-            return False
-        return True
-    except OSError:
+    if not target.exists():
         return False
+    if target.is_dir() and recursive:
+        shutil.rmtree(target)
+    elif target.is_dir():
+        target.rmdir()
+    else:
+        target.unlink()
+    return True
 
 
 def rmdir(path: str) -> bool:
@@ -498,6 +519,10 @@ def temp_dir(prefix: str = "tmp", dir: Optional[str] = None) -> str:
 
 
 __all__ = [
+    "read_text",
+    "write_text",
+    "append_text",
+    "create_dir",
     "read",
     "read_bytes",
     "write",

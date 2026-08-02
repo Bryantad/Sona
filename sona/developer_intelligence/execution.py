@@ -1,6 +1,6 @@
 """Internal, approval-scoped patch application and bounded verification.
 
-The public 0.15.3 task API remains preview-only.  This module is the shared
+The public 0.15.4 task API remains preview-only.  This module is the shared
 execution boundary for Guardian and future clients that already possess a
 governance decision and a narrowly scoped approval.
 """

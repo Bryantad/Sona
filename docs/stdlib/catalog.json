@@ -1,695 +1,1178 @@
 {
-  "version": "0.15.3",
-  "generated": "2026-06-04T10:27:20Z",
-  "moduleCount": 85,
-  "categories": [
-    "core",
-    "data_structures",
-    "io",
-    "network",
-    "database",
-    "security",
-    "async",
-    "testing",
-    "utilities",
-    "automation",
-    "functional",
-    "templating",
-    "data_processing"
-  ],
+  "schema": 1,
+  "schema_id": "sona.stdlib.catalog.schema-1",
+  "version": "0.15.4",
+  "generated_from": "sona/stdlib/MANIFEST.json",
+  "source_manifest_hash": "0154_stdlib_runtime_capability",
+  "moduleCount": 146,
   "modules": [
     {
       "name": "assert",
       "type": "stdlib",
-      "status": "preview",
+      "status": "stable",
       "source": "intrinsic",
       "category": "testing",
-      "description": "assert - Rich assertions for Sona stdlib"
+      "description": "Dedicated testing assertions."
     },
     {
       "name": "async",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "async",
-      "description": "async - Async/await utilities for Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "benchmark",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "testing",
-      "description": "benchmark - Performance benchmarking for Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "bitwise",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "functional",
-      "description": "bitwise - Bitwise operations for Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "boolean",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "core",
-      "description": "Sona Standard Library - Boolean Operations Module"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "cache",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "database",
-      "description": "cache - Enhanced caching layer for Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "cli",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "automation",
-      "description": "cli - Command-line interface utilities for Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "collection",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "data_structures",
-      "description": "Sona standard library: collections helpers."
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "color",
       "type": "stdlib",
-      "status": "preview",
+      "status": "stable",
       "source": "intrinsic",
-      "category": "data_processing",
-      "description": "color - Color manipulation for Sona stdlib"
+      "category": "utility",
+      "description": "Optional ANSI terminal styling."
     },
     {
       "name": "comparison",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "core",
-      "description": "Sona Standard Library - Comparison Operations Module"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "compression",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "automation",
-      "description": "compression - File compression utilities for Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "config",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "automation",
-      "description": "config - Configuration management for Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "cookies",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "network",
-      "description": "cookies - HTTP cookie management for Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "crypto",
       "type": "stdlib",
       "status": "preview",
       "source": "sona+intrinsic",
-      "category": "security",
-      "description": "Sona-authored crypto wrappers over private intrinsics."
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "csv",
       "type": "stdlib",
       "status": "stable",
       "source": "intrinsic",
-      "category": "io",
-      "description": "Parse, write, and manipulate CSV (Comma Separated Values) data."
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "date",
       "type": "stdlib",
       "status": "stable",
       "source": "intrinsic",
-      "category": "utilities",
-      "description": "Date manipulation helpers for working with ISO dates, ranges, and calendar boundaries."
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "decorator",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "functional",
-      "description": "decorator - Decorator utilities for Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "dns",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "network",
-      "description": "dns - DNS resolution utilities for Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "emotion",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "description": "Emotion detection backend for the Sona emotion module."
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "encoding",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "utilities",
-      "description": "Encoding helpers for base64."
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "env",
       "type": "stdlib",
       "status": "stable",
       "source": "intrinsic",
-      "description": "Interact with process environment variables and .env files."
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "fs",
       "type": "stdlib",
       "status": "stable",
       "source": "intrinsic",
-      "category": "io",
-      "description": "High-level filesystem helpers for Sona scripts."
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "ftp",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "network",
-      "description": "ftp - FTP client for Sona stdlib"
+      "category": "utility",
+      "description": ""
+    },
+    {
+      "name": "focus",
+      "type": "stdlib",
+      "status": "stable",
+      "source": "intrinsic",
+      "category": "utility",
+      "description": "Local focus-session helpers."
+    },
+    {
+      "name": "format",
+      "type": "stdlib",
+      "status": "stable",
+      "source": "intrinsic",
+      "category": "utility",
+      "description": "Deterministic human-readable output formatting."
     },
     {
       "name": "functional",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "functional",
-      "description": "functional - Functional programming utilities for Sona stdlib"
+      "category": "utility",
+      "description": ""
+    },
+    {
+      "name": "guardian",
+      "type": "stdlib",
+      "status": "stable",
+      "source": "intrinsic",
+      "category": "resilience",
+      "description": "Local Guardian resilience facade with snapshots, drift detection, quarantine, rollback, and audit history."
     },
     {
       "name": "graph",
       "type": "stdlib",
       "status": "core",
       "source": "sona",
-      "category": "data_structures",
-      "description": "Sona-authored graph helpers for the public stdlib foundation."
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "hashing",
       "type": "stdlib",
       "status": "stable",
       "source": "sona+intrinsic",
-      "category": "utilities",
-      "description": "Sona-authored hashing wrapper over private intrinsics."
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "heap",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "data_structures",
-      "description": "heap - Heap/Priority queue for Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "http",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "network",
-      "description": "http - HTTP client operations for Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "io",
       "type": "stdlib",
       "status": "stable",
       "source": "intrinsic",
-      "category": "io"
+      "category": "utility",
+      "description": ""
+    },
+    {
+      "name": "intent",
+      "type": "stdlib",
+      "status": "stable",
+      "source": "intrinsic",
+      "category": "utility",
+      "description": "Local in-process intent notes."
     },
     {
       "name": "iterator",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "functional",
-      "description": "iterator - Iterator utilities for Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "json",
       "type": "stdlib",
       "status": "stable",
       "source": "intrinsic",
-      "category": "io"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "jwt",
       "type": "stdlib",
       "status": "preview",
       "source": "sona+intrinsic",
-      "category": "security",
-      "description": "Sona-authored JWT-style token helpers over private intrinsics."
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "logging",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "automation",
-      "description": "logging - Logging utilities for Sona stdlib"
+      "category": "utility",
+      "description": ""
+    },
+    {
+      "name": "log",
+      "type": "stdlib",
+      "status": "stable",
+      "source": "intrinsic",
+      "category": "developer-experience",
+      "description": "Deterministic local logging helpers."
     },
     {
       "name": "markdown",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "templating",
-      "description": "markdown - Markdown processing for Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "math",
       "type": "stdlib",
       "status": "stable",
       "source": "intrinsic",
-      "category": "core"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "matrix",
       "type": "stdlib",
       "status": "core",
       "source": "sona",
-      "category": "data_structures",
-      "description": "Sona-authored matrix helpers for the public stdlib foundation."
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "migration",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "database",
-      "description": "migration - Enhanced database migration system for Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "mock",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "testing",
-      "description": "mock - Mocking utilities for testing in Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "numbers",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "core",
-      "description": "Numeric helpers."
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "oauth",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "security",
-      "description": "oauth - OAuth authentication for Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "operators",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "core",
-      "description": "Sona Standard Library - Operators Module"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "orm",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "database",
-      "description": "orm - Enhanced ORM (Object-Relational Mapping) for Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "password",
       "type": "stdlib",
       "status": "preview",
       "source": "sona+intrinsic",
-      "category": "security",
-      "description": "Sona-authored password helpers over private intrinsics."
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "path",
       "type": "stdlib",
       "status": "stable",
       "source": "intrinsic",
-      "category": "io",
-      "description": "Path manipulation helpers for building, normalising, and inspecting filesystem paths."
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "permissions",
       "type": "stdlib",
       "status": "core",
       "source": "sona",
-      "category": "security",
-      "description": "Sona-authored permission helpers for the public stdlib foundation."
+      "category": "utility",
+      "description": ""
+    },
+    {
+      "name": "pipe",
+      "type": "stdlib",
+      "status": "stable",
+      "source": "intrinsic",
+      "category": "utility",
+      "description": "Functional pipeline helpers."
     },
     {
       "name": "pool",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "async",
-      "description": "pool - Thread/process pooling for Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "process",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "async",
-      "description": "process - Process management for Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "profiler",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "testing",
-      "description": "profiler - Code profiling for Sona stdlib"
+      "category": "utility",
+      "description": ""
+    },
+    {
+      "name": "profile",
+      "type": "stdlib",
+      "status": "stable",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Optional local cognitive-accessibility profile presets."
+    },
+    {
+      "name": "simplify",
+      "type": "stdlib",
+      "status": "stable",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Plain-language message and error simplification."
+    },
+    {
+      "name": "breadcrumb",
+      "type": "stdlib",
+      "status": "stable",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Local breadcrumb trail for recovery and workflow context."
+    },
+    {
+      "name": "flow",
+      "type": "stdlib",
+      "status": "stable",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Explainable local flow scoring and suggestions."
+    },
+    {
+      "name": "explain",
+      "type": "stdlib",
+      "status": "stable",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Curated deterministic explanations."
+    },
+    {
+      "name": "pace",
+      "type": "stdlib",
+      "status": "stable",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Local output pacing controls."
+    },
+    {
+      "name": "affirm",
+      "type": "stdlib",
+      "status": "stable",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Factual local success and milestone messages."
+    },
+    {
+      "name": "chunk",
+      "type": "stdlib",
+      "status": "stable",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Chunking helpers for lists, text, steps, and checkpoints."
+    },
+    {
+      "name": "timer",
+      "type": "stdlib",
+      "status": "stable",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Monotonic local focus timer helpers."
+    },
+    {
+      "name": "noise",
+      "type": "stdlib",
+      "status": "stable",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Local event noise filtering."
+    },
+    {
+      "name": "tone",
+      "type": "stdlib",
+      "status": "stable",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Neutral message tone helpers."
+    },
+    {
+      "name": "readability",
+      "type": "stdlib",
+      "status": "stable",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Explainable readability and identifier heuristics."
+    },
+    {
+      "name": "linewidth",
+      "type": "stdlib",
+      "status": "stable",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Line width wrapping and checks."
+    },
+    {
+      "name": "mirror",
+      "type": "stdlib",
+      "status": "stable",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Similar-symbol checks and explanations."
+    },
+    {
+      "name": "chunk_read",
+      "type": "stdlib",
+      "status": "stable",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Chunked reading navigation."
+    },
+    {
+      "name": "contract",
+      "type": "stdlib",
+      "status": "stable",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Explicit runtime contract checks."
+    },
+    {
+      "name": "boundary",
+      "type": "stdlib",
+      "status": "stable",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Explicit local permission boundaries."
+    },
+    {
+      "name": "routine",
+      "type": "stdlib",
+      "status": "stable",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Routine definition and checklist state."
+    },
+    {
+      "name": "strict",
+      "type": "stdlib",
+      "status": "stable",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Opt-in strict runtime checks."
+    },
+    {
+      "name": "certainty",
+      "type": "stdlib",
+      "status": "stable",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Local uncertainty and assumption notes."
+    },
+    {
+      "name": "sensory",
+      "type": "stdlib",
+      "status": "stable",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Low-stimulation text transformation."
+    },
+    {
+      "name": "interrupt",
+      "type": "stdlib",
+      "status": "experimental",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Experimental interrupt capture and review helpers."
+    },
+    {
+      "name": "hyperfocus",
+      "type": "stdlib",
+      "status": "experimental",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Experimental hyperfocus boundary checks."
+    },
+    {
+      "name": "priority",
+      "type": "stdlib",
+      "status": "experimental",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Experimental priority ranking helpers."
+    },
+    {
+      "name": "drift",
+      "type": "stdlib",
+      "status": "experimental",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Experimental drift detection and reset prompts."
+    },
+    {
+      "name": "scaffold",
+      "type": "stdlib",
+      "status": "experimental",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Experimental task scaffolding helpers."
+    },
+    {
+      "name": "reentry",
+      "type": "stdlib",
+      "status": "experimental",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Experimental re-entry cards and prompts."
+    },
+    {
+      "name": "reward",
+      "type": "stdlib",
+      "status": "experimental",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Experimental local reward token helpers."
+    },
+    {
+      "name": "context",
+      "type": "stdlib",
+      "status": "experimental",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Experimental local context packs."
+    },
+    {
+      "name": "momentum",
+      "type": "stdlib",
+      "status": "experimental",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Experimental momentum checks."
+    },
+    {
+      "name": "rotate",
+      "type": "stdlib",
+      "status": "experimental",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Experimental task rotation helpers."
+    },
+    {
+      "name": "start",
+      "type": "stdlib",
+      "status": "experimental",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Experimental tiny-start helpers."
+    },
+    {
+      "name": "alias",
+      "type": "stdlib",
+      "status": "experimental",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Experimental aliasing helpers."
+    },
+    {
+      "name": "phonetic",
+      "type": "stdlib",
+      "status": "experimental",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Experimental phonetic spelling helpers."
+    },
+    {
+      "name": "visual",
+      "type": "stdlib",
+      "status": "experimental",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Experimental visual highlighting and spacing helpers."
+    },
+    {
+      "name": "symbol",
+      "type": "stdlib",
+      "status": "experimental",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Experimental symbol explanation helpers."
+    },
+    {
+      "name": "sequence",
+      "type": "stdlib",
+      "status": "experimental",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Experimental sequence review helpers."
+    },
+    {
+      "name": "memory",
+      "type": "stdlib",
+      "status": "experimental",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Experimental local cognitive memory/glossary helpers."
+    },
+    {
+      "name": "contrast",
+      "type": "stdlib",
+      "status": "experimental",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Experimental contrast ratio helpers."
+    },
+    {
+      "name": "template",
+      "type": "stdlib",
+      "status": "experimental",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Experimental structured template helpers."
+    },
+    {
+      "name": "spoken",
+      "type": "stdlib",
+      "status": "experimental",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Experimental spoken-script helpers."
+    },
+    {
+      "name": "pattern",
+      "type": "stdlib",
+      "status": "experimental",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Experimental pattern detection helpers."
+    },
+    {
+      "name": "trace",
+      "type": "stdlib",
+      "status": "experimental",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Experimental event trace helpers."
+    },
+    {
+      "name": "transition",
+      "type": "stdlib",
+      "status": "experimental",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Experimental transition planning helpers."
+    },
+    {
+      "name": "detail",
+      "type": "stdlib",
+      "status": "experimental",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Experimental detail expansion helpers."
+    },
+    {
+      "name": "anchor",
+      "type": "stdlib",
+      "status": "experimental",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Experimental local anchor helpers."
+    },
+    {
+      "name": "overload",
+      "type": "stdlib",
+      "status": "experimental",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Experimental overload check helpers."
+    },
+    {
+      "name": "mono",
+      "type": "stdlib",
+      "status": "experimental",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Experimental monotropic focus helpers."
+    },
+    {
+      "name": "system",
+      "type": "stdlib",
+      "status": "experimental",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Experimental system mapping helpers."
+    },
+    {
+      "name": "mastery",
+      "type": "stdlib",
+      "status": "experimental",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Experimental mastery planning helpers."
+    },
+    {
+      "name": "shutdown",
+      "type": "stdlib",
+      "status": "experimental",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Experimental shutdown planning helpers."
+    },
+    {
+      "name": "energy",
+      "type": "stdlib",
+      "status": "experimental",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Experimental energy budgeting helpers."
+    },
+    {
+      "name": "narrative",
+      "type": "stdlib",
+      "status": "experimental",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Experimental narrative framing helpers."
+    },
+    {
+      "name": "journal",
+      "type": "stdlib",
+      "status": "experimental",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Experimental local journal helpers."
+    },
+    {
+      "name": "adapt",
+      "type": "stdlib",
+      "status": "experimental",
+      "source": "intrinsic",
+      "category": "accessibility",
+      "description": "Experimental adaptation preference helpers."
     },
     {
       "name": "promise",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "async",
-      "description": "promise - Promise/Future pattern for Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "proxy",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "network",
-      "description": "proxy - HTTP proxy utilities for Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "query",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "database",
-      "description": "query - Enhanced SQL query builder for Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "queue",
       "type": "stdlib",
       "status": "core",
       "source": "sona",
-      "category": "data_structures",
-      "description": "Pure Sona queue runtime (no Python native bridge)."
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "random",
       "type": "stdlib",
       "status": "core",
       "source": "sona+intrinsic",
-      "category": "utilities",
-      "description": "Sona-authored pseudo-random runtime with optional private intrinsics."
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "redis",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "database",
-      "description": "redis - Comprehensive Redis client for Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "regex",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "description": "Native Sona regex-lite helpers (no Python native bridge)."
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "scheduler",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "automation",
-      "description": "scheduler - Task scheduling utilities for Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "search",
       "type": "stdlib",
       "status": "core",
       "source": "sona",
-      "category": "data_processing",
-      "description": "Sona-authored search helpers for the public stdlib foundation."
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "secrets",
       "type": "stdlib",
       "status": "preview",
       "source": "sona+intrinsic",
-      "category": "security",
-      "description": "Sona-authored secure random wrappers over private intrinsics."
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "session",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "network",
-      "description": "session - HTTP session management for Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "shell",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "automation",
-      "description": "shell - Shell command execution for Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "signal",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "automation",
-      "description": "signal - Signal/event system for Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "smtp",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "network",
-      "description": "smtp - Email sending via SMTP for Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "sort",
       "type": "stdlib",
       "status": "core",
       "source": "sona",
-      "category": "data_processing",
-      "description": "Sona-authored sorting helpers for the public stdlib foundation."
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "sqlite",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "database",
-      "description": "sqlite - SQLite database operations for Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "stack",
       "type": "stdlib",
       "status": "core",
       "source": "sona",
-      "category": "data_structures",
-      "description": "Pure Sona stack runtime (no Python native bridge)."
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "statistics",
       "type": "stdlib",
       "status": "core",
       "source": "sona",
-      "category": "data_processing",
-      "description": "Sona-authored descriptive statistics for the public stdlib foundation."
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "string",
       "type": "stdlib",
       "status": "stable",
       "source": "intrinsic",
-      "category": "core"
+      "category": "utility",
+      "description": ""
     },
     {
-      "name": "template",
+      "name": "stdin",
       "type": "stdlib",
-      "status": "preview",
+      "status": "stable",
       "source": "intrinsic",
-      "category": "templating",
-      "description": "template - Simple template engine for Sona stdlib"
+      "category": "io",
+      "description": "Canonical console input for Sona programs."
     },
     {
       "name": "test",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "testing",
-      "description": "test - Test framework for Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "thread",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "async",
-      "description": "thread - Threading utilities for Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "time",
       "type": "stdlib",
       "status": "stable",
       "source": "intrinsic",
-      "category": "utilities",
-      "description": "Time operations for retrieving timestamps, formatting, parsing, and measuring durations."
-    },
-    {
-      "name": "timer",
-      "type": "stdlib",
-      "status": "preview",
-      "source": "intrinsic",
-      "category": "utilities",
-      "description": "Timing helpers for quick measurements."
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "toml",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "io",
-      "description": "Sona Standard Library - TOML Module"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "tree",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "data_structures",
-      "description": "tree - Tree data structure for Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "type",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "core",
-      "description": "Sona Standard Library - Type Inquiry Module"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "url",
       "type": "stdlib",
-      "status": "preview",
+      "status": "stable",
       "source": "intrinsic",
-      "category": "network",
-      "description": "url - URL parsing and building for Sona stdlib"
+      "category": "utility",
+      "description": "URL parsing and encoding helpers."
     },
     {
       "name": "uuid",
       "type": "stdlib",
       "status": "core",
       "source": "sona+intrinsic",
-      "category": "utilities",
-      "description": "Sona-authored UUID helpers over private intrinsics."
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "validation",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "utilities",
-      "description": "Input validation helpers."
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "websocket",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "network",
-      "description": "websocket - WebSocket client for Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "xml",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "io",
-      "description": "xml - XML parsing and generation for Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "yaml",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "io",
-      "description": "Sona Standard Library - YAML Module"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "collection.list",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "data_structures",
-      "description": "collection.list - Sequence operations for Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "collection.dict",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "data_structures",
-      "description": "collection.dict - Dictionary operations for Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "collection.set",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "data_structures",
-      "description": "collection.set - Set operations for Sona stdlib"
+      "category": "utility",
+      "description": ""
     },
     {
       "name": "collection.tuple",
       "type": "stdlib",
       "status": "preview",
       "source": "intrinsic",
-      "category": "data_structures",
-      "description": "collection.tuple - Tuple operations for Sona stdlib"
+      "category": "utility",
+      "description": ""
+    },
+    {
+      "name": "intrinsics",
+      "type": "stdlib",
+      "status": "preview",
+      "source": "intrinsic",
+      "category": "utility",
+      "description": ""
     }
   ]
 }

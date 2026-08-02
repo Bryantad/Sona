@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "schema_id": "sona.stdlib-conformance-fixtures.schema-1",
+  "fixtures": [
+    {"name": "collection-foundation", "module": "collection", "source": "collection.sona", "classification": "identical", "stdin": "", "stdout": "1\n[1, 2]\n"},
+    {"name": "date-foundation", "module": "date", "source": "date.sona", "classification": "identical", "stdin": "", "stdout": "29\n2024/02/29\n"},
+    {"name": "filesystem-foundation", "module": "fs", "source": "fs.sona", "classification": "identical", "stdin": "", "stdout": "sona!\n", "native_capabilities": ["--allow-fs-read", "--allow-fs-write"]},
+    {"name": "stream-output-foundation", "module": "io", "source": "io.sona", "classification": "identical", "stdin": "", "stdout": "sona!\n"},
+    {"name": "json-foundation", "module": "json", "source": "json.sona", "classification": "identical", "stdin": "", "stdout": "{\"a\": 1, \"b\": 2}\n"},
+    {"name": "math-foundation", "module": "math", "source": "math.sona", "classification": "identical", "stdin": "", "stdout": "yes\n"},
+    {"name": "random-seed-repeatability", "module": "random", "source": "random.sona", "classification": "identical", "stdin": "", "stdout": "yes\n", "scope_note": "Compares repeatability, not identical cross-engine sequences."},
+    {"name": "stdin-foundation", "module": "stdin", "source": "stdin.sona", "classification": "identical", "stdin": "Sona\n", "stdout": "Sona\n"},
+    {"name": "string-foundation", "module": "string", "source": "string.sona", "classification": "identical", "stdin": "", "stdout": "SONA\nyes\n"},
+    {"name": "time-foundation", "module": "time", "source": "time.sona", "classification": "identical", "stdin": "", "stdout": "ok\n"}
+  ],
+  "excluded": [
+    {"module": "http", "reason": "Native HTTP is importable but intentionally unavailable with SONA-HTTP-005 in 0.15.4."}
+  ]
+}

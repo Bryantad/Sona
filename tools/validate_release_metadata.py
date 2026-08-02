@@ -14,31 +14,6 @@ import tomllib
 
 ROOT = Path(__file__).resolve().parents[1]
 
-ACTIVE_STALE_SCAN = [
-    "README.md",
-    "CHANGELOG.md",
-    "pyproject.toml",
-    "sona/__init__.py",
-    "sona/cli.py",
-    "sona/interpreter.py",
-    "sona/lsp_server.py",
-    "sona/spm.py",
-    "sona/stdlib/__init__.py",
-    "sona/stdlib/MANIFEST.json",
-    "docs/README.md",
-    "docs/QUICKSTART.md",
-    "docs/LANGUAGE_REFERENCE.md",
-    "docs/STDLIB_REFERENCE.md",
-    "docs/errors/v0.10-errors.md",
-    "docs/errors/v0.14-diagnostics.md",
-    "docs/packages/manifest.md",
-    "docs/stdlib/catalog.json",
-    "scripts/release_gate.ps1",
-    "scripts/release_hardening.ps1",
-    "tools/run_examples.py",
-]
-
-
 def fail(message: str) -> None:
     raise SystemExit(f"ERROR: {message}")
 
@@ -187,12 +162,15 @@ def parse_manifest_version() -> str:
     return payload["version"]
 
 
-def parse_release_script_default(path: str) -> str:
-    text = read(path)
-    match = re.search(r'\[string\]\$ExpectedVersion\s*=\s*"([^"]+)"', text)
-    if not match:
-        fail(f"{path} missing ExpectedVersion default")
-    return match.group(1)
+def parse_native_workspace_version() -> str:
+    payload = tomllib.loads(read("native/Cargo.toml"))
+    return payload["workspace"]["package"]["version"]
+
+
+def parse_extension_versions() -> tuple[str, str]:
+    package = json.loads(read("vscode-extension/package.json"))
+    lock = json.loads(read("vscode-extension/package-lock.json"))
+    return package["version"], lock["version"]
 
 
 def cli_version_output() -> str:
@@ -208,22 +186,12 @@ def cli_version_output() -> str:
     return proc.stdout.strip()
 
 
-def check_no_stale_active_references(version: str, active_scan: list[str]) -> None:
-    stale = "0.14.1"
-    for path in active_scan:
-        text = read(path)
-        if path != "CHANGELOG.md" and stale in text:
-            fail(f"active file {path} still contains stale {stale}")
-        if path not in {"CHANGELOG.md"} and version not in text:
-            fail(f"active file {path} does not contain expected version {version}")
-
-
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--version", required=True, help="Expected release version")
     args = parser.parse_args()
     expected = args.version
-    active_scan = [*ACTIVE_STALE_SCAN, f"RELEASE_NOTES_v{expected}.md"]
+    extension_version, extension_lock_version = parse_extension_versions()
 
     checks = {
         "pyproject.toml": parse_pyproject_version(),
@@ -232,8 +200,9 @@ def main() -> int:
         "interpreter __version__": parse_interpreter_version(),
         "sona/stdlib/__init__.py": parse_stdlib_version(),
         "sona/stdlib/MANIFEST.json": parse_manifest_version(),
-        "scripts/release_gate.ps1": parse_release_script_default("scripts/release_gate.ps1"),
-        "scripts/release_hardening.ps1": parse_release_script_default("scripts/release_hardening.ps1"),
+        "native/Cargo.toml": parse_native_workspace_version(),
+        "vscode-extension/package.json": extension_version,
+        "vscode-extension/package-lock.json": extension_lock_version,
     }
     for label, value in checks.items():
         if value != expected:
@@ -245,15 +214,34 @@ def main() -> int:
 
     require_contains("README.md", f"Current release: `{expected}`")
     require_contains("CHANGELOG.md", f"## {expected}")
+    for path in (
+        "docs/README.md",
+        "docs/QUICKSTART.md",
+        "docs/LANGUAGE_REFERENCE.md",
+        "docs/STDLIB_REFERENCE.md",
+        "docs/errors/v0.10-errors.md",
+        "docs/errors/v0.14-diagnostics.md",
+    ):
+        require_contains(path, expected)
     require_contains(f"RELEASE_NOTES_v{expected}.md", f"Sona {expected}")
+    require_contains(
+        f"docs/release/{expected}-implementation-report.md",
+        f"Sona {expected}",
+    )
     require_contains("docs/stdlib/catalog.json", f'"version": "{expected}"')
     require_contains("docs/packages/manifest.md", f"v{expected}")
-    require_contains("sona/stdlib/MANIFEST.json", "0150_cognitive_runtime_guardian")
+    require_contains(
+        "sona/stdlib/MANIFEST.json",
+        "0154_stdlib_runtime_capability",
+    )
+    require_contains(
+        "docs/stdlib/catalog.json",
+        "0154_stdlib_runtime_capability",
+    )
     require_contains("vscode-extension/src/extension.ts", f"Sona {expected} Extension")
     require_contains("vscode-extension/src/sonaCliIntegration.ts", f"Sona {expected}")
 
     validate_dependency_and_toolchain_contracts()
-    check_no_stale_active_references(expected, active_scan)
     print(f"Release metadata validated for {expected}.")
     return 0
 

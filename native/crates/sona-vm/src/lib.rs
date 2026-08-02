@@ -1,11 +1,14 @@
 use std::collections::HashMap;
 use std::fmt;
 use std::path::PathBuf;
+use std::time::Instant;
 
 use sona_bytecode::{BytecodeProgram, Constant, FunctionBytecode, Instruction};
 use sona_diagnostics::{Diagnostic, DiagnosticList, SonaResult, SourceSpan};
 use sona_modules::{default_module_roots, ModuleResolver};
 use sona_runtime::RuntimeConfig;
+
+mod host;
 
 #[derive(Clone, Debug)]
 pub enum Value {
@@ -91,6 +94,8 @@ pub struct Vm {
     instruction_count: usize,
     call_depth: usize,
     resolver: ModuleResolver,
+    random_state: u64,
+    started_at: Instant,
 }
 
 impl Vm {
@@ -120,6 +125,8 @@ impl Vm {
             instruction_count: 0,
             call_depth: 0,
             resolver,
+            random_state: 0x534f_4e41_0154,
+            started_at: Instant::now(),
         }
     }
 
@@ -288,8 +295,24 @@ impl Vm {
     }
 
     fn import_module(&mut self, name: &str) -> SonaResult<()> {
+        if !self.resolver.contains(name) {
+            if let Some(exports) = host::module_exports(name) {
+                self.globals.insert(
+                    name.to_string(),
+                    Binding {
+                        value: Value::Module {
+                            name: name.to_string(),
+                            exports,
+                        },
+                        is_const: true,
+                    },
+                );
+                return Ok(());
+            }
+        }
         let record = self.resolver.load(name)?;
         let mut module_vm = Vm::with_resolver(self.resolver.clone());
+        module_vm.config = self.config.clone();
         module_vm.execute(&record.bytecode)?;
         let mut exports = HashMap::new();
         for (key, binding) in module_vm.globals {
@@ -366,6 +389,10 @@ impl Vm {
                 println!("{line}");
                 self.output.push(line);
                 self.stack.push(Value::Null);
+            }
+            Value::NativeFunction(name) => {
+                let result = self.call_host(name, args)?;
+                self.stack.push(result);
             }
             Value::Function(function) => {
                 if self.call_depth >= self.config.limits.max_call_depth {
@@ -587,6 +614,9 @@ fn const_error(name: &str) -> DiagnosticList {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
     use sona_bytecode::compile;
     use sona_ir::lower;
     use sona_parser::parse_source;
@@ -618,5 +648,108 @@ mod tests {
         let mut vm = Vm::new(None);
         vm.execute(&bytecode).unwrap();
         assert_eq!(vm.output(), &["10"]);
+    }
+
+    fn compile_source(name: &str, text: &str) -> BytecodeProgram {
+        let source = SourceFile::new(0, name, text);
+        let ast = parse_source(&source).unwrap();
+        compile(lower(ast).unwrap(), Some(source.text)).unwrap()
+    }
+
+    fn temporary_directory(label: &str) -> PathBuf {
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let path = std::env::temp_dir().join(format!("sona-0154-{label}-{nonce}"));
+        fs::create_dir_all(&path).unwrap();
+        path
+    }
+
+    #[test]
+    fn runs_foundation_host_modules_without_workspace_wrappers() {
+        let bytecode = compile_source(
+            "foundation.sona",
+            r#"
+                import string;
+                import math;
+                import json;
+                import collection;
+                print(string.upper("sona"));
+                print(math.sqrt(81));
+                print(json.stringify(json.parse("{\"b\":2,\"a\":1}")));
+                print(collection.first([4, 5, 6]));
+            "#,
+        );
+        let mut vm = Vm::new(None);
+        vm.execute(&bytecode).unwrap();
+        assert_eq!(vm.output(), &["SONA", "9", "{\"a\": 1, \"b\": 2}", "4"]);
+    }
+
+    #[test]
+    fn native_filesystem_is_default_denied_then_explicitly_granted() {
+        let root = temporary_directory("fs");
+        let target = root.join("snow-\u{2603}.txt");
+        let path = target.to_string_lossy().replace('\\', "/");
+        let source = format!(
+            "import fs; fs.write_text(\"{path}\", \"Sona\"); print(fs.read_text(\"{path}\"));"
+        );
+        let bytecode = compile_source("fs.sona", &source);
+
+        let mut denied = Vm::new(None);
+        let error = denied.execute(&bytecode).unwrap_err();
+        assert_eq!(error.0[0].diagnostic_id, "SONA-FS-005");
+
+        let mut allowed = Vm::new(None);
+        allowed.config.capabilities.filesystem_read = true;
+        allowed.config.capabilities.filesystem_write = true;
+        allowed.execute(&bytecode).unwrap();
+        assert_eq!(allowed.output(), &["Sona"]);
+        assert_eq!(fs::read_to_string(&target).unwrap(), "Sona");
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn workspace_module_precedes_host_registry() {
+        let root = temporary_directory("precedence");
+        fs::write(
+            root.join("string.smod"),
+            "func upper(value) { return \"workspace\"; };",
+        )
+        .unwrap();
+        let entry = root.join("app.sona");
+        let bytecode = compile_source(
+            entry.to_string_lossy().as_ref(),
+            "import string; print(string.upper(\"sona\"));",
+        );
+        let mut vm = Vm::new(Some(entry));
+        vm.execute(&bytecode).unwrap();
+        assert_eq!(vm.output(), &["workspace"]);
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn native_http_is_importable_but_reports_stable_unavailable_diagnostic() {
+        let bytecode = compile_source(
+            "http.sona",
+            "import http; http.get(\"https://example.invalid/private?token=secret\");",
+        );
+        let mut vm = Vm::new(None);
+        vm.config.capabilities.network = true;
+        let error = vm.execute(&bytecode).unwrap_err();
+        assert_eq!(error.0[0].diagnostic_id, "SONA-HTTP-005");
+        assert!(!error.0[0].message.contains("secret"));
+    }
+
+    #[test]
+    fn seeded_native_random_is_repeatable() {
+        let bytecode = compile_source(
+            "random.sona",
+            "import random; random.seed(42); print(random.integer(1, 100)); random.seed(42); print(random.integer(1, 100));",
+        );
+        let mut vm = Vm::new(None);
+        vm.execute(&bytecode).unwrap();
+        assert_eq!(vm.output().len(), 2);
+        assert_eq!(vm.output()[0], vm.output()[1]);
     }
 }

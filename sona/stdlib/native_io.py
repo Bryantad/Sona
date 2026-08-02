@@ -4,8 +4,13 @@ from __future__ import annotations
 
 import os
 import re
+import sys
 from pathlib import Path
 from typing import Tuple
+
+from . import fs as _fs
+from .errors import StdlibError, raise_fs_error
+from .runtime_context import StdlibRuntimeContext
 
 
 ALLOWED_EXTENSIONS = {
@@ -131,8 +136,68 @@ def stdin_input(prompt: str = "") -> str:
     return input(prompt)
 
 
-def stdin_read() -> str:
-    return input("")
+def stdin_read(prompt: str | None = None) -> str:
+    return input("" if prompt is None else prompt)
+
+
+def io_write_stdout(value: object = "") -> None:
+    sys.stdout.write(str(value))
+
+
+def io_write_stderr(value: object = "") -> None:
+    sys.stderr.write(str(value))
+
+
+def io_flush() -> None:
+    sys.stdout.flush()
+    sys.stderr.flush()
+
+
+class _BoundIO:
+    def __init__(self, interpreter) -> None:
+        self.context = StdlibRuntimeContext(interpreter)
+
+    def io_input(self, prompt: str | None = None) -> str:
+        self.context.require("console_input", "stdin.read")
+        return stdin_read(prompt)
+
+    stdin_read = io_input
+    stdin_input = io_input
+
+    def io_read_file(self, path):
+        try:
+            target = self.context.resolve_path(path, write=False, operation="io.read_file")
+            return _fs.read_text(str(target))
+        except StdlibError:
+            raise
+        except Exception as error:
+            raise_fs_error("io.read_file", path, error)
+
+    def io_write_file(self, path, content):
+        try:
+            target = self.context.resolve_path(path, write=True, operation="io.write_file")
+            _fs.write_text(str(target), str(content))
+            return True
+        except StdlibError:
+            raise
+        except Exception as error:
+            raise_fs_error("io.write_file", path, error)
+
+    def io_write_stdout(self, value=""):
+        self.context.require("console_output", "io.write_stdout")
+        return io_write_stdout(value)
+
+    def io_write_stderr(self, value=""):
+        self.context.require("console_output", "io.write_stderr")
+        return io_write_stderr(value)
+
+    def io_flush(self):
+        self.context.require("console_output", "io.flush")
+        return io_flush()
+
+
+def build_native_bridge(interpreter):
+    return _BoundIO(interpreter)
 
 
 def stdin_write_file(path: str, content: str | bytes) -> bool | dict[str, str]:
@@ -162,4 +227,8 @@ __all__ = [
     "stdin_read_file",
     "stdin_write",
     "stdin_append",
+    "io_write_stdout",
+    "io_write_stderr",
+    "io_flush",
+    "build_native_bridge",
 ]

@@ -34,6 +34,18 @@ impl ModuleResolver {
         &self.roots
     }
 
+    /// Return true when a workspace/module-root implementation exists.
+    ///
+    /// The VM uses this before consulting its built-in host registry so an
+    /// application-provided ``.smod`` keeps the established precedence.
+    pub fn contains(&self, name: &str) -> bool {
+        let relative = name.replace('.', "/") + ".smod";
+        self.roots
+            .iter()
+            .map(|root| root.join(&relative))
+            .any(|candidate| candidate.is_file())
+    }
+
     pub fn load(&mut self, name: &str) -> SonaResult<ModuleRecord> {
         if let Some(record) = self.loaded.get(name) {
             return Ok(record.clone());

@@ -11,6 +11,8 @@ sona-bytecode = { path = "../sona-bytecode" }
 sona-diagnostics = { path = "../sona-diagnostics" }
 sona-modules = { path = "../sona-modules" }
 sona-runtime = { path = "../sona-runtime" }
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+serde_json = "1.0"
 
 [dev-dependencies]
 sona-ir = { path = "../sona-ir" }

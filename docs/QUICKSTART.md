@@ -10,7 +10,7 @@ behavior wins and this page must be corrected before release.
 
 ## 1. Install Sona
 
-Use Python 3.11 or newer.
+Use Python 3.11 or 3.12.
 
 ```bash
 python -m pip install sona-lang
@@ -25,7 +25,7 @@ sona --version
 Expected shape:
 
 ```text
-Sona 0.15.1
+Sona 0.15.4
 ```
 
 ## 2. Create `hello.sona`

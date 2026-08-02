@@ -12,3 +12,15 @@ func write_file(path, content) {
 func read_file(path) {
     return io_read_file(path)
 }
+
+func write_stdout(value=nil) {
+    return io_write_stdout(value)
+}
+
+func write_stderr(value=nil) {
+    return io_write_stderr(value)
+}
+
+func flush() {
+    return io_flush()
+}

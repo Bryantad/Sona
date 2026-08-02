@@ -186,6 +186,15 @@ def startswith(
     return text.casefold().startswith(prefixes)
 
 
+def starts_with(
+    value: Any,
+    prefix: str | Sequence[str],
+    *,
+    ignore_case: bool = False,
+) -> bool:
+    return startswith(value, prefix, ignore_case=ignore_case)
+
+
 def endswith(
     value: Any,
     suffix: str | Sequence[str],
@@ -201,6 +210,15 @@ def endswith(
         else (_ensure_text(suffix).casefold(),)
     )
     return text.casefold().endswith(suffixes)
+
+
+def ends_with(
+    value: Any,
+    suffix: str | Sequence[str],
+    *,
+    ignore_case: bool = False,
+) -> bool:
+    return endswith(value, suffix, ignore_case=ignore_case)
 
 
 def count(value: Any, substring: str, *, ignore_case: bool = False) -> int:
@@ -569,6 +587,7 @@ __all__ = [
     "contains",
     "count",
     "endswith",
+    "ends_with",
     "ensure_prefix",
     "ensure_suffix",
     "format",
@@ -604,6 +623,7 @@ __all__ = [
     "snake_case",
     "split",
     "startswith",
+    "starts_with",
     "swapcase",
     "title",
     "trim",

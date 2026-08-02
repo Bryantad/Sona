@@ -122,8 +122,19 @@ def _attach_call_site_diagnostic(exc: Exception, node: Any, suggestion: str) -> 
     if diagnostic is None:
         return
     location = getattr(diagnostic, "location", None)
-    if location is None or getattr(location, "file", "<unknown>") == "<unknown>":
-        diagnostic.location = SourceLocation.from_node(node)
+    candidate = SourceLocation.from_node(node)
+    current_file = str(getattr(location, "file", "<unknown>")).replace("\\", "/")
+    candidate_file = str(candidate.file).replace("\\", "/")
+    current_is_internal = "/stdlib/" in current_file
+    candidate_is_internal = "/stdlib/" in candidate_file
+    if (
+        location is None
+        or current_file == "<unknown>"
+        or (current_is_internal and not candidate_is_internal)
+    ):
+        # Public calls should point to application source, not the shipped
+        # ``.smod`` adapter that translated the host failure.
+        diagnostic.location = candidate
     if not getattr(diagnostic, "suggestion", ""):
         diagnostic.suggestion = suggestion
 
@@ -1454,13 +1465,25 @@ class MethodCallExpression(Expression):
                     return method.call(method_args, kw_args)
                 except TypeError as exc:
                     if not _should_retry_legacy_call_signature(exc):
+                        _attach_call_site_diagnostic(exc, self, "Pass the documented method arguments.")
                         raise
                     try:
                         return method.call(method_args)
                     except TypeError:
+                        _attach_call_site_diagnostic(exc, self, "Pass the documented method arguments.")
                         raise exc
+                    except Exception as retry_exc:
+                        _attach_call_site_diagnostic(retry_exc, self, "Pass the documented method arguments.")
+                        raise
+                except Exception as exc:
+                    _attach_call_site_diagnostic(exc, self, "Pass the documented method arguments.")
+                    raise
             if callable(method):
-                return method(obj, *pos_args, **kw_args)
+                try:
+                    return method(obj, *pos_args, **kw_args)
+                except Exception as exc:
+                    _attach_call_site_diagnostic(exc, self, "Pass the documented method arguments.")
+                    raise
             from .errors import ErrorCode, SourceLocation
             from .interpreter import SonaRuntimeError
             raise SonaRuntimeError(
@@ -1478,13 +1501,25 @@ class MethodCallExpression(Expression):
                     return method.call(pos_args, kw_args)
                 except TypeError as exc:
                     if not _should_retry_legacy_call_signature(exc):
+                        _attach_call_site_diagnostic(exc, self, "Pass the documented method arguments.")
                         raise
                     try:
                         return method.call(pos_args)
                     except TypeError:
+                        _attach_call_site_diagnostic(exc, self, "Pass the documented method arguments.")
                         raise exc
+                    except Exception as retry_exc:
+                        _attach_call_site_diagnostic(retry_exc, self, "Pass the documented method arguments.")
+                        raise
+                except Exception as exc:
+                    _attach_call_site_diagnostic(exc, self, "Pass the documented method arguments.")
+                    raise
             if callable(method):
-                return method(*pos_args, **kw_args)
+                try:
+                    return method(*pos_args, **kw_args)
+                except Exception as exc:
+                    _attach_call_site_diagnostic(exc, self, "Pass the documented method arguments.")
+                    raise
             from .errors import ErrorCode, SourceLocation
             from .interpreter import SonaRuntimeError
             raise SonaRuntimeError(

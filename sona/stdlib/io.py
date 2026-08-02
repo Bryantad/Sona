@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import sys
 from pathlib import Path
 
 try:  # pragma: no cover - allow running outside package
@@ -22,6 +23,19 @@ def read_file(path: str) -> str:
 
 def write_file(path: str, content: str) -> bool | str:
     return native_io.write_file(path, content)
+
+
+def write_stdout(value: object = "") -> None:
+    sys.stdout.write(str(value))
+
+
+def write_stderr(value: object = "") -> None:
+    sys.stderr.write(str(value))
+
+
+def flush() -> None:
+    sys.stdout.flush()
+    sys.stderr.flush()
 
 
 def read(path: str, encoding: str = "utf-8") -> str:
@@ -195,6 +209,9 @@ def print_to_file(
 
 
 __all__ = [
+    "write_stdout",
+    "write_stderr",
+    "flush",
     "input",
     "read_file",
     "write_file",

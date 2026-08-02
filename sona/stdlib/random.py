@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 import random as _random
 from typing import Sequence, TypeVar
 
@@ -13,8 +14,16 @@ def random() -> float:
     return _random.random()
 
 
+def float() -> builtins.float:  # noqa: A001 - canonical Sona API spelling
+    return random()
+
+
 def randint(a: int, b: int) -> int:
     return _random.randint(a, b)
+
+
+def integer(a: int, b: int) -> int:
+    return randint(a, b)
 
 
 def choice(seq: Sequence[T]) -> T:
@@ -165,7 +174,7 @@ def weighted_choice(choices: dict[T, float]) -> T:
 
 
 __all__ = [
-    "random", "randint", "choice", "shuffle", "sample", "uniform",
+    "float", "integer", "random", "randint", "choice", "shuffle", "sample", "uniform",
     "seed", "choices", "gauss", "triangular", "randbytes",
     "coin_flip", "dice", "weighted_choice"
 ]

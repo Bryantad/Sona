@@ -122,9 +122,23 @@ func pointer_set(value, pointer, new_value) {
 }
 
 func parse(text, options=nil) {
-    return loads(text, options)
+    if options == nil {
+        options = {}
+    }
+    return json_parse(
+        text,
+        allow_comments=__option(options, "allow_comments", false),
+        allow_trailing_commas=__option(options, "allow_trailing_commas", false),
+        strict=__option(options, "strict", true)
+    )
 }
 
-func stringify(value, options=nil) {
-    return dumps(value, options)
+func stringify(value, indent=nil) {
+    return json_stringify(
+        value,
+        indent=__default(indent, nil),
+        sort_keys=true,
+        ensure_ascii=false,
+        trailing_newline=false
+    )
 }

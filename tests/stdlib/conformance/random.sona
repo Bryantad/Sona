@@ -1,0 +1,8 @@
+import random;
+random.seed(42);
+let first = random.integer(1, 1000);
+random.seed(42);
+let second = random.integer(1, 1000);
+if first == second {
+    print("yes");
+}

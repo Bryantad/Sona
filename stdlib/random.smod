@@ -54,6 +54,10 @@ func random() {
     return __next_raw() / __rng_modulus
 }
 
+func float() {
+    return random()
+}
+
 func __unit_random() {
     return __next_raw() / __rng_modulus
 }
@@ -75,6 +79,10 @@ func randint(a, b) {
         offset = span - 1
     }
     return a + offset
+}
+
+func integer(a, b) {
+    return randint(a, b)
 }
 
 func choice(values) {

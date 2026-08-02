@@ -1,7 +1,7 @@
 # Sona Standard Library Reference
 
 This reference documents the stable user-facing stdlib surface for Sona
-`0.15.1`. The package may contain more modules, but this page is the usability
+`0.15.4`. The package may contain more modules, but this page is the usability
 contract for new developers.
 
 Documentation truth rule: if this reference and runtime behavior disagree,
@@ -28,6 +28,7 @@ JSON-compatible data.
 | --- | --- |
 | `assert` | Run dedicated testing assertions. |
 | `color` | Apply optional ANSI terminal styling. |
+| `collection` | Transform and inspect lists and collection-like values. |
 | `csv` | Parse, validate, and write comma-separated value data. |
 | `date` | Work with ISO dates, calendar boundaries, and date differences. |
 | `env` | Read and write process environment values. |
@@ -35,8 +36,9 @@ JSON-compatible data.
 | `format` | Produce deterministic human-readable output formatting. |
 | `fs` | Inspect and manipulate filesystem paths. |
 | `hashing` | Create deterministic digests for strings and byte-like data. |
+| `http` | Perform bounded HTTP requests in the Python-compatible runtime. |
 | `intent` | Track local in-process intent notes. |
-| `io` | Read from and write to text files. |
+| `io` | Coordinate standard output and error streams. |
 | `json` | Parse, validate, and serialize JSON-compatible data. |
 | `log` | Use deterministic local logging helpers. |
 | `math` | Use numeric helpers and common math operations. |
@@ -47,6 +49,7 @@ JSON-compatible data.
 | `url` | Parse, build, encode, and decode URL values. |
 | `queue` | Use a Sona-authored FIFO queue. |
 | `stack` | Use a Sona-authored LIFO stack. |
+| `stdin` | Read console input. |
 | `sort` | Sort values with Sona-authored loop implementations. |
 | `search` | Find values in lists and strings with Sona-authored helpers. |
 | `statistics` | Compute descriptive statistics in Sona. |
@@ -394,7 +397,7 @@ preserved for compatibility but do not change runtime state.
 
 ## Sona-Native Foundation Modules
 
-Sona `0.15.1` moves the public foundation for `queue`, `stack`, `sort`,
+Sona `0.15.4` preserves the public foundation for `queue`, `stack`, `sort`,
 `search`, `statistics`, `matrix`, `graph`, and `permissions` into
 `stdlib/*.smod`. These modules are authored in Sona and should not depend on
 regular Python stdlib modules for their public implementation.

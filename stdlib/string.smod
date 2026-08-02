@@ -93,6 +93,10 @@ func starts_with(value, prefix, options=nil) {
     )
 }
 
+func startswith(value, prefix, options=nil) {
+    return starts_with(value, prefix, options)
+}
+
 func ends_with(value, suffix, options=nil) {
     if options == nil {
         options = {}
@@ -102,6 +106,10 @@ func ends_with(value, suffix, options=nil) {
         suffix,
         ignore_case=__option(options, "ignore_case", false)
     )
+}
+
+func endswith(value, suffix, options=nil) {
+    return ends_with(value, suffix, options)
 }
 
 func count(value, substring, options=nil) {

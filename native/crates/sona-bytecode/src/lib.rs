@@ -120,7 +120,7 @@ pub fn decode_source_backed(bytes: &[u8], file: impl Into<String>) -> SonaResult
             &file,
             "SONA-NATIVE-BYTECODE-001",
             "Invalid .sbc magic.",
-            "Use a .sbc file produced by Sona 0.15.3.",
+            "Use a .sbc file produced by Sona 0.15.4.",
         ));
     }
     if bytes.len() < FIXED_HEADER_BYTES {
@@ -138,7 +138,7 @@ pub fn decode_source_backed(bytes: &[u8], file: impl Into<String>) -> SonaResult
             &file,
             "SONA-NATIVE-BYTECODE-004",
             format!("Unsupported .sbc format version {version}."),
-            "Recompile the source with Sona 0.15.3.",
+            "Recompile the source with Sona 0.15.4.",
         ));
     }
     let header_length = usize::from(u16::from_le_bytes([bytes[6], bytes[7]]));

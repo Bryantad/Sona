@@ -1,0 +1,6 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func read(prompt=nil) {
+    return stdin_read(prompt)
+}

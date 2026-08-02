@@ -200,7 +200,7 @@ if _PYGLS_AVAILABLE:
 
     class SonaLsp(LanguageServer):
         def __init__(self):
-            super().__init__("sona-lsp", "0.15.3")
+            super().__init__("sona-lsp", "0.15.4")
 
         def validate(self, uri: str, text: str) -> None:
             diags: list[Diagnostic] = []

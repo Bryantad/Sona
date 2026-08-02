@@ -1,0 +1,5 @@
+import string;
+print(string.upper("sona"));
+if string.starts_with("sona", "so") {
+    print("yes");
+}

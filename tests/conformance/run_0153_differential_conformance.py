@@ -204,7 +204,7 @@ def _compare(fixture: dict[str, Any], native_binary: Path) -> Comparison:
 
 def _write_markdown(summary: dict[str, Any], path: Path) -> None:
     lines = [
-        "# Sona 0.15.3 Differential Conformance",
+        f"# Sona {summary['sona_version']} Differential Conformance",
         "",
         "This is bounded cross-engine conformance, not full semantic parity.",
         "",
@@ -230,9 +230,11 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--native-binary", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--sona-version", default=SONA_VERSION)
     args = parser.parse_args(argv)
     native_binary = args.native_binary.resolve()
     output_dir = args.output_dir.resolve()
+    sona_version = args.sona_version
     if not native_binary.is_file():
         parser.error("--native-binary must name an existing release binary")
     if not _outside_repository(output_dir):
@@ -243,19 +245,19 @@ def main(argv: list[str] | None = None) -> int:
     comparison_pass = sum(result.status == "pass" for result in results)
     comparison_fail = sum(result.status == "fail" for result in results)
     engine_executions = len(results) * 2
-    json_path = output_dir / "sona-0.15.3-differential-conformance.json"
-    markdown_path = output_dir / "sona-0.15.3-differential-conformance.md"
+    json_path = output_dir / f"sona-{sona_version}-differential-conformance.json"
+    markdown_path = output_dir / f"sona-{sona_version}-differential-conformance.md"
     summary = {
         "schema_id": SCHEMA_ID,
         "schema": 1,
-        "sona_version": SONA_VERSION,
+        "sona_version": sona_version,
         "source_commit": _git_commit(),
         "generated_at_utc": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "host_os": platform.system(),
         "architecture": platform.machine(),
         "tool_versions": {
             "python": platform.python_version(),
-            "native_core": SONA_VERSION,
+            "native_core": sona_version,
         },
         "command_summary": [
             execution.command
@@ -287,7 +289,7 @@ def main(argv: list[str] | None = None) -> int:
             "differential-conformance Markdown does not match its JSON source"
         )
     print(
-        "Sona 0.15.3 differential conformance: "
+        f"Sona {sona_version} differential conformance: "
         f"{'pass' if comparison_fail == 0 else 'fail'}"
     )
     print(f"JSON: {json_path}")

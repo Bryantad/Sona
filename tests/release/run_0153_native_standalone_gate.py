@@ -82,7 +82,7 @@ def _case(
 
 def _write_markdown(summary: dict, path: Path) -> None:
     lines = [
-        "# Sona 0.15.3 Native Standalone Gate",
+        f"# Sona {summary['sona_version']} Native Standalone Gate",
         "",
         f"- Schema: `{summary['schema_id']}`",
         f"- Source commit: `{summary['source_commit']}`",
@@ -103,9 +103,11 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--native-binary", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--sona-version", default=SONA_VERSION)
     args = parser.parse_args(argv)
     native_binary = args.native_binary.resolve()
     output_dir = args.output_dir.resolve()
+    sona_version = args.sona_version
     if not native_binary.is_file():
         parser.error("--native-binary must name an existing release binary")
     if not _outside_repository(output_dir):
@@ -145,7 +147,7 @@ def main(argv: list[str] | None = None) -> int:
 
     binary = str(isolated_binary)
     doctor = (
-        "native_binary_version=0.15.3\n"
+        f"native_binary_version={sona_version}\n"
         "bytecode_version=1\n"
         "feature_level=Sona Native Core preview\n"
         "python_required=false\n"
@@ -244,19 +246,19 @@ def main(argv: list[str] | None = None) -> int:
 
     passed = sum(result.status == "pass" for result in results)
     failed = sum(result.status == "fail" for result in results)
-    json_path = output_dir / "sona-0.15.3-native-standalone.json"
-    markdown_path = output_dir / "sona-0.15.3-native-standalone.md"
+    json_path = output_dir / f"sona-{sona_version}-native-standalone.json"
+    markdown_path = output_dir / f"sona-{sona_version}-native-standalone.md"
     summary = {
         "schema_id": SCHEMA_ID,
         "schema": 1,
-        "sona_version": SONA_VERSION,
+        "sona_version": sona_version,
         "source_commit": _git_commit(),
         "generated_at_utc": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "host_os": platform.system(),
         "architecture": platform.machine(),
         "tool_versions": {
             "python_harness": platform.python_version(),
-            "native_core": SONA_VERSION,
+            "native_core": sona_version,
         },
         "command_summary": [result.command for result in results],
         "artifact_relative_evidence_paths": [json_path.name, markdown_path.name],

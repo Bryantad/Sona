@@ -7,6 +7,7 @@ import importlib
 
 _SPECIAL_NATIVE_MODULES = {
     "assert": "native_assertions",
+    "stdin": "native_io",
 }
 
 for _accessibility_module in [

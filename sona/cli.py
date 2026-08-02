@@ -1,5 +1,5 @@
 """
-Sona v0.15.3 Command Line Interface with AI Integration
+Sona v0.15.4 Command Line Interface with AI Integration
 
 Enhanced CLI with profile, benchmark, suggest, and explain commands
 powered by GPT-2 and cognitive assistance features.
@@ -670,6 +670,7 @@ def execute_sona(
     project_root = Path(file_path).resolve().parent if file_path else Path.cwd()
     interpreter = _load_default_interpreter(project_root=project_root)
     interpreter.compatibility_mode = compatibility_mode
+    interpreter.safe_mode = bool(safe_mode)
     if safe_mode:
         interpreter.maximum_call_depth = 128
         interpreter.maximum_loop_iterations = 100_000
@@ -864,7 +865,7 @@ ENHANCED_COMMANDS = None  # lazy-loaded mapping
 
 
 # Version information
-SONA_VERSION = "0.15.3"
+SONA_VERSION = "0.15.4"
 AI_FEATURES_VERSION = "1.0.0"
 DEFAULT_OFFLINE_MODEL = "qwen2.5-coder:7b"
 
@@ -893,7 +894,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
     """Create the main argument parser for Sona CLI"""
     parser = SonaArgumentParser(
         prog='sona',
-        description='Sona Cognitive Programming Language v0.15.3',
+        description='Sona Cognitive Programming Language v0.15.4',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
             "Usage:\n"
@@ -2244,7 +2245,7 @@ def handle_repl_command(args) -> int:
         from sona.interpreter import SonaInterpreter
         interpreter = SonaInterpreter()
 
-        safe_print("Sona REPL v0.15.3 - Type 'exit' to quit; ':reset' clears state")
+        safe_print("Sona REPL v0.15.4 - Type 'exit' to quit; ':reset' clears state")
         if args.ai:
             try:
                 interpreter.enable_ai()
@@ -2456,7 +2457,7 @@ def handle_model_command(args) -> int:
                 if item is None:
                     continue
                 if item.provider_id in {'claude', 'codex'}:
-                    state, detail = 'unavailable', 'Provider is intentionally unavailable in 0.15.3.'
+                    state, detail = 'unavailable', 'Provider is intentionally unavailable in 0.15.4.'
                 elif not item.enabled:
                     state, detail = 'disabled', 'Descriptor is disabled.'
                 elif item.provider_id == 'deterministic':

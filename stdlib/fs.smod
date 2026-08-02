@@ -15,7 +15,11 @@ func __default_encoding(value) {
 }
 
 func read(path, encoding=nil) {
-    return fs_read(path, __default_encoding(encoding))
+    return read_text(path, encoding)
+}
+
+func read_text(path, encoding=nil) {
+    return fs_read_text(path, __default_encoding(encoding))
 }
 
 func read_bytes(path) {
@@ -23,7 +27,11 @@ func read_bytes(path) {
 }
 
 func write(path, content, encoding=nil) {
-    return fs_write(path, content, __default_encoding(encoding))
+    return write_text(path, content, encoding)
+}
+
+func write_text(path, content, encoding=nil) {
+    return fs_write_text(path, content, __default_encoding(encoding))
 }
 
 func write_bytes(path, data) {
@@ -31,7 +39,11 @@ func write_bytes(path, data) {
 }
 
 func append(path, content, encoding=nil) {
-    return fs_append(path, content, __default_encoding(encoding))
+    return append_text(path, content, encoding)
+}
+
+func append_text(path, content, encoding=nil) {
+    return fs_append_text(path, content, __default_encoding(encoding))
 }
 
 func exists(path) {
@@ -55,13 +67,17 @@ func list_all(path) {
 }
 
 func mkdir(path, parents=nil, exist_ok=nil) {
+    return create_dir(path, parents, exist_ok)
+}
+
+func create_dir(path, parents=nil, exist_ok=nil) {
     if parents == nil {
         parents = true
     }
     if exist_ok == nil {
         exist_ok = true
     }
-    return fs_mkdir(path, parents, exist_ok)
+    return fs_create_dir(path, parents, exist_ok)
 }
 
 func remove(path, recursive=nil) {
@@ -76,6 +92,10 @@ func copy(src, dst, overwrite=nil) {
         overwrite = true
     }
     return fs_copy(src, dst, overwrite)
+}
+
+func rename(src, dst) {
+    return fs_rename(src, dst)
 }
 
 func move(src, dst, overwrite=nil) {

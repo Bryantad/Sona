@@ -539,7 +539,7 @@ class SonaCliIntegration {
         return `<!DOCTYPE html>
 <html>
 <body>
-  <h1>Welcome to Sona 0.15.3</h1>
+  <h1>Welcome to Sona 0.15.4</h1>
   <p>The AI-native programming language with cognitive accessibility features.</p>
   <button onclick="vscode.postMessage({command: 'setupAzure'})">Setup Azure</button>
   <button onclick="vscode.postMessage({command: 'setupManual'})">Manual Setup</button>

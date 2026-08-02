@@ -1,0 +1,4 @@
+import date;
+let parsed = date.parse("2024-02-29");
+print(parsed.day);
+print(date.format("2024-02-29", "%Y/%m/%d"));

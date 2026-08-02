@@ -1,0 +1,4 @@
+import math;
+if math.sqrt(81) == 9 {
+    print("yes");
+}

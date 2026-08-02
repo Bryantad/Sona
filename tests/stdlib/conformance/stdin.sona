@@ -1,0 +1,2 @@
+import stdin;
+print(stdin.read());

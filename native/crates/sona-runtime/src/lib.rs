@@ -22,7 +22,8 @@ impl Default for RuntimeLimits {
 #[derive(Clone, Debug)]
 pub struct RuntimeCapabilities {
     pub console: bool,
-    pub filesystem: bool,
+    pub filesystem_read: bool,
+    pub filesystem_write: bool,
     pub network: bool,
     pub process: bool,
     pub environment: bool,
@@ -32,7 +33,8 @@ impl Default for RuntimeCapabilities {
     fn default() -> Self {
         Self {
             console: true,
-            filesystem: false,
+            filesystem_read: false,
+            filesystem_write: false,
             network: false,
             process: false,
             environment: false,

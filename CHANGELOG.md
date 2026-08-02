@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.15.4
+
+- Established one schema-2 standard-library manifest and generated catalog for
+  146 preserved public modules and the 11-module certified foundation.
+- Added canonical filesystem, HTTP, JSON, random, stream, input, string, date,
+  and time APIs with structured diagnostic families.
+- Added safe-mode filesystem/network restrictions to the Python-compatible
+  runtime and explicit filesystem/network capability flags to Native Core.
+- Added Native Core host-module implementations for the bounded foundation;
+  native HTTP remains explicitly unavailable with `SONA-HTTP-005`.
+- Added bounded Python/Native standard-library conformance fixtures, runtime
+  capability regressions, HTTP mock-server tests, and executable documentation
+  examples.
+- Preserved 0.15.x aliases, Python compatibility semantics, cognitive runtime,
+  Guardian interfaces, and workspace-module precedence.
+
 ## 0.15.1
 
 - Restored manual and Azure AI setup loading.

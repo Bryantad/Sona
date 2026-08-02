@@ -1,5 +1,5 @@
 """
-Sona v0.15.3 - Enhanced Interpreter with Full Loop Support
+Sona v0.15.4 - Enhanced Interpreter with Full Loop Support
 ========================================================
 
 Production-grade interpreter with complete language feature support.
@@ -335,13 +335,14 @@ class SimpleModuleSystem:
         if native_module is None:
             return
 
-        providers = [native_module]
+        providers = []
         factory = getattr(native_module, "build_native_bridge", None)
         if callable(factory):
             try:
                 providers.append(factory(self.interpreter))
             except Exception:
                 pass
+        providers.append(native_module)
 
         for provider in providers:
             for attr_name in dir(provider):
@@ -1407,6 +1408,8 @@ class SonaUnifiedInterpreter:
 
         # Initialize module system
         self.project_root = (Path(project_root) if project_root else Path.cwd()).resolve()
+        self.safe_mode = False
+        self.stdlib_capabilities = None
         self._init_options["project_root"] = self.project_root
         self.module_system = SimpleModuleSystem(self, project_root=self.project_root)
 
@@ -1750,7 +1753,7 @@ class SonaUnifiedInterpreter:
                                  global_scope=True)
 
         # Built-in variables
-        self.memory.set_variable('__version__', '0.15.3', global_scope=True)
+        self.memory.set_variable('__version__', '0.15.4', global_scope=True)
         self.memory.set_variable('__sona__', True, global_scope=True)
         self.memory.set_variable('True', True, global_scope=True)
         self.memory.set_variable('False', False, global_scope=True)

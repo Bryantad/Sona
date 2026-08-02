@@ -624,6 +624,8 @@ def diff(obj1: Any, obj2: Any) -> dict[str, Any]:
 
 
 __all__ = [
+    "parse",
+    "stringify",
     "loads",
     "load",
     "dumps",

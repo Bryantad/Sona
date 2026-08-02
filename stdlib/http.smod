@@ -1,0 +1,46 @@
+const module_format = "smod-runtime"
+const runtime_backend = "smod"
+
+func get(url, options=nil, headers=nil, max_retries=nil, retry_delay=nil) {
+    return http_get(url, options, headers, max_retries, retry_delay)
+}
+
+func post(url, options=nil, json=nil, timeout=nil, headers=nil, max_retries=nil, retry_delay=nil) {
+    return http_post(url, options, json, timeout, headers, max_retries, retry_delay)
+}
+
+func put(url, options=nil, json=nil, timeout=nil, headers=nil) {
+    return http_put(url, options, json, timeout, headers)
+}
+
+func patch(url, options=nil, json=nil, timeout=nil, headers=nil) {
+    return http_patch(url, options, json, timeout, headers)
+}
+
+func delete(url, options=nil, headers=nil) {
+    return http_delete(url, options, headers)
+}
+
+func head(url, options=nil, headers=nil) {
+    return http_head(url, options, headers)
+}
+
+func request(method, url, options=nil) {
+    return http_request(method, url, options)
+}
+
+func get_json(url, options=nil) {
+    return http_get_json(url, options)
+}
+
+func post_json(url, value=nil, options=nil) {
+    return http_post_json(url, value, options)
+}
+
+func download(url, filename, options=nil) {
+    return http_download(url, filename, options)
+}
+
+func upload(url, filename, options=nil) {
+    return http_upload(url, filename, options)
+}
