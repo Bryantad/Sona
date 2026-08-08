@@ -128,7 +128,7 @@ pub(super) fn module_exports(name: &str) -> Option<HashMap<String, Value>> {
 
 impl Vm {
     pub(super) fn call_host(&mut self, name: &'static str, args: Vec<Value>) -> SonaResult<Value> {
-        match name {
+        let result = match name {
             "collection.first" => collection_first(&args),
             "collection.last" => collection_last(&args),
             "collection.take" => collection_take(&args, false),
@@ -177,6 +177,63 @@ impl Vm {
                 format!("Native host export '{name}' is not implemented."),
                 "Use an export listed in the 0.15.4 native support matrix.",
             )),
+        };
+        self.record_host_effect(name, &args, &result);
+        result
+    }
+
+    fn record_host_effect(&mut self, name: &str, args: &[Value], result: &SonaResult<Value>) {
+        let diagnostic_id = result
+            .as_ref()
+            .err()
+            .and_then(|items| items.0.first())
+            .map(|diagnostic| diagnostic.diagnostic_id.as_str());
+        let standard_outcome = if result.is_ok() {
+            "allowed"
+        } else if matches!(diagnostic_id, Some("SONA-FS-005") | Some("SONA-IO-003")) {
+            "denied"
+        } else {
+            "failed"
+        };
+
+        match name {
+            "fs.rename" | "fs.copy" => {
+                let source = self.proof_filesystem_target(args.first());
+                let destination = self.proof_filesystem_target(args.get(1));
+                self.record_proof_effect(
+                    "filesystem",
+                    &format!("{name}.source"),
+                    standard_outcome,
+                    source,
+                );
+                self.record_proof_effect(
+                    "filesystem",
+                    &format!("{name}.destination"),
+                    standard_outcome,
+                    destination,
+                );
+            }
+            name if name.starts_with("fs.") => {
+                let target = self.proof_filesystem_target(args.first());
+                self.record_proof_effect("filesystem", name, standard_outcome, target);
+            }
+            name if name.starts_with("http.") => {
+                let outcome = if result.is_ok() {
+                    "allowed"
+                } else if self.config.capabilities.network {
+                    "unavailable"
+                } else {
+                    "denied"
+                };
+                self.record_proof_effect("network", name, outcome, None);
+            }
+            "io.write_stdout" | "io.write_stderr" | "io.flush" => {
+                self.record_proof_effect("console", name, standard_outcome, None);
+            }
+            "stdin.read" => {
+                self.record_proof_effect("stdin", "read", standard_outcome, None);
+            }
+            _ => {}
         }
     }
 
@@ -373,11 +430,9 @@ impl Vm {
         self.require_console()?;
         let text = args[0].to_string();
         if stderr {
-            eprint!("{text}");
-            std::io::stderr().flush().map_err(io_error)?;
+            self.emit_stderr(&text).map_err(io_error)?;
         } else {
-            print!("{text}");
-            std::io::stdout().flush().map_err(io_error)?;
+            self.emit_stdout(&text).map_err(io_error)?;
             self.output.push(text);
         }
         Ok(Value::Null)
@@ -404,12 +459,11 @@ impl Vm {
         }
     }
 
-    fn stdin_read(&self, args: &[Value]) -> SonaResult<Value> {
+    fn stdin_read(&mut self, args: &[Value]) -> SonaResult<Value> {
         arity("stdin.read", args, 0, 1)?;
         self.require_console()?;
         if let Some(prompt) = args.first() {
-            print!("{prompt}");
-            std::io::stdout().flush().map_err(io_error)?;
+            self.emit_stdout(&prompt.to_string()).map_err(io_error)?;
         }
         let mut line = String::new();
         std::io::stdin().read_line(&mut line).map_err(io_error)?;

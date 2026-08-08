@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 import shutil
 import subprocess
@@ -112,3 +113,264 @@ def test_differential_conformance_has_exact_accounting(
     assert summary["comparison_pass"] == 20
     assert summary["comparison_fail"] == 0
     assert summary["scope"] == "bounded cross-engine conformance"
+
+
+def _native_run(
+    native_binary: Path,
+    *args: str,
+    cwd: Path,
+    input_data: bytes | None = None,
+) -> subprocess.CompletedProcess[bytes]:
+    return subprocess.run(
+        [str(native_binary), *args],
+        cwd=cwd,
+        capture_output=True,
+        input=input_data,
+        shell=False,
+        timeout=30,
+    )
+
+
+def _sha256(data: bytes) -> str:
+    return "sha256:" + hashlib.sha256(data).hexdigest()
+
+
+def _write_source(path: Path, text: str) -> None:
+    path.write_text(text, encoding="utf-8", newline="\n")
+
+
+def test_native_proof_receipt_is_redacted_canonical_and_matches_run_output(
+    tmp_path: Path, native_binary: Path
+):
+    source = tmp_path / "proof.sona"
+    source.write_bytes(b'import io; io.write_stdout("value"); io.write_stderr("warn"); print("line");\r\n')
+    normal = _native_run(native_binary, "run", str(source), "--engine", "native", cwd=tmp_path)
+    receipt_path = tmp_path / "proof.json"
+    proof = _native_run(
+        native_binary,
+        "proof",
+        str(source),
+        "--receipt",
+        str(receipt_path),
+        "--engine",
+        "native",
+        cwd=tmp_path,
+    )
+
+    assert proof.returncode == normal.returncode == 0
+    assert proof.stdout == normal.stdout == b"valueline\n"
+    assert proof.stderr == normal.stderr == b"warn"
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    assert receipt["schema_id"] == "sona.native-proof.schema-1"
+    assert receipt["engine"] == {
+        "fallback_used": False,
+        "name": "native",
+        "python_embedded": False,
+        "python_required": False,
+    }
+    assert receipt["program"] == {
+        "kind": "source",
+        "source": {"sha256": _sha256(source.read_bytes()), "bytes": len(source.read_bytes())},
+    }
+    assert receipt["execution"]["stdout"] == {
+        "sha256": _sha256(proof.stdout),
+        "bytes": len(proof.stdout),
+    }
+    assert receipt["execution"]["stderr"] == {
+        "sha256": _sha256(proof.stderr),
+        "bytes": len(proof.stderr),
+    }
+    unsigned = dict(receipt)
+    receipt_hash = unsigned.pop("receipt_hash")
+    canonical = json.dumps(unsigned, ensure_ascii=False, separators=(",", ":"), sort_keys=True).encode("utf-8")
+    assert receipt_hash == _sha256(canonical)
+    assert receipt_hash != _sha256(canonical + b"\n")
+    rendered = receipt_path.read_text(encoding="utf-8")
+    assert str(source) not in rendered
+    assert "value" not in rendered
+    assert "warn" not in rendered
+
+
+def test_native_proof_sbc_preserves_container_and_exact_source_identity(
+    tmp_path: Path, native_binary: Path
+):
+    source = tmp_path / "source.sona"
+    source.write_bytes(b'print("container");\r\n')
+    container = tmp_path / "source.sbc"
+    compiled = _native_run(
+        native_binary, "compile", str(source), "--output", str(container), cwd=tmp_path
+    )
+    assert compiled.returncode == 0, compiled.stderr.decode("utf-8", "replace")
+
+    receipt_path = tmp_path / "container-proof.json"
+    proof = _native_run(
+        native_binary,
+        "proof",
+        str(container),
+        "--receipt",
+        str(receipt_path),
+        cwd=tmp_path,
+    )
+    assert proof.returncode == 0, proof.stderr.decode("utf-8", "replace")
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    assert receipt["program"] == {
+        "kind": "sbc",
+        "container": {"sha256": _sha256(container.read_bytes()), "bytes": len(container.read_bytes())},
+        "source": {"sha256": _sha256(source.read_bytes()), "bytes": len(source.read_bytes())},
+    }
+
+
+def test_native_proof_preserves_program_diagnostic_ownership_and_receipt(
+    tmp_path: Path, native_binary: Path
+):
+    source = tmp_path / "legacy.sona"
+    _write_source(source, "fn legacy() { return 1; };\n")
+    receipt_path = tmp_path / "legacy-proof.json"
+    process = _native_run(
+        native_binary, "proof", str(source), "--receipt", str(receipt_path), cwd=tmp_path
+    )
+    normal = _native_run(native_binary, "run", str(source), "--engine", "native", cwd=tmp_path)
+    assert process.returncode == 1
+    assert process.stdout == normal.stdout
+    assert process.stderr == normal.stderr
+    assert b"SONA-PARSE-001" in process.stderr
+    assert b"PROOF-" not in process.stderr
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    assert receipt["execution"]["status"] == "failed"
+    assert receipt["execution"]["diagnostic"]["id"] == "SONA-PARSE-001"
+
+    denied = tmp_path / "denied.sona"
+    _write_source(denied, 'import fs; print(fs.read_text("secret.txt"));\n')
+    denied_receipt = tmp_path / "denied-proof.json"
+    process = _native_run(
+        native_binary, "proof", str(denied), "--receipt", str(denied_receipt), cwd=tmp_path
+    )
+    normal = _native_run(native_binary, "run", str(denied), "--engine", "native", cwd=tmp_path)
+    assert process.returncode == 1
+    assert process.stdout == normal.stdout
+    assert process.stderr == normal.stderr
+    assert b"SONA-FS-005" in process.stderr
+    assert b"PROOF-" not in process.stderr
+    receipt = json.loads(denied_receipt.read_text(encoding="utf-8"))
+    assert receipt["execution"]["diagnostic"]["id"] == "SONA-FS-005"
+    assert receipt["effects"][0]["outcome"] == "denied"
+
+
+def test_native_proof_uses_private_per_execution_target_fingerprints(
+    tmp_path: Path, native_binary: Path
+):
+    target = tmp_path / "sensitive-target.txt"
+    target.write_text("present", encoding="utf-8")
+    source = tmp_path / "effects.sona"
+    _write_source(
+        source,
+        'import fs; print(fs.exists("sensitive-target.txt")); print(fs.exists("sensitive-target.txt"));\n',
+    )
+
+    first_receipt = tmp_path / "first.json"
+    first = _native_run(
+        native_binary,
+        "proof",
+        str(source),
+        "--receipt",
+        str(first_receipt),
+        "--allow-fs-read",
+        cwd=tmp_path,
+    )
+    assert first.returncode == 0, first.stderr.decode("utf-8", "replace")
+    first_payload = json.loads(first_receipt.read_text(encoding="utf-8"))
+    filesystem = [item for item in first_payload["effects"] if item["scope"] == "filesystem"]
+    assert len(filesystem) == 2
+    assert filesystem[0]["target"].startswith("hmac-sha256:")
+    assert filesystem[0]["target"] == filesystem[1]["target"]
+    assert "sensitive-target" not in first_receipt.read_text(encoding="utf-8")
+
+    second_receipt = tmp_path / "second.json"
+    second = _native_run(
+        native_binary,
+        "proof",
+        str(source),
+        "--receipt",
+        str(second_receipt),
+        "--allow-fs-read",
+        cwd=tmp_path,
+    )
+    assert second.returncode == 0
+    second_payload = json.loads(second_receipt.read_text(encoding="utf-8"))
+    second_target = next(item["target"] for item in second_payload["effects"] if item["scope"] == "filesystem")
+    assert second_target != filesystem[0]["target"]
+
+
+def test_native_proof_never_records_stdin_values_or_fingerprints(
+    tmp_path: Path, native_binary: Path
+):
+    source = tmp_path / "stdin.sona"
+    _write_source(source, "import stdin; print(stdin.read());\n")
+    receipt_path = tmp_path / "stdin-proof.json"
+    process = _native_run(
+        native_binary,
+        "proof",
+        str(source),
+        "--receipt",
+        str(receipt_path),
+        cwd=tmp_path,
+        input_data=b"0420\n",
+    )
+    assert process.returncode == 0
+    assert process.stdout == b"0420\n"
+    receipt_text = receipt_path.read_text(encoding="utf-8")
+    receipt = json.loads(receipt_text)
+    stdin_effect = next(item for item in receipt["effects"] if item["scope"] == "stdin")
+    assert stdin_effect == {
+        "operation": "read",
+        "outcome": "allowed",
+        "scope": "stdin",
+        "sequence": 1,
+    }
+    assert "0420" not in receipt_text
+
+
+def test_native_proof_infrastructure_and_container_failures_have_exact_owners(
+    tmp_path: Path, native_binary: Path
+):
+    source = tmp_path / "source.sona"
+    _write_source(source, 'print("ok");\n')
+    existing = tmp_path / "existing.json"
+    existing.write_text("{}\n", encoding="utf-8")
+
+    cases = [
+        (["proof", str(source)], "PROOF-001"),
+        (["proof", str(tmp_path / "unsupported.txt"), "--receipt", str(tmp_path / "x.json")], "PROOF-002"),
+        (["proof", str(source), "--receipt", str(tmp_path / "missing" / "x.json")], "PROOF-003"),
+        (["proof", str(source), "--receipt", str(existing)], "PROOF-004"),
+        (["proof", str(source), "--receipt", str(tmp_path / "engine.json"), "--engine", "python-compat"], "SONA-NATIVE-CLI-004"),
+    ]
+    for arguments, diagnostic_id in cases:
+        process = _native_run(native_binary, *arguments, cwd=tmp_path)
+        assert process.returncode == 1
+        assert diagnostic_id.encode("utf-8") in process.stderr
+        if diagnostic_id != "PROOF-001":
+            assert b"PROOF-001" not in process.stderr
+
+    malformed = tmp_path / "malformed.sbc"
+    malformed.write_bytes(b"not-an-sbc")
+    malformed_receipt = tmp_path / "malformed.json"
+    process = _native_run(
+        native_binary, "proof", str(malformed), "--receipt", str(malformed_receipt), cwd=tmp_path
+    )
+    assert process.returncode == 1
+    assert b"SONA-NATIVE-BYTECODE-001" in process.stderr
+    assert b"PROOF-" not in process.stderr
+    assert not malformed_receipt.exists()
+
+    run = _native_run(native_binary, "run", str(source), "--engine", "native", cwd=tmp_path)
+    assert run.returncode == 0
+    assert b"PROOF-" not in run.stdout + run.stderr
+    container = tmp_path / "normal.sbc"
+    compiled = _native_run(
+        native_binary, "compile", str(source), "--output", str(container), cwd=tmp_path
+    )
+    assert compiled.returncode == 0
+    executed = _native_run(native_binary, "exec", str(container), cwd=tmp_path)
+    assert executed.returncode == 0
+    assert b"PROOF-" not in executed.stdout + executed.stderr

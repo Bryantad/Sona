@@ -18,3 +18,13 @@ granted through these flags.
 
 Workspace `.smod` modules retain precedence over built-in Native Core host
 modules. The host registry is a fallback, not an override.
+
+Native Proof Mode uses the same Native Core grants while writing an explicit
+runner-owned evidence receipt:
+
+```text
+sona proof app.sona --receipt proof.json --engine native --allow-fs-read
+```
+
+It does not grant any capability beyond the listed flags. See [Native Proof
+Mode](../native-proof-mode.md) for receipt redaction and diagnostic ownership.

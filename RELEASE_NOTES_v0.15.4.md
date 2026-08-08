@@ -47,6 +47,20 @@ foundation. Collection and random remain honestly classified as `PARTIAL`,
 and HTTP as `UNSUPPORTED`. The release does not claim full Python/Native
 semantic parity or serialized instruction bytecode.
 
+## Native Proof Mode
+
+- `sona proof <program.sona|program.sbc> --receipt <path>` records redacted,
+  self-hashed Native Core execution evidence without changing the program's
+  native runtime behavior.
+- Receipts identify exact source/container bytes, granted capabilities,
+  sanitized effects, outcome, diagnostics, and output hashes. They never store
+  source, paths, output bodies, stdin values, credentials, or environment data.
+- `PROOF-001..007` are reserved for Proof Mode infrastructure. Program parser,
+  container, VM, runtime, engine, and capability diagnostics retain their
+  established identifiers.
+- This is tamper-evident-after-creation evidence, not signer identity, machine
+  attestation, trusted-hardware proof, or a claim of Python/Native parity.
+
 ## Compatibility
 
 - Valid 0.15.3 Python-compatible programs, implicit final-statement function

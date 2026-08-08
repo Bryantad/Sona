@@ -1,14 +1,132 @@
 use std::collections::HashMap;
 use std::fmt;
-use std::path::PathBuf;
+use std::io::{self, Write};
+use std::path::{Component, Path, PathBuf};
 use std::time::Instant;
 
+use hmac::{Hmac, Mac};
+use sha2::{Digest, Sha256};
 use sona_bytecode::{BytecodeProgram, Constant, FunctionBytecode, Instruction};
 use sona_diagnostics::{Diagnostic, DiagnosticList, SonaResult, SourceSpan};
 use sona_modules::{default_module_roots, ModuleResolver};
 use sona_runtime::RuntimeConfig;
 
 mod host;
+
+type HmacSha256 = Hmac<Sha256>;
+
+/// Redacted effect evidence emitted only when the caller enables Native Proof
+/// observation.  Raw paths and argument values never leave the VM.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct NativeProofEffect {
+    pub sequence: u64,
+    pub scope: String,
+    pub operation: String,
+    pub outcome: String,
+    pub target: Option<String>,
+}
+
+/// Incremental process-output and host-effect evidence for one native run.
+/// It observes the existing runtime boundaries; it does not influence VM
+/// evaluation or capability decisions.
+#[derive(Clone, Debug)]
+pub struct NativeProofEvidence {
+    target_key: Vec<u8>,
+    stdout: Sha256,
+    stderr: Sha256,
+    stdout_bytes: u64,
+    stderr_bytes: u64,
+    effects: Vec<NativeProofEffect>,
+}
+
+impl NativeProofEvidence {
+    pub fn new(target_key: Vec<u8>) -> Self {
+        Self {
+            target_key,
+            stdout: Sha256::new(),
+            stderr: Sha256::new(),
+            stdout_bytes: 0,
+            stderr_bytes: 0,
+            effects: Vec::new(),
+        }
+    }
+
+    pub fn record_stdout(&mut self, bytes: &[u8]) {
+        self.stdout.update(bytes);
+        self.stdout_bytes = self.stdout_bytes.saturating_add(bytes.len() as u64);
+    }
+
+    pub fn record_stderr(&mut self, bytes: &[u8]) {
+        self.stderr.update(bytes);
+        self.stderr_bytes = self.stderr_bytes.saturating_add(bytes.len() as u64);
+    }
+
+    pub fn stdout_bytes(&self) -> u64 {
+        self.stdout_bytes
+    }
+
+    pub fn stderr_bytes(&self) -> u64 {
+        self.stderr_bytes
+    }
+
+    pub fn stdout_sha256(&self) -> String {
+        sha256_label(self.stdout.clone().finalize().as_slice())
+    }
+
+    pub fn stderr_sha256(&self) -> String {
+        sha256_label(self.stderr.clone().finalize().as_slice())
+    }
+
+    pub fn effects(&self) -> &[NativeProofEffect] {
+        &self.effects
+    }
+
+    fn record_effect(
+        &mut self,
+        scope: &str,
+        operation: &str,
+        outcome: &str,
+        target_identity: Option<String>,
+    ) {
+        let target = target_identity.map(|identity| {
+            let mut mac = HmacSha256::new_from_slice(&self.target_key)
+                .expect("HMAC accepts a non-empty SHA-256 key");
+            mac.update(identity.as_bytes());
+            format!("hmac-sha256:{}", hex_lower(&mac.finalize().into_bytes()))
+        });
+        self.effects.push(NativeProofEffect {
+            sequence: (self.effects.len() as u64) + 1,
+            scope: scope.to_string(),
+            operation: operation.to_string(),
+            outcome: outcome.to_string(),
+            target,
+        });
+    }
+}
+
+fn hex_lower(bytes: &[u8]) -> String {
+    bytes.iter().map(|byte| format!("{byte:02x}")).collect()
+}
+
+fn sha256_label(bytes: &[u8]) -> String {
+    format!("sha256:{}", hex_lower(bytes))
+}
+
+fn lexical_normalize_path(path: &Path) -> PathBuf {
+    let mut normalized = PathBuf::new();
+    for component in path.components() {
+        match component {
+            Component::CurDir => {}
+            Component::ParentDir => {
+                let _ = normalized.pop();
+            }
+            Component::Prefix(prefix) => normalized.push(prefix.as_os_str()),
+            Component::RootDir => normalized.push(component.as_os_str()),
+            Component::Normal(part) => normalized.push(part),
+        }
+    }
+    normalized
+}
 
 #[derive(Clone, Debug)]
 pub enum Value {
@@ -96,6 +214,7 @@ pub struct Vm {
     resolver: ModuleResolver,
     random_state: u64,
     started_at: Instant,
+    proof: Option<NativeProofEvidence>,
 }
 
 impl Vm {
@@ -127,11 +246,81 @@ impl Vm {
             resolver,
             random_state: 0x534f_4e41_0154,
             started_at: Instant::now(),
+            proof: None,
         }
     }
 
     pub fn output(&self) -> &[String] {
         &self.output
+    }
+
+    /// Enable redacted Proof Mode observation for this VM instance.  This is
+    /// deliberately opt-in so ordinary native runs retain no proof state.
+    pub fn enable_proof_observation(&mut self, target_key: Vec<u8>) {
+        self.proof = Some(NativeProofEvidence::new(target_key));
+    }
+
+    /// Return the collected evidence after execution.  The caller may append
+    /// CLI-rendered diagnostics to the output digests before serializing a
+    /// receipt.
+    pub fn take_proof_evidence(&mut self) -> Option<NativeProofEvidence> {
+        self.proof.take()
+    }
+
+    pub(crate) fn emit_stdout(&mut self, text: &str) -> io::Result<()> {
+        {
+            let stdout = io::stdout();
+            let mut output = stdout.lock();
+            output.write_all(text.as_bytes())?;
+            output.flush()?;
+        }
+        if let Some(proof) = self.proof.as_mut() {
+            proof.record_stdout(text.as_bytes());
+        }
+        Ok(())
+    }
+
+    pub(crate) fn emit_stderr(&mut self, text: &str) -> io::Result<()> {
+        {
+            let stderr = io::stderr();
+            let mut output = stderr.lock();
+            output.write_all(text.as_bytes())?;
+            output.flush()?;
+        }
+        if let Some(proof) = self.proof.as_mut() {
+            proof.record_stderr(text.as_bytes());
+        }
+        Ok(())
+    }
+
+    pub(crate) fn record_proof_effect(
+        &mut self,
+        scope: &str,
+        operation: &str,
+        outcome: &str,
+        target_identity: Option<String>,
+    ) {
+        if let Some(proof) = self.proof.as_mut() {
+            proof.record_effect(scope, operation, outcome, target_identity);
+        }
+    }
+
+    pub(crate) fn proof_filesystem_target(&self, value: Option<&Value>) -> Option<String> {
+        let Value::String(raw) = value? else {
+            return None;
+        };
+        let path = Path::new(raw);
+        let absolute = if path.is_absolute() {
+            path.to_path_buf()
+        } else {
+            std::env::current_dir().ok()?.join(path)
+        };
+        let identity =
+            std::fs::canonicalize(&absolute).unwrap_or_else(|_| lexical_normalize_path(&absolute));
+        Some(format!(
+            "filesystem\u{0}{}",
+            identity.to_string_lossy().replace('\\', "/")
+        ))
     }
 
     pub fn execute(&mut self, program: &BytecodeProgram) -> SonaResult<Value> {
@@ -376,17 +565,26 @@ impl Vm {
         match callee {
             Value::NativeFunction("print") => {
                 if !self.config.capabilities.console {
-                    return Err(DiagnosticList::single(Diagnostic::error(
+                    let diagnostic = DiagnosticList::single(Diagnostic::error(
                         "E0300",
                         "SONA-NATIVE-POLICY-001",
                         "policy",
                         "Console output is disabled by runtime policy.",
                         SourceSpan::unknown(),
                         "Enable console capability for this run.",
-                    )));
+                    ));
+                    self.record_proof_effect("console", "print", "denied", None);
+                    return Err(diagnostic);
                 }
                 let line = args.first().map(ToString::to_string).unwrap_or_default();
-                println!("{line}");
+                let result = self.emit_stdout(&format!("{line}\n"));
+                self.record_proof_effect(
+                    "console",
+                    "print",
+                    if result.is_ok() { "allowed" } else { "failed" },
+                    None,
+                );
+                result.map_err(console_output_error)?;
                 self.output.push(line);
                 self.stack.push(Value::Null);
             }
@@ -597,6 +795,17 @@ fn type_error(message: impl Into<String>) -> DiagnosticList {
         message,
         SourceSpan::unknown(),
         "Use operands supported by the Sona Native Core profile.",
+    ))
+}
+
+fn console_output_error(_error: std::io::Error) -> DiagnosticList {
+    DiagnosticList::single(Diagnostic::error(
+        "E0600",
+        "SONA-IO-002",
+        "io",
+        "Console output failed.",
+        SourceSpan::unknown(),
+        "Check the output destination and run the program again.",
     ))
 }
 

@@ -9,6 +9,7 @@ feature drafts are intentionally not part of the published branch structure.
 - [Quickstart](QUICKSTART.md)
 - [Language Reference](LANGUAGE_REFERENCE.md)
 - [Standard Library Reference](STDLIB_REFERENCE.md)
+- [Native Proof Mode](reference/native-proof-mode.md)
 - [0.15.4 Standard Library Catalog](reference/stdlib/README.md)
 - [Accessibility Reference](ACCESSIBILITY_REFERENCE.md)
 - [Guardian Reference](GUARDIAN_REFERENCE.md)

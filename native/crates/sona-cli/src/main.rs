@@ -11,6 +11,8 @@ use sona_runtime::RuntimeCapabilities;
 use sona_source::SourceFile;
 use sona_vm::Vm;
 
+mod proof;
+
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 fn main() {
@@ -59,6 +61,7 @@ fn run(args: Vec<String>) -> SonaResult<i32> {
             exec_bytecode(Path::new(file), runtime_capabilities(&args))?;
             Ok(0)
         }
+        "proof" => proof::run(&args, VERSION),
         "inspect" => inspect(&args),
         "doctor" if args.get(1).map(String::as_str) == Some("native") => {
             doctor_native();
@@ -82,9 +85,10 @@ fn print_help() {
     println!("  sona check app.sona --engine native");
     println!("  sona compile app.sona --output app.sbc");
     println!("  sona exec app.sbc");
+    println!("  sona proof app.sona --receipt proof.json --engine native");
     println!("  sona inspect tokens|ast|ir|bytecode <file>");
     println!("  sona doctor native");
-    println!("Capabilities for run/exec:");
+    println!("Capabilities for run/exec/proof:");
     println!("  --allow-fs-read   allow native filesystem reads");
     println!("  --allow-fs-write  allow native filesystem writes");
     println!("  --allow-network   grant network policy (HTTP remains unavailable in 0.15.4)");

@@ -57,11 +57,12 @@ def _case(
     environment: dict[str, str],
     stdout: str,
     stderr: str = "",
+    expected_exit_code: int = 0,
 ) -> GateResult:
     completed = _run(command, 30, cwd=cwd, env=environment)
     passed = (
         not completed.timed_out
-        and completed.returncode == 0
+        and completed.returncode == expected_exit_code
         and completed.stdout == stdout
         and completed.stderr == stderr
         and "Traceback (most recent call last):" not in completed.stderr
@@ -146,6 +147,14 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     binary = str(isolated_binary)
+    proof_receipt = isolated_root / "hello-proof.json"
+    denied_receipt = isolated_root / "denied-proof.json"
+    denied_source = programs_dir / "proof_denied.sona"
+    denied_source.write_text(
+        'import fs; print(fs.read_text("secret.txt"));\n',
+        encoding="utf-8",
+        newline="\n",
+    )
     doctor = (
         f"native_binary_version={sona_version}\n"
         "bytecode_version=1\n"
@@ -206,8 +215,44 @@ def main(argv: list[str] | None = None) -> int:
             ],
             "ok\n",
         ),
+        (
+            "proof-hello",
+            [
+                binary,
+                "proof",
+                str(programs_dir / "hello.sona"),
+                "--receipt",
+                str(proof_receipt),
+                "--engine",
+                "native",
+            ],
+            "Hello from native Sona\n",
+        ),
+        (
+            "proof-capability-denial",
+            [
+                binary,
+                "proof",
+                str(denied_source),
+                "--receipt",
+                str(denied_receipt),
+                "--engine",
+                "native",
+            ],
+            "",
+        ),
     ]
     for name, command, expected_stdout in cases:
+        expected_stderr = ""
+        expected_exit_code = 0
+        if name == "proof-capability-denial":
+            expected_exit_code = 1
+            expected_stderr = (
+                "error[E0600] SONA-FS-005: Native filesystem reads require "
+                "--allow-fs-read.\n"
+                "  --> <unknown>:1:1\n"
+                "  hint: Grant only the filesystem capability required for this run.\n"
+            )
         results.append(
             _case(
                 name,
@@ -215,6 +260,8 @@ def main(argv: list[str] | None = None) -> int:
                 cwd=isolated_root,
                 environment=environment,
                 stdout=expected_stdout,
+                stderr=expected_stderr,
+                expected_exit_code=expected_exit_code,
             )
         )
 
@@ -234,6 +281,36 @@ def main(argv: list[str] | None = None) -> int:
             stdout=f"{container}\n",
         )
     )
+
+    for name, path, expected_id in (
+        ("proof-receipt", proof_receipt, None),
+        ("proof-denied-receipt", denied_receipt, "SONA-FS-005"),
+    ):
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            passed = (
+                payload["schema_id"] == "sona.native-proof.schema-1"
+                and payload["engine"]["python_required"] is False
+                and payload["engine"]["fallback_used"] is False
+                and (
+                    expected_id is None
+                    or payload["execution"]["diagnostic"]["id"] == expected_id
+                )
+            )
+        except (OSError, KeyError, TypeError, ValueError):
+            passed = False
+        results.append(
+            GateResult(
+                name=name,
+                status="pass" if passed else "fail",
+                command=["<native-proof-receipt>"],
+                exit_code=0 if passed else 1,
+                stdout="",
+                stderr="",
+                timed_out=False,
+                process_count=None,
+            )
+        )
     results.append(
         _case(
             "execute-container",

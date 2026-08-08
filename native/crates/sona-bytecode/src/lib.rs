@@ -19,6 +19,16 @@ pub struct BytecodeProgram {
     pub source_text: Option<String>,
 }
 
+/// The validated source payload carried by an SBC version-1 container.
+///
+/// Version 1 is deliberately source-backed rather than serialized native
+/// instructions.  Callers that need source identity (such as Native Proof
+/// Mode) must hash `source_bytes` before decoding them into text.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SourceBackedPayload {
+    pub source_bytes: Vec<u8>,
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct FunctionBytecode {
     pub name: String,
@@ -106,6 +116,20 @@ pub fn encode_source_backed(program: &BytecodeProgram) -> Vec<u8> {
 }
 
 pub fn decode_source_backed(bytes: &[u8], file: impl Into<String>) -> SonaResult<String> {
+    let payload = decode_source_backed_payload(bytes, file)?;
+    // `decode_source_backed_payload` validates UTF-8 before returning.
+    Ok(String::from_utf8(payload.source_bytes).expect("validated UTF-8 payload"))
+}
+
+/// Validate a source-backed SBC container and return its exact source bytes.
+///
+/// This preserves all pre-existing container diagnostics while making the
+/// validated payload available for identity-sensitive consumers without line
+/// ending normalization or a lossy decode/re-encode cycle.
+pub fn decode_source_backed_payload(
+    bytes: &[u8],
+    file: impl Into<String>,
+) -> SonaResult<SourceBackedPayload> {
     let file = file.into();
     if bytes.len() < BYTECODE_MAGIC.len() {
         return Err(container_error(
@@ -255,16 +279,16 @@ pub fn decode_source_backed(bytes: &[u8], file: impl Into<String>) -> SonaResult
             "Recompile the source; trailing bytes are not allowed in format version 1.",
         ));
     }
-    std::str::from_utf8(&bytes[header_end..source_end])
-        .map(str::to_owned)
-        .map_err(|_| {
-            container_error(
-                &file,
-                "SONA-NATIVE-BYTECODE-002",
-                "The .sbc source payload is not valid UTF-8.",
-                "Recompile the original UTF-8 Sona source.",
-            )
-        })
+    let source_bytes = bytes[header_end..source_end].to_vec();
+    std::str::from_utf8(&source_bytes).map_err(|_| {
+        container_error(
+            &file,
+            "SONA-NATIVE-BYTECODE-002",
+            "The .sbc source payload is not valid UTF-8.",
+            "Recompile the original UTF-8 Sona source.",
+        )
+    })?;
+    Ok(SourceBackedPayload { source_bytes })
 }
 
 fn push_field(header: &mut Vec<u8>, field: u8, value: &[u8]) {
@@ -580,6 +604,18 @@ mod container_tests {
         assert_eq!(
             decode_source_backed(&encoded, "test.sbc").unwrap().len(),
             MAX_SOURCE_BYTES as usize
+        );
+    }
+
+    #[test]
+    fn exposes_validated_exact_source_bytes_for_identity_consumers() {
+        let source = "print(\"line\");\r\n";
+        let encoded = encode_source_backed(&program(source));
+        let payload = decode_source_backed_payload(&encoded, "identity.sbc").unwrap();
+        assert_eq!(payload.source_bytes, source.as_bytes());
+        assert_eq!(
+            decode_source_backed(&encoded, "identity.sbc").unwrap(),
+            source
         );
     }
 
