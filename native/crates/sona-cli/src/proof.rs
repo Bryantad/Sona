@@ -28,9 +28,9 @@ enum PersistenceFault {
     Creation,
     Serialization,
     Finalization,
+    PostPublication,
 }
 
-#[cfg_attr(windows, allow(dead_code))]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum PublicationState {
     NotPublished,
@@ -43,6 +43,34 @@ struct ProofContext {
     target_key: Vec<u8>,
     forced_duration_ms: Option<u64>,
     fault: Option<PersistenceFault>,
+}
+
+#[derive(Debug)]
+struct ProofFailure {
+    surfaced: DiagnosticList,
+    program: Option<DiagnosticList>,
+}
+
+impl ProofFailure {
+    fn infrastructure(surfaced: DiagnosticList) -> Self {
+        Self {
+            surfaced,
+            program: None,
+        }
+    }
+
+    fn after_execution(surfaced: DiagnosticList, program: &Option<DiagnosticList>) -> Self {
+        Self {
+            surfaced,
+            program: program.clone(),
+        }
+    }
+}
+
+impl From<DiagnosticList> for ProofFailure {
+    fn from(value: DiagnosticList) -> Self {
+        Self::infrastructure(value)
+    }
 }
 
 impl ProofContext {
@@ -84,14 +112,21 @@ struct PreparedProgram {
 /// execution fails after its receipt was safely written; Proof-only failures
 /// use the compact `PROOF-XXX` namespace.
 pub(super) fn run(args: &[String], version: &str) -> SonaResult<i32> {
-    run_with_context(args, version, None)
+    run_with_context(args, version, None).map_err(|failure| {
+        let ProofFailure { surfaced, program } = failure;
+        // The program diagnostic is intentionally retained through the Proof
+        // boundary for internal tests/debugging, then omitted from public
+        // output when a Proof infrastructure diagnostic takes precedence.
+        drop(program);
+        surfaced
+    })
 }
 
 fn run_with_context(
     args: &[String],
     version: &str,
     supplied_context: Option<ProofContext>,
-) -> SonaResult<i32> {
+) -> Result<i32, ProofFailure> {
     let (target, receipt_path) = parse_invocation(args)?;
     super::require_native_engine(args)?;
     validate_receipt_destination(&receipt_path)?;
@@ -124,11 +159,16 @@ fn run_with_context(
         &evidence,
         program_error.as_ref(),
         &context,
-    )?;
-    persist_receipt(&receipt_path, &receipt, context.fault)?;
+    )
+    .map_err(|failure| ProofFailure::after_execution(failure, &program_error))?;
+    persist_receipt(&receipt_path, &receipt, context.fault)
+        .map_err(|failure| ProofFailure::after_execution(failure, &program_error))?;
 
     if let Some(diagnostics) = program_error {
-        return Err(diagnostics);
+        return Err(ProofFailure {
+            program: Some(diagnostics.clone()),
+            surfaced: diagnostics,
+        });
     }
     Ok(0)
 }
@@ -150,37 +190,56 @@ fn parse_invocation(args: &[String]) -> SonaResult<(PathBuf, PathBuf)> {
             "Provide a .sona or .sbc program before Proof Mode options.",
         ));
     }
-    let positions = args
-        .iter()
-        .enumerate()
-        .filter_map(|(index, item)| (item == "--receipt").then_some(index))
-        .collect::<Vec<_>>();
-    if positions.len() != 1 {
-        return Err(proof_error(
-            "PROOF-001",
-            "E0001",
-            "Invalid Proof Mode invocation.",
-            "Provide exactly one --receipt <path> option.",
-        ));
+    let invalid =
+        |hint: &str| proof_error("PROOF-001", "E0001", "Invalid Proof Mode invocation.", hint);
+    let mut receipt = None;
+    let mut engine_seen = false;
+    let mut index = 2;
+    while index < args.len() {
+        match args[index].as_str() {
+            "--receipt" => {
+                if receipt.is_some() {
+                    return Err(invalid("Provide exactly one --receipt <path> option."));
+                }
+                let Some(value) = args.get(index + 1) else {
+                    return Err(invalid("Provide a path after --receipt."));
+                };
+                if value.is_empty() || value.starts_with('-') {
+                    return Err(invalid("Provide a non-option path after --receipt."));
+                }
+                receipt = Some(PathBuf::from(value));
+                index += 2;
+            }
+            "--engine" => {
+                if engine_seen {
+                    return Err(invalid("Provide at most one --engine option."));
+                }
+                let Some(value) = args.get(index + 1) else {
+                    return Err(invalid("Provide a value after --engine."));
+                };
+                if value.is_empty() || value.starts_with('-') {
+                    return Err(invalid("Provide a non-option value after --engine."));
+                }
+                engine_seen = true;
+                index += 2;
+            }
+            "--allow-fs-read" | "--allow-fs-write" | "--allow-network" => {
+                index += 1;
+            }
+            option if option.starts_with('-') => {
+                return Err(invalid("Use only documented Proof Mode options."));
+            }
+            _ => {
+                return Err(invalid(
+                    "Provide one program path followed only by Proof Mode options.",
+                ));
+            }
+        }
     }
-    let receipt_index = positions[0];
-    let Some(receipt) = args.get(receipt_index + 1) else {
-        return Err(proof_error(
-            "PROOF-001",
-            "E0001",
-            "Invalid Proof Mode invocation.",
-            "Provide a path after --receipt.",
-        ));
+    let Some(receipt) = receipt else {
+        return Err(invalid("Provide exactly one --receipt <path> option."));
     };
-    if receipt.is_empty() || receipt.starts_with('-') {
-        return Err(proof_error(
-            "PROOF-001",
-            "E0001",
-            "Invalid Proof Mode invocation.",
-            "Provide a non-option path after --receipt.",
-        ));
-    }
-    Ok((PathBuf::from(target), PathBuf::from(receipt)))
+    Ok((PathBuf::from(target), receipt))
 }
 
 fn validate_receipt_destination(destination: &Path) -> SonaResult<()> {
@@ -435,6 +494,7 @@ fn persist_receipt(
         Ok(())
     })();
     if write_result.is_err() || fault == Some(PersistenceFault::Finalization) {
+        drop(file);
         let _ = fs::remove_file(&temporary_path);
         return Err(proof_error(
             "PROOF-007",
@@ -478,6 +538,14 @@ fn persist_receipt(
             ));
         }
     }
+    if fault == Some(PersistenceFault::PostPublication) {
+        return Err(proof_error(
+            "PROOF-007",
+            "E0600",
+            "Receipt finalization failed.",
+            "A receipt path may exist but is not publication-certified; inspect it before retrying.",
+        ));
+    }
     if OpenOptions::new()
         .write(true)
         .open(destination)
@@ -500,22 +568,12 @@ fn publish_no_clobber(
     temporary_path: &Path,
     destination: &Path,
 ) -> Result<(), (PublicationState, io::Error)> {
-    #[cfg(windows)]
-    {
-        // Windows rename is a no-replace publication when the destination is
-        // absent, which preserves the receipt's evidence-creation contract.
-        fs::rename(temporary_path, destination)
-            .map_err(|error| (PublicationState::NotPublished, error))
-    }
-    #[cfg(not(windows))]
-    {
-        // POSIX rename may overwrite an existing file.  Hard-linking the
-        // fully flushed temporary file publishes only when the final name is
-        // absent, then removes the temporary alias.
-        fs::hard_link(temporary_path, destination)
-            .map_err(|error| (PublicationState::NotPublished, error))?;
-        fs::remove_file(temporary_path).map_err(|error| (PublicationState::Published, error))
-    }
+    // `rename` may replace an existing destination on both Windows and POSIX.
+    // A same-directory hard link is an atomic create-if-absent publication;
+    // unsupported filesystems fail closed instead of weakening no-clobber.
+    fs::hard_link(temporary_path, destination)
+        .map_err(|error| (PublicationState::NotPublished, error))?;
+    fs::remove_file(temporary_path).map_err(|error| (PublicationState::Published, error))
 }
 
 fn create_temporary_receipt(
@@ -607,6 +665,36 @@ mod tests {
     }
 
     #[test]
+    fn malformed_proof_arguments_are_rejected() {
+        for args in [
+            vec![
+                "proof".into(),
+                "app.sona".into(),
+                "unexpected".into(),
+                "--receipt".into(),
+                "proof.json".into(),
+            ],
+            vec![
+                "proof".into(),
+                "app.sona".into(),
+                "--unknown".into(),
+                "--receipt".into(),
+                "proof.json".into(),
+            ],
+            vec![
+                "proof".into(),
+                "app.sona".into(),
+                "--receipt".into(),
+                "proof.json".into(),
+                "--engine".into(),
+            ],
+        ] {
+            let error = parse_invocation(&args).unwrap_err();
+            assert_eq!(error.0[0].diagnostic_id, "PROOF-001");
+        }
+    }
+
+    #[test]
     fn receipt_hash_uses_compact_canonical_bytes_without_newline() {
         let receipt = seal_receipt(json!({"z": 1, "a": ["first", "second"]})).unwrap();
         let hash = receipt["receipt_hash"].as_str().unwrap();
@@ -658,5 +746,102 @@ mod tests {
             };
             assert_eq!(error.0[0].diagnostic_id, expected);
         }
+    }
+
+    #[test]
+    fn prepublication_failure_removes_its_temporary_receipt() {
+        let directory =
+            std::env::temp_dir().join(format!("sona-proof-cleanup-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&directory);
+        fs::create_dir_all(&directory).unwrap();
+        let destination = directory.join("proof.json");
+        let error = persist_receipt(
+            &destination,
+            &seal_receipt(json!({"schema": 1})).unwrap(),
+            Some(PersistenceFault::Finalization),
+        )
+        .unwrap_err();
+        assert_eq!(error.0[0].diagnostic_id, "PROOF-007");
+        assert!(!destination.exists());
+        assert_eq!(fs::read_dir(&directory).unwrap().count(), 0);
+        fs::remove_dir_all(directory).unwrap();
+    }
+
+    #[test]
+    fn publication_never_clobbers_an_existing_destination() {
+        let directory =
+            std::env::temp_dir().join(format!("sona-proof-no-clobber-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&directory);
+        fs::create_dir_all(&directory).unwrap();
+        let temporary = directory.join("temporary.json");
+        let destination = directory.join("proof.json");
+        fs::write(&temporary, b"new evidence\n").unwrap();
+        fs::write(&destination, b"existing evidence\n").unwrap();
+
+        let result = publish_no_clobber(&temporary, &destination);
+        assert!(result.is_err());
+        assert_eq!(fs::read(&destination).unwrap(), b"existing evidence\n");
+        assert_eq!(fs::read(&temporary).unwrap(), b"new evidence\n");
+
+        fs::remove_dir_all(directory).unwrap();
+    }
+
+    #[test]
+    fn postpublication_failure_preserves_the_uncertified_receipt() {
+        let directory = std::env::temp_dir().join(format!(
+            "sona-proof-post-publication-{}",
+            std::process::id()
+        ));
+        let _ = fs::remove_dir_all(&directory);
+        fs::create_dir_all(&directory).unwrap();
+        let destination = directory.join("proof.json");
+        let receipt = seal_receipt(json!({"schema": 1})).unwrap();
+
+        let error = persist_receipt(
+            &destination,
+            &receipt,
+            Some(PersistenceFault::PostPublication),
+        )
+        .unwrap_err();
+        assert_eq!(error.0[0].diagnostic_id, "PROOF-007");
+        assert!(destination.exists());
+        let mut expected = canonical_json(&receipt).unwrap();
+        expected.push(b'\n');
+        assert_eq!(fs::read(&destination).unwrap(), expected);
+        assert_eq!(fs::read_dir(&directory).unwrap().count(), 1);
+
+        fs::remove_dir_all(directory).unwrap();
+    }
+
+    #[test]
+    fn persistence_failure_retains_the_program_diagnostic_internally() {
+        let directory =
+            std::env::temp_dir().join(format!("sona-proof-precedence-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&directory);
+        fs::create_dir_all(&directory).unwrap();
+        let source = directory.join("invalid.sona");
+        fs::write(&source, "fn legacy() { return 1; };\n").unwrap();
+        let destination = directory.join("proof.json");
+        let args = vec![
+            "proof".into(),
+            source.to_string_lossy().into_owned(),
+            "--receipt".into(),
+            destination.to_string_lossy().into_owned(),
+        ];
+
+        let failure = run_with_context(
+            &args,
+            "0.15.4",
+            Some(context(Some(PersistenceFault::Finalization))),
+        )
+        .unwrap_err();
+        assert_eq!(failure.surfaced.0[0].diagnostic_id, "PROOF-007");
+        assert_eq!(
+            failure.program.as_ref().unwrap().0[0].diagnostic_id,
+            "SONA-PARSE-001"
+        );
+        assert!(!destination.exists());
+
+        fs::remove_dir_all(directory).unwrap();
     }
 }

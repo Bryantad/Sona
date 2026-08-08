@@ -502,7 +502,13 @@ impl Vm {
         let record = self.resolver.load(name)?;
         let mut module_vm = Vm::with_resolver(self.resolver.clone());
         module_vm.config = self.config.clone();
-        module_vm.execute(&record.bytecode)?;
+        // Workspace modules execute in an isolated VM, but Proof Mode remains
+        // one observer for the complete program. Move the observer through the
+        // nested execution so output hashes and effect sequence stay exact.
+        module_vm.proof = self.proof.take();
+        let module_result = module_vm.execute(&record.bytecode);
+        self.proof = module_vm.proof.take();
+        module_result?;
         let mut exports = HashMap::new();
         for (key, binding) in module_vm.globals {
             if key != "print" {
@@ -935,6 +941,60 @@ mod tests {
         vm.execute(&bytecode).unwrap();
         assert_eq!(vm.output(), &["workspace"]);
         fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn proof_observation_includes_workspace_module_output_and_effects() {
+        let root = temporary_directory("proof-module");
+        let target = root.join("target.txt");
+        fs::write(&target, "present").unwrap();
+        let normalized_target = target.to_string_lossy().replace('\\', "/");
+        fs::write(
+            root.join("helper.smod"),
+            format!("import fs; fs.exists(\"{normalized_target}\"); print(\"module\");"),
+        )
+        .unwrap();
+        let entry = root.join("app.sona");
+        let bytecode = compile_source(
+            entry.to_string_lossy().as_ref(),
+            "import helper; print(\"main\");",
+        );
+        let mut vm = Vm::new(Some(entry));
+        vm.config.capabilities.filesystem_read = true;
+        vm.enable_proof_observation(vec![7; 32]);
+        vm.execute(&bytecode).unwrap();
+        let evidence = vm.take_proof_evidence().unwrap();
+        assert_eq!(
+            evidence.stdout_sha256(),
+            sha256_label(Sha256::digest(b"module\nmain\n").as_slice())
+        );
+        assert_eq!(evidence.stdout_bytes(), 12);
+        assert_eq!(evidence.effects().len(), 3);
+        assert_eq!(evidence.effects()[0].scope, "filesystem");
+        assert_eq!(evidence.effects()[1].operation, "print");
+        assert_eq!(evidence.effects()[2].operation, "print");
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn proof_hashes_match_fixed_sha256_and_hmac_vectors() {
+        let mut evidence = NativeProofEvidence::new(vec![0x0b; 20]);
+        evidence.record_stdout(b"abc");
+        evidence.record_effect(
+            "filesystem",
+            "read",
+            "allowed",
+            Some("Hi There".to_string()),
+        );
+
+        assert_eq!(
+            evidence.stdout_sha256(),
+            "sha256:ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+        );
+        assert_eq!(
+            evidence.effects()[0].target.as_deref(),
+            Some("hmac-sha256:b0344c61d8db38535ca8afceaf0bf12b881dc200c9833da726e9376c2e32cff7")
+        );
     }
 
     #[test]
