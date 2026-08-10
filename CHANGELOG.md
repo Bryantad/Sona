@@ -13,6 +13,8 @@
 - Added bounded Python/Native standard-library conformance fixtures, runtime
   capability regressions, HTTP mock-server tests, and executable documentation
   examples.
+- Updated the VS Code extension's `brace-expansion` resolution to 5.0.9 for
+  the current production dependency audit.
 - Preserved 0.15.x aliases, Python compatibility semantics, cognitive runtime,
   Guardian interfaces, and workspace-module precedence.
 

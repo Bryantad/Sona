@@ -76,10 +76,10 @@ semantic parity or serialized instruction bytecode.
 The Windows implementation gate completed 424 Python tests, the nine official
 examples, all three probes, locked Rust formatting/Clippy/tests, the bounded
 20-fixture differential corpus, the 10-fixture standard-library corpus, Native
-standalone checks, extension compile/smoke tests, a zero-vulnerability
-production npm audit, and VSIX content inspection. The Python suite's only
-accepted warnings are the two Python 3.12 deprecations emitted by pinned
-`lark-parser==0.12.0`.
+standalone checks, extension compile/smoke tests, a zero-high/critical
+production npm audit with `brace-expansion` resolved to 5.0.9, and VSIX content
+inspection. The Python suite's only accepted warnings are the two Python 3.12
+deprecations emitted by pinned `lark-parser==0.12.0`.
 
 This source work does not publish to PyPI or the VS Code Marketplace. Native
 Core remains a preview, and Python remains the compatibility engine.

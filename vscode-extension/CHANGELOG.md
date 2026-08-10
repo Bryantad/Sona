@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.15.4
+
+- Aligns the tracked extension metadata with Sona 0.15.4's standard-library
+  runtime capability release.
+- Keeps the AI Console UI backend-focused and unchanged.
+- Pins the transitive `brace-expansion` resolution to 5.0.9 for the current
+  production dependency audit.
+
 ## 0.15.1
 
 - Aligns the extension with Sona 0.15.1.
