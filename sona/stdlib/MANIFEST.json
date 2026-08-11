@@ -2281,7 +2281,7 @@
       "side_effects": [
         "explicit-project-state"
       ],
-      "description": "Local Guardian resilience facade with snapshots, drift detection, recovery, Native Proof verification, attestation, and audit history.",
+      "description": "Local Guardian resilience facade with snapshots, drift detection, recovery, Native Proof verification, attestation, governed advisory review, and audit history.",
       "preload": false,
       "exports": [
         {
@@ -2352,6 +2352,11 @@
         {
           "name": "proof_attest",
           "signature": "(project_root=nil, receipt_path=nil)",
+          "disposition": "KEEP"
+        },
+        {
+          "name": "proof_review",
+          "signature": "(project_root=nil, receipt_path=nil, provider=nil, model=nil, allow_network=nil)",
           "disposition": "KEEP"
         },
         {

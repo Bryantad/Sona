@@ -41,6 +41,7 @@ CONFIG_NAME = "sona.guard.json"
 STATE_VERSION = 1
 NATIVE_PROOF_SCHEMA_ID = "sona.native-proof.schema-1"
 GUARDIAN_PROOF_BINDING_SCHEMA_ID = "sona.guardian-proof-binding.schema-1"
+GUARDIAN_PROOF_AI_REVIEW_SCHEMA_ID = "sona.guardian-proof-ai-review.schema-1"
 MUTATING_ACTIONS = {"init", "snapshot", "quarantine", "rollback", "heal-apply", "proof-attest"}
 
 
@@ -906,6 +907,131 @@ def guardian_proof_verify(project_root: Any = None, receipt_path: Any = None) ->
     return result
 
 
+def guardian_proof_review(
+    project_root: Any = None,
+    receipt_path: Any = None,
+    provider: Any = None,
+    model: Any = None,
+    allow_network: Any = False,
+) -> dict[str, Any]:
+    """Run governed advisory analysis over verified, redacted Proof facts only.
+
+    AI is deliberately outside the trust chain: it cannot verify, attest, or
+    mutate the receipt. Provider routing receives no project path, receipt
+    path, source, program path, stdout, stderr, environment, or credentials.
+    """
+    root = _project_root(project_root)
+    verified = guardian_proof_verify(root, receipt_path)
+    if verified.get("status") != "verified":
+        return verified
+
+    receipt_hash = verified["receipt_hash"]
+    locally_attested = any(
+        record.get("payload", {}).get("receipt_hash") == receipt_hash
+        for record in guardian_proof_history(root, 100_000)
+        if isinstance(record.get("payload"), dict)
+    )
+    evidence = {
+        "schema_id": GUARDIAN_PROOF_AI_REVIEW_SCHEMA_ID,
+        "proof_status": "verified",
+        "receipt_hash": receipt_hash,
+        "execution": verified["execution"],
+        "guardian": verified["guardian"],
+        "local_attestation_recorded": locally_attested,
+    }
+    review_input = _canonical_json_bytes(evidence)
+
+    from sona.developer_intelligence import (
+        ContextEnvelope,
+        DeveloperIntelligenceService,
+        TaskConstraints,
+        TaskRequest,
+        TaskType,
+    )
+
+    provider_id = str(provider).strip() if provider is not None and str(provider).strip() else None
+    model_id = str(model).strip() if model is not None and str(model).strip() else None
+    request = TaskRequest(
+        task_type=TaskType.REVIEW,
+        instruction=(
+            "Review this verified Sona Native Proof evidence as an advisory analyst. "
+            "State the execution outcome, Guardian baseline binding, and local attestation status. "
+            "Explicitly state that AI does not verify, sign, attest, or add trust to the receipt. "
+            "Do not infer source, paths, output content, identity, machine integrity, remote "
+            "attestation, or facts absent from the evidence packet."
+        ),
+        provider_id=provider_id,
+        model_id=model_id,
+        context=ContextEnvelope(
+            selected_text=review_input.decode("utf-8"),
+            origin="guardian-proof-review",
+            redacted_context=(
+                "project_root",
+                "receipt_path",
+                "program_path",
+                "program_source",
+                "stdout",
+                "stderr",
+                "environment",
+            ),
+            omitted_context=("workspace_files", "selected_source", "output_bodies"),
+        ),
+        constraints=TaskConstraints(
+            read_only=True,
+            allow_file_writes=False,
+            allow_shell=False,
+            allow_network=bool(allow_network),
+            maximum_files=1,
+            maximum_context_tokens=4096,
+        ),
+        governance_metadata={
+            "guardian_proof_review": True,
+            "trust_boundary": "advisory-only",
+            "network_explicitly_allowed": bool(allow_network),
+        },
+    )
+    reviewed = DeveloperIntelligenceService(root).execute(request, write_task_receipt=False)
+    reviewer = {
+        "provider_id": reviewed.provider_id,
+        "model_id": reviewed.model_id,
+        "advisory": True,
+    }
+    boundary = (
+        "AI analysis is advisory and is not part of the Proof receipt, Guardian verification, "
+        "or Guardian attestation."
+    )
+    if reviewed.status.value != "ok":
+        result = {
+            "schema_version": 1,
+            "schema_id": GUARDIAN_PROOF_AI_REVIEW_SCHEMA_ID,
+            "status": "review-unavailable",
+            "reason": reviewed.status.value.replace("_", "-"),
+            "receipt_hash": receipt_hash,
+            "proof_status": "verified",
+            "review_input_hash": _sha256_label(review_input),
+            "reviewer": reviewer,
+            "message": "The proof remains verified, but governed AI review was not produced.",
+            "trust_boundary": boundary,
+        }
+        result["accessibility"] = _accessibility_event(root, "proof-review", result)
+        return result
+
+    result = {
+        "schema_version": 1,
+        "schema_id": GUARDIAN_PROOF_AI_REVIEW_SCHEMA_ID,
+        "status": "reviewed",
+        "receipt_hash": receipt_hash,
+        "proof_status": "verified",
+        "review_input_hash": _sha256_label(review_input),
+        "evidence": evidence,
+        "reviewer": reviewer,
+        "review": str(reviewed.summary),
+        "trust_boundary": boundary,
+    }
+    result["accessibility"] = _accessibility_event(root, "proof-review", result)
+    return result
+
+
 def guardian_proof_attest(project_root: Any = None, receipt_path: Any = None) -> dict[str, Any]:
     """Record a successful, Guardian-bound Native Proof after a clean verify."""
     root = _project_root(project_root)
@@ -1162,6 +1288,7 @@ __all__ = [
     "guardian_init",
     "guardian_proof_attest",
     "guardian_proof_history",
+    "guardian_proof_review",
     "guardian_proof_verify",
     "guardian_quarantine",
     "guardian_report_json",

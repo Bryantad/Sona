@@ -220,7 +220,7 @@
       "status": "stable",
       "source": "intrinsic",
       "category": "resilience",
-      "description": "Local Guardian resilience facade with snapshots, drift detection, recovery, Native Proof verification, attestation, and audit history."
+      "description": "Local Guardian resilience facade with snapshots, drift detection, recovery, Native Proof verification, attestation, governed advisory review, and audit history."
     },
     {
       "name": "graph",

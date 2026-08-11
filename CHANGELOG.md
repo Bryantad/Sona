@@ -20,6 +20,9 @@
 - Added an opt-in Guardian-bound Native Proof chain: baseline-tracked native
   receipts, read-only Guardian verification, clean-state attestation, and
   redacted local audit history without adding Python to Native Core.
+- Added governed `sona guardian proof review`: verified redacted facts can be
+  reviewed by Sona's deterministic analyst or an explicitly selected AI
+  provider, while model output remains outside the trust and attestation chain.
 - Preserved 0.15.x aliases, Python compatibility semantics, cognitive runtime,
   Guardian interfaces, and workspace-module precedence.
 

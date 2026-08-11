@@ -196,6 +196,109 @@ def test_guardian_verifies_and_attests_a_bound_native_proof_without_receipt_path
     assert len(guardian.guardian_proof_history(project)) == 1
 
 
+def test_guardian_ai_review_uses_only_verified_redacted_evidence(tmp_path):
+    project = make_project(tmp_path)
+    guardian.guardian_init(project)
+    receipt = tmp_path / "native-proof.json"
+    _write_guardian_bound_native_proof(project, receipt)
+    guardian_state = project / ".sona" / "guardian"
+    before = {
+        path.relative_to(guardian_state).as_posix(): path.read_bytes()
+        for path in guardian_state.rglob("*")
+        if path.is_file()
+    }
+
+    reviewed = guardian.guardian_proof_review(project, receipt, "deterministic")
+    after = {
+        path.relative_to(guardian_state).as_posix(): path.read_bytes()
+        for path in guardian_state.rglob("*")
+        if path.is_file()
+    }
+
+    assert reviewed["status"] == "reviewed"
+    assert reviewed["schema_id"] == "sona.guardian-proof-ai-review.schema-1"
+    assert reviewed["proof_status"] == "verified"
+    assert reviewed["evidence"]["local_attestation_recorded"] is False
+    assert reviewed["reviewer"] == {
+        "provider_id": "deterministic",
+        "model_id": "deterministic:sona",
+        "advisory": True,
+    }
+    assert reviewed["review_input_hash"].startswith("sha256:")
+    assert "does not add" in reviewed["review"]
+    assert "not part of" in reviewed["trust_boundary"]
+    rendered = json.dumps(reviewed)
+    assert str(project) not in rendered
+    assert str(receipt) not in rendered
+    assert "app.sona" not in rendered
+    assert 'print("hello")' not in rendered
+    assert after == before, "AI review must not mutate Guardian proof state"
+    assert not (project / ".sona" / "receipts" / "tasks").exists(), "AI review must not write a task receipt"
+
+    guardian.guardian_proof_attest(project, receipt)
+    attested_review = guardian.guardian_proof_review(project, receipt, "deterministic")
+    assert attested_review["evidence"]["local_attestation_recorded"] is True
+
+
+def test_guardian_ai_review_rejects_before_provider_routing(tmp_path):
+    project = make_project(tmp_path)
+    guardian.guardian_init(project)
+    receipt = tmp_path / "native-proof.json"
+    _write_guardian_bound_native_proof(project, receipt)
+    receipt.write_bytes(b" " + receipt.read_bytes())
+
+    governance_audit = project / ".sona" / "governance" / "audit.jsonl"
+    reviewed = guardian.guardian_proof_review(project, receipt, "ollama")
+
+    assert reviewed["status"] == "rejected"
+    assert reviewed["reason"] == "receipt-not-canonical"
+    assert not governance_audit.exists(), "invalid evidence must not reach governed provider routing"
+
+
+def test_guardian_ai_review_routes_only_redacted_packet_to_local_ollama(tmp_path, monkeypatch):
+    project = make_project(tmp_path)
+    guardian.guardian_init(project)
+    receipt = tmp_path / "native-proof.json"
+    _write_guardian_bound_native_proof(project, receipt)
+    captured = {}
+
+    def fake_ollama_execute(_self, request, model):
+        captured["request"] = request
+        captured["model"] = model
+        return {"summary": "Local model advisory review complete.", "status": "ok"}
+
+    monkeypatch.setattr(
+        "sona.developer_intelligence.providers.OllamaProvider.execute",
+        fake_ollama_execute,
+    )
+    reviewed = guardian.guardian_proof_review(project, receipt, "ollama")
+
+    assert reviewed["status"] == "reviewed"
+    assert reviewed["reviewer"]["provider_id"] == "ollama"
+    assert reviewed["reviewer"]["model_id"].startswith("ollama:")
+    request = captured["request"]
+    packet = json.loads(request.context.selected_text)
+    assert set(packet) == {
+        "schema_id",
+        "proof_status",
+        "receipt_hash",
+        "execution",
+        "guardian",
+        "local_attestation_recorded",
+    }
+    assert request.target_files == ()
+    assert request.context.active_file is None
+    assert request.constraints.read_only is True
+    assert request.constraints.allow_file_writes is False
+    assert request.constraints.allow_shell is False
+    assert request.constraints.allow_network is False
+    rendered = request.context.selected_text
+    assert str(project) not in rendered
+    assert str(receipt) not in rendered
+    assert "app.sona" not in rendered
+    assert 'print("hello")' not in rendered
+
+
 def test_guardian_rejects_noncanonical_or_wrongly_bound_native_proofs(tmp_path):
     project = make_project(tmp_path)
     guardian.guardian_init(project)
@@ -338,6 +441,22 @@ def test_canonical_guardian_proof_cli_verifies_attests_and_lists_history(tmp_pat
     assert attest.returncode == 0, attest.stderr or attest.stdout
     assert json.loads(attest.stdout)["status"] == "attested"
 
+    review = subprocess.run(
+        [
+            sys.executable, "-m", "sona", "guardian", "proof", "review",
+            "--project-root", str(project), "--receipt", str(receipt),
+            "--provider", "deterministic",
+        ],
+        cwd=project, env=env, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+    )
+    assert review.returncode == 0, review.stderr or review.stdout
+    review_payload = json.loads(review.stdout)
+    assert review_payload["status"] == "reviewed"
+    assert review_payload["evidence"]["local_attestation_recorded"] is True
+    assert review_payload["reviewer"]["advisory"] is True
+    assert str(project) not in review.stdout
+    assert str(receipt) not in review.stdout
+
     history = subprocess.run(
         [sys.executable, "-m", "sona", "guardian", "proof", "history", "--project-root", str(project)],
         cwd=project, env=env, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
@@ -444,6 +563,7 @@ def test_guardian_public_smod_facade(tmp_path):
     receipt = tmp_path / "native-proof.json"
     _write_guardian_bound_native_proof(project, receipt)
     assert call(module.proof_verify, str(project), str(receipt))["status"] == "verified"
+    assert call(module.proof_review, str(project), str(receipt), "deterministic", None)["status"] == "reviewed"
     assert call(module.proof_attest, str(project), str(receipt))["status"] == "attested"
     assert call(module.proof_history, str(project))[0]["event"] == "guardian.proof.attest"
     assert "Guardian status: ok" in call(module.report_plain, str(project))

@@ -65,6 +65,11 @@ func proof_attest(project_root=nil, receipt_path=nil) {
     return guardian_proof_attest(project_root, receipt_path)
 }
 
+func proof_review(project_root=nil, receipt_path=nil, provider=nil, model=nil, allow_network=nil) {
+    if allow_network == nil { allow_network = false }
+    return guardian_proof_review(project_root, receipt_path, provider, model, allow_network)
+}
+
 func proof_history(project_root=nil, limit=nil) {
     if limit == nil { limit = 50 }
     return guardian_proof_history(project_root, limit)

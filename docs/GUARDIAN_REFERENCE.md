@@ -23,7 +23,8 @@ sona guardian doctor
 Additional public operations include snapshot creation, diff, quarantine,
 rollback, plain-language reports, JSON reports, local audit history, and
 explicit `heal --apply` recovery. Guardian also exposes `proof_verify`,
-`proof_attest`, and `proof_history` for a local Native Proof release chain.
+`proof_attest`, `proof_review`, and `proof_history` for a local Native Proof
+release chain with optional governed advisory analysis.
 
 ## Trust Boundary
 
@@ -65,6 +66,7 @@ sona guardian init --project-root .
 sona proof app.sona --receipt .sona/receipts/proof.json --engine native --guardian-root . --summary
 sona guardian proof verify --project-root . --receipt .sona/receipts/proof.json
 sona guardian proof attest --project-root . --receipt .sona/receipts/proof.json
+sona guardian proof review --project-root . --receipt .sona/receipts/proof.json --provider deterministic
 sona guardian proof history --project-root .
 ```
 
@@ -83,9 +85,23 @@ a clean current Guardian verification. It then appends a redacted local audit
 record containing the receipt hash and anchor, not the receipt path, source,
 program path, or output body.
 
+`guardian proof review` repeats read-only verification before provider routing.
+The reviewer sees a canonical redacted packet containing only the receipt hash,
+execution outcome, Guardian anchor, and whether a matching local attestation is
+recorded. Sona returns the packet's SHA-256 label as `review_input_hash` so the
+exact advisory input is visible. The default deterministic reviewer is fully
+local; `--provider ollama` selects configured local Ollama. A configured remote
+provider additionally requires `--allow-network` and must still pass governance
+policy. Invalid evidence never reaches a provider.
+
+AI review does not write an AI task receipt, change Guardian proof state, or
+become part of verification or attestation. Provider-routing decisions may be
+recorded in Sona's separate governance audit. Model text is always advisory and
+cannot verify, sign, attest, or add trust to evidence.
+
 This is a local release-integrity chain, not a remote or hardware attestation.
-It does not provide signer identity or protect against a party that can modify
-both the proof receipt and the local Guardian state.
+Neither AI review nor the underlying chain provides signer identity or protects
+against a party that can modify both the proof receipt and local Guardian state.
 
 ## Trusted Configuration
 

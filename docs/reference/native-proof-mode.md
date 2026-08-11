@@ -98,6 +98,7 @@ sona guardian init --project-root .
 sona proof app.sona --receipt .sona/receipts/proof.json --engine native --guardian-root . --summary
 sona guardian proof verify --project-root . --receipt .sona/receipts/proof.json
 sona guardian proof attest --project-root . --receipt .sona/receipts/proof.json
+sona guardian proof review --project-root . --receipt .sona/receipts/proof.json --provider deterministic
 sona guardian proof history --project-root .
 ```
 
@@ -118,11 +119,35 @@ history. It does not copy the receipt, source, program path, or output bodies.
 The optional terminal summary identifies a bound receipt as `Guardian Bound
 baseline <id>` without revealing the project root.
 
+## Governed advisory AI review
+
+`sona guardian proof review` is an analysis layer after verification, not a new
+trust layer. It verifies the receipt first; rejected or noncanonical evidence
+never reaches provider routing. The exact provider input is a canonical packet
+containing only the receipt hash, execution status and exit code, redacted
+Guardian anchor, and local-attestation flag. The command returns a
+`review_input_hash` for that packet and never sends project paths, receipt paths,
+source, output bodies, environment values, or credentials as review context.
+
+The deterministic local reviewer is the safe default. A configured local Qwen
+model can be used through Ollama:
+
+```text
+sona guardian proof review --project-root . --receipt .sona/receipts/proof.json --provider ollama
+```
+
+Configured remote providers require both explicit provider selection and
+`--allow-network`; governance policy can still deny or require approval. Review
+does not write an AI task receipt or alter Guardian proof state. Provider-routing
+decisions may enter the separate governance audit. All returned model text is
+marked advisory and cannot verify, sign, attest, or add trust to the receipt.
+
 ## Limits of the claim
 
 Proof Mode creates redacted, self-hashed, tamper-evident-after-creation Native
 Core execution evidence. The Guardian flow adds a local baseline binding,
-read-only receipt verification, and an explicit local audit attestation; it is
+read-only receipt verification, an explicit local audit attestation, and an
+optional governed advisory review; it is
 not cryptographic signer identity, machine or remote attestation,
 trusted-hardware proof, operating-system integrity proof, or full
 Python/native semantic parity. A local user who can alter both receipt and

@@ -64,10 +64,18 @@ semantic parity or serialized instruction bytecode.
   baseline-tracked Guardian project without importing Python, executing
   Guardian, or recording the project path in the receipt. Binding failures are
   `PROOF-008` and occur before execution.
-- `sona guardian proof verify|attest|history` provides read-only receipt
-  verification, clean-project local attestation, and redacted audit history.
+- `sona guardian proof verify|attest|review|history` provides read-only receipt
+  verification, clean-project local attestation, governed advisory review, and
+  redacted audit history.
   Attestation records the receipt hash and Guardian anchor only; it does not
   copy program paths, source, output, or the receipt itself.
+- `guardian proof review` verifies before provider routing and sends only the
+  receipt hash, execution outcome, Guardian anchor, and local-attestation flag
+  to Sona's governed review service. It hashes that exact review packet, writes
+  no AI task receipt, and labels all model output advisory. Deterministic local
+  review is the default; configured local Ollama can be selected with
+  `--provider ollama`. Remote-provider network access requires the additional
+  explicit `--allow-network` flag and remains subject to governance policy.
 - This is tamper-evident-after-creation evidence, not signer identity, machine
   or remote attestation, trusted-hardware proof, operating-system integrity
   proof, or a claim of Python/Native parity. The Guardian chain is local and
@@ -91,7 +99,7 @@ The release validation surface covers the Python suite, official examples,
 static probes, locked Rust formatting/Clippy/tests, bounded differential and
 standard-library corpora, Native standalone checks, extension compile/smoke
 tests, production dependency audit, VSIX inspection, and the Guardian-bound
-Proof verification/attestation chain. The Python suite's only accepted
+Proof verification/attestation/advisory-review chain. The Python suite's only accepted
 warnings are the two Python 3.12 deprecations emitted by pinned
 `lark-parser==0.12.0`.
 

@@ -9,7 +9,7 @@ feature drafts are intentionally not part of the published branch structure.
 - [Quickstart](QUICKSTART.md)
 - [Language Reference](LANGUAGE_REFERENCE.md)
 - [Standard Library Reference](STDLIB_REFERENCE.md)
-- [Native Proof Mode and Guardian Trust Chain](reference/native-proof-mode.md)
+- [Native Proof, Guardian Trust Chain, and governed AI review](reference/native-proof-mode.md)
 - [0.15.4 Standard Library Catalog](reference/stdlib/README.md)
 - [Accessibility Reference](ACCESSIBILITY_REFERENCE.md)
 - [Guardian Reference](GUARDIAN_REFERENCE.md)

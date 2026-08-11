@@ -1,7 +1,7 @@
 {
   "name": "sona-ai-native-programming",
   "displayName": "Sona: AI-Native Programming with Cognitive Accessibility",
-  "description": "AI-native programming for real work and real minds, with Sona 0.15.4 diagnostics, Guardian-bound Native Proof workflows, local runtime integration, and the preview Sona AI Console.",
+  "description": "AI-native programming with Sona 0.15.4 diagnostics, Guardian-bound Native Proof, governed AI review, local runtime integration, and the preview Sona AI Console.",
   "version": "0.15.4",
   "publisher": "Waycoreinc",
   "icon": "assets/icon.png",

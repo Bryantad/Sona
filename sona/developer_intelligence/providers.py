@@ -27,6 +27,26 @@ def _developer_prompt(request: TaskRequest) -> str:
 class DeterministicProvider:
     def execute(self, request: TaskRequest, model: ModelDescriptor) -> dict[str, Any]:
         source = request.context.selected_text or ""
+        if request.task_type.value == "review" and request.governance_metadata.get("guardian_proof_review"):
+            try:
+                evidence = json.loads(source)
+            except (TypeError, ValueError, json.JSONDecodeError):
+                evidence = {}
+            execution = evidence.get("execution") if isinstance(evidence, dict) else {}
+            guardian = evidence.get("guardian") if isinstance(evidence, dict) else {}
+            outcome = "succeeded" if isinstance(execution, dict) and execution.get("status") == "ok" else "failed"
+            tracked = isinstance(guardian, dict) and guardian.get("program_baseline") == "tracked"
+            attested = bool(evidence.get("local_attestation_recorded")) if isinstance(evidence, dict) else False
+            return {
+                "summary": (
+                    f"Guardian Proof review (local): the verified Native Core execution {outcome}; "
+                    f"the program is {'baseline-tracked' if tracked else 'not confirmed as baseline-tracked'}; "
+                    f"a local Guardian attestation {'is recorded' if attested else 'is not recorded'}. "
+                    "This advisory review does not add signer identity, remote attestation, machine "
+                    "integrity, or new trust to the receipt."
+                ),
+                "status": "ok",
+            }
         if request.task_type.value == "explain" and source:
             from .deterministic import explain_source
             return {"summary": "Explanation (local): " + explain_source(source, str(request.governance_metadata.get("style") or "simple")), "status": "ok"}

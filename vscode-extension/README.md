@@ -14,9 +14,11 @@ existing editor and AI Console surface.
 
 - `sona-native proof file.sona --guardian-root . --summary` can bind redacted
   Native Proof execution evidence to an initialized Guardian baseline.
-- `sona guardian proof verify`, `attest`, and `history` provide local receipt
-  verification and audit history without storing program paths or output in the
-  Guardian attestation.
+- `sona guardian proof verify`, `attest`, `review`, and `history` provide local
+  receipt verification, audit history, and governed advisory analysis without
+  storing program paths or output in the Guardian attestation or AI context.
+- Proof review defaults to Sona's deterministic local analyst and can use a
+  configured local Ollama provider; AI output never becomes proof or attestation.
 - The extension continues to use the separately installed `sona` CLI for its
   editor commands; install `sona-native` alongside it when using Native Proof.
 - Existing **Run Sona File** command and `.sona` / `.smod` syntax highlighting

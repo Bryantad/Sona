@@ -1405,12 +1405,18 @@ def create_argument_parser() -> argparse.ArgumentParser:
     guardian_report = guardian_sub.add_parser('report')
     guardian_report.add_argument('--project-root', default=None)
     guardian_report.add_argument('--json', action='store_true')
-    guardian_proof = guardian_sub.add_parser('proof', help='Verify and attest Native Proof receipts')
+    guardian_proof = guardian_sub.add_parser('proof', help='Verify, attest, and review Native Proof receipts')
     guardian_proof_sub = guardian_proof.add_subparsers(dest='guardian_proof_cmd')
     for name in ('verify', 'attest'):
         sub = guardian_proof_sub.add_parser(name)
         sub.add_argument('--project-root', default=None)
         sub.add_argument('--receipt', required=True)
+    guardian_proof_review = guardian_proof_sub.add_parser('review')
+    guardian_proof_review.add_argument('--project-root', default=None)
+    guardian_proof_review.add_argument('--receipt', required=True)
+    guardian_proof_review.add_argument('--provider', default=None)
+    guardian_proof_review.add_argument('--model', default=None)
+    guardian_proof_review.add_argument('--allow-network', action='store_true')
     guardian_proof_history = guardian_proof_sub.add_parser('history')
     guardian_proof_history.add_argument('--project-root', default=None)
     guardian_proof_history.add_argument('--limit', type=int, default=50)
@@ -1538,7 +1544,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
     add_guard_root(report_parser)
     report_parser.add_argument('--json', action='store_true', help='Print JSON report')
 
-    proof_parser = guard_sub.add_parser('proof', help='Verify and attest Native Proof receipts')
+    proof_parser = guard_sub.add_parser('proof', help='Verify, attest, and review Native Proof receipts')
     proof_sub = proof_parser.add_subparsers(dest='guardian_proof_cmd', help='Native Proof operations')
     for name, help_text in [
         ('verify', 'Verify a Guardian-bound Native Proof receipt'),
@@ -1547,6 +1553,12 @@ def create_argument_parser() -> argparse.ArgumentParser:
         sub = proof_sub.add_parser(name, help=help_text)
         add_guard_root(sub)
         sub.add_argument('--receipt', required=True, help='Path to a Native Proof receipt')
+    proof_review_parser = proof_sub.add_parser('review', help='Run governed advisory analysis over verified Proof facts')
+    add_guard_root(proof_review_parser)
+    proof_review_parser.add_argument('--receipt', required=True, help='Path to a Native Proof receipt')
+    proof_review_parser.add_argument('--provider', default=None, help='Governed provider id, such as ollama or deterministic')
+    proof_review_parser.add_argument('--model', default=None, help='Optional registered model id')
+    proof_review_parser.add_argument('--allow-network', action='store_true', help='Explicitly permit a configured remote provider; local Ollama does not require this')
     proof_history_parser = proof_sub.add_parser('history', help='Show Native Proof attestations')
     add_guard_root(proof_history_parser)
     proof_history_parser.add_argument('--limit', type=int, default=50, help='Maximum attestations to print')
@@ -2831,6 +2843,14 @@ def handle_guard_command(args) -> int:
                 result = guardian.guardian_proof_verify(project_root, getattr(args, 'receipt', None))
             elif proof_command == 'attest':
                 result = guardian.guardian_proof_attest(project_root, getattr(args, 'receipt', None))
+            elif proof_command == 'review':
+                result = guardian.guardian_proof_review(
+                    project_root,
+                    getattr(args, 'receipt', None),
+                    getattr(args, 'provider', None),
+                    getattr(args, 'model', None),
+                    getattr(args, 'allow_network', False),
+                )
             elif proof_command == 'history':
                 result = guardian.guardian_proof_history(project_root, getattr(args, 'limit', 50))
             else:
@@ -2848,7 +2868,7 @@ def handle_guard_command(args) -> int:
 
         print(json.dumps(redact(result), indent=2, sort_keys=True))
         status = result.get('status') if isinstance(result, dict) else None
-        return 1 if status in {'denied', 'failed', 'blocked', 'approval-required', 'rejected'} else 0
+        return 1 if status in {'denied', 'failed', 'blocked', 'approval-required', 'rejected', 'review-unavailable'} else 0
     except Exception as e:  # pragma: no cover
         safe_print(f"[ERROR] guardian command error: {e}")
         return 1

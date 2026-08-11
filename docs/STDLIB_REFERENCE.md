@@ -83,7 +83,7 @@ JSON-compatible data.
 | `strict` | Run opt-in strict checks. |
 | `certainty` | Track local assumptions and uncertainty notes. |
 | `sensory` | Apply low-stimulation text transformations. |
-| `guardian` | Guard a project with local snapshots, drift detection, recovery, Native Proof verification, attestation, and audit history. |
+| `guardian` | Guard a project with local snapshots, drift detection, recovery, Native Proof verification, attestation, governed advisory review, and audit history. |
 
 ## csv
 

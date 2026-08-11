@@ -291,6 +291,12 @@ def test_native_proof_binds_to_guardian_and_can_be_attested(
     verified = guardian.guardian_proof_verify(project, receipt_path)
     assert verified["status"] == "verified"
     assert guardian.guardian_proof_attest(project, receipt_path)["status"] == "attested"
+    reviewed = guardian.guardian_proof_review(project, receipt_path, "deterministic")
+    assert reviewed["status"] == "reviewed"
+    assert reviewed["evidence"]["local_attestation_recorded"] is True
+    assert reviewed["reviewer"]["advisory"] is True
+    assert str(project) not in json.dumps(reviewed)
+    assert str(receipt_path) not in json.dumps(reviewed)
     assert guardian.guardian_proof_history(project)[0]["payload"]["receipt_hash"] == receipt["receipt_hash"]
 
     source.write_text('print("changed after baseline");\n', encoding="utf-8")
