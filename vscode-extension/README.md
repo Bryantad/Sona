@@ -114,7 +114,7 @@ Sona AI Console is a preview feature. Claude and Codex are placeholder agent mod
 
 ## Release Notes
 
-- [Release notes](https://github.com/Bryantad/Sona/blob/main/RELEASE_NOTES_v0.15.1.md)
+- [0.15.4 release notes](https://github.com/Bryantad/Sona/blob/main/RELEASE_NOTES_v0.15.4.md)
 
 ## License
 
