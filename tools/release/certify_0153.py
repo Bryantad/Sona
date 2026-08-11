@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Certify one clean Sona 0.15.3 commit without writing inside its clone."""
+"""Certify one clean active Sona release commit outside its clone."""
 
 from __future__ import annotations
 
@@ -15,6 +15,7 @@ import subprocess
 import sys
 import tarfile
 import time
+import tomllib
 import venv
 import zipfile
 from dataclasses import asdict, dataclass
@@ -29,9 +30,13 @@ except ImportError:  # Direct script execution.
     from artifacts_0153 import inspect_archive
 
 
-VERSION = "0.15.3"
 SCHEMA_ID = "sona.release-certification-platform.schema-1"
 ROOT = Path(__file__).resolve().parents[2]
+VERSION = str(
+    tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"][
+        "version"
+    ]
+)
 PHASES = {"python", "gates", "native", "extension", "packaging"}
 TREE_EXCLUSIONS = {".git"}
 
@@ -517,7 +522,7 @@ def run_gates_phase(
     )
     result: dict[str, Any] = {
         "status": "pass",
-        "release_gate": "reports/gates/release/sona-0.15.3-release-gate.json",
+        "release_gate": f"reports/gates/release/sona-{VERSION}-release-gate.json",
     }
     if native_binary is not None:
         runner.run(
@@ -528,6 +533,8 @@ def run_gates_phase(
                 native_binary,
                 "--output-dir",
                 gate_root / "differential",
+                "--sona-version",
+                VERSION,
             ],
             cwd=stage,
             timeout=300,
@@ -540,6 +547,8 @@ def run_gates_phase(
                 native_binary,
                 "--output-dir",
                 gate_root / "native-standalone",
+                "--sona-version",
+                VERSION,
             ],
             cwd=stage,
             timeout=300,
@@ -548,10 +557,10 @@ def run_gates_phase(
             {
                 "differential":
                     "reports/gates/differential/"
-                    "sona-0.15.3-differential-conformance.json",
+                    f"sona-{VERSION}-differential-conformance.json",
                 "native_standalone":
                     "reports/gates/native-standalone/"
-                    "sona-0.15.3-native-standalone.json",
+                    f"sona-{VERSION}-native-standalone.json",
             }
         )
     return result

@@ -150,6 +150,26 @@ Expand-Archive `
 The guides use `sona-native` as a convenient installed alias. If you run the
 ZIP directly, substitute the full path to its `sona.exe`.
 
+### Linux and macOS Native Core
+
+The cross-platform release workflow builds and executes architecture-specific
+Native Core candidates on their matching hosts:
+
+| Host | Native Core asset |
+| --- | --- |
+| Linux x86-64 | `sona-native-0.15.4-linux-x86_64-musl.tar.gz` |
+| Linux ARM64 | `sona-native-0.15.4-linux-aarch64-musl.tar.gz` |
+| macOS Intel | `sona-native-0.15.4-macos-x86_64.tar.gz` |
+| macOS Apple Silicon | `sona-native-0.15.4-macos-aarch64.tar.gz` |
+
+Attach these files only after the final-commit workflow passes. The Linux
+artifacts are static musl builds. The macOS candidates remain unsigned until a
+separate Apple Developer ID signing and notarization gate is completed.
+
+The wheel, source distribution, and VSIX are portable artifacts; separate
+copies are not built per operating system. The workflow installs and tests the
+same wheel bytes with Python 3.11 and 3.12 on all five desktop targets.
+
 ### VS Code extension
 
 ```powershell
@@ -229,17 +249,24 @@ No breaking language change is intended in 0.15.4.
 | `sona_lang-0.15.4-py3-none-any.whl` | Python wheel for the `sona` CLI, Guardian, and compatibility runtime |
 | `sona_lang-0.15.4.tar.gz` | Python source distribution; separate from GitHub's automatic source archive |
 | `sona-native-0.15.4-windows-x86_64.zip` | Standalone Windows x86-64 Native Core executable |
+| `sona-native-0.15.4-linux-x86_64-musl.tar.gz` | Static Linux x86-64 Native Core executable |
+| `sona-native-0.15.4-linux-aarch64-musl.tar.gz` | Static Linux ARM64 Native Core executable |
+| `sona-native-0.15.4-macos-x86_64.tar.gz` | macOS Intel Native Core executable |
+| `sona-native-0.15.4-macos-aarch64.tar.gz` | macOS Apple Silicon Native Core executable |
 | `sona-ai-native-programming-0.15.4.vsix` | VS Code extension package |
-| `SHA256SUMS.txt` | SHA-256 checksums for the four manually uploaded artifacts |
+| `sona-0.15.4-platform-test-kit.zip` | Cross-platform machine verifier and instructions |
+| `sona-0.15.4-release-manifest.json` | Source commit and host-tested desktop matrix |
+| `SHA256SUMS.txt` | SHA-256 authority for the assembled release candidate |
 
-Do not embed the Native Core ZIP in the wheel or VSIX. It is a separate GitHub
-Release asset.
+Do not embed any Native Core archive in the wheel or VSIX. Each native build is
+a separate GitHub Release asset tied to its own host evidence.
 
 ## Documentation
 
 - [Native Proof Mode Guide](docs/guides/proof-mode.md)
 - [Guardian Guide](docs/guides/guardian.md)
 - [Using Native Proof and Guardian Together](docs/guides/proof-and-guardian.md)
+- [Platform Installation and Testing](docs/guides/platform-installation-and-testing.md)
 - [Native Proof Mode Reference](docs/reference/native-proof-mode.md)
 - [Guardian Reference](docs/GUARDIAN_REFERENCE.md)
 - [0.15.4 Implementation Report](docs/release/0.15.4-implementation-report.md)
@@ -266,11 +293,15 @@ Core, package, and extension surfaces:
 - Wheel, source distribution, Native ZIP, and VSIX builds, inspections, clean
   installs, and smoke tests passed. The VSIX production dependency audit
   reported 0 high, 0 critical, and 0 total vulnerabilities.
+- The cross-platform packager, deterministic archive checks, exact-candidate
+  assembler, and machine verifier pass their local unit suite. The real Windows
+  verifier also passed the wheel/sdist/VSIX inspection and complete Native
+  Proof → Guardian verify → attest → deterministic review workflow.
 
 See the implementation report for the precise commands and scope. Final
-publication certification still requires a rebuild from the final commit in a
-clean Windows release environment, including the process-isolation gate and
-the required cross-platform Python and Native checks.
+publication certification still requires the final-commit workflow to pass on
+Windows x86-64, Linux x86-64/ARM64, and macOS Intel/Apple Silicon with Python
+3.11/3.12. macOS signing and notarization remain a separate publication gate.
 
 ## Trust and preview limits
 
@@ -285,3 +316,6 @@ the required cross-platform Python and Native checks.
   mutate, or expand the evidence claim.
 - Native Core remains a preview; Native HTTP and serialized native instruction
   streams remain future work.
+- Android and iOS are compile-only experiments in 0.15.4, not supported mobile
+  release targets. The Linux ARM64 archive must not be relabeled as Android,
+  and no standalone iOS CLI or app package is provided.

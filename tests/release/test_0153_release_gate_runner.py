@@ -32,8 +32,8 @@ def test_release_gate_uses_exact_positive_and_negative_schema(tmp_path):
         timeout=60,
     )
     assert process.returncode == 0, process.stdout + process.stderr
-    json_path = tmp_path / "sona-0.15.3-release-gate.json"
-    markdown_path = tmp_path / "sona-0.15.3-release-gate.md"
+    json_path = tmp_path / f"sona-{release_gate.SONA_VERSION}-release-gate.json"
+    markdown_path = tmp_path / f"sona-{release_gate.SONA_VERSION}-release-gate.md"
     summary = json.loads(json_path.read_text(encoding="utf-8"))
     assert summary["schema_id"] == "sona.release-gate.schema-2"
     assert summary["schema"] == 2

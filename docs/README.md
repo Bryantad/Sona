@@ -12,6 +12,7 @@ feature drafts are intentionally not part of the published branch structure.
 - [Native Proof Mode Guide](guides/proof-mode.md)
 - [Guardian Guide](guides/guardian.md)
 - [Using Native Proof and Guardian Together](guides/proof-and-guardian.md)
+- [Platform Installation and Testing](guides/platform-installation-and-testing.md)
 - [Native Proof Mode Technical Reference](reference/native-proof-mode.md)
 - [0.15.4 Standard Library Catalog](reference/stdlib/README.md)
 - [Accessibility Reference](ACCESSIBILITY_REFERENCE.md)

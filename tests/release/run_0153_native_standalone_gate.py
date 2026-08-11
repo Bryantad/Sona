@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the Windows/Linux Native Core standalone evidence gate."""
+"""Run the cross-platform Native Core standalone evidence gate."""
 
 from __future__ import annotations
 
@@ -17,11 +17,15 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from run_0153_release_gate import _git_commit, _outside_repository, _run  # noqa: E402
+from run_0153_release_gate import (  # noqa: E402
+    SONA_VERSION,
+    _git_commit,
+    _outside_repository,
+    _run,
+)
 
 
 SCHEMA_ID = "sona.native-standalone.schema-1"
-SONA_VERSION = "0.15.3"
 
 
 @dataclass(frozen=True)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exact positive and negative conformance gate for Sona 0.15.3."""
+"""Exact positive and negative conformance gate for the active Sona release."""
 
 from __future__ import annotations
 
@@ -12,15 +12,20 @@ import re
 import signal
 import subprocess
 import sys
+import tomllib
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 
-SCHEMA_ID = "sona.release-gate.schema-2"
-SONA_VERSION = "0.15.3"
 ROOT = Path(__file__).resolve().parents[2]
+SCHEMA_ID = "sona.release-gate.schema-2"
+SONA_VERSION = str(
+    tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"][
+        "version"
+    ]
+)
 CASES_DIR = Path(__file__).with_name("cases")
 ANSI_RE = re.compile(r"\x1b(?:\[[0-?]*[ -/]*[@-~]|\][^\x07]*(?:\x07|\x1b\\))")
 DIAGNOSTIC_RE = re.compile(
@@ -377,7 +382,7 @@ def _git_commit() -> str:
 
 def _write_markdown(summary: dict[str, Any], path: Path) -> None:
     lines = [
-        "# Sona 0.15.3 Release Gate",
+        f"# Sona {SONA_VERSION} Release Gate",
         "",
         f"- Schema: `{summary['schema_id']}`",
         f"- Source commit: `{summary['source_commit']}`",
@@ -416,8 +421,8 @@ def main(argv: list[str] | None = None) -> int:
     positive_pass = sum(result.status == "positive_pass" for result in results)
     negative_pass = sum(result.status == "negative_pass" for result in results)
     failures = sum(result.status == "fail" for result in results)
-    json_path = output_dir / "sona-0.15.3-release-gate.json"
-    markdown_path = output_dir / "sona-0.15.3-release-gate.md"
+    json_path = output_dir / f"sona-{SONA_VERSION}-release-gate.json"
+    markdown_path = output_dir / f"sona-{SONA_VERSION}-release-gate.md"
     summary = {
         "schema_id": SCHEMA_ID,
         "schema": 2,
@@ -451,7 +456,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     if markdown_path.read_text(encoding="utf-8") != rendered:
         raise RuntimeError("release-gate Markdown does not match its JSON source")
-    print(f"Sona 0.15.3 release gate: {'pass' if failures == 0 else 'fail'}")
+    print(f"Sona {SONA_VERSION} release gate: {'pass' if failures == 0 else 'fail'}")
     print(f"JSON: {json_path}")
     print(f"Markdown: {markdown_path}")
     print(

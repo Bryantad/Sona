@@ -228,6 +228,15 @@ def main() -> int:
         f"docs/release/{expected}-implementation-report.md",
         f"Sona {expected}",
     )
+    require_contains("docs/guides/platform-installation-and-testing.md", expected)
+    require_contains(".github/workflows/release-platforms-0154.yml", expected)
+    for target in (
+        "x86_64-unknown-linux-musl",
+        "aarch64-unknown-linux-musl",
+        "x86_64-apple-darwin",
+        "aarch64-apple-darwin",
+    ):
+        require_contains(".github/workflows/release-platforms-0154.yml", target)
     require_contains("docs/stdlib/catalog.json", f'"version": "{expected}"')
     require_contains("docs/packages/manifest.md", f"v{expected}")
     require_contains(

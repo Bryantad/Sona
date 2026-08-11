@@ -19,6 +19,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tests" / "release"))
 from run_0153_release_gate import (  # noqa: E402
     DIAGNOSTIC_RE,
+    SONA_VERSION,
     _deterministic_environment,
     _git_commit,
     _outside_repository,
@@ -27,7 +28,6 @@ from run_0153_release_gate import (  # noqa: E402
 
 
 SCHEMA_ID = "sona.differential-conformance.schema-1"
-SONA_VERSION = "0.15.3"
 CLASSIFICATIONS = {
     "identical",
     "shared_diagnostic",

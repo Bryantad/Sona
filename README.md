@@ -5,7 +5,7 @@ clear execution, readable diagnostics, deterministic examples, and cognitive
 accessibility.
 
 [![Source Version](https://img.shields.io/github/v/tag/Bryantad/Sona?label=source\&sort=semver)](https://github.com/Bryantad/Sona/tags)
-[![CI](https://github.com/Bryantad/Sona/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/Bryantad/Sona/actions/workflows/ci.yml)
+[![CI](https://github.com/Bryantad/Sona/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Bryantad/Sona/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue.svg)](https://www.python.org/)
 [![Package](https://img.shields.io/badge/package-sona--lang-blue)](https://pypi.org/project/sona-lang/)
 [![License](https://img.shields.io/github/license/Bryantad/Sona)](LICENSE)
@@ -101,6 +101,7 @@ Both `sona run <file.sona>` and `sona <file.sona>` are supported for local files
 * [Native Proof Mode Guide](docs/guides/proof-mode.md)
 * [Guardian Guide](docs/guides/guardian.md)
 * [Using Native Proof and Guardian Together](docs/guides/proof-and-guardian.md)
+* [Platform Installation and Testing](docs/guides/platform-installation-and-testing.md)
 * [0.15.4 Standard Library Catalog](docs/reference/stdlib/README.md)
 * [Accessibility Reference](docs/ACCESSIBILITY_REFERENCE.md)
 * [Guardian Reference](docs/GUARDIAN_REFERENCE.md)
@@ -140,6 +141,8 @@ docs/                         Current user-facing documentation
 examples/                     Official source-checkout examples
 tools/run_examples.py         Source-checkout example validator
 .github/workflows/ci.yml      Continuous integration workflow
+.github/workflows/release-platforms-0154.yml
+                              Cross-platform release-candidate workflow
 vscode-extension/             Main Sona VS Code extension
 extensions/sona-receipt-explorer/
                               Receipt Explorer VS Code extension

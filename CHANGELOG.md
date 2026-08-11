@@ -25,6 +25,10 @@
   provider, while model output remains outside the trust and attestation chain.
 - Added task-oriented guides for Native Proof Mode, Guardian drift and recovery,
   and the complete Guardian-bound Proof and advisory AI workflow.
+- Added host-matched 0.15.4 release-candidate packaging for Windows x86-64,
+  Linux x86-64/ARM64, and macOS Intel/Apple Silicon, plus one portable wheel,
+  source distribution, VSIX, machine verifier, checksum authority, and release
+  manifest. Android and iOS remain explicit compile-only experiments.
 - Preserved 0.15.x aliases, Python compatibility semantics, cognitive runtime,
   Guardian interfaces, and workspace-module precedence.
 
