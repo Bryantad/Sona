@@ -7,16 +7,20 @@
 
 Visual Studio Code support for the Sona programming language.
 
-## What's New in 0.15.1
+## What's New in 0.15.4
 
-Sona `0.15.1` focuses on Cognitive Diagnostics and language-wide audit
-hardening while preserving the existing extension feature surface.
+Sona `0.15.4` adds a release-trust workflow while preserving the extension's
+existing editor and AI Console surface.
 
-- Stable CLI flow remains available: `sona --version`, `sona --help`, `sona run file.sona`, and `sona file.sona`.
-- `sona check file.sona` reports Cognitive Diagnostics for common mistakes.
-- `sona check file.sona --json` returns structured diagnostics for tools.
-- Existing **Run Sona File** command remains available from the Command Palette and editor context menu.
-- `.sona` and `.smod` syntax highlighting remains activation-safe.
+- `sona-native proof file.sona --guardian-root . --summary` can bind redacted
+  Native Proof execution evidence to an initialized Guardian baseline.
+- `sona guardian proof verify`, `attest`, and `history` provide local receipt
+  verification and audit history without storing program paths or output in the
+  Guardian attestation.
+- The extension continues to use the separately installed `sona` CLI for its
+  editor commands; install `sona-native` alongside it when using Native Proof.
+- Existing **Run Sona File** command and `.sona` / `.smod` syntax highlighting
+  remain activation-safe.
 
 ## How to Use Sona in VS Code
 

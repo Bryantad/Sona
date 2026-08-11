@@ -4,6 +4,10 @@
 
 - Aligns the tracked extension metadata with Sona 0.15.4's standard-library
   runtime capability release.
+- Documents the opt-in Guardian-bound Native Proof workflow for the separately
+  installed Sona CLI: `sona-native proof --guardian-root` creates redacted
+  execution evidence, while `sona guardian proof verify|attest|history`
+  verifies and records local Guardian attestations.
 - Keeps the AI Console UI backend-focused and unchanged.
 - Pins the transitive `brace-expansion` resolution to 5.0.9 for the current
   production dependency audit.
