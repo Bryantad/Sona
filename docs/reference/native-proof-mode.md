@@ -7,6 +7,7 @@ program semantics, or provide a general security attestation.
 ```text
 sona proof app.sona --receipt proof.json --engine native
 sona proof app.sbc --receipt proof.json --allow-fs-read
+sona proof app.sona --receipt proof.json --summary
 ```
 
 The receipt destination is required, its parent directory must already exist,
@@ -57,10 +58,24 @@ fails, Sona prints the relevant `PROOF-*` diagnostic and makes no proof-success
 claim. A final path may remain after a post-publication durability failure; it
 must not be treated as publication-certified.
 
-With a successfully persisted receipt, `sona proof` has the same program-visible
-stdout, stderr, exit result, VM semantics, and runtime diagnostics as an
-equivalent native `sona run`. Only the explicitly requested evidence side
-effect differs.
+Without `--summary`, a successfully persisted `sona proof` has the same
+program-visible stdout, stderr, exit result, VM semantics, and runtime
+diagnostics as an equivalent native `sona run`. Only the explicitly requested
+evidence side effect differs.
+
+## Interactive summary
+
+Pass `--summary` when a person is watching the terminal and needs a concise
+confirmation that the receipt was saved. After a successful execution and
+receipt publication, Sona writes a labeled summary to stderr with the receipt
+path, Native Core engine, observed-effect count, output byte counts, duration,
+and receipt hash.
+
+The summary is presentation-only: it is not emitted for program or receipt
+failures, is not included in the receipt's output hashes, and does not change
+the receipt contents, receipt hash, program stdout, or exit result. Leave the
+flag off for the exact `sona run`-compatible stdout/stderr contract used by
+scripts and automated tests.
 
 ## Limits of the claim
 

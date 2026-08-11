@@ -191,6 +191,61 @@ def test_native_proof_receipt_is_redacted_canonical_and_matches_run_output(
     assert "warn" not in rendered
 
 
+def test_native_proof_summary_is_opt_in_and_excluded_from_receipt_output_hashes(
+    tmp_path: Path, native_binary: Path
+):
+    source = tmp_path / "summary.sona"
+    _write_source(source, 'print("operator view");\n')
+    receipt_path = tmp_path / "summary-proof.json"
+    proof = _native_run(
+        native_binary,
+        "proof",
+        str(source),
+        "--receipt",
+        str(receipt_path),
+        "--summary",
+        cwd=tmp_path,
+    )
+
+    assert proof.returncode == 0
+    assert proof.stdout == b"operator view\n"
+    summary = proof.stderr.decode("utf-8", "replace")
+    assert "Proof receipt saved" in summary
+    assert "  Execution     succeeded" in summary
+    assert "  Engine        Native Core" in summary
+    assert f"  Receipt       {receipt_path}" in summary
+    assert "  Evidence      1 observed effect" in summary
+    assert "  Output        14 B stdout, 0 B stderr" in summary
+    assert "  Duration      " in summary
+
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    assert receipt["execution"]["stdout"] == {
+        "sha256": _sha256(proof.stdout),
+        "bytes": len(proof.stdout),
+    }
+    assert receipt["execution"]["stderr"] == {
+        "sha256": _sha256(b""),
+        "bytes": 0,
+    }
+    assert receipt["receipt_hash"] in summary
+
+    failed_source = tmp_path / "summary-failure.sona"
+    _write_source(failed_source, "fn legacy() { return 1; };\n")
+    failed_receipt = tmp_path / "summary-failure.json"
+    failed = _native_run(
+        native_binary,
+        "proof",
+        str(failed_source),
+        "--receipt",
+        str(failed_receipt),
+        "--summary",
+        cwd=tmp_path,
+    )
+    assert failed.returncode == 1
+    assert b"Proof receipt saved" not in failed.stderr
+    assert failed_receipt.is_file()
+
+
 def test_native_proof_sbc_preserves_container_and_exact_source_identity(
     tmp_path: Path, native_binary: Path
 ):

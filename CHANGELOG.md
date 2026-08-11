@@ -15,6 +15,8 @@
   examples.
 - Updated the VS Code extension's `brace-expansion` resolution to 5.0.9 for
   the current production dependency audit.
+- Added an opt-in `sona proof --summary` terminal confirmation for saved proof
+  receipts while preserving the default machine-compatible output contract.
 - Preserved 0.15.x aliases, Python compatibility semantics, cognitive runtime,
   Guardian interfaces, and workspace-module precedence.
 

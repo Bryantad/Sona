@@ -108,6 +108,13 @@ struct PreparedProgram {
     identity: ProgramIdentity,
 }
 
+#[derive(Debug)]
+struct ProofInvocation {
+    target: PathBuf,
+    receipt_path: PathBuf,
+    summary: bool,
+}
+
 /// Run Proof Mode.  The command returns an existing program diagnostic when
 /// execution fails after its receipt was safely written; Proof-only failures
 /// use the compact `PROOF-XXX` namespace.
@@ -127,13 +134,13 @@ fn run_with_context(
     version: &str,
     supplied_context: Option<ProofContext>,
 ) -> Result<i32, ProofFailure> {
-    let (target, receipt_path) = parse_invocation(args)?;
+    let invocation = parse_invocation(args)?;
     super::require_native_engine(args)?;
-    validate_receipt_destination(&receipt_path)?;
+    validate_receipt_destination(&invocation.receipt_path)?;
 
     // A container must validate its exact source backing before it is eligible
     // for a Proof receipt.  Existing bytecode diagnostics retain ownership.
-    let prepared = prepare_program(&target)?;
+    let prepared = prepare_program(&invocation.target)?;
     let context = supplied_context.unwrap_or(ProofContext::production()?);
     let identity = prepared.identity.clone();
     let capabilities = super::runtime_capabilities(args);
@@ -161,7 +168,7 @@ fn run_with_context(
         &context,
     )
     .map_err(|failure| ProofFailure::after_execution(failure, &program_error))?;
-    persist_receipt(&receipt_path, &receipt, context.fault)
+    persist_receipt(&invocation.receipt_path, &receipt, context.fault)
         .map_err(|failure| ProofFailure::after_execution(failure, &program_error))?;
 
     if let Some(diagnostics) = program_error {
@@ -170,10 +177,13 @@ fn run_with_context(
             surfaced: diagnostics,
         });
     }
+    if invocation.summary {
+        emit_summary(&invocation.receipt_path, &receipt);
+    }
     Ok(0)
 }
 
-fn parse_invocation(args: &[String]) -> SonaResult<(PathBuf, PathBuf)> {
+fn parse_invocation(args: &[String]) -> SonaResult<ProofInvocation> {
     let Some(target) = args.get(1) else {
         return Err(proof_error(
             "PROOF-001",
@@ -194,6 +204,7 @@ fn parse_invocation(args: &[String]) -> SonaResult<(PathBuf, PathBuf)> {
         |hint: &str| proof_error("PROOF-001", "E0001", "Invalid Proof Mode invocation.", hint);
     let mut receipt = None;
     let mut engine_seen = false;
+    let mut summary = false;
     let mut index = 2;
     while index < args.len() {
         match args[index].as_str() {
@@ -223,6 +234,13 @@ fn parse_invocation(args: &[String]) -> SonaResult<(PathBuf, PathBuf)> {
                 engine_seen = true;
                 index += 2;
             }
+            "--summary" => {
+                if summary {
+                    return Err(invalid("Provide --summary at most once."));
+                }
+                summary = true;
+                index += 1;
+            }
             "--allow-fs-read" | "--allow-fs-write" | "--allow-network" => {
                 index += 1;
             }
@@ -239,7 +257,51 @@ fn parse_invocation(args: &[String]) -> SonaResult<(PathBuf, PathBuf)> {
     let Some(receipt) = receipt else {
         return Err(invalid("Provide exactly one --receipt <path> option."));
     };
-    Ok((PathBuf::from(target), receipt))
+    Ok(ProofInvocation {
+        target: PathBuf::from(target),
+        receipt_path: receipt,
+        summary,
+    })
+}
+
+fn emit_summary(receipt_path: &Path, receipt: &Value) {
+    let mut stderr = io::stderr().lock();
+    let _ = writeln!(stderr);
+    let _ = write!(stderr, "{}", render_summary(receipt_path, receipt));
+}
+
+fn render_summary(receipt_path: &Path, receipt: &Value) -> String {
+    let execution = &receipt["execution"];
+    let stdout_bytes = execution["stdout"]["bytes"].as_u64().unwrap_or(0);
+    let stderr_bytes = execution["stderr"]["bytes"].as_u64().unwrap_or(0);
+    let duration_ms = execution["duration_ms"].as_u64().unwrap_or(0);
+    let effect_count = receipt["effects"].as_array().map_or(0, Vec::len);
+    let effect_label = if effect_count == 1 {
+        "effect"
+    } else {
+        "effects"
+    };
+    let receipt_hash = receipt["receipt_hash"].as_str().unwrap_or("unavailable");
+
+    format!(
+        concat!(
+            "Proof receipt saved\n",
+            "  Execution     succeeded\n",
+            "  Engine        Native Core\n",
+            "  Receipt       {}\n",
+            "  Evidence      {} observed {}\n",
+            "  Output        {} B stdout, {} B stderr\n",
+            "  Duration      {} ms\n",
+            "  Receipt hash  {}\n",
+        ),
+        receipt_path.display(),
+        effect_count,
+        effect_label,
+        stdout_bytes,
+        stderr_bytes,
+        duration_ms,
+        receipt_hash,
+    )
 }
 
 fn validate_receipt_destination(destination: &Path) -> SonaResult<()> {
@@ -688,10 +750,61 @@ mod tests {
                 "proof.json".into(),
                 "--engine".into(),
             ],
+            vec![
+                "proof".into(),
+                "app.sona".into(),
+                "--receipt".into(),
+                "proof.json".into(),
+                "--summary".into(),
+                "--summary".into(),
+            ],
         ] {
             let error = parse_invocation(&args).unwrap_err();
             assert_eq!(error.0[0].diagnostic_id, "PROOF-001");
         }
+    }
+
+    #[test]
+    fn proof_summary_is_an_opt_in_invocation_flag() {
+        let invocation = parse_invocation(&[
+            "proof".into(),
+            "app.sona".into(),
+            "--summary".into(),
+            "--receipt".into(),
+            "proof.json".into(),
+        ])
+        .unwrap();
+
+        assert_eq!(invocation.target, PathBuf::from("app.sona"));
+        assert_eq!(invocation.receipt_path, PathBuf::from("proof.json"));
+        assert!(invocation.summary);
+    }
+
+    #[test]
+    fn proof_summary_is_concise_and_operator_friendly() {
+        let receipt = json!({
+            "execution": {
+                "stdout": {"bytes": 24},
+                "stderr": {"bytes": 0},
+                "duration_ms": 9
+            },
+            "effects": [{"scope": "console"}],
+            "receipt_hash": "sha256:receipt"
+        });
+
+        assert_eq!(
+            render_summary(Path::new("proof.json"), &receipt),
+            concat!(
+                "Proof receipt saved\n",
+                "  Execution     succeeded\n",
+                "  Engine        Native Core\n",
+                "  Receipt       proof.json\n",
+                "  Evidence      1 observed effect\n",
+                "  Output        24 B stdout, 0 B stderr\n",
+                "  Duration      9 ms\n",
+                "  Receipt hash  sha256:receipt\n",
+            )
+        );
     }
 
     #[test]

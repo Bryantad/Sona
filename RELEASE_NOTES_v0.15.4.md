@@ -58,6 +58,8 @@ semantic parity or serialized instruction bytecode.
 - `PROOF-001..007` are reserved for Proof Mode infrastructure. Program parser,
   container, VM, runtime, engine, and capability diagnostics retain their
   established identifiers.
+- `--summary` adds a concise terminal confirmation after a successful receipt
+  is saved, without changing the receipt or the default scripted output.
 - This is tamper-evident-after-creation evidence, not signer identity, machine
   attestation, trusted-hardware proof, or a claim of Python/Native parity.
 
