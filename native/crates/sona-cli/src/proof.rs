@@ -22,6 +22,7 @@ use sona_source::SourceFile;
 use sona_vm::{NativeProofEffect, NativeProofEvidence, Vm};
 
 const SCHEMA_ID: &str = "sona.native-proof.schema-1";
+const GUARDIAN_BINDING_SCHEMA_ID: &str = "sona.guardian-proof-binding.schema-1";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum PersistenceFault {
@@ -43,6 +44,7 @@ struct ProofContext {
     target_key: Vec<u8>,
     forced_duration_ms: Option<u64>,
     fault: Option<PersistenceFault>,
+    guardian_binding: Option<Value>,
 }
 
 #[derive(Debug)]
@@ -89,6 +91,7 @@ impl ProofContext {
             target_key,
             forced_duration_ms: None,
             fault: None,
+            guardian_binding: None,
         })
     }
 }
@@ -112,6 +115,7 @@ struct PreparedProgram {
 struct ProofInvocation {
     target: PathBuf,
     receipt_path: PathBuf,
+    guardian_root: Option<PathBuf>,
     summary: bool,
 }
 
@@ -141,7 +145,13 @@ fn run_with_context(
     // A container must validate its exact source backing before it is eligible
     // for a Proof receipt.  Existing bytecode diagnostics retain ownership.
     let prepared = prepare_program(&invocation.target)?;
-    let context = supplied_context.unwrap_or(ProofContext::production()?);
+    let guardian_binding = invocation
+        .guardian_root
+        .as_deref()
+        .map(|root| load_guardian_binding(root, &prepared))
+        .transpose()?;
+    let mut context = supplied_context.unwrap_or(ProofContext::production()?);
+    context.guardian_binding = guardian_binding;
     let identity = prepared.identity.clone();
     let capabilities = super::runtime_capabilities(args);
     let started = Instant::now();
@@ -204,6 +214,7 @@ fn parse_invocation(args: &[String]) -> SonaResult<ProofInvocation> {
         |hint: &str| proof_error("PROOF-001", "E0001", "Invalid Proof Mode invocation.", hint);
     let mut receipt = None;
     let mut engine_seen = false;
+    let mut guardian_root = None;
     let mut summary = false;
     let mut index = 2;
     while index < args.len() {
@@ -234,6 +245,23 @@ fn parse_invocation(args: &[String]) -> SonaResult<ProofInvocation> {
                 engine_seen = true;
                 index += 2;
             }
+            "--guardian-root" => {
+                if guardian_root.is_some() {
+                    return Err(invalid(
+                        "Provide at most one --guardian-root <project> option.",
+                    ));
+                }
+                let Some(value) = args.get(index + 1) else {
+                    return Err(invalid("Provide a project root after --guardian-root."));
+                };
+                if value.is_empty() || value.starts_with('-') {
+                    return Err(invalid(
+                        "Provide a non-option project root after --guardian-root.",
+                    ));
+                }
+                guardian_root = Some(PathBuf::from(value));
+                index += 2;
+            }
             "--summary" => {
                 if summary {
                     return Err(invalid("Provide --summary at most once."));
@@ -260,8 +288,124 @@ fn parse_invocation(args: &[String]) -> SonaResult<ProofInvocation> {
     Ok(ProofInvocation {
         target: PathBuf::from(target),
         receipt_path: receipt,
+        guardian_root,
         summary,
     })
+}
+
+/// Load the small, redacted Guardian anchor used by an explicitly bound proof.
+///
+/// This is deliberately Native Core-only: it reads Guardian's persisted state
+/// without importing Python, running Guardian, or recording an audit event.
+/// The result never includes an operating-system path or Guardian's inventory.
+fn load_guardian_binding(root: &Path, prepared: &PreparedProgram) -> SonaResult<Value> {
+    let root = fs::canonicalize(root).map_err(|_| guardian_binding_error())?;
+    if !fs::metadata(&root)
+        .map(|metadata| metadata.is_dir())
+        .unwrap_or(false)
+    {
+        return Err(guardian_binding_error());
+    }
+
+    let target = fs::canonicalize(&prepared.entry_path).map_err(|_| guardian_binding_error())?;
+    if !target.starts_with(&root) {
+        return Err(guardian_binding_error());
+    }
+
+    let state = root.join(".sona").join("guardian");
+    let baseline_path = state.join("baseline.json");
+    let trusted_config_path = state.join("trusted_config.json");
+    let baseline_bytes = read_guardian_state_file(&root, &baseline_path)?;
+    let trusted_config_bytes = read_guardian_state_file(&root, &trusted_config_path)?;
+    let baseline: Value =
+        serde_json::from_slice(&baseline_bytes).map_err(|_| guardian_binding_error())?;
+    let trusted_config: Value =
+        serde_json::from_slice(&trusted_config_bytes).map_err(|_| guardian_binding_error())?;
+
+    let baseline_object = baseline.as_object().ok_or_else(guardian_binding_error)?;
+    let trusted_config_object = trusted_config
+        .as_object()
+        .ok_or_else(guardian_binding_error)?;
+    if baseline_object
+        .get("schema_version")
+        .and_then(Value::as_u64)
+        != Some(1)
+        || trusted_config_object
+            .get("schema_version")
+            .and_then(Value::as_u64)
+            != Some(1)
+    {
+        return Err(guardian_binding_error());
+    }
+    let snapshot_id = baseline_object
+        .get("snapshot_id")
+        .and_then(Value::as_str)
+        .filter(|value| !value.is_empty())
+        .ok_or_else(guardian_binding_error)?;
+    let baseline_config_hash = baseline_object
+        .get("trusted_config_hash")
+        .ok_or_else(guardian_binding_error)?;
+    let trusted_config_hash = trusted_config_object
+        .get("config_hash")
+        .ok_or_else(guardian_binding_error)?;
+    if baseline_config_hash != trusted_config_hash {
+        return Err(guardian_binding_error());
+    }
+
+    let relative_target = target
+        .strip_prefix(&root)
+        .map_err(|_| guardian_binding_error())?
+        .to_string_lossy()
+        .replace('\\', "/");
+    let target_hash = match prepared.identity.container.as_ref() {
+        Some((hash, _)) => hash.as_str(),
+        None => prepared.identity.source_sha256.as_str(),
+    };
+    let target_hash = target_hash
+        .strip_prefix("sha256:")
+        .ok_or_else(guardian_binding_error)?;
+    let tracked = baseline_object
+        .get("files")
+        .and_then(Value::as_array)
+        .map(|files| {
+            files.iter().any(|file| {
+                file.get("path").and_then(Value::as_str) == Some(relative_target.as_str())
+                    && file.get("sha256").and_then(Value::as_str) == Some(target_hash)
+            })
+        })
+        .unwrap_or(false);
+    if !tracked {
+        return Err(guardian_binding_error());
+    }
+
+    Ok(json!({
+        "schema_id": GUARDIAN_BINDING_SCHEMA_ID,
+        "baseline_snapshot_id": snapshot_id,
+        "baseline_sha256": sha256_label(&baseline_bytes),
+        "trusted_config_sha256": sha256_label(&trusted_config_bytes),
+        "program_baseline": "tracked"
+    }))
+}
+
+fn read_guardian_state_file(root: &Path, path: &Path) -> SonaResult<Vec<u8>> {
+    let metadata = fs::symlink_metadata(path).map_err(|_| guardian_binding_error())?;
+    if metadata.file_type().is_symlink() || !metadata.file_type().is_file() {
+        return Err(guardian_binding_error());
+    }
+    let resolved = fs::canonicalize(path).map_err(|_| guardian_binding_error())?;
+    if !resolved.starts_with(root) {
+        return Err(guardian_binding_error());
+    }
+    fs::read(path).map_err(|_| guardian_binding_error())
+}
+
+fn guardian_binding_error() -> DiagnosticList {
+    proof_error(
+        "PROOF-008",
+        "E0601",
+        "Guardian binding is unavailable.",
+        "Initialize Guardian for the project and prove a baseline-tracked program with --guardian-root.",
+    )
 }
 
 fn emit_summary(receipt_path: &Path, receipt: &Value) {
@@ -282,6 +426,34 @@ fn render_summary(receipt_path: &Path, receipt: &Value) -> String {
         "effects"
     };
     let receipt_hash = receipt["receipt_hash"].as_str().unwrap_or("unavailable");
+
+    if let Some(snapshot_id) = receipt
+        .get("guardian")
+        .and_then(|guardian| guardian.get("baseline_snapshot_id"))
+        .and_then(Value::as_str)
+    {
+        return format!(
+            concat!(
+                "Proof receipt saved\n",
+                "  Execution     succeeded\n",
+                "  Engine        Native Core\n",
+                "  Guardian      Bound baseline {}\n",
+                "  Receipt       {}\n",
+                "  Evidence      {} observed {}\n",
+                "  Output        {} B stdout, {} B stderr\n",
+                "  Duration      {} ms\n",
+                "  Receipt hash  {}\n",
+            ),
+            snapshot_id,
+            receipt_path.display(),
+            effect_count,
+            effect_label,
+            stdout_bytes,
+            stderr_bytes,
+            duration_ms,
+            receipt_hash,
+        );
+    }
 
     format!(
         concat!(
@@ -448,7 +620,7 @@ fn build_receipt_for_program(
         .map(effect_json)
         .collect::<Vec<_>>();
     let diagnostic = program_error.and_then(execution_diagnostic_json);
-    let receipt = json!({
+    let mut receipt = json!({
         "schema_id": SCHEMA_ID,
         "schema": 1,
         "receipt_type": "native_execution_proof",
@@ -479,6 +651,12 @@ fn build_receipt_for_program(
         },
         "effects": effects
     });
+    if let Some(binding) = &context.guardian_binding {
+        receipt
+            .as_object_mut()
+            .expect("Proof receipt is an object")
+            .insert("guardian".to_string(), binding.clone());
+    }
     seal_receipt(receipt)
 }
 
@@ -715,6 +893,7 @@ mod tests {
             target_key: vec![7; 32],
             forced_duration_ms: Some(9),
             fault,
+            guardian_binding: None,
         }
     }
 
@@ -778,6 +957,21 @@ mod tests {
         assert_eq!(invocation.target, PathBuf::from("app.sona"));
         assert_eq!(invocation.receipt_path, PathBuf::from("proof.json"));
         assert!(invocation.summary);
+    }
+
+    #[test]
+    fn proof_guardian_binding_is_an_opt_in_invocation_flag() {
+        let invocation = parse_invocation(&[
+            "proof".into(),
+            "app.sona".into(),
+            "--guardian-root".into(),
+            "project".into(),
+            "--receipt".into(),
+            "proof.json".into(),
+        ])
+        .unwrap();
+
+        assert_eq!(invocation.guardian_root, Some(PathBuf::from("project")));
     }
 
     #[test]

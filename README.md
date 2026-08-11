@@ -27,6 +27,8 @@ Current release: `0.15.4`
   date/time, random, stream, and input contracts.
 * Explicit runtime capabilities for safe Python-compatible runs and Native
   Core filesystem/network access.
+* Opt-in Native Proof receipts that bind to a Guardian-tracked baseline and
+  gain explicit local verification and audit attestation for release workflows.
 * Cognitive accessibility references for supported developer workflows.
 * Guardian runtime documentation for local resilience and release trust surfaces.
 

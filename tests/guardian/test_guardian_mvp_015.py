@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -43,6 +44,56 @@ def make_project(tmp_path: Path) -> Path:
         encoding="utf-8",
     )
     return project
+
+
+def _sha256_label(value: bytes) -> str:
+    return "sha256:" + hashlib.sha256(value).hexdigest()
+
+
+def _write_guardian_bound_native_proof(project: Path, destination: Path) -> None:
+    source = project / "app.sona"
+    source_bytes = source.read_bytes()
+    anchor, _baseline = guardian._guardian_proof_anchor(project)
+    receipt = {
+        "schema_id": "sona.native-proof.schema-1",
+        "schema": 1,
+        "receipt_type": "native_execution_proof",
+        "generated_at_utc": "2026-08-10T00:00:00Z",
+        "sona_version": "0.15.4",
+        "engine": {
+            "name": "native",
+            "python_required": False,
+            "python_embedded": False,
+            "fallback_used": False,
+        },
+        "program": {
+            "kind": "source",
+            "source": {"sha256": _sha256_label(source_bytes), "bytes": len(source_bytes)},
+        },
+        "capabilities": {
+            "console": True,
+            "filesystem_read": False,
+            "filesystem_write": False,
+            "network": False,
+            "process": False,
+            "environment": False,
+        },
+        "execution": {
+            "status": "ok",
+            "exit_code": 0,
+            "duration_ms": 0,
+            "diagnostic": None,
+            "stdout": {"sha256": _sha256_label(b""), "bytes": 0},
+            "stderr": {"sha256": _sha256_label(b""), "bytes": 0},
+        },
+        "effects": [],
+        "guardian": anchor,
+    }
+    unsigned = json.dumps(receipt, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    receipt["receipt_hash"] = _sha256_label(unsigned)
+    destination.write_bytes(
+        json.dumps(receipt, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8") + b"\n"
+    )
 
 
 def test_guardian_lifecycle_quarantine_and_rollback(tmp_path):
@@ -112,6 +163,65 @@ def test_guardian_verify_does_not_write_project_or_guardian_state(tmp_path):
     assert guardian.guardian_verify(project)["status"] == "ok"
     after = {path.relative_to(project).as_posix(): path.read_bytes() for path in project.rglob("*") if path.is_file()}
     assert after == before
+
+
+def test_guardian_verifies_and_attests_a_bound_native_proof_without_receipt_paths(tmp_path):
+    project = make_project(tmp_path)
+    guardian.guardian_init(project)
+    receipt = tmp_path / "native-proof.json"
+    _write_guardian_bound_native_proof(project, receipt)
+
+    before = {path.relative_to(project).as_posix(): path.read_bytes() for path in project.rglob("*") if path.is_file()}
+    verified = guardian.guardian_proof_verify(project, receipt)
+    after = {path.relative_to(project).as_posix(): path.read_bytes() for path in project.rglob("*") if path.is_file()}
+    assert verified["status"] == "verified"
+    assert verified["execution"] == {"status": "ok", "exit_code": 0}
+    assert verified["guardian"]["program_baseline"] == "tracked"
+    assert after == before, "receipt verification must remain read-only"
+
+    attested = guardian.guardian_proof_attest(project, receipt)
+    assert attested["status"] == "attested"
+    history = guardian.guardian_proof_history(project)
+    assert len(history) == 1
+    payload = history[0]["payload"]
+    assert payload["receipt_hash"] == verified["receipt_hash"]
+    assert str(receipt) not in json.dumps(payload)
+    assert "app.sona" not in json.dumps(payload)
+
+    (project / "app.sona").write_text('print("drift")\n', encoding="utf-8")
+    assert guardian.guardian_proof_verify(project, receipt)["status"] == "verified"
+    rejected = guardian.guardian_proof_attest(project, receipt)
+    assert rejected["status"] == "rejected"
+    assert rejected["reason"] == "guardian-drift"
+    assert len(guardian.guardian_proof_history(project)) == 1
+
+
+def test_guardian_rejects_noncanonical_or_wrongly_bound_native_proofs(tmp_path):
+    project = make_project(tmp_path)
+    guardian.guardian_init(project)
+    receipt = tmp_path / "native-proof.json"
+    _write_guardian_bound_native_proof(project, receipt)
+
+    receipt.write_bytes(b" " + receipt.read_bytes())
+    noncanonical = guardian.guardian_proof_verify(project, receipt)
+    assert noncanonical["status"] == "rejected"
+    assert noncanonical["reason"] == "receipt-not-canonical"
+
+    _write_guardian_bound_native_proof(project, receipt)
+    payload = json.loads(receipt.read_text(encoding="utf-8"))
+    payload["guardian"]["baseline_snapshot_id"] = "different-baseline"
+    unsigned = dict(payload)
+    unsigned.pop("receipt_hash")
+    payload["receipt_hash"] = _sha256_label(
+        json.dumps(unsigned, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    )
+    receipt.write_bytes(
+        json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8") + b"\n"
+    )
+    mismatch = guardian.guardian_proof_verify(project, receipt)
+    assert mismatch["status"] == "rejected"
+    assert mismatch["reason"] == "guardian-binding-mismatch"
+    assert guardian.guardian_proof_history(project) == []
 
 
 def test_guardian_canonical_mutation_requires_enforcing_policy_and_writes_receipt(tmp_path):
@@ -198,6 +308,42 @@ def test_canonical_guardian_cli_enforces_governance_before_apply(tmp_path):
     payload = json.loads(allowed.stdout)
     assert payload["status"] == "rolled-back"
     assert Path(payload["receipt_path"]).exists()
+
+
+def test_canonical_guardian_proof_cli_verifies_attests_and_lists_history(tmp_path):
+    project = make_project(tmp_path)
+    guardian.guardian_init(project)
+    receipt = tmp_path / "native-proof.json"
+    _write_guardian_bound_native_proof(project, receipt)
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(ROOT)
+
+    verify = subprocess.run(
+        [
+            sys.executable, "-m", "sona", "guardian", "proof", "verify",
+            "--project-root", str(project), "--receipt", str(receipt),
+        ],
+        cwd=project, env=env, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+    )
+    assert verify.returncode == 0, verify.stderr or verify.stdout
+    assert json.loads(verify.stdout)["status"] == "verified"
+
+    attest = subprocess.run(
+        [
+            sys.executable, "-m", "sona", "guardian", "proof", "attest",
+            "--project-root", str(project), "--receipt", str(receipt),
+        ],
+        cwd=project, env=env, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+    )
+    assert attest.returncode == 0, attest.stderr or attest.stdout
+    assert json.loads(attest.stdout)["status"] == "attested"
+
+    history = subprocess.run(
+        [sys.executable, "-m", "sona", "guardian", "proof", "history", "--project-root", str(project)],
+        cwd=project, env=env, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+    )
+    assert history.returncode == 0, history.stderr or history.stdout
+    assert json.loads(history.stdout)[0]["event"] == "guardian.proof.attest"
 
 
 def test_guardian_publishes_accessibility_context(tmp_path):
@@ -295,4 +441,9 @@ def test_guardian_public_smod_facade(tmp_path):
     assert call(module.verify, str(project))["status"] == "ok"
     assert call(module.snapshot, str(project), "manual")["status"] == "snapshot-created"
     assert call(module.diff, str(project))["status"] == "ok"
+    receipt = tmp_path / "native-proof.json"
+    _write_guardian_bound_native_proof(project, receipt)
+    assert call(module.proof_verify, str(project), str(receipt))["status"] == "verified"
+    assert call(module.proof_attest, str(project), str(receipt))["status"] == "attested"
+    assert call(module.proof_history, str(project))[0]["event"] == "guardian.proof.attest"
     assert "Guardian status: ok" in call(module.report_plain, str(project))

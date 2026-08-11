@@ -1,6 +1,6 @@
 # Sona Guardian Reference
 
-Sona `0.15.0` ships `guardian` as a local resilience facade. Guardian helps a
+Sona `0.15.4` ships `guardian` as a local resilience facade. Guardian helps a
 developer detect project drift, preserve suspect state, restore a trusted local
 snapshot, verify the restored project, and report what happened.
 
@@ -9,19 +9,21 @@ protection, and does not silently apply AI-generated repairs.
 
 ## Public Facade
 
-`guardian` is available through `stdlib/guardian.smod` and the `sona guard`
-CLI. The stable public flow is:
+`guardian` is available through `stdlib/guardian.smod` and the canonical
+`sona guardian` CLI (`sona guard` remains compatible). The stable public flow
+is:
 
 ```text
-sona guard init
-sona guard status
-sona guard verify
-sona guard doctor
+sona guardian init
+sona guardian status
+sona guardian verify
+sona guardian doctor
 ```
 
 Additional public operations include snapshot creation, diff, quarantine,
 rollback, plain-language reports, JSON reports, local audit history, and
-explicit `heal --apply` recovery.
+explicit `heal --apply` recovery. Guardian also exposes `proof_verify`,
+`proof_attest`, and `proof_history` for a local Native Proof release chain.
 
 ## Trust Boundary
 
@@ -45,9 +47,45 @@ build/**
 *.p12
 *.pfx
 .sona/guardian/**
+.sona/receipts/**
+.sona/governance/**
 ```
 
 Guardian storage does not recursively snapshot itself.
+
+## Native Proof Trust Chain
+
+Guardian and Native Proof Mode are intentionally coordinated but not silently
+coupled. A release workflow opts in at each state-changing or evidence-bearing
+step:
+
+```text
+mkdir .sona/receipts
+sona guardian init --project-root .
+sona proof app.sona --receipt .sona/receipts/proof.json --engine native --guardian-root . --summary
+sona guardian proof verify --project-root . --receipt .sona/receipts/proof.json
+sona guardian proof attest --project-root . --receipt .sona/receipts/proof.json
+sona guardian proof history --project-root .
+```
+
+At proof creation, Native Core reads Guardian's persisted baseline and trusted
+configuration without importing Python, executing Guardian, or mutating its
+state. It requires the program to be inside the explicit project root and to
+match the tracked baseline hash. The Native receipt stores only a redacted
+anchor: baseline snapshot ID, SHA-256 labels for the two Guardian state files,
+and `program_baseline: "tracked"`.
+
+`guardian proof verify` is read-only. It checks canonical receipt storage and
+self-hash, Native Core/no-Python engine identity, the matching Guardian anchor,
+and that the receipt's source or container hash is represented by the trusted
+baseline. `guardian proof attest` additionally requires a successful proof and
+a clean current Guardian verification. It then appends a redacted local audit
+record containing the receipt hash and anchor, not the receipt path, source,
+program path, or output body.
+
+This is a local release-integrity chain, not a remote or hardware attestation.
+It does not provide signer identity or protect against a party that can modify
+both the proof receipt and the local Guardian state.
 
 ## Trusted Configuration
 

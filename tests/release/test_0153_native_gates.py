@@ -10,6 +10,8 @@ from pathlib import Path
 
 import pytest
 
+from sona.stdlib import native_guardian as guardian
+
 
 ROOT = Path(__file__).resolve().parents[2]
 CURRENT_VERSION = "0.15.4"
@@ -244,6 +246,69 @@ def test_native_proof_summary_is_opt_in_and_excluded_from_receipt_output_hashes(
     assert failed.returncode == 1
     assert b"Proof receipt saved" not in failed.stderr
     assert failed_receipt.is_file()
+
+
+def test_native_proof_binds_to_guardian_and_can_be_attested(
+    tmp_path: Path, native_binary: Path
+):
+    project = tmp_path / "guardian-project"
+    project.mkdir()
+    source = project / "app.sona"
+    _write_source(source, 'print("guardian-bound");\n')
+    initialized = guardian.guardian_init(project)
+    receipt_dir = project / ".sona" / "receipts"
+    receipt_dir.mkdir(parents=True)
+    receipt_path = receipt_dir / "guardian-proof.json"
+
+    proof = _native_run(
+        native_binary,
+        "proof",
+        str(source),
+        "--receipt",
+        str(receipt_path),
+        "--guardian-root",
+        str(project),
+        "--summary",
+        cwd=project,
+    )
+    assert proof.returncode == 0, proof.stderr.decode("utf-8", "replace")
+    assert proof.stdout == b"guardian-bound\n"
+    summary = proof.stderr.decode("utf-8", "replace")
+    assert f"  Guardian      Bound baseline {initialized['snapshot_id']}" in summary
+
+    rendered = receipt_path.read_text(encoding="utf-8")
+    receipt = json.loads(rendered)
+    assert receipt["guardian"] == {
+        "schema_id": "sona.guardian-proof-binding.schema-1",
+        "baseline_snapshot_id": initialized["snapshot_id"],
+        "baseline_sha256": _sha256((project / ".sona" / "guardian" / "baseline.json").read_bytes()),
+        "trusted_config_sha256": _sha256((project / ".sona" / "guardian" / "trusted_config.json").read_bytes()),
+        "program_baseline": "tracked",
+    }
+    assert str(project) not in rendered
+    assert "app.sona" not in rendered
+
+    verified = guardian.guardian_proof_verify(project, receipt_path)
+    assert verified["status"] == "verified"
+    assert guardian.guardian_proof_attest(project, receipt_path)["status"] == "attested"
+    assert guardian.guardian_proof_history(project)[0]["payload"]["receipt_hash"] == receipt["receipt_hash"]
+
+    source.write_text('print("changed after baseline");\n', encoding="utf-8")
+    stale_receipt = receipt_dir / "stale-guardian-proof.json"
+    stale = _native_run(
+        native_binary,
+        "proof",
+        str(source),
+        "--receipt",
+        str(stale_receipt),
+        "--guardian-root",
+        str(project),
+        cwd=project,
+    )
+    assert stale.returncode == 1
+    assert stale.stdout == b""
+    assert b"PROOF-008" in stale.stderr
+    assert not stale_receipt.exists()
 
 
 def test_native_proof_sbc_preserves_container_and_exact_source_identity(

@@ -85,15 +85,16 @@ fn print_help() {
     println!("  sona check app.sona --engine native");
     println!("  sona compile app.sona --output app.sbc");
     println!("  sona exec app.sbc");
-    println!("  sona proof app.sona --receipt proof.json --engine native [--summary]");
+    println!("  sona proof app.sona --receipt proof.json --engine native [--summary] [--guardian-root project]");
     println!("  sona inspect tokens|ast|ir|bytecode <file>");
     println!("  sona doctor native");
     println!("Capabilities for run/exec/proof:");
     println!("  --allow-fs-read   allow native filesystem reads");
     println!("  --allow-fs-write  allow native filesystem writes");
     println!("  --allow-network   grant network policy (HTTP remains unavailable in 0.15.4)");
-    println!("Proof Mode option:");
+    println!("Proof Mode options:");
     println!("  --summary         show a receipt confirmation after a successful proof");
+    println!("  --guardian-root   bind a proof to an initialized Guardian project baseline");
 }
 
 fn run_file(path: &Path, capabilities: RuntimeCapabilities) -> SonaResult<()> {

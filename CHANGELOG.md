@@ -17,6 +17,9 @@
   the current production dependency audit.
 - Added an opt-in `sona proof --summary` terminal confirmation for saved proof
   receipts while preserving the default machine-compatible output contract.
+- Added an opt-in Guardian-bound Native Proof chain: baseline-tracked native
+  receipts, read-only Guardian verification, clean-state attestation, and
+  redacted local audit history without adding Python to Native Core.
 - Preserved 0.15.x aliases, Python compatibility semantics, cognitive runtime,
   Guardian interfaces, and workspace-module precedence.
 

@@ -55,19 +55,31 @@ semantic parity or serialized instruction bytecode.
 - Receipts identify exact source/container bytes, granted capabilities,
   sanitized effects, outcome, diagnostics, and output hashes. They never store
   source, paths, output bodies, stdin values, credentials, or environment data.
-- `PROOF-001..007` are reserved for Proof Mode infrastructure. Program parser,
+- `PROOF-001..008` are reserved for Proof Mode infrastructure. Program parser,
   container, VM, runtime, engine, and capability diagnostics retain their
   established identifiers.
 - `--summary` adds a concise terminal confirmation after a successful receipt
   is saved, without changing the receipt or the default scripted output.
+- `--guardian-root <project>` opt-in binds a proof to an initialized,
+  baseline-tracked Guardian project without importing Python, executing
+  Guardian, or recording the project path in the receipt. Binding failures are
+  `PROOF-008` and occur before execution.
+- `sona guardian proof verify|attest|history` provides read-only receipt
+  verification, clean-project local attestation, and redacted audit history.
+  Attestation records the receipt hash and Guardian anchor only; it does not
+  copy program paths, source, output, or the receipt itself.
 - This is tamper-evident-after-creation evidence, not signer identity, machine
-  attestation, trusted-hardware proof, or a claim of Python/Native parity.
+  or remote attestation, trusted-hardware proof, operating-system integrity
+  proof, or a claim of Python/Native parity. The Guardian chain is local and
+  does not protect against a party able to alter both local Guardian state and
+  the receipt.
 
 ## Compatibility
 
 - Valid 0.15.3 Python-compatible programs, implicit final-statement function
-  values, cognitive runtime behavior, Guardian interfaces, and workspace
-  module precedence are preserved.
+  values, cognitive runtime behavior, existing Guardian interfaces, and
+  workspace module precedence are preserved. Guardian's new Proof helpers are
+  additive.
 - Existing public modules remain importable. Canonical aliases are quiet for
   the rest of the 0.15.x line.
 - The tracked VS Code extension remains backend-focused; the AI Console UI was
@@ -75,13 +87,17 @@ semantic parity or serialized instruction bytecode.
 
 ## Validation summary
 
-The Windows implementation gate completed 424 Python tests, the nine official
-examples, all three probes, locked Rust formatting/Clippy/tests, the bounded
-20-fixture differential corpus, the 10-fixture standard-library corpus, Native
-standalone checks, extension compile/smoke tests, a zero-high/critical
-production npm audit with `brace-expansion` resolved to 5.0.9, and VSIX content
-inspection. The Python suite's only accepted warnings are the two Python 3.12
-deprecations emitted by pinned `lark-parser==0.12.0`.
+The release validation surface covers the Python suite, official examples,
+static probes, locked Rust formatting/Clippy/tests, bounded differential and
+standard-library corpora, Native standalone checks, extension compile/smoke
+tests, production dependency audit, VSIX inspection, and the Guardian-bound
+Proof verification/attestation chain. The Python suite's only accepted
+warnings are the two Python 3.12 deprecations emitted by pinned
+`lark-parser==0.12.0`.
+
+Final publication certification must rebuild the artifacts from the final
+commit in a clean Windows release environment, including its process-isolation
+gate and the required cross-platform Python and Native checks.
 
 This source work does not publish to PyPI or the VS Code Marketplace. Native
 Core remains a preview, and Python remains the compatibility engine.

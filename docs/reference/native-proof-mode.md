@@ -8,6 +8,7 @@ program semantics, or provide a general security attestation.
 sona proof app.sona --receipt proof.json --engine native
 sona proof app.sbc --receipt proof.json --allow-fs-read
 sona proof app.sona --receipt proof.json --summary
+sona proof app.sona --receipt proof.json --engine native --guardian-root . --summary
 ```
 
 The receipt destination is required, its parent directory must already exist,
@@ -32,6 +33,12 @@ Receipts use `sona.native-proof.schema-1`. They record only:
 - SHA-256/byte-count summaries of stdout and stderr; and
 - redacted filesystem, console, stdin, and unavailable-network effects.
 
+When `--guardian-root <project>` is explicitly requested, the receipt also
+contains a redacted Guardian binding: a schema ID, trusted baseline snapshot
+ID, and SHA-256 labels for Guardian's baseline and trusted-config state files.
+It records only `program_baseline: "tracked"`; it never records the project
+root, Guardian inventory, program path, or configuration contents.
+
 No receipt stores source text, raw paths, stdout/stderr bodies, stdin values,
 environment values, credentials, request bodies, temporary paths, or operating
 system error text. Filesystem targets use a new execution-local
@@ -46,11 +53,14 @@ included in the digest. Hashes use lowercase `sha256:<hex>` notation.
 
 ## Diagnostics and compatibility
 
-`PROOF-001` through `PROOF-007` belong exclusively to Proof Mode invocation,
+`PROOF-001` through `PROOF-008` belong exclusively to Proof Mode invocation,
 input, receipt destination, creation, serialization, and finalization
-failures. Diagnostics produced by the program retain their existing Sona
+failures. `PROOF-008` means an explicitly requested Guardian binding was
+unavailable, inconsistent, outside the requested project, or no longer tracked
+by the trusted baseline. It is raised before program execution and no receipt
+is published. Diagnostics produced by the program retain their existing Sona
 identifiers: Proof Mode does not reclassify parser, container, VM, runtime,
-engine, capability, Guardian, or host failures.
+engine, capability, or host failures.
 
 When a program fails and the receipt persists, Sona prints the original program
 diagnostic and stores its identifier in the receipt. When persistence itself
@@ -77,10 +87,43 @@ the receipt contents, receipt hash, program stdout, or exit result. Leave the
 flag off for the exact `sona run`-compatible stdout/stderr contract used by
 scripts and automated tests.
 
+## Guardian-bound proof and local attestation
+
+Use Guardian before a release proof when the program is part of an explicitly
+trusted project:
+
+```text
+mkdir .sona/receipts
+sona guardian init --project-root .
+sona proof app.sona --receipt .sona/receipts/proof.json --engine native --guardian-root . --summary
+sona guardian proof verify --project-root . --receipt .sona/receipts/proof.json
+sona guardian proof attest --project-root . --receipt .sona/receipts/proof.json
+sona guardian proof history --project-root .
+```
+
+`--guardian-root` is opt-in. Native Core reads only the regular
+`.sona/guardian/baseline.json` and `trusted_config.json` state files. It checks
+that the input lies inside the supplied project and that its exact source hash
+(or `.sbc` container hash) is still the tracked baseline entry. Native Core
+does not import Python, execute Guardian, write Guardian state, or make an
+audit entry while creating the receipt.
+
+`sona guardian proof verify` is read-only. It verifies the receipt's canonical
+self-hash, Native Core/no-Python engine fields, Guardian binding, and the
+redacted baseline program identity. `sona guardian proof attest` repeats that
+verification, requires a successful execution and a currently clean Guardian
+project, then records only the receipt hash and Guardian anchor in local audit
+history. It does not copy the receipt, source, program path, or output bodies.
+
+The optional terminal summary identifies a bound receipt as `Guardian Bound
+baseline <id>` without revealing the project root.
+
 ## Limits of the claim
 
 Proof Mode creates redacted, self-hashed, tamper-evident-after-creation Native
-Core execution evidence. It does not provide cryptographic signer identity,
-machine or remote attestation, trusted-hardware proof, operating-system
-integrity proof, Guardian linkage, receipt verification, or full Python/native
-semantic parity. Those remain post-0.15.4 work.
+Core execution evidence. The Guardian flow adds a local baseline binding,
+read-only receipt verification, and an explicit local audit attestation; it is
+not cryptographic signer identity, machine or remote attestation,
+trusted-hardware proof, operating-system integrity proof, or full
+Python/native semantic parity. A local user who can alter both receipt and
+Guardian state is outside this trust claim.

@@ -39,7 +39,9 @@ DEFAULT_EXCLUDES = [
 
 CONFIG_NAME = "sona.guard.json"
 STATE_VERSION = 1
-MUTATING_ACTIONS = {"init", "snapshot", "quarantine", "rollback", "heal-apply"}
+NATIVE_PROOF_SCHEMA_ID = "sona.native-proof.schema-1"
+GUARDIAN_PROOF_BINDING_SCHEMA_ID = "sona.guardian-proof-binding.schema-1"
+MUTATING_ACTIONS = {"init", "snapshot", "quarantine", "rollback", "heal-apply", "proof-attest"}
 
 
 def _now() -> str:
@@ -227,6 +229,14 @@ def _write_json(path: Path, payload: Any) -> None:
 
 def _hash_bytes(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
+
+
+def _sha256_label(value: bytes) -> str:
+    return "sha256:" + _hash_bytes(value)
+
+
+def _canonical_json_bytes(value: Any) -> bytes:
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
 
 
 def _hash_file(path: Path) -> str:
@@ -713,6 +723,246 @@ def guardian_diff(project_root: Any = None) -> dict[str, Any]:
     return diff
 
 
+def _guardian_proof_rejection(reason: str, message: str, receipt_hash: str | None = None) -> dict[str, Any]:
+    result = {
+        "schema_version": 1,
+        "status": "rejected",
+        "reason": reason,
+        "message": message,
+    }
+    if receipt_hash:
+        result["receipt_hash"] = receipt_hash
+    return result
+
+
+def _guardian_proof_anchor(root: Path) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Return a redacted anchor that matches Native Core's binding reader."""
+    baseline_path = _baseline_path(root)
+    trusted_config_path = _trusted_config_path(root)
+    values: list[bytes] = []
+    for path in (baseline_path, trusted_config_path):
+        if path.is_symlink() or not path.is_file():
+            raise ValueError("Guardian proof binding is unavailable")
+        resolved = path.resolve(strict=True)
+        if not resolved.is_relative_to(root):
+            raise ValueError("Guardian proof binding is unavailable")
+        values.append(path.read_bytes())
+    baseline_bytes, trusted_config_bytes = values
+    baseline = json.loads(baseline_bytes.decode("utf-8"))
+    trusted_config = json.loads(trusted_config_bytes.decode("utf-8"))
+    if not isinstance(baseline, dict) or not isinstance(trusted_config, dict):
+        raise ValueError("Guardian proof binding is unavailable")
+    if baseline.get("schema_version") != 1 or trusted_config.get("schema_version") != 1:
+        raise ValueError("Guardian proof binding is unavailable")
+    snapshot_id = baseline.get("snapshot_id")
+    if not isinstance(snapshot_id, str) or not snapshot_id:
+        raise ValueError("Guardian proof binding is unavailable")
+    if (
+        "trusted_config_hash" not in baseline
+        or "config_hash" not in trusted_config
+        or baseline["trusted_config_hash"] != trusted_config["config_hash"]
+    ):
+        raise ValueError("Guardian proof binding is unavailable")
+    return {
+        "schema_id": GUARDIAN_PROOF_BINDING_SCHEMA_ID,
+        "baseline_snapshot_id": snapshot_id,
+        "baseline_sha256": _sha256_label(baseline_bytes),
+        "trusted_config_sha256": _sha256_label(trusted_config_bytes),
+        "program_baseline": "tracked",
+    }, baseline
+
+
+def _is_sha256_label(value: Any) -> bool:
+    if not isinstance(value, str) or not value.startswith("sha256:"):
+        return False
+    digest = value.removeprefix("sha256:")
+    return len(digest) == 64 and all(character in "0123456789abcdef" for character in digest)
+
+
+def guardian_proof_verify(project_root: Any = None, receipt_path: Any = None) -> dict[str, Any]:
+    """Verify a Native Proof receipt against this Guardian's trusted baseline.
+
+    The check is read-only. It validates the canonical receipt hash, Native
+    Core identity, redacted Guardian anchor, and the program's baseline hash;
+    it intentionally does not persist the receipt or its source path.
+    """
+    root = _project_root(project_root)
+    try:
+        anchor, baseline = _guardian_proof_anchor(root)
+    except (OSError, UnicodeDecodeError, ValueError, json.JSONDecodeError):
+        return _guardian_proof_rejection(
+            "guardian-unavailable",
+            "Guardian is not initialized with a consistent trusted baseline.",
+        )
+
+    if receipt_path is None or not str(receipt_path).strip():
+        return _guardian_proof_rejection("invalid-receipt", "Provide a Native Proof receipt path.")
+    try:
+        path = Path(str(receipt_path)).expanduser()
+        if path.is_symlink() or not path.is_file():
+            return _guardian_proof_rejection("invalid-receipt", "Provide a regular Native Proof receipt file.")
+        raw = path.read_bytes()
+        receipt = json.loads(raw.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return _guardian_proof_rejection("invalid-receipt", "The Native Proof receipt could not be read safely.")
+    if not isinstance(receipt, dict):
+        return _guardian_proof_rejection("invalid-receipt", "The Native Proof receipt must contain a JSON object.")
+
+    canonical = _canonical_json_bytes(receipt)
+    if raw not in {canonical, canonical + b"\n"}:
+        return _guardian_proof_rejection(
+            "receipt-not-canonical",
+            "The Native Proof receipt is not stored in canonical form.",
+        )
+    unsigned = dict(receipt)
+    receipt_hash = unsigned.pop("receipt_hash", None)
+    if not _is_sha256_label(receipt_hash) or receipt_hash != _sha256_label(_canonical_json_bytes(unsigned)):
+        return _guardian_proof_rejection(
+            "receipt-hash-mismatch",
+            "The Native Proof receipt hash does not match its canonical contents.",
+        )
+
+    engine = receipt.get("engine")
+    if (
+        receipt.get("schema_id") != NATIVE_PROOF_SCHEMA_ID
+        or receipt.get("schema") != 1
+        or receipt.get("receipt_type") != "native_execution_proof"
+        or not isinstance(engine, dict)
+        or engine.get("name") != "native"
+        or engine.get("python_required") is not False
+        or engine.get("python_embedded") is not False
+        or engine.get("fallback_used") is not False
+    ):
+        return _guardian_proof_rejection(
+            "unsupported-receipt",
+            "The receipt is not a Native Core Proof Mode schema-1 receipt.",
+            receipt_hash,
+        )
+
+    execution = receipt.get("execution")
+    if not isinstance(execution, dict):
+        return _guardian_proof_rejection("invalid-receipt", "The Native Proof receipt has no execution record.", receipt_hash)
+    execution_status = execution.get("status")
+    exit_code = execution.get("exit_code")
+    if (
+        execution_status not in {"ok", "failed"}
+        or not isinstance(exit_code, int)
+        or isinstance(exit_code, bool)
+        or (execution_status == "ok" and exit_code != 0)
+        or (execution_status == "failed" and exit_code != 1)
+    ):
+        return _guardian_proof_rejection("invalid-receipt", "The Native Proof execution record is inconsistent.", receipt_hash)
+
+    binding = receipt.get("guardian")
+    if not isinstance(binding, dict):
+        return _guardian_proof_rejection(
+            "unbound-receipt",
+            "The Native Proof receipt was not created with --guardian-root.",
+            receipt_hash,
+        )
+    if any(binding.get(key) != value for key, value in anchor.items()):
+        return _guardian_proof_rejection(
+            "guardian-binding-mismatch",
+            "The Native Proof receipt is bound to a different Guardian baseline.",
+            receipt_hash,
+        )
+
+    program = receipt.get("program")
+    if not isinstance(program, dict) or program.get("kind") not in {"source", "sbc"}:
+        return _guardian_proof_rejection("invalid-receipt", "The Native Proof program identity is invalid.", receipt_hash)
+    source = program.get("source")
+    if not isinstance(source, dict) or not _is_sha256_label(source.get("sha256")):
+        return _guardian_proof_rejection("invalid-receipt", "The Native Proof source identity is invalid.", receipt_hash)
+    program_hash = source["sha256"]
+    if program["kind"] == "sbc":
+        container = program.get("container")
+        if not isinstance(container, dict) or not _is_sha256_label(container.get("sha256")):
+            return _guardian_proof_rejection("invalid-receipt", "The Native Proof container identity is invalid.", receipt_hash)
+        program_hash = container["sha256"]
+    baseline_files = baseline.get("files", [])
+    if not isinstance(baseline_files, list):
+        return _guardian_proof_rejection("guardian-unavailable", "Guardian baseline inventory is invalid.", receipt_hash)
+    baseline_hashes = {
+        "sha256:" + item["sha256"]
+        for item in baseline_files
+        if isinstance(item, dict) and isinstance(item.get("sha256"), str)
+    }
+    if program_hash not in baseline_hashes:
+        return _guardian_proof_rejection(
+            "program-not-baseline-tracked",
+            "The proven program is not present in this Guardian baseline.",
+            receipt_hash,
+        )
+
+    result = {
+        "schema_version": 1,
+        "status": "verified",
+        "receipt_hash": receipt_hash,
+        "execution": {"status": execution_status, "exit_code": exit_code},
+        "guardian": anchor,
+        "message": "Native Proof receipt matches this Guardian baseline.",
+    }
+    result["accessibility"] = _accessibility_event(root, "proof-verify", result)
+    return result
+
+
+def guardian_proof_attest(project_root: Any = None, receipt_path: Any = None) -> dict[str, Any]:
+    """Record a successful, Guardian-bound Native Proof after a clean verify."""
+    root = _project_root(project_root)
+    verified = guardian_proof_verify(root, receipt_path)
+    if verified.get("status") != "verified":
+        return verified
+    if verified["execution"]["status"] != "ok":
+        return _guardian_proof_rejection(
+            "execution-not-successful",
+            "Only a successful Native Proof execution can be attested.",
+            verified["receipt_hash"],
+        )
+    project_verify = guardian_verify(root)
+    if project_verify.get("status") != "ok":
+        return _guardian_proof_rejection(
+            "guardian-drift",
+            "Guardian detected project drift; restore a clean baseline before attesting this proof.",
+            verified["receipt_hash"],
+        ) | {
+            "drift": {
+                "added": len(project_verify.get("added", [])),
+                "changed": len(project_verify.get("changed", [])),
+                "missing": len(project_verify.get("missing", [])),
+            }
+        }
+
+    anchor = verified["guardian"]
+    _audit(root, "guardian.proof.attest", {
+        "receipt_hash": verified["receipt_hash"],
+        "execution_status": "ok",
+        "baseline_snapshot_id": anchor["baseline_snapshot_id"],
+        "baseline_sha256": anchor["baseline_sha256"],
+        "trusted_config_sha256": anchor["trusted_config_sha256"],
+        "program_baseline": "tracked",
+    })
+    result = {
+        "schema_version": 1,
+        "status": "attested",
+        "receipt_hash": verified["receipt_hash"],
+        "guardian": anchor,
+        "message": "Guardian recorded the successful Native Proof against its clean trusted baseline.",
+    }
+    result["accessibility"] = _accessibility_event(root, "proof-attest", result)
+    return result
+
+
+def guardian_proof_history(project_root: Any = None, limit: Any = 50) -> list[dict[str, Any]]:
+    """Return local Guardian audit entries for Native Proof attestations only."""
+    root = _project_root(project_root)
+    requested = max(0, int(limit or 50))
+    records = [
+        record for record in guardian_audit_history(root, 100_000)
+        if record.get("event") == "guardian.proof.attest"
+    ]
+    return records[-requested:] if requested else []
+
+
 def guardian_rollback(
     project_root: Any = None,
     snapshot_id: Any = None,
@@ -876,6 +1126,7 @@ def guardian_report_json(project_root: Any = None) -> dict[str, Any]:
         "status": guardian_status(root),
         "verify": guardian_verify(root),
         "doctor": guardian_doctor(root),
+        "proof_attestations": guardian_proof_history(root, 10),
     }
 
 
@@ -883,6 +1134,9 @@ def guardian_report_plain(project_root: Any = None) -> str:
     report = guardian_report_json(project_root)
     verify = report["verify"]
     if verify.get("status") == "ok":
+        attestations = report.get("proof_attestations", [])
+        if attestations:
+            return f"Guardian status: ok. No drift detected. {len(attestations)} Native Proof receipt(s) attested."
         return "Guardian status: ok. No drift detected."
     if verify.get("status") == "uninitialized":
         return "Guardian status: uninitialized. Run `sona guard init` for this project root."
@@ -906,6 +1160,9 @@ __all__ = [
     "guardian_graph",
     "guardian_heal",
     "guardian_init",
+    "guardian_proof_attest",
+    "guardian_proof_history",
+    "guardian_proof_verify",
     "guardian_quarantine",
     "guardian_report_json",
     "guardian_report_plain",

@@ -57,6 +57,19 @@ func audit_history(project_root=nil, limit=nil) {
     return guardian_audit_history(project_root, limit)
 }
 
+func proof_verify(project_root=nil, receipt_path=nil) {
+    return guardian_proof_verify(project_root, receipt_path)
+}
+
+func proof_attest(project_root=nil, receipt_path=nil) {
+    return guardian_proof_attest(project_root, receipt_path)
+}
+
+func proof_history(project_root=nil, limit=nil) {
+    if limit == nil { limit = 50 }
+    return guardian_proof_history(project_root, limit)
+}
+
 func report_json(project_root=nil) {
     return guardian_report_json(project_root)
 }

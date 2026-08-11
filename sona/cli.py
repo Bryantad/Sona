@@ -1405,6 +1405,15 @@ def create_argument_parser() -> argparse.ArgumentParser:
     guardian_report = guardian_sub.add_parser('report')
     guardian_report.add_argument('--project-root', default=None)
     guardian_report.add_argument('--json', action='store_true')
+    guardian_proof = guardian_sub.add_parser('proof', help='Verify and attest Native Proof receipts')
+    guardian_proof_sub = guardian_proof.add_subparsers(dest='guardian_proof_cmd')
+    for name in ('verify', 'attest'):
+        sub = guardian_proof_sub.add_parser(name)
+        sub.add_argument('--project-root', default=None)
+        sub.add_argument('--receipt', required=True)
+    guardian_proof_history = guardian_proof_sub.add_parser('history')
+    guardian_proof_history.add_argument('--project-root', default=None)
+    guardian_proof_history.add_argument('--limit', type=int, default=50)
 
     # AI mode convenience command
     ai_mode_parser = subparsers.add_parser(
@@ -1528,6 +1537,19 @@ def create_argument_parser() -> argparse.ArgumentParser:
     report_parser = guard_sub.add_parser('report', help='Print a Guardian report')
     add_guard_root(report_parser)
     report_parser.add_argument('--json', action='store_true', help='Print JSON report')
+
+    proof_parser = guard_sub.add_parser('proof', help='Verify and attest Native Proof receipts')
+    proof_sub = proof_parser.add_subparsers(dest='guardian_proof_cmd', help='Native Proof operations')
+    for name, help_text in [
+        ('verify', 'Verify a Guardian-bound Native Proof receipt'),
+        ('attest', 'Record a successful Guardian-bound Native Proof receipt'),
+    ]:
+        sub = proof_sub.add_parser(name, help=help_text)
+        add_guard_root(sub)
+        sub.add_argument('--receipt', required=True, help='Path to a Native Proof receipt')
+    proof_history_parser = proof_sub.add_parser('history', help='Show Native Proof attestations')
+    add_guard_root(proof_history_parser)
+    proof_history_parser.add_argument('--limit', type=int, default=50, help='Maximum attestations to print')
 
     # doctor command
     _doctor_parser = subparsers.add_parser(  # noqa: F841
@@ -2803,6 +2825,17 @@ def handle_guard_command(args) -> int:
             result = guardian.guardian_graph(project_root)
         elif command in {'audit', 'history'}:
             result = guardian.guardian_audit_history(project_root, getattr(args, 'limit', 50))
+        elif command == 'proof':
+            proof_command = getattr(args, 'guardian_proof_cmd', None)
+            if proof_command == 'verify':
+                result = guardian.guardian_proof_verify(project_root, getattr(args, 'receipt', None))
+            elif proof_command == 'attest':
+                result = guardian.guardian_proof_attest(project_root, getattr(args, 'receipt', None))
+            elif proof_command == 'history':
+                result = guardian.guardian_proof_history(project_root, getattr(args, 'limit', 50))
+            else:
+                safe_print("[ERROR] Missing Guardian Proof command. Try: sona guardian proof --help")
+                return 1
         elif command == 'report':
             if getattr(args, 'json', False):
                 result = guardian.guardian_report_json(project_root)
@@ -2815,7 +2848,7 @@ def handle_guard_command(args) -> int:
 
         print(json.dumps(redact(result), indent=2, sort_keys=True))
         status = result.get('status') if isinstance(result, dict) else None
-        return 1 if status in {'denied', 'failed', 'blocked', 'approval-required'} else 0
+        return 1 if status in {'denied', 'failed', 'blocked', 'approval-required', 'rejected'} else 0
     except Exception as e:  # pragma: no cover
         safe_print(f"[ERROR] guardian command error: {e}")
         return 1
