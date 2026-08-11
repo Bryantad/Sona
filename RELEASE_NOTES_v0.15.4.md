@@ -1,122 +1,287 @@
-# Sona 0.15.4 - Standard Library Cohesion and Runtime Capability
+# Sona 0.15.4 — Native Proof, Guardian Trust, and Governed AI Review
 
-Sona 0.15.4 turns the existing standard-library surface into a reviewed
-runtime contract. It preserves the Python-compatible language behavior and
-the 0.15.3 Native Core preview while making common filesystem, data, network,
-stream, input, random, string, date, and time work predictable.
+Sona 0.15.4 introduces an end-to-end local trust workflow for Native Core:
+create redacted execution evidence, bind it to a Guardian-tracked project
+baseline, verify it, record a clean-state attestation, and optionally ask a
+governed AI reviewer to explain only the verified redacted facts.
 
-## Standard-library contract
+```text
+reviewed project → Guardian baseline → Native Proof receipt
+                 → verify → attest → optional governed AI review
+```
 
-- `sona/stdlib/MANIFEST.json` is now the schema-2 authority for 146 preserved
-  modules. It records signatures, compatibility dispositions, diagnostic
-  behavior, and Python/Native/standalone support classifications.
-- The certified foundation is `collection`, `date`, `fs`, `http`, `io`,
+The AI layer is deliberately outside the trust chain. It can explain evidence;
+it cannot create, alter, verify, or strengthen that evidence.
+
+This release also hardens Sona's standard library into a documented runtime
+contract while preserving 0.15.3 Python-compatible behavior. Native Core
+remains a preview, and Python remains Sona's compatibility engine.
+
+## Highlights
+
+This workflow uses two command surfaces:
+
+| Command | Role |
+| --- | --- |
+| `sona` | Python-compatible CLI, Guardian, package tools, and developer intelligence |
+| `sona-native` | Convenient installed alias for the standalone Native Core executable |
+| `sona.exe` | Executable filename inside the Windows Native Core ZIP |
+
+### Native Proof Mode
+
+Native Core can now execute a `.sona` program or source-backed `.sbc` container
+and publish a `sona.native-proof.schema-1` JSON receipt:
+
+```powershell
+sona-native proof .\app.sona `
+  --receipt .\.sona\receipts\app-proof.json `
+  --engine native `
+  --summary
+```
+
+- Receipts identify the exact input bytes, engine, granted capabilities,
+  ordered observable effects, execution outcome, diagnostics, and hashed
+  stdout/stderr.
+- Receipts are canonical, self-hashed, redacted, and published without
+  overwriting an existing destination.
+- Source text, raw paths, output bodies, stdin values, credentials,
+  environment values, and raw operating-system error text are never stored.
+- `--summary` adds a concise, professional terminal confirmation after the
+  receipt is saved. The summary is written to stderr so program stdout remains
+  pipeline-friendly.
+- `PROOF-001` through `PROOF-008` provide stable infrastructure diagnostics;
+  program parser, VM, runtime, and capability diagnostics keep their existing
+  identifiers.
+
+### Guardian-bound execution evidence
+
+Add `--guardian-root` to require the program to match an initialized Guardian
+baseline before Native Core executes it:
+
+```powershell
+sona-native proof .\app.sona `
+  --receipt .\.sona\receipts\app-proof.json `
+  --engine native `
+  --guardian-root . `
+  --summary
+```
+
+Native Core reads the minimum trusted Guardian state directly. It does not
+import Python, invoke Guardian, mutate Guardian state, or record the project
+path in the receipt. A missing, stale, inconsistent, or untracked baseline
+fails with `PROOF-008` before program execution.
+
+The Python-compatible CLI then provides four explicit downstream operations:
+
+- `sona guardian proof verify` checks canonical storage, the receipt self-hash,
+  Native/no-Python identity, the Guardian anchor, and baseline-tracked program
+  identity. Verification is read-only.
+- `sona guardian proof attest` repeats verification, requires a successful
+  execution, requires the live project to remain clean, and appends a redacted
+  local attestation record.
+- `sona guardian proof review` analyzes a verified redacted packet through a
+  governed reviewer.
+- `sona guardian proof history` shows recent local Proof attestations.
+
+### Governed AI review
+
+Guardian Proof review verifies evidence before any provider is selected or
+called. The review packet contains only:
+
+- the receipt hash;
+- the execution status and exit code;
+- the redacted Guardian anchor; and
+- whether a local attestation has been recorded.
+
+Sona returns a SHA-256 identity for that exact packet. It sends no project or
+receipt paths, source, selected workspace files, output bodies, environment
+values, or credentials as review context.
+
+The deterministic local reviewer is the reproducible default. Configured
+local Ollama is available with `--provider ollama`. Remote providers require
+explicit selection, `--allow-network`, and a governance policy that permits
+the route. Provider output is always labeled advisory, writes no AI task
+receipt, and adds no verification or attestation claim.
+
+### Standard-library cohesion and runtime capabilities
+
+- A schema-2 manifest is now the authority for 146 preserved public modules,
+  including signatures, compatibility dispositions, diagnostics, and support
+  classifications.
+- The certified foundation covers `collection`, `date`, `fs`, `http`, `io`,
   `json`, `math`, `random`, `stdin`, `string`, and `time`.
-- The generated catalog and module reference are derived from that manifest.
-- Private `native_*` modules remain implementation details. Application code
-  uses the public module names.
-
-## Runtime capabilities
-
-- Python-compatible normal runs retain filesystem and network access.
-- `--safe` confines filesystem reads to the project root and denies secret
-  reads, filesystem writes, and network access.
-- Native Core remains console-only by default. Filesystem and network access
+- Canonical filesystem, HTTP, JSON, random, stream, input, string, date, and
+  time APIs now use stable structured diagnostic families.
+- Python-compatible normal runs preserve filesystem and network behavior;
+  `--safe` confines reads to the project root and denies secret reads, writes,
+  and network access.
+- Native Core remains console-only by default. Filesystem and network policy
   require explicit `--allow-fs-read`, `--allow-fs-write`, and
   `--allow-network` flags.
-- Native HTTP is importable but intentionally unavailable in 0.15.4. It emits
-  the stable `SONA-HTTP-005` diagnostic instead of silently falling back.
+- Native HTTP remains intentionally unavailable in 0.15.4 and emits
+  `SONA-HTTP-005` instead of silently falling back to Python. Native
+  `collection` and `random` support remain classified as partial.
 
-## Canonical APIs and diagnostics
+## Install the release assets
 
-- `fs` now exposes the canonical UTF-8 text and path operations while keeping
-  0.15.x aliases quiet and compatible.
-- `http` provides bounded Python-compatible GET, POST, PUT, PATCH, and DELETE
-  requests with structured responses, timeouts, redirects, headers, JSON
-  bodies, response-size limits, and sanitized transport diagnostics.
-- JSON output uses deterministic key ordering; random seeding is repeatable
-  within each engine; stream output and console input have distinct modules.
-- Host failures use stable `SONA-FS-*`, `SONA-HTTP-*`, `SONA-JSON-*`,
-  `SONA-IO-*`, `SONA-TIME-*`, and `SONA-STDLIB-*` diagnostic families and
-  carry the application call location.
+### Python-compatible CLI and Guardian
 
-## Native Core preview
+Python 3.11 and 3.12 are supported:
 
-Native Core includes a workspace-first host-module registry for the bounded
-foundation. Collection and random remain honestly classified as `PARTIAL`,
-and HTTP as `UNSUPPORTED`. The release does not claim full Python/Native
-semantic parity or serialized instruction bytecode.
+```powershell
+python -m pip install .\sona_lang-0.15.4-py3-none-any.whl
+sona --version
+```
 
-## Native Proof Mode
+Expected version: `Sona 0.15.4`.
 
-- Native Core `proof <program.sona|program.sbc> --receipt <path>` records
-  redacted, self-hashed execution evidence without changing native runtime
-  behavior. Use `sona-native proof` for the installed alias or `sona proof`
-  when `sona` is the standalone Native Core executable from the release ZIP.
-- Receipts identify exact source/container bytes, granted capabilities,
-  sanitized effects, outcome, diagnostics, and output hashes. They never store
-  source, paths, output bodies, stdin values, credentials, or environment data.
-- `PROOF-001..008` are reserved for Proof Mode infrastructure. Program parser,
-  container, VM, runtime, engine, and capability diagnostics retain their
-  established identifiers.
-- `--summary` adds a concise terminal confirmation after a successful receipt
-  is saved, without changing the receipt or the default scripted output.
-- `--guardian-root <project>` opt-in binds a proof to an initialized,
-  baseline-tracked Guardian project without importing Python, executing
-  Guardian, or recording the project path in the receipt. Binding failures are
-  `PROOF-008` and occur before execution.
-- `sona guardian proof verify|attest|review|history` provides read-only receipt
-  verification, clean-project local attestation, governed advisory review, and
-  redacted audit history.
-  Attestation records the receipt hash and Guardian anchor only; it does not
-  copy program paths, source, output, or the receipt itself.
-- `guardian proof review` verifies before provider routing and sends only the
-  receipt hash, execution outcome, Guardian anchor, and local-attestation flag
-  to Sona's governed review service. It hashes that exact review packet, writes
-  no AI task receipt, and labels all model output advisory. Deterministic local
-  review is the default; configured local Ollama can be selected with
-  `--provider ollama`. Remote-provider network access requires the additional
-  explicit `--allow-network` flag and remains subject to governance policy.
-- This is tamper-evident-after-creation evidence, not signer identity, machine
-  or remote attestation, trusted-hardware proof, operating-system integrity
-  proof, or a claim of Python/Native parity. The Guardian chain is local and
-  does not protect against a party able to alter both local Guardian state and
-  the receipt.
+### Windows Native Core
 
-## Proof and Guardian documentation
+The Native Core ZIP contains one standalone executable named `sona.exe`:
 
-- [Native Proof Mode Guide](docs/guides/proof-mode.md) explains executable
-  selection, receipt creation, fields, capabilities, diagnostics, and limits.
-- [Guardian Guide](docs/guides/guardian.md) explains baselines, drift,
-  quarantine, governed recovery, configuration, and troubleshooting.
-- [Using Native Proof and Guardian Together](docs/guides/proof-and-guardian.md)
-  provides a complete PowerShell workflow through verification, local
-  attestation, governed AI review, and release handling.
+```powershell
+Expand-Archive `
+  .\sona-native-0.15.4-windows-x86_64.zip `
+  -DestinationPath .\sona-native-0.15.4-windows-x86_64
+
+.\sona-native-0.15.4-windows-x86_64\sona.exe --version
+```
+
+The guides use `sona-native` as a convenient installed alias. If you run the
+ZIP directly, substitute the full path to its `sona.exe`.
+
+### VS Code extension
+
+```powershell
+code --install-extension .\sona-ai-native-programming-0.15.4.vsix
+```
+
+The extension documents the 0.15.4 Proof and Guardian workflow. Its AI Console
+remains backend-focused; this release does not redesign that UI.
+
+## Try the complete trust chain
+
+Use a dedicated child directory rather than initializing Guardian directly in
+the system temporary-directory root:
+
+```powershell
+$native = (Get-Command sona-native).Source
+# ZIP users can instead resolve the extracted sona.exe before Set-Location:
+# $native = (Resolve-Path .\sona-native-0.15.4-windows-x86_64\sona.exe).Path
+
+$project = Join-Path $env:TEMP `
+  ("sona-0154-proof-{0}" -f [guid]::NewGuid())
+New-Item -ItemType Directory -Path $project | Out-Null
+Set-Location $project
+
+'print("Sona 0.15.4 Guardian-bound Proof: OK")' |
+  Set-Content -LiteralPath .\hello.sona -Encoding ascii
+New-Item -ItemType Directory -Path .\.sona\receipts | Out-Null
+
+sona guardian init --project-root .
+sona guardian verify --project-root .
+
+$receipt = Join-Path (Resolve-Path .\.sona\receipts) `
+  ("hello-proof-{0}.json" -f [guid]::NewGuid())
+
+& $native proof .\hello.sona `
+  --receipt $receipt `
+  --engine native `
+  --guardian-root . `
+  --summary
+
+sona guardian proof verify `
+  --project-root . `
+  --receipt $receipt
+
+sona guardian proof attest `
+  --project-root . `
+  --receipt $receipt
+
+sona guardian proof review `
+  --project-root . `
+  --receipt $receipt `
+  --provider deterministic
+
+sona guardian proof history --project-root . --limit 10
+```
+
+The expected status progression is `initialized` → `ok` → `verified` →
+`attested` → `reviewed`.
 
 ## Compatibility
 
+No breaking language change is intended in 0.15.4.
+
 - Valid 0.15.3 Python-compatible programs, implicit final-statement function
   values, cognitive runtime behavior, existing Guardian interfaces, and
-  workspace module precedence are preserved. Guardian's new Proof helpers are
-  additive.
-- Existing public modules remain importable. Canonical aliases are quiet for
-  the rest of the 0.15.x line.
-- The tracked VS Code extension remains backend-focused; the AI Console UI was
-  not redesigned.
+  workspace-module precedence are preserved.
+- Existing public modules remain importable, and canonical aliases remain
+  quiet for the rest of the 0.15.x line.
+- Proof, Guardian binding, attestation, and review are additive and opt-in.
+- Proof Mode observes Native Core without changing ordinary `run`, `exec`, VM,
+  capability, or language semantics.
+
+## Release assets
+
+| Asset | Purpose |
+| --- | --- |
+| `sona_lang-0.15.4-py3-none-any.whl` | Python wheel for the `sona` CLI, Guardian, and compatibility runtime |
+| `sona_lang-0.15.4.tar.gz` | Python source distribution; separate from GitHub's automatic source archive |
+| `sona-native-0.15.4-windows-x86_64.zip` | Standalone Windows x86-64 Native Core executable |
+| `sona-ai-native-programming-0.15.4.vsix` | VS Code extension package |
+| `SHA256SUMS.txt` | SHA-256 checksums for the four manually uploaded artifacts |
+
+Do not embed the Native Core ZIP in the wheel or VSIX. It is a separate GitHub
+Release asset.
+
+## Documentation
+
+- [Native Proof Mode Guide](docs/guides/proof-mode.md)
+- [Guardian Guide](docs/guides/guardian.md)
+- [Using Native Proof and Guardian Together](docs/guides/proof-and-guardian.md)
+- [Native Proof Mode Reference](docs/reference/native-proof-mode.md)
+- [Guardian Reference](docs/GUARDIAN_REFERENCE.md)
+- [0.15.4 Implementation Report](docs/release/0.15.4-implementation-report.md)
 
 ## Validation summary
 
-The release validation surface covers the Python suite, official examples,
-static probes, locked Rust formatting/Clippy/tests, bounded differential and
-standard-library corpora, Native standalone checks, extension compile/smoke
-tests, production dependency audit, VSIX inspection, and the Guardian-bound
-Proof verification/attestation/advisory-review chain. The Python suite's only accepted
-warnings are the two Python 3.12 deprecations emitted by pinned
-`lark-parser==0.12.0`.
+The implementation was validated across the language, trust chain, Native
+Core, package, and extension surfaces:
 
-Final publication certification must rebuild the artifacts from the final
-commit in a clean Windows release environment, including its process-isolation
-gate and the required cross-platform Python and Native checks.
+- 424 Python tests passed with the two host-limited native gate files excluded;
+  the only accepted warnings were two Python 3.12 deprecations from pinned
+  `lark-parser==0.12.0`.
+- 16 focused Guardian Proof AI tests passed, including rejection before
+  provider routing and deterministic/mocked-Ollama review paths.
+- The real Native Proof → Guardian verify → attest → deterministic review flow
+  passed, together with the documented drift, governed recovery, and final
+  clean-verification workflows.
+- All 9 official examples and all 3 runtime probes passed.
+- Rust formatting and locked Clippy passed with zero warnings; all 29 Rust unit
+  tests passed.
+- The bounded differential corpus completed 40 executions with 0 failures;
+  the standard-library corpus completed 20 executions with 0 failures.
+- Native standalone validation completed 16 checks with 0 failures.
+- Wheel, source distribution, Native ZIP, and VSIX builds, inspections, clean
+  installs, and smoke tests passed. The VSIX production dependency audit
+  reported 0 high, 0 critical, and 0 total vulnerabilities.
 
-This source work does not publish to PyPI or the VS Code Marketplace. Native
-Core remains a preview, and Python remains the compatibility engine.
+See the implementation report for the precise commands and scope. Final
+publication certification still requires a rebuild from the final commit in a
+clean Windows release environment, including the process-isolation gate and
+the required cross-platform Python and Native checks.
+
+## Trust and preview limits
+
+- Native Proof is redacted, self-hashed, tamper-evident-after-creation
+  evidence. It is not signer identity, trusted timestamping, trusted-hardware
+  proof, operating-system integrity proof, remote attestation, or a claim of
+  Python/Native semantic parity.
+- Guardian establishes project-local trust. It does not protect against an
+  actor able to replace both the receipt and local Guardian state, and it is
+  not antivirus software or a remote backup service.
+- AI review is advisory analysis after verification. It cannot verify, attest,
+  mutate, or expand the evidence claim.
+- Native Core remains a preview; Native HTTP and serialized native instruction
+  streams remain future work.
