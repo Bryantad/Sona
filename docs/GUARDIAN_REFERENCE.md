@@ -1,5 +1,9 @@
 # Sona Guardian Reference
 
+This page defines Guardian's technical behavior. For task-oriented setup, start
+with the [Guardian guide](guides/guardian.md) or the
+[combined Native Proof and Guardian workflow](guides/proof-and-guardian.md).
+
 Sona `0.15.4` ships `guardian` as a local resilience facade. Guardian helps a
 developer detect project drift, preserve suspect state, restore a trusted local
 snapshot, verify the restored project, and report what happened.
@@ -63,7 +67,7 @@ step:
 ```text
 mkdir .sona/receipts
 sona guardian init --project-root .
-sona proof app.sona --receipt .sona/receipts/proof.json --engine native --guardian-root . --summary
+sona-native proof app.sona --receipt .sona/receipts/proof.json --engine native --guardian-root . --summary
 sona guardian proof verify --project-root . --receipt .sona/receipts/proof.json
 sona guardian proof attest --project-root . --receipt .sona/receipts/proof.json
 sona guardian proof review --project-root . --receipt .sona/receipts/proof.json --provider deterministic
@@ -109,9 +113,10 @@ against a party that can modify both the proof receipt and local Guardian state.
 the configuration, records a trusted hash, copies trusted validation policy into
 local Guardian state, and establishes the baseline.
 
-During verification, unexpected config drift is quarantined and Guardian
-continues using the trusted baseline policy. Newly introduced validation
-commands are not executed automatically.
+During verification, unexpected config drift is reported without changing the
+project or Guardian state, and Guardian continues using the trusted baseline
+policy. Quarantine is deferred to an explicit preservation or approved recovery
+step. Newly introduced validation commands are not executed automatically.
 
 ## Validation Commands
 
@@ -127,10 +132,13 @@ Default healing is non-mutating:
 detect -> report -> recommend -> require explicit apply
 ```
 
-Mutating recovery requires `sona guard heal --apply` or an explicit automatic
-recovery policy. Before rollback, Guardian preserves suspect state in
-quarantine, verifies snapshot integrity, restores files, reruns trusted
-validation, verifies restored hashes, and records an audit event.
+Mutating recovery requires `sona guardian heal --apply --approve`, an enforcing
+`.sona/governance.json`, and non-denied `write_workspace` and `execute_code`
+rules. The built-in audit policy denies mutation; `--approve` and
+`auto_recover` do not bypass policy. Before rollback, Guardian preserves
+suspect state in quarantine, verifies snapshot integrity, restores files,
+reruns trusted validation, verifies restored hashes, and records an audit
+event.
 
 If verification fails, Guardian stops safely, activates the circuit breaker,
 preserves evidence, and reports the failure. Guardian must not enter an

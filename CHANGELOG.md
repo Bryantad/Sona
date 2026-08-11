@@ -23,6 +23,8 @@
 - Added governed `sona guardian proof review`: verified redacted facts can be
   reviewed by Sona's deterministic analyst or an explicitly selected AI
   provider, while model output remains outside the trust and attestation chain.
+- Added task-oriented guides for Native Proof Mode, Guardian drift and recovery,
+  and the complete Guardian-bound Proof and advisory AI workflow.
 - Preserved 0.15.x aliases, Python compatibility semantics, cognitive runtime,
   Guardian interfaces, and workspace-module precedence.
 

@@ -10,6 +10,8 @@
   verifies, records local Guardian attestations, and offers governed advisory
   analysis over a redacted evidence packet.
 - Keeps the AI Console UI backend-focused and unchanged.
+- Links to the new task-oriented Native Proof, Guardian, and combined trust-chain
+  guides.
 - Pins the transitive `brace-expansion` resolution to 5.0.9 for the current
   production dependency audit.
 

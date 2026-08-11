@@ -114,6 +114,12 @@ See the full quickstart in `docs/QUICKSTART.md`.
 
 Sona AI Console is a preview feature. Claude and Codex are placeholder agent modes unless a proper provider integration is added; the extension does not control external AI extensions.
 
+## Proof and Guardian Guides
+
+- [Native Proof Mode](https://github.com/Bryantad/Sona/blob/main/docs/guides/proof-mode.md)
+- [Guardian](https://github.com/Bryantad/Sona/blob/main/docs/guides/guardian.md)
+- [Using Native Proof and Guardian Together](https://github.com/Bryantad/Sona/blob/main/docs/guides/proof-and-guardian.md)
+
 ## Release Notes
 
 - [0.15.4 release notes](https://github.com/Bryantad/Sona/blob/main/RELEASE_NOTES_v0.15.4.md)

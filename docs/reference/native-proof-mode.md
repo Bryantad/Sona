@@ -1,14 +1,22 @@
 # Native Proof Mode
 
+This page defines the field-level Proof Mode contract. For task-oriented setup,
+start with the [Native Proof Mode guide](../guides/proof-mode.md) or the
+[combined Proof and Guardian workflow](../guides/proof-and-guardian.md).
+
+Examples use the installed Native Core name `sona-native`. If you run the
+Windows release ZIP directly, substitute `.\sona.exe`; the executable inside
+that ZIP is named `sona.exe`.
+
 Native Proof Mode records bounded evidence for one Native Core execution. It
 observes the existing native runtime; it does not select another engine, alter
 program semantics, or provide a general security attestation.
 
 ```text
-sona proof app.sona --receipt proof.json --engine native
-sona proof app.sbc --receipt proof.json --allow-fs-read
-sona proof app.sona --receipt proof.json --summary
-sona proof app.sona --receipt proof.json --engine native --guardian-root . --summary
+sona-native proof app.sona --receipt proof.json --engine native
+sona-native proof app.sbc --receipt proof.json --allow-fs-read
+sona-native proof app.sona --receipt proof.json --summary
+sona-native proof app.sona --receipt proof.json --engine native --guardian-root . --summary
 ```
 
 The receipt destination is required, its parent directory must already exist,
@@ -68,7 +76,7 @@ fails, Sona prints the relevant `PROOF-*` diagnostic and makes no proof-success
 claim. A final path may remain after a post-publication durability failure; it
 must not be treated as publication-certified.
 
-Without `--summary`, a successfully persisted `sona proof` has the same
+Without `--summary`, a successfully persisted Native Core `proof` has the same
 program-visible stdout, stderr, exit result, VM semantics, and runtime
 diagnostics as an equivalent native `sona run`. Only the explicitly requested
 evidence side effect differs.
@@ -95,7 +103,7 @@ trusted project:
 ```text
 mkdir .sona/receipts
 sona guardian init --project-root .
-sona proof app.sona --receipt .sona/receipts/proof.json --engine native --guardian-root . --summary
+sona-native proof app.sona --receipt .sona/receipts/proof.json --engine native --guardian-root . --summary
 sona guardian proof verify --project-root . --receipt .sona/receipts/proof.json
 sona guardian proof attest --project-root . --receipt .sona/receipts/proof.json
 sona guardian proof review --project-root . --receipt .sona/receipts/proof.json --provider deterministic

@@ -49,9 +49,10 @@ semantic parity or serialized instruction bytecode.
 
 ## Native Proof Mode
 
-- `sona proof <program.sona|program.sbc> --receipt <path>` records redacted,
-  self-hashed Native Core execution evidence without changing the program's
-  native runtime behavior.
+- Native Core `proof <program.sona|program.sbc> --receipt <path>` records
+  redacted, self-hashed execution evidence without changing native runtime
+  behavior. Use `sona-native proof` for the installed alias or `sona proof`
+  when `sona` is the standalone Native Core executable from the release ZIP.
 - Receipts identify exact source/container bytes, granted capabilities,
   sanitized effects, outcome, diagnostics, and output hashes. They never store
   source, paths, output bodies, stdin values, credentials, or environment data.
@@ -81,6 +82,16 @@ semantic parity or serialized instruction bytecode.
   proof, or a claim of Python/Native parity. The Guardian chain is local and
   does not protect against a party able to alter both local Guardian state and
   the receipt.
+
+## Proof and Guardian documentation
+
+- [Native Proof Mode Guide](docs/guides/proof-mode.md) explains executable
+  selection, receipt creation, fields, capabilities, diagnostics, and limits.
+- [Guardian Guide](docs/guides/guardian.md) explains baselines, drift,
+  quarantine, governed recovery, configuration, and troubleshooting.
+- [Using Native Proof and Guardian Together](docs/guides/proof-and-guardian.md)
+  provides a complete PowerShell workflow through verification, local
+  attestation, governed AI review, and release handling.
 
 ## Compatibility
 
