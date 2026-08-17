@@ -87,6 +87,8 @@ def validate_dependency_and_toolchain_contracts() -> None:
     security_overrides = extension.get("overrides", {})
     for package, version in {
         "brace-expansion": "5.0.9",
+        "fast-uri": "3.1.5",
+        "js-yaml": "4.3.1",
         "minimatch": "10.2.6",
         "cheerio": "1.0.0-rc.12",
         "undici": "7.29.0",
@@ -103,6 +105,8 @@ def validate_dependency_and_toolchain_contracts() -> None:
         fail("extension lockfile does not pin esbuild 0.25.8")
     for package, version in {
         "brace-expansion": "5.0.9",
+        "fast-uri": "3.1.5",
+        "js-yaml": "4.3.1",
         "minimatch": "10.2.6",
     }.items():
         locked = lock.get("packages", {}).get(f"node_modules/{package}", {})

@@ -445,6 +445,8 @@
     "@typespec/ts-http-runtime": "0.3.0",
     "brace-expansion": "5.0.9",
     "cheerio": "1.0.0-rc.12",
+    "fast-uri": "3.1.5",
+    "js-yaml": "4.3.1",
     "minimatch": "10.2.6",
     "undici": "7.29.0"
   }
