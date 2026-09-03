@@ -4,6 +4,7 @@ import argparse
 import json
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 from tools.release import platform_release_0154 as release
@@ -163,9 +164,14 @@ class PlatformReleaseTests(unittest.TestCase):
             root = Path(raw)
             commit = self._assembly_input(root)
             output = root / "assembled"
-            result = release.command_assemble(
-                argparse.Namespace(input_root=root, output_dir=output)
-            )
+            with mock.patch.object(
+                release,
+                "_repository_version",
+                return_value=release.VERSION,
+            ):
+                result = release.command_assemble(
+                    argparse.Namespace(input_root=root, output_dir=output)
+                )
             self.assertEqual(result["source_commit"], commit)
             expected = release.RELEASE_ASSETS | {
                 release.RELEASE_MANIFEST_NAME,

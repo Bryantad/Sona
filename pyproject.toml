@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sona-lang"
-version = "0.15.4"
+version = "0.15.5"
 description = "Sona Programming Language with Cognitive Accessibility and Neurodivergent-First Features"
 authors = [{name = "WayCore Inc.", email = "info@waycore.com"}]
 readme = "README.md"
@@ -111,6 +111,7 @@ extend-exclude = '''
 
 [tool.ruff]
 target-version = "py311"
+line-length = 100
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -154,7 +155,6 @@ exclude = [
 ]
 
 [tool.ruff.format]
-line-length = 100
 quote-style = "double"
 indent-style = "space"
 line-ending = "auto"

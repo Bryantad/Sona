@@ -43,6 +43,48 @@ NATIVE_PROOF_SCHEMA_ID = "sona.native-proof.schema-1"
 GUARDIAN_PROOF_BINDING_SCHEMA_ID = "sona.guardian-proof-binding.schema-1"
 GUARDIAN_PROOF_AI_REVIEW_SCHEMA_ID = "sona.guardian-proof-ai-review.schema-1"
 MUTATING_ACTIONS = {"init", "snapshot", "quarantine", "rollback", "heal-apply", "proof-attest"}
+DEFAULT_CAPABILITY_POLICY = {
+    "filesystem_read": "deny",
+    "filesystem_write": "deny",
+    "network": "deny",
+}
+CAPABILITY_DISPLAY_NAMES = {
+    "filesystem_read": "fs.read",
+    "filesystem_write": "fs.write",
+    "network": "network",
+}
+
+
+class GuardianError(ValueError):
+    """A stable, redacted Guardian failure safe for CLI and API callers."""
+
+    def __init__(
+        self,
+        diagnostic_id: str,
+        status: str,
+        message: str,
+        hint: str,
+        *,
+        reason: str | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.diagnostic_id = diagnostic_id
+        self.status = status
+        self.message = message
+        self.hint = hint
+        self.reason = reason
+
+    def as_result(self) -> dict[str, Any]:
+        result = {
+            "schema_version": 1,
+            "status": self.status,
+            "diagnostic_id": self.diagnostic_id,
+            "message": self.message,
+            "hint": self.hint,
+        }
+        if self.reason:
+            result["reason"] = self.reason
+        return result
 
 
 def _now() -> str:
@@ -50,9 +92,25 @@ def _now() -> str:
 
 
 def _project_root(value: Any = None) -> Path:
-    root = Path(str(value or ".")).expanduser().resolve()
-    if not root.exists() or not root.is_dir():
-        raise ValueError(f"Guardian project root does not exist: {root}")
+    try:
+        root = Path(str(value or ".")).expanduser().resolve()
+        available = root.exists() and root.is_dir()
+    except OSError as exc:
+        raise GuardianError(
+            "SONA-GUARD-001",
+            "invalid-project-root",
+            "Guardian project root is unavailable.",
+            "Choose an existing, accessible project directory.",
+            reason="project-root-unavailable",
+        ) from exc
+    if not available:
+        raise GuardianError(
+            "SONA-GUARD-001",
+            "invalid-project-root",
+            "Guardian project root is unavailable.",
+            "Choose an existing, accessible project directory.",
+            reason="project-root-unavailable",
+        )
     return root
 
 
@@ -228,6 +286,52 @@ def _write_json(path: Path, payload: Any) -> None:
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
 
 
+def _create_json_no_clobber(root: Path, path: Path, payload: Any) -> bool:
+    """Create project-local JSON once without replacing a concurrent file."""
+    parent = _safe_resolve(root, path.parent, "create-state", audit=False)
+    parent.mkdir(parents=True, exist_ok=True)
+    resolved_parent = parent.resolve(strict=True)
+    if not resolved_parent.is_relative_to(root):
+        raise GuardianError(
+            "SONA-GUARD-005",
+            "state-write-denied",
+            "Guardian could not create project-local state safely.",
+            "Check project permissions and ensure .sona does not leave the project through a link.",
+            reason="unsafe-state-path",
+        )
+    encoded = (json.dumps(payload, indent=2, sort_keys=True) + "\n").encode("utf-8")
+    try:
+        descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    except FileExistsError:
+        return False
+    except OSError as exc:
+        raise GuardianError(
+            "SONA-GUARD-005",
+            "state-write-denied",
+            "Guardian could not create project-local state.",
+            "Check project permissions, then retry Guardian initialization.",
+            reason="state-write-failed",
+        ) from exc
+    try:
+        with os.fdopen(descriptor, "wb") as handle:
+            handle.write(encoded)
+            handle.flush()
+            os.fsync(handle.fileno())
+    except OSError as exc:
+        try:
+            path.unlink(missing_ok=True)
+        except OSError:
+            pass
+        raise GuardianError(
+            "SONA-GUARD-005",
+            "state-write-denied",
+            "Guardian could not create project-local state.",
+            "Check project permissions, then retry Guardian initialization.",
+            reason="state-write-failed",
+        ) from exc
+    return True
+
+
 def _hash_bytes(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
 
@@ -238,6 +342,63 @@ def _sha256_label(value: bytes) -> str:
 
 def _canonical_json_bytes(value: Any) -> bytes:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+
+
+def _normalize_capability_policy(value: Any = None) -> dict[str, str]:
+    if value is None:
+        value = {}
+    if not isinstance(value, dict):
+        raise GuardianError(
+            "SONA-GUARD-002",
+            "invalid-config",
+            "Guardian capability policy is invalid.",
+            "Set capabilities to an object containing only allow or deny decisions.",
+            reason="invalid-capability-policy",
+        )
+    unknown = sorted(set(value) - set(DEFAULT_CAPABILITY_POLICY))
+    if unknown:
+        raise GuardianError(
+            "SONA-GUARD-002",
+            "invalid-config",
+            "Guardian capability policy contains an unsupported capability.",
+            "Use only filesystem_read, filesystem_write, and network.",
+            reason="unsupported-capability",
+        )
+    normalized = dict(DEFAULT_CAPABILITY_POLICY)
+    for capability, decision in value.items():
+        if not isinstance(decision, str) or decision not in {"allow", "deny"}:
+            raise GuardianError(
+                "SONA-GUARD-002",
+                "invalid-config",
+                "Guardian capability policy contains an unsupported decision.",
+                "Use exactly allow or deny for every configured capability.",
+                reason="unsupported-capability-decision",
+            )
+        normalized[capability] = decision
+    return normalized
+
+
+def _normalized_policy(capabilities: dict[str, str]) -> dict[str, Any]:
+    return {
+        "schema_version": 1,
+        "capabilities": {name: capabilities[name] for name in sorted(DEFAULT_CAPABILITY_POLICY)},
+    }
+
+
+def _policy_sha256(capabilities: dict[str, str]) -> str:
+    return _sha256_label(_canonical_json_bytes(_normalized_policy(capabilities)))
+
+
+def _capability_decisions(capabilities: dict[str, str], source: str) -> list[dict[str, str]]:
+    return [
+        {
+            "capability": CAPABILITY_DISPLAY_NAMES[name],
+            "runtime_capability": name,
+            "decision": capabilities[name],
+            "source": source,
+        }
+        for name in DEFAULT_CAPABILITY_POLICY
+    ]
 
 
 def _hash_file(path: Path) -> str:
@@ -256,7 +417,16 @@ def _config_hash(root: Path) -> str | None:
     path = _config_path(root)
     if not path.exists():
         return None
-    return _hash_bytes(path.read_bytes())
+    try:
+        return _hash_bytes(path.read_bytes())
+    except OSError as exc:
+        raise GuardianError(
+            "SONA-GUARD-002",
+            "invalid-config",
+            "Guardian configuration could not be read safely.",
+            "Check sona.guard.json permissions and retry.",
+            reason="configuration-unreadable",
+        ) from exc
 
 
 def _normalize_command(command: Any) -> list[str]:
@@ -270,34 +440,105 @@ def _normalize_command(command: Any) -> list[str]:
 def _load_working_config(root: Path) -> dict[str, Any]:
     path = _config_path(root)
     if not path.exists():
-        return {
-            "validation_commands": [],
-            "auto_recover": False,
-            "excludes": [],
-        }
-    _safe_resolve(root, path, "read-config")
-    raw = json.loads(path.read_text(encoding="utf-8"))
+        raw: dict[str, Any] = {}
+    else:
+        try:
+            _safe_resolve(root, path, "read-config", audit=False)
+            raw = json.loads(path.read_text(encoding="utf-8"))
+        except GuardianError:
+            raise
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+            raise GuardianError(
+                "SONA-GUARD-002",
+                "invalid-config",
+                "Guardian configuration could not be read safely.",
+                "Review sona.guard.json and ensure it is valid, readable JSON.",
+                reason="configuration-unreadable",
+            ) from exc
     if not isinstance(raw, dict):
-        raise ValueError("sona.guard.json must contain a JSON object")
-    commands = [_normalize_command(item) for item in raw.get("validation_commands", [])]
-    excludes = [str(item) for item in raw.get("excludes", [])]
+        raise GuardianError(
+            "SONA-GUARD-002",
+            "invalid-config",
+            "Guardian configuration must be a JSON object.",
+            "Replace sona.guard.json with an object using the documented schema.",
+            reason="configuration-not-object",
+        )
+    schema_version = raw.get("schema_version", 1)
+    if type(schema_version) is not int or schema_version != 1:
+        raise GuardianError(
+            "SONA-GUARD-002",
+            "invalid-config",
+            "Guardian configuration schema version is unsupported.",
+            "Use schema_version 1 or remove the field for legacy compatibility.",
+            reason="unsupported-config-schema",
+        )
+    raw_commands = raw.get("validation_commands", [])
+    raw_excludes = raw.get("excludes", [])
+    if not isinstance(raw_commands, list) or not isinstance(raw_excludes, list):
+        raise GuardianError(
+            "SONA-GUARD-002",
+            "invalid-config",
+            "Guardian recovery settings are invalid.",
+            "Use arrays for validation_commands and excludes.",
+            reason="invalid-recovery-settings",
+        )
+    try:
+        commands = [_normalize_command(item) for item in raw_commands]
+    except ValueError as exc:
+        raise GuardianError(
+            "SONA-GUARD-002",
+            "invalid-config",
+            "Guardian validation commands are invalid.",
+            "Use a command string or an array of command argument strings.",
+            reason="invalid-validation-command",
+        ) from exc
+    if not all(isinstance(item, str) for item in raw_excludes):
+        raise GuardianError(
+            "SONA-GUARD-002",
+            "invalid-config",
+            "Guardian excludes are invalid.",
+            "Use only string patterns in excludes.",
+            reason="invalid-excludes",
+        )
+    capabilities = _normalize_capability_policy(raw.get("capabilities"))
     return {
+        "schema_version": 1,
         "validation_commands": commands,
         "auto_recover": bool(raw.get("auto_recover", False)),
-        "excludes": excludes,
+        "excludes": list(raw_excludes),
+        "capabilities": capabilities,
+        "policy_sha256": _policy_sha256(capabilities),
     }
 
 
 def _load_trusted_config(root: Path) -> dict[str, Any]:
-    return _read_json(
-        _trusted_config_path(root),
-        {
-            "config_hash": None,
-            "validation_commands": [],
-            "auto_recover": False,
-            "excludes": [],
-        },
-    )
+    try:
+        value = _read_json(
+            _trusted_config_path(root),
+            {
+                "config_hash": None,
+                "validation_commands": [],
+                "auto_recover": False,
+                "excludes": [],
+            },
+        )
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise GuardianError(
+            "SONA-GUARD-004",
+            "invalid-state",
+            "Guardian trusted configuration could not be read safely.",
+            "Review the project-local Guardian state before retrying.",
+            reason="trusted-configuration-unreadable",
+        ) from exc
+    if not isinstance(value, dict):
+        raise GuardianError(
+            "SONA-GUARD-004",
+            "invalid-state",
+            "Guardian trusted configuration is invalid.",
+            "Review the project-local Guardian state before retrying.",
+            reason="trusted-configuration-invalid",
+        )
+    return value
 
 
 def _load_baseline(root: Path) -> dict[str, Any] | None:
@@ -398,7 +639,7 @@ def _verify_snapshot_integrity(root: Path, snapshot: dict[str, Any]) -> dict[str
     return {"ok": not failed, "failed": failed}
 
 
-def _write_baseline(root: Path, manifest: dict[str, Any]) -> None:
+def _write_baseline(root: Path, manifest: dict[str, Any], *, no_clobber: bool = False) -> None:
     baseline = {
         "schema_version": 1,
         "version": STATE_VERSION,
@@ -410,7 +651,17 @@ def _write_baseline(root: Path, manifest: dict[str, Any]) -> None:
         "parg": manifest.get("parg", {"nodes": [], "edges": []}),
         "files": manifest.get("files", []),
     }
-    _write_json(_baseline_path(root), baseline)
+    if no_clobber:
+        if not _create_json_no_clobber(root, _baseline_path(root), baseline):
+            raise GuardianError(
+                "SONA-GUARD-004",
+                "invalid-state",
+                "Guardian baseline appeared during initialization.",
+                "Run guardian check and review the existing local state before retrying.",
+                reason="concurrent-initialization",
+            )
+    else:
+        _write_json(_baseline_path(root), baseline)
 
 
 def _parg_graph(root: Path, records: list[dict[str, Any]]) -> dict[str, Any]:
@@ -581,29 +832,113 @@ def guardian_snapshot(project_root: Any = None, name: Any = None) -> dict[str, A
 
 def guardian_init(project_root: Any = None) -> dict[str, Any]:
     root = _project_root(project_root)
-    state = _state_dir(root)
-    state.mkdir(parents=True, exist_ok=True)
+    baseline_path = _baseline_path(root)
+    trusted_config_path = _trusted_config_path(root)
+    baseline_exists = baseline_path.exists()
+    trusted_config_exists = trusted_config_path.exists()
+    if baseline_exists != trusted_config_exists:
+        raise GuardianError(
+            "SONA-GUARD-004",
+            "invalid-state",
+            "Guardian found partial initialization state and did not overwrite it.",
+            "Review .sona/guardian, preserve anything needed, then repair or remove only the partial state.",
+            reason="partial-initialization",
+        )
+    if baseline_exists and trusted_config_exists:
+        try:
+            anchor, baseline = _guardian_proof_anchor(root)
+            trusted_policy = _trusted_policy(_load_trusted_config(root))
+        except GuardianError:
+            raise
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+            raise GuardianError(
+                "SONA-GUARD-004",
+                "invalid-state",
+                "Guardian existing state could not be validated and was not overwritten.",
+                "Run guardian check and review the project-local state before retrying.",
+                reason="existing-state-invalid",
+            ) from exc
+        capabilities = (
+            trusted_policy["capabilities"]
+            if trusted_policy is not None
+            else dict(DEFAULT_CAPABILITY_POLICY)
+        )
+        result = {
+            "status": "already-initialized",
+            "project_root": str(root),
+            "file_count": len(baseline.get("files", [])),
+            "snapshot_id": anchor["baseline_snapshot_id"],
+            "policy_sha256": anchor.get("policy_sha256"),
+            "policy_enforced": bool(anchor.get("policy_enforced", False)),
+            "capability_decisions": _capability_decisions(
+                capabilities,
+                "trusted-policy" if trusted_policy is not None else "legacy-baseline",
+            ),
+            "message": "Guardian is already initialized; existing project-local state was not changed.",
+        }
+        result["accessibility"] = _accessibility_event(root, "init", result)
+        return result
+
+    default_config = {
+        "schema_version": 1,
+        "capabilities": dict(DEFAULT_CAPABILITY_POLICY),
+        "validation_commands": [],
+        "auto_recover": False,
+        "excludes": [],
+    }
+    if not _config_path(root).exists():
+        _create_json_no_clobber(root, _config_path(root), default_config)
     working_config = _load_working_config(root)
     trusted_config = {
         "schema_version": 1,
         "version": STATE_VERSION,
         "created_at": _now(),
         "config_hash": _config_hash(root),
+        "policy_sha256": working_config["policy_sha256"],
+        "capabilities": working_config["capabilities"],
         "validation_commands": working_config["validation_commands"],
         "auto_recover": working_config["auto_recover"],
         "excludes": working_config["excludes"],
     }
-    _write_json(_trusted_config_path(root), trusted_config)
-    snapshot = guardian_snapshot(root, "baseline")
-    manifest = _load_snapshot(root, snapshot["snapshot_id"])
-    _write_baseline(root, manifest)
-    _audit(root, "guardian.init", {"file_count": len(manifest["files"]), "snapshot_id": snapshot["snapshot_id"]})
+    if not _create_json_no_clobber(root, trusted_config_path, trusted_config):
+        raise GuardianError(
+            "SONA-GUARD-004",
+            "invalid-state",
+            "Guardian trusted state already exists and was not overwritten.",
+            "Run guardian check and review the existing local state before retrying.",
+            reason="concurrent-initialization",
+        )
+    try:
+        snapshot = guardian_snapshot(root, "baseline")
+        manifest = _load_snapshot(root, snapshot["snapshot_id"])
+        _write_baseline(root, manifest, no_clobber=True)
+        _audit(root, "guardian.init", {
+            "file_count": len(manifest["files"]),
+            "snapshot_id": snapshot["snapshot_id"],
+            "policy_sha256": trusted_config["policy_sha256"],
+        })
+    except GuardianError:
+        raise
+    except OSError as exc:
+        raise GuardianError(
+            "SONA-GUARD-005",
+            "state-write-denied",
+            "Guardian could not finish creating project-local state.",
+            "Check project permissions and review partial .sona/guardian state before retrying.",
+            reason="state-write-failed",
+        ) from exc
     result = {
         "status": "initialized",
         "project_root": str(root),
         "file_count": len(manifest["files"]),
         "snapshot_id": snapshot["snapshot_id"],
         "trusted_config_hash": trusted_config["config_hash"],
+        "policy_sha256": trusted_config["policy_sha256"],
+        "policy_enforced": True,
+        "capability_decisions": _capability_decisions(
+            trusted_config["capabilities"],
+            "trusted-policy",
+        ),
         "validation_commands": trusted_config["validation_commands"],
     }
     result["accessibility"] = _accessibility_event(root, "init", result)
@@ -699,16 +1034,117 @@ def guardian_verify(project_root: Any = None, run_validation: Any = False) -> di
 
 
 def guardian_check(project_root: Any = None) -> dict[str, Any]:
-    """Compatibility alias for read-only Guardian verification."""
+    """Validate Guardian policy, trusted state, drift, and Proof Mode readiness."""
     try:
-        return guardian_verify(project_root)
-    except ValueError as exc:
-        return {
-            "schema_version": 1,
-            "status": "invalid-project-root",
-            "diagnostic_id": "SONA-GUARD-001",
-            "message": str(exc),
+        root = _project_root(project_root)
+        working_config = _load_working_config(root)
+        verify = guardian_verify(root)
+        initialized = verify.get("status") != "uninitialized"
+        trusted_policy = None
+        anchor = None
+        if initialized:
+            trusted_config = _load_trusted_config(root)
+            trusted_policy = _trusted_policy(trusted_config)
+            anchor, _baseline = _guardian_proof_anchor(root)
+
+        if trusted_policy is not None:
+            capabilities = trusted_policy["capabilities"]
+            policy_sha256 = trusted_policy["policy_sha256"]
+            policy_source = "trusted-policy"
+            working_matches_trusted = working_config["policy_sha256"] == policy_sha256
+        else:
+            capabilities = working_config["capabilities"]
+            policy_sha256 = working_config["policy_sha256"]
+            policy_source = "project-config" if not initialized else "legacy-baseline"
+            working_matches_trusted = None if initialized else True
+
+        result = dict(verify)
+        result["schema_version"] = 1
+        result["policy"] = {
+            "status": "valid",
+            "source": policy_source,
+            "policy_sha256": policy_sha256,
+            "working_policy_sha256": working_config["policy_sha256"],
+            "working_matches_trusted": working_matches_trusted,
+            "legacy_baseline": bool(initialized and trusted_policy is None),
         }
+        result["capability_decisions"] = _capability_decisions(capabilities, policy_source)
+        result["proof_mode"] = {
+            "ready": anchor is not None,
+            "binding_schema_id": GUARDIAN_PROOF_BINDING_SCHEMA_ID,
+            "policy_enforced": bool(anchor and anchor.get("policy_enforced", False)),
+        }
+        return result
+    except GuardianError as exc:
+        return exc.as_result()
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError):
+        return GuardianError(
+            "SONA-GUARD-004",
+            "invalid-state",
+            "Guardian project state could not be validated safely.",
+            "Review sona.guard.json and .sona/guardian before retrying.",
+            reason="state-validation-failed",
+        ).as_result()
+
+
+def guardian_explain(project_root: Any = None) -> dict[str, Any]:
+    """Return a read-only explanation of current Guardian workflow state."""
+    check = guardian_check(project_root)
+    if check.get("diagnostic_id"):
+        return check
+    root = _project_root(project_root)
+    status = check.get("status")
+    warnings = []
+    if status == "uninitialized":
+        message = "Guardian is not initialized for this project root."
+        next_step = "Run `sona guardian init --project-root <project>` to create a trusted policy and baseline."
+    elif status == "ok":
+        message = "Guardian policy and baseline are valid, and no drift is detected."
+        next_step = "Run Proof Mode with --guardian-root to bind execution evidence to this policy and baseline."
+    elif status == "drift":
+        classification = check.get("drift_classification", {}).get("classification", "suspicious")
+        message = f"Guardian detected project drift classified as {classification}."
+        next_step = "Review `sona guardian diff`; use approved recovery only after human review."
+    else:
+        message = "Guardian state could not be classified."
+        next_step = "Run `sona guardian doctor` for readiness details."
+    if check.get("policy", {}).get("legacy_baseline"):
+        warnings.append(
+            "This baseline predates policy enforcement; legacy Proof Mode bindings remain verifiable, "
+            "but capability flags are not constrained by Guardian."
+        )
+    if check.get("policy", {}).get("working_matches_trusted") is False:
+        warnings.append(
+            "The working capability policy differs from the trusted policy; the trusted policy remains authoritative."
+        )
+    if not check.get("proof_mode", {}).get("ready"):
+        warnings.append("Proof Mode binding is unavailable until Guardian initialization succeeds.")
+    result = {
+        "schema_version": 1,
+        "status": "explained",
+        "guardian_status": status,
+        "policy_source": check.get("policy", {}).get("source"),
+        "policy_sha256": check.get("policy", {}).get("policy_sha256"),
+        "capability_decisions": check.get("capability_decisions", []),
+        "proof_mode": check.get("proof_mode", {}),
+        "message": message,
+        "next_step": next_step,
+        "warnings": warnings,
+        "workflow": [
+            "policy",
+            "capability-decision",
+            "native-execution",
+            "proof-receipt",
+        ],
+        "drift": {
+            "added": len(check.get("added", [])),
+            "changed": len(check.get("changed", [])),
+            "missing": len(check.get("missing", [])),
+            "config_drift": bool(check.get("config_drift", {}).get("drift")),
+        },
+    }
+    result["accessibility"] = _accessibility_event(root, "explain", result)
+    return result
 
 
 def guardian_diff(project_root: Any = None) -> dict[str, Any]:
@@ -764,13 +1200,18 @@ def _guardian_proof_anchor(root: Path) -> tuple[dict[str, Any], dict[str, Any]]:
         or baseline["trusted_config_hash"] != trusted_config["config_hash"]
     ):
         raise ValueError("Guardian proof binding is unavailable")
-    return {
+    anchor = {
         "schema_id": GUARDIAN_PROOF_BINDING_SCHEMA_ID,
         "baseline_snapshot_id": snapshot_id,
         "baseline_sha256": _sha256_label(baseline_bytes),
         "trusted_config_sha256": _sha256_label(trusted_config_bytes),
         "program_baseline": "tracked",
-    }, baseline
+    }
+    trusted_policy = _trusted_policy(trusted_config)
+    if trusted_policy is not None:
+        anchor["policy_sha256"] = trusted_policy["policy_sha256"]
+        anchor["policy_enforced"] = True
+    return anchor, baseline
 
 
 def _is_sha256_label(value: Any) -> bool:
@@ -780,8 +1221,89 @@ def _is_sha256_label(value: Any) -> bool:
     return len(digest) == 64 and all(character in "0123456789abcdef" for character in digest)
 
 
+def _guardian_proof_diagnostic(diagnostic: Any) -> tuple[str, str]:
+    diagnostic_id = getattr(diagnostic, "diagnostic_id", "")
+    if diagnostic_id == "PROOF-VERIFY-004":
+        return "receipt-not-canonical", "The Proof Mode receipt is not stored in canonical form."
+    if diagnostic_id == "PROOF-VERIFY-005":
+        return "receipt-hash-mismatch", "The Proof Mode receipt hash does not match its canonical contents."
+    if diagnostic_id in {"PROOF-VERIFY-007", "PROOF-VERIFY-010", "PROOF-VERIFY-011", "PROOF-VERIFY-012", "PROOF-VERIFY-013"}:
+        return "unsupported-receipt", "The receipt is not a Native Core Proof Mode schema-1 receipt."
+    return "invalid-receipt", getattr(
+        diagnostic,
+        "message",
+        "The Proof Mode receipt could not be read safely.",
+    )
+
+
+def _guardian_runtime_evidence(
+    verified: dict[str, Any],
+    *,
+    include_effect_targets: bool,
+) -> dict[str, Any]:
+    """Select verified runtime facts without introducing semantic claims."""
+    effect_fields = (
+        "sequence",
+        "effect",
+        "support",
+        "scope",
+        "operation",
+        "outcome",
+    )
+    effects = []
+    for item in verified.get("effects", []):
+        effect = {key: item[key] for key in effect_fields if key in item}
+        if include_effect_targets and "target" in item:
+            effect["target"] = item["target"]
+        effects.append(effect)
+    execution = verified["execution"]
+    return {
+        "sona_version": verified["sona_version"],
+        "program": verified["program"],
+        "engine": verified["engine"],
+        "capabilities": verified["capabilities"],
+        "execution": {
+            "status": execution["status"],
+            "exit_code": execution["exit_code"],
+            "stdout": execution["stdout"],
+            "stderr": execution["stderr"],
+        },
+        "effects": effects,
+    }
+
+
+def _trusted_policy(trusted_config: dict[str, Any]) -> dict[str, Any] | None:
+    capabilities_value = trusted_config.get("capabilities")
+    supplied_hash = trusted_config.get("policy_sha256")
+    if capabilities_value is None and supplied_hash is None:
+        return None
+    if capabilities_value is None or supplied_hash is None:
+        raise GuardianError(
+            "SONA-GUARD-004",
+            "invalid-state",
+            "Guardian trusted policy state is incomplete.",
+            "Reinitialize Guardian only after reviewing or removing the partial local state.",
+            reason="incomplete-trusted-policy",
+        )
+    capabilities = _normalize_capability_policy(capabilities_value)
+    expected_hash = _policy_sha256(capabilities)
+    if supplied_hash != expected_hash:
+        raise GuardianError(
+            "SONA-GUARD-004",
+            "invalid-state",
+            "Guardian trusted policy identity does not match its canonical policy.",
+            "Review the project-local Guardian state before running Proof Mode.",
+            reason="trusted-policy-hash-mismatch",
+        )
+    return {
+        "capabilities": capabilities,
+        "policy_sha256": expected_hash,
+        "policy_enforced": True,
+    }
+
+
 def guardian_proof_verify(project_root: Any = None, receipt_path: Any = None) -> dict[str, Any]:
-    """Verify a Native Proof receipt against this Guardian's trusted baseline.
+    """Verify a Proof Mode receipt against this Guardian's trusted baseline.
 
     The check is read-only. It validates the canonical receipt hash, Native
     Core identity, redacted Guardian anchor, and the program's baseline hash;
@@ -796,90 +1318,56 @@ def guardian_proof_verify(project_root: Any = None, receipt_path: Any = None) ->
             "Guardian is not initialized with a consistent trusted baseline.",
         )
 
-    if receipt_path is None or not str(receipt_path).strip():
-        return _guardian_proof_rejection("invalid-receipt", "Provide a Native Proof receipt path.")
     try:
-        path = Path(str(receipt_path)).expanduser()
-        if path.is_symlink() or not path.is_file():
-            return _guardian_proof_rejection("invalid-receipt", "Provide a regular Native Proof receipt file.")
-        raw = path.read_bytes()
-        receipt = json.loads(raw.decode("utf-8"))
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
-        return _guardian_proof_rejection("invalid-receipt", "The Native Proof receipt could not be read safely.")
-    if not isinstance(receipt, dict):
-        return _guardian_proof_rejection("invalid-receipt", "The Native Proof receipt must contain a JSON object.")
+        from sona.proof import ProofDiagnostic, load_receipt, verify_receipt
 
-    canonical = _canonical_json_bytes(receipt)
-    if raw not in {canonical, canonical + b"\n"}:
-        return _guardian_proof_rejection(
-            "receipt-not-canonical",
-            "The Native Proof receipt is not stored in canonical form.",
-        )
-    unsigned = dict(receipt)
-    receipt_hash = unsigned.pop("receipt_hash", None)
-    if not _is_sha256_label(receipt_hash) or receipt_hash != _sha256_label(_canonical_json_bytes(unsigned)):
-        return _guardian_proof_rejection(
-            "receipt-hash-mismatch",
-            "The Native Proof receipt hash does not match its canonical contents.",
-        )
+        verified = verify_receipt(receipt_path)
+        receipt, _raw = load_receipt(receipt_path)
+    except ProofDiagnostic as diagnostic:
+        reason, message = _guardian_proof_diagnostic(diagnostic)
+        return _guardian_proof_rejection(reason, message)
 
-    engine = receipt.get("engine")
-    if (
-        receipt.get("schema_id") != NATIVE_PROOF_SCHEMA_ID
-        or receipt.get("schema") != 1
-        or receipt.get("receipt_type") != "native_execution_proof"
-        or not isinstance(engine, dict)
-        or engine.get("name") != "native"
-        or engine.get("python_required") is not False
-        or engine.get("python_embedded") is not False
-        or engine.get("fallback_used") is not False
-    ):
-        return _guardian_proof_rejection(
-            "unsupported-receipt",
-            "The receipt is not a Native Core Proof Mode schema-1 receipt.",
-            receipt_hash,
-        )
-
-    execution = receipt.get("execution")
-    if not isinstance(execution, dict):
-        return _guardian_proof_rejection("invalid-receipt", "The Native Proof receipt has no execution record.", receipt_hash)
-    execution_status = execution.get("status")
-    exit_code = execution.get("exit_code")
-    if (
-        execution_status not in {"ok", "failed"}
-        or not isinstance(exit_code, int)
-        or isinstance(exit_code, bool)
-        or (execution_status == "ok" and exit_code != 0)
-        or (execution_status == "failed" and exit_code != 1)
-    ):
-        return _guardian_proof_rejection("invalid-receipt", "The Native Proof execution record is inconsistent.", receipt_hash)
+    receipt_hash = verified["receipt_hash"]
+    execution_status = verified["execution"]["status"]
+    exit_code = verified["execution"]["exit_code"]
 
     binding = receipt.get("guardian")
     if not isinstance(binding, dict):
         return _guardian_proof_rejection(
             "unbound-receipt",
-            "The Native Proof receipt was not created with --guardian-root.",
+            "The Proof Mode receipt was not created with --guardian-root.",
             receipt_hash,
         )
-    if any(binding.get(key) != value for key, value in anchor.items()):
+    required_binding_fields = (
+        "schema_id",
+        "baseline_snapshot_id",
+        "baseline_sha256",
+        "trusted_config_sha256",
+        "program_baseline",
+    )
+    if any(binding.get(key) != anchor.get(key) for key in required_binding_fields):
         return _guardian_proof_rejection(
             "guardian-binding-mismatch",
-            "The Native Proof receipt is bound to a different Guardian baseline.",
+            "The Proof Mode receipt is bound to a different Guardian baseline.",
+            receipt_hash,
+        )
+    has_policy_extension = "policy_sha256" in binding or "policy_enforced" in binding
+    if has_policy_extension and (
+        binding.get("policy_sha256") != anchor.get("policy_sha256")
+        or binding.get("policy_enforced") is not True
+        or anchor.get("policy_enforced") is not True
+    ):
+        return _guardian_proof_rejection(
+            "guardian-policy-mismatch",
+            "The Proof Mode receipt is bound to a different Guardian capability policy.",
             receipt_hash,
         )
 
-    program = receipt.get("program")
-    if not isinstance(program, dict) or program.get("kind") not in {"source", "sbc"}:
-        return _guardian_proof_rejection("invalid-receipt", "The Native Proof program identity is invalid.", receipt_hash)
-    source = program.get("source")
-    if not isinstance(source, dict) or not _is_sha256_label(source.get("sha256")):
-        return _guardian_proof_rejection("invalid-receipt", "The Native Proof source identity is invalid.", receipt_hash)
+    program = verified["program"]
+    source = program["source"]
     program_hash = source["sha256"]
     if program["kind"] == "sbc":
-        container = program.get("container")
-        if not isinstance(container, dict) or not _is_sha256_label(container.get("sha256")):
-            return _guardian_proof_rejection("invalid-receipt", "The Native Proof container identity is invalid.", receipt_hash)
-        program_hash = container["sha256"]
+        program_hash = program["container"]["sha256"]
     baseline_files = baseline.get("files", [])
     if not isinstance(baseline_files, list):
         return _guardian_proof_rejection("guardian-unavailable", "Guardian baseline inventory is invalid.", receipt_hash)
@@ -900,8 +1388,12 @@ def guardian_proof_verify(project_root: Any = None, receipt_path: Any = None) ->
         "status": "verified",
         "receipt_hash": receipt_hash,
         "execution": {"status": execution_status, "exit_code": exit_code},
-        "guardian": anchor,
-        "message": "Native Proof receipt matches this Guardian baseline.",
+        "runtime_evidence": _guardian_runtime_evidence(
+            verified,
+            include_effect_targets=True,
+        ),
+        "guardian": binding,
+        "message": "Proof Mode receipt matches this Guardian baseline and declared policy binding.",
     }
     result["accessibility"] = _accessibility_event(root, "proof-verify", result)
     return result
@@ -918,7 +1410,7 @@ def guardian_proof_review(
 
     AI is deliberately outside the trust chain: it cannot verify, attest, or
     mutate the receipt. Provider routing receives no project path, receipt
-    path, source, program path, stdout, stderr, environment, or credentials.
+    path, source, program path, stdout/stderr bodies, environment, or credentials.
     """
     root = _project_root(project_root)
     verified = guardian_proof_verify(root, receipt_path)
@@ -936,8 +1428,17 @@ def guardian_proof_review(
         "proof_status": "verified",
         "receipt_hash": receipt_hash,
         "execution": verified["execution"],
+        "runtime_evidence": _guardian_runtime_evidence(
+            verified["runtime_evidence"],
+            include_effect_targets=False,
+        ),
         "guardian": verified["guardian"],
         "local_attestation_recorded": locally_attested,
+        "observation_boundary": {
+            "effect_source": "instrumented-native-host-boundaries",
+            "agent_action": "not-represented",
+            "ai_request_causality": "not-established",
+        },
     }
     review_input = _canonical_json_bytes(evidence)
 
@@ -954,10 +1455,13 @@ def guardian_proof_review(
     request = TaskRequest(
         task_type=TaskType.REVIEW,
         instruction=(
-            "Review this verified Sona Native Proof evidence as an advisory analyst. "
-            "State the execution outcome, Guardian baseline binding, and local attestation status. "
+            "Review this verified Proof Mode evidence from Sona as an advisory analyst. "
+            "State the execution outcome, runtime identity, granted capabilities, observed effect "
+            "identifiers, Guardian baseline binding, and local attestation status. "
             "Explicitly state that AI does not verify, sign, attest, or add trust to the receipt. "
-            "Do not infer source, paths, output content, identity, machine integrity, remote "
+            "Do not describe any event as AGENT.ACTION or claim that an AI request caused the run. "
+            "Do not infer source, paths, output content, operator or signer identity, machine "
+            "integrity, remote "
             "attestation, or facts absent from the evidence packet."
         ),
         provider_id=provider_id,
@@ -997,7 +1501,7 @@ def guardian_proof_review(
         "advisory": True,
     }
     boundary = (
-        "AI analysis is advisory and is not part of the Proof receipt, Guardian verification, "
+        "AI analysis is advisory and is not part of the Proof Mode receipt, Guardian verification, "
         "or Guardian attestation."
     )
     if reviewed.status.value != "ok":
@@ -1033,7 +1537,7 @@ def guardian_proof_review(
 
 
 def guardian_proof_attest(project_root: Any = None, receipt_path: Any = None) -> dict[str, Any]:
-    """Record a successful, Guardian-bound Native Proof after a clean verify."""
+    """Record a successful, Guardian-bound Proof Mode receipt after a clean verify."""
     root = _project_root(project_root)
     verified = guardian_proof_verify(root, receipt_path)
     if verified.get("status") != "verified":
@@ -1041,7 +1545,7 @@ def guardian_proof_attest(project_root: Any = None, receipt_path: Any = None) ->
     if verified["execution"]["status"] != "ok":
         return _guardian_proof_rejection(
             "execution-not-successful",
-            "Only a successful Native Proof execution can be attested.",
+            "Only a successful Proof Mode execution can be attested.",
             verified["receipt_hash"],
         )
     project_verify = guardian_verify(root)
@@ -1072,14 +1576,14 @@ def guardian_proof_attest(project_root: Any = None, receipt_path: Any = None) ->
         "status": "attested",
         "receipt_hash": verified["receipt_hash"],
         "guardian": anchor,
-        "message": "Guardian recorded the successful Native Proof against its clean trusted baseline.",
+        "message": "Guardian recorded the successful Proof Mode receipt against its clean trusted baseline.",
     }
     result["accessibility"] = _accessibility_event(root, "proof-attest", result)
     return result
 
 
 def guardian_proof_history(project_root: Any = None, limit: Any = 50) -> list[dict[str, Any]]:
-    """Return local Guardian audit entries for Native Proof attestations only."""
+    """Return local Guardian audit entries for Proof Mode attestations only."""
     root = _project_root(project_root)
     requested = max(0, int(limit or 50))
     records = [
@@ -1262,7 +1766,7 @@ def guardian_report_plain(project_root: Any = None) -> str:
     if verify.get("status") == "ok":
         attestations = report.get("proof_attestations", [])
         if attestations:
-            return f"Guardian status: ok. No drift detected. {len(attestations)} Native Proof receipt(s) attested."
+            return f"Guardian status: ok. No drift detected. {len(attestations)} Proof Mode receipt(s) attested."
         return "Guardian status: ok. No drift detected."
     if verify.get("status") == "uninitialized":
         return "Guardian status: uninitialized. Run `sona guard init` for this project root."
@@ -1283,6 +1787,7 @@ __all__ = [
     "guardian_check",
     "guardian_diff",
     "guardian_doctor",
+    "guardian_explain",
     "guardian_graph",
     "guardian_heal",
     "guardian_init",

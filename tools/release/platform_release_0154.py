@@ -632,6 +632,7 @@ def _cargo_build(spec: NativeSpec, output_dir: Path) -> tuple[Path, dict[str, An
     ).resolve()
     environment = os.environ.copy()
     environment["CARGO_TARGET_DIR"] = str(target_dir)
+    environment["SONA_SOURCE_COMMIT"] = _source_commit()
     rustc = _run(["rustc", "--version"], cwd=ROOT, environment=environment)
     if not rustc.stdout.startswith("rustc 1.94.0 "):
         raise RuntimeError(f"Rust 1.94.0 is required: {rustc.stdout.strip()}")

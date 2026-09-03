@@ -34,14 +34,33 @@ class DeterministicProvider:
                 evidence = {}
             execution = evidence.get("execution") if isinstance(evidence, dict) else {}
             guardian = evidence.get("guardian") if isinstance(evidence, dict) else {}
+            runtime = evidence.get("runtime_evidence") if isinstance(evidence, dict) else {}
+            capabilities = runtime.get("capabilities") if isinstance(runtime, dict) else {}
+            effects = runtime.get("effects") if isinstance(runtime, dict) else []
             outcome = "succeeded" if isinstance(execution, dict) and execution.get("status") == "ok" else "failed"
             tracked = isinstance(guardian, dict) and guardian.get("program_baseline") == "tracked"
             attested = bool(evidence.get("local_attestation_recorded")) if isinstance(evidence, dict) else False
+            granted = [
+                str(name)
+                for name, allowed in (capabilities.items() if isinstance(capabilities, dict) else ())
+                if allowed is True
+            ]
+            observed = []
+            for item in effects if isinstance(effects, list) else ():
+                if not isinstance(item, dict):
+                    continue
+                identifier = item.get("effect")
+                if not identifier:
+                    identifier = f"{item.get('scope', 'unknown')}.{item.get('operation', 'unknown')}"
+                observed.append(f"{identifier} {item.get('outcome', 'unknown')}")
             return {
                 "summary": (
-                    f"Guardian Proof review (local): the verified Native Core execution {outcome}; "
+                    f"Guardian Proof Mode review (local): the verified Native Core execution {outcome}; "
+                    f"granted capabilities were {', '.join(granted) if granted else 'none'}; "
+                    f"observed effects were {', '.join(observed) if observed else 'none recorded'}; "
                     f"the program is {'baseline-tracked' if tracked else 'not confirmed as baseline-tracked'}; "
                     f"a local Guardian attestation {'is recorded' if attested else 'is not recorded'}. "
+                    "No AGENT.ACTION or causal link from an AI request to this execution is established. "
                     "This advisory review does not add signer identity, remote attestation, machine "
                     "integrity, or new trust to the receipt."
                 ),

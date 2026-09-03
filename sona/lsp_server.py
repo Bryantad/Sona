@@ -1,6 +1,9 @@
-"""Sona Language Server (LSP).
+"""Sona Language Server Protocol support.
 
-This module provides an stdio-based LSP server for `.sona` files.
+The server intentionally exposes a narrow, conservative feature set. Canonical
+frontend diagnostics remain the authority for language validity, while editor
+navigation uses a non-executing local declaration index that also works for an
+incomplete document.
 """
 
 from __future__ import annotations
@@ -9,32 +12,29 @@ import argparse
 import ast
 import re
 import sys
+from collections.abc import Iterable
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
-from typing import Iterable, Optional
 
 try:
-    from pygls.server import LanguageServer  # type: ignore[import-not-found]
     from lsprotocol.types import (  # type: ignore[import-not-found]
         TEXT_DOCUMENT_COMPLETION,
-        TEXT_DOCUMENT_DID_CHANGE,
-        TEXT_DOCUMENT_DID_OPEN,
-        TEXT_DOCUMENT_HOVER,
         TEXT_DOCUMENT_DEFINITION,
-        TEXT_DOCUMENT_REFERENCES,
+        TEXT_DOCUMENT_DID_CHANGE,
+        TEXT_DOCUMENT_DID_CLOSE,
+        TEXT_DOCUMENT_DID_OPEN,
         TEXT_DOCUMENT_DOCUMENT_SYMBOL,
-        TEXT_DOCUMENT_FORMATTING,
+        TEXT_DOCUMENT_HOVER,
         CompletionItem,
         CompletionItemKind,
         CompletionList,
         CompletionParams,
         DefinitionParams,
-        ReferenceParams,
-        DocumentSymbolParams,
-        DocumentFormattingParams,
         Diagnostic,
         DiagnosticSeverity,
+        DocumentSymbol,
+        DocumentSymbolParams,
         Hover,
         HoverParams,
         Location,
@@ -42,91 +42,431 @@ try:
         MarkupKind,
         Position,
         Range,
-        SymbolInformation,
         SymbolKind,
-        TextEdit,
     )
+    from pygls.server import LanguageServer  # type: ignore[import-not-found]
 
     _PYGLS_AVAILABLE = True
-except ImportError:  # pragma: no cover
+except ImportError:  # pragma: no cover - dependency isolation covers this path
     _PYGLS_AVAILABLE = False
 
 
 SONA_ROOT = Path(__file__).resolve().parent.parent
 STDLIB_ROOT = SONA_ROOT / "sona" / "stdlib"
 
+_IDENTIFIER = r"[A-Za-z_][A-Za-z0-9_]*"
+_IMPORT_RE = re.compile(
+    rf"^[ \t]*import[ \t]+(?P<module>{_IDENTIFIER}(?:\.{_IDENTIFIER})*)"
+    rf"(?:[ \t]+as[ \t]+(?P<alias>{_IDENTIFIER}))?"
+)
+_FUNCTION_RE = re.compile(
+    rf"^[ \t]*(?:export[ \t]+)?(?:func|def)[ \t]+(?P<name>{_IDENTIFIER})[ \t]*\("
+)
+_CLASS_RE = re.compile(
+    rf"^[ \t]*(?:export[ \t]+)?class[ \t]+(?P<name>{_IDENTIFIER})"
+)
+_BINDING_RE = re.compile(
+    rf"^[ \t]*(?:export[ \t]+)?(?P<binding>let|const)[ \t]+"
+    rf"(?P<name>{_IDENTIFIER})[ \t]*="
+)
+_BARE_ASSIGNMENT_RE = re.compile(
+    rf"^[ \t]*(?P<name>{_IDENTIFIER})[ \t]*=(?!=)"
+)
+_MEMBER_PREFIX_RE = re.compile(
+    rf"(?P<module>{_IDENTIFIER}(?:\.{_IDENTIFIER})*)\."
+    rf"(?P<prefix>{_IDENTIFIER})?$"
+)
+_QUALIFIER_RE = re.compile(
+    rf"(?P<module>{_IDENTIFIER}(?:\.{_IDENTIFIER})*)\.$"
+)
 
-def _eprint(msg: str) -> None:
-    print(msg, file=sys.stderr)
+_BARE_ASSIGNMENT_KEYWORDS = frozenset(
+    {
+        "break",
+        "catch",
+        "class",
+        "const",
+        "continue",
+        "def",
+        "else",
+        "export",
+        "finally",
+        "for",
+        "func",
+        "if",
+        "import",
+        "let",
+        "match",
+        "repeat",
+        "return",
+        "try",
+        "when",
+        "while",
+    }
+)
+
+# Only executable 0.15.x forms are suggested. Recognized-but-uncertified forms
+# such as class, export, match, repeat, and statement-form when are omitted.
+_KEYWORDS = (
+    "break",
+    "catch",
+    "const",
+    "continue",
+    "else",
+    "false",
+    "finally",
+    "for",
+    "func",
+    "if",
+    "import",
+    "in",
+    "let",
+    "null",
+    "print",
+    "return",
+    "show",
+    "true",
+    "try",
+    "while",
+)
+
+
+def _eprint(message: str) -> None:
+    print(message, file=sys.stderr)
+
+
+def canonical_diagnostics(uri: str, text: str):
+    """Return the same canonical schema-1 diagnostics used by CLI tooling."""
+    from .developer_intelligence.frontend import analyze_frontend
+
+    return analyze_frontend(text, file=uri)
+
+
+def _stdlib_modules() -> list[str]:
+    from .stdlib_manifest import user_module_names
+
+    return user_module_names()
 
 
 def _read_text(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
-def canonical_diagnostics(uri: str, text: str):
-    """Return the same canonical schema-1 diagnostics used by CLI tooling."""
-    from .developer_intelligence.frontend import analyze_frontend
-    return analyze_frontend(text, file=uri)
+def _line_at(text: str, line: int) -> str:
+    lines = text.splitlines()
+    if 0 <= line < len(lines):
+        return lines[line]
+    return ""
 
 
-def _stdlib_modules() -> list[str]:
-    from .stdlib_manifest import user_module_names
-    return user_module_names()
+def _utf16_length(value: str) -> int:
+    return len(value.encode("utf-16-le")) // 2
 
 
-def _pos(line_1: int, col_1: int) -> Position:
-    return Position(line=max(line_1 - 1, 0), character=max(col_1 - 1, 0))
+def _codepoint_index(line: str, utf16_character: int) -> int:
+    """Convert an LSP UTF-16 character offset to a Python string index."""
+    target = max(utf16_character, 0)
+    consumed = 0
+    for index, character in enumerate(line):
+        width = _utf16_length(character)
+        if consumed + width > target:
+            return index
+        consumed += width
+        if consumed == target:
+            return index + 1
+    return len(line)
 
 
-def _range_from_point(line_1: int, col_1: int) -> Range:
-    start = _pos(line_1, col_1)
-    end = Position(line=start.line, character=start.character + 1)
+def _lsp_character(line: str, codepoint_index: int) -> int:
+    return _utf16_length(line[: max(codepoint_index, 0)])
+
+
+def _position_from_one_based(
+    text: str,
+    line_1: int,
+    column_1: int,
+) -> Position:
+    line_index = max(line_1 - 1, 0)
+    line = _line_at(text, line_index)
+    character = _lsp_character(line, max(column_1 - 1, 0))
+    return Position(line=line_index, character=character)
+
+
+def _diagnostic_range(
+    text: str,
+    start_line_1: int,
+    start_column_1: int,
+    end_line_1: int | None,
+    end_column_1: int | None,
+) -> Range:
+    start = _position_from_one_based(text, start_line_1, start_column_1)
+    if end_column_1 is None:
+        end_line_1 = start_line_1
+        end_column_1 = start_column_1 + 1
+    end = _position_from_one_based(
+        text,
+        end_line_1 or start_line_1,
+        end_column_1,
+    )
+    if end.line == start.line and end.character <= start.character:
+        end = Position(line=start.line, character=start.character + 1)
     return Range(start=start, end=end)
 
 
-def _word_at(text: str, line: int, character: int) -> str:
-    lines = text.splitlines()
-    if line < 0 or line >= len(lines):
-        return ""
-    s = lines[line]
-    if not s:
-        return ""
+def _word_span_at(
+    text: str,
+    line_number: int,
+    utf16_character: int,
+) -> tuple[str, int, int]:
+    line = _line_at(text, line_number)
+    if not line:
+        return "", 0, 0
 
-    i = min(max(character, 0), len(s))
-    left = i
-    while left > 0 and (s[left - 1].isalnum() or s[left - 1] == "_"):
+    index = _codepoint_index(line, utf16_character)
+    left = index
+    while left > 0 and (line[left - 1].isalnum() or line[left - 1] == "_"):
         left -= 1
-    right = i
-    while right < len(s) and (s[right].isalnum() or s[right] == "_"):
+    right = index
+    while right < len(line) and (line[right].isalnum() or line[right] == "_"):
         right += 1
-    return s[left:right]
+    return line[left:right], left, right
+
+
+def _mask_non_code(text: str) -> str:
+    """Replace comments and quoted text with spaces while preserving offsets."""
+    masked: list[str] = []
+    index = 0
+    quote: str | None = None
+    escaped = False
+    line_comment = False
+
+    while index < len(text):
+        character = text[index]
+
+        if character in "\r\n":
+            masked.append(character)
+            line_comment = False
+            if quote is not None:
+                escaped = False
+            index += 1
+            continue
+
+        if line_comment:
+            masked.append(" ")
+            index += 1
+            continue
+
+        if quote is not None:
+            masked.append(" ")
+            if escaped:
+                escaped = False
+            elif character == "\\":
+                escaped = True
+            elif character == quote:
+                quote = None
+            index += 1
+            continue
+
+        if character == "#" or text.startswith("//", index):
+            line_comment = True
+            masked.append(" ")
+            if character == "/":
+                masked.append(" ")
+                index += 2
+            else:
+                index += 1
+            continue
+
+        if character in {'"', "'", "`"}:
+            quote = character
+            masked.append(" ")
+            index += 1
+            continue
+
+        masked.append(character)
+        index += 1
+
+    return "".join(masked)
+
+
+@dataclass(frozen=True)
+class SonaDeclaration:
+    """A conservative declaration discovered in the current document."""
+
+    name: str
+    display_name: str
+    kind: str
+    detail: str
+    line: int
+    start: int
+    end: int
+
+
+def _declaration(
+    match: re.Match[str],
+    *,
+    line: int,
+    name_group: str,
+    display_name: str,
+    kind: str,
+    detail: str,
+) -> SonaDeclaration:
+    name = match.group(name_group)
+    return SonaDeclaration(
+        name=name,
+        display_name=display_name,
+        kind=kind,
+        detail=detail,
+        line=line,
+        start=match.start(name_group),
+        end=match.end(name_group),
+    )
+
+
+def scan_document_declarations(text: str) -> list[SonaDeclaration]:
+    """Index unambiguous top-level declarations without executing the parser."""
+    masked_lines = _mask_non_code(text).splitlines()
+    original_lines = text.splitlines()
+    declarations: list[SonaDeclaration] = []
+    brace_depth = 0
+
+    for line_number, masked_line in enumerate(masked_lines):
+        original_line = (
+            original_lines[line_number]
+            if line_number < len(original_lines)
+            else masked_line
+        )
+        if brace_depth == 0:
+            import_match = _IMPORT_RE.match(masked_line)
+            if import_match:
+                module = original_line[
+                    import_match.start("module") : import_match.end("module")
+                ]
+                name_group = "alias" if import_match.group("alias") else "module"
+                binding = import_match.group(name_group)
+                if name_group == "module" and "." in binding:
+                    binding = binding.split(".", 1)[0]
+                    declarations.append(
+                        SonaDeclaration(
+                            name=binding,
+                            display_name=module,
+                            kind="module",
+                            detail=f"import {module}",
+                            line=line_number,
+                            start=import_match.start("module"),
+                            end=import_match.start("module") + len(binding),
+                        )
+                    )
+                else:
+                    display = (
+                        f"{module} as {binding}"
+                        if name_group == "alias"
+                        else module
+                    )
+                    declarations.append(
+                        _declaration(
+                            import_match,
+                            line=line_number,
+                            name_group=name_group,
+                            display_name=display,
+                            kind="module",
+                            detail=f"import {module}",
+                        )
+                    )
+            else:
+                function_match = _FUNCTION_RE.match(masked_line)
+                class_match = _CLASS_RE.match(masked_line)
+                binding_match = _BINDING_RE.match(masked_line)
+                assignment_match = _BARE_ASSIGNMENT_RE.match(masked_line)
+
+                if function_match:
+                    name = function_match.group("name")
+                    declarations.append(
+                        _declaration(
+                            function_match,
+                            line=line_number,
+                            name_group="name",
+                            display_name=name,
+                            kind="function",
+                            detail="Sona function declaration",
+                        )
+                    )
+                elif class_match:
+                    name = class_match.group("name")
+                    declarations.append(
+                        _declaration(
+                            class_match,
+                            line=line_number,
+                            name_group="name",
+                            display_name=name,
+                            kind="class",
+                            detail="Recognized Sona class declaration",
+                        )
+                    )
+                elif binding_match:
+                    name = binding_match.group("name")
+                    binding = binding_match.group("binding")
+                    declarations.append(
+                        _declaration(
+                            binding_match,
+                            line=line_number,
+                            name_group="name",
+                            display_name=name,
+                            kind="constant" if binding == "const" else "variable",
+                            detail=f"Sona {binding} binding",
+                        )
+                    )
+                elif assignment_match:
+                    name = assignment_match.group("name")
+                    if name not in _BARE_ASSIGNMENT_KEYWORDS:
+                        declarations.append(
+                            _declaration(
+                                assignment_match,
+                                line=line_number,
+                                name_group="name",
+                                display_name=name,
+                                kind="variable",
+                                detail="Sona assignment",
+                            )
+                        )
+
+        brace_depth += masked_line.count("{") - masked_line.count("}")
+        brace_depth = max(brace_depth, 0)
+
+    return declarations
+
+
+def _import_bindings(text: str) -> dict[str, str]:
+    bindings: dict[str, str] = {}
+    for declaration in scan_document_declarations(text):
+        if declaration.kind == "module" and declaration.detail.startswith("import "):
+            bindings[declaration.name] = declaration.detail.removeprefix("import ")
+    return bindings
+
+
+def _resolve_module_name(text: str, candidate: str) -> str:
+    head, separator, tail = candidate.partition(".")
+    imported = _import_bindings(text).get(head)
+    if imported is None:
+        return candidate
+    return f"{imported}.{tail}" if separator else imported
 
 
 def _completion_context(
-    line_text: str, character: int
-) -> tuple[Optional[str], Optional[str]]:
-    """Returns (import_prefix, member_context_module).
-
-    - If cursor is in an `import <prefix>` statement, returns import_prefix.
-    - If cursor is after `<module>.`, returns member_context_module.
-    """
-    before = line_text[: max(character, 0)]
-
-    # Member access: foo.<cursor>
-    dot = before.rfind(".")
-    if dot != -1 and dot > 0:
-        mod = before[:dot].strip().split()[-1]
-        if mod.isidentifier():
-            return None, mod
-
-    # Import statement: import <prefix>
+    line_text: str,
+    codepoint_character: int,
+) -> tuple[str | None, str | None, str]:
+    before = line_text[: max(codepoint_character, 0)]
     stripped = before.lstrip()
     if stripped.startswith("import "):
-        prefix = stripped[len("import "):].strip()
-        return prefix, None
+        return stripped.removeprefix("import ").strip(), None, ""
 
-    return None, None
+    member_match = _MEMBER_PREFIX_RE.search(before)
+    if member_match:
+        return None, member_match.group("module"), member_match.group("prefix") or ""
+
+    prefix_match = re.search(rf"({_IDENTIFIER})$", before)
+    return None, None, prefix_match.group(1) if prefix_match else ""
 
 
 @dataclass(frozen=True)
@@ -135,36 +475,39 @@ class StdlibDoc:
     symbols: dict[str, str]
 
 
-def _resolve_stdlib_module_path(module_name: str) -> Optional[Path]:
+def _resolve_stdlib_module_path(module_name: str) -> Path | None:
     candidates = [
         SONA_ROOT / "stdlib" / f"{module_name}.smod",
         STDLIB_ROOT / f"{module_name}.py",
     ]
     if not module_name.startswith("native_"):
         candidates.append(STDLIB_ROOT / f"native_{module_name}.py")
-    for p in candidates:
-        if p.exists():
-            return p
-    return None
+    return next((path for path in candidates if path.exists()), None)
 
 
 @lru_cache(maxsize=256)
-def _stdlib_docs(module_name: str) -> Optional[StdlibDoc]:
+def _stdlib_docs(module_name: str) -> StdlibDoc | None:
     module_path = _resolve_stdlib_module_path(module_name)
     if not module_path:
         return None
 
-    if module_path.suffix == ".smod":
+    try:
         text = _read_text(module_path)
-        symbols = {
-            match.group(1): ""
-            for match in re.finditer(r"^\s*func\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(", text, re.MULTILINE)
-            if not match.group(1).startswith("_")
-        }
-        first_comment = ""
-        for line in text.splitlines():
-            stripped = line.strip()
-            if stripped.startswith("#"):
+        if module_path.suffix == ".smod":
+            symbols = {
+                match.group(1): ""
+                for match in re.finditer(
+                    rf"^\s*func\s+({_IDENTIFIER})\s*\(",
+                    text,
+                    re.MULTILINE,
+                )
+                if not match.group(1).startswith("_")
+            }
+            first_comment = ""
+            for line in text.splitlines():
+                stripped = line.strip()
+                if not stripped.startswith("#"):
+                    continue
                 comment = stripped.lstrip("#").strip()
                 if not comment or comment.endswith(".smod"):
                     continue
@@ -172,404 +515,355 @@ def _stdlib_docs(module_name: str) -> Optional[StdlibDoc]:
                     comment = comment.split(":", 1)[1].strip()
                 first_comment = comment
                 break
-        return StdlibDoc(module_doc=first_comment, symbols=symbols)
+            return StdlibDoc(module_doc=first_comment, symbols=symbols)
 
-    try:
-        tree = ast.parse(_read_text(module_path), filename=str(module_path))
-    except Exception:
+        tree = ast.parse(text, filename=str(module_path))
+    except (OSError, SyntaxError, UnicodeError):
         return None
 
     module_doc = ast.get_docstring(tree) or ""
     symbols: dict[str, str] = {}
-
     for node in tree.body:
         if isinstance(
-            node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
-        ):
-            name = node.name
-            if name.startswith("_"):
-                continue
-            symbols[name] = ast.get_docstring(node) or ""
-
+            node,
+            (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef),
+        ) and not node.name.startswith("_"):
+            symbols[node.name] = ast.get_docstring(node) or ""
     return StdlibDoc(module_doc=module_doc, symbols=symbols)
+
+
+def _declaration_at(
+    text: str,
+    line: int,
+    utf16_character: int,
+) -> SonaDeclaration | None:
+    word, _, _ = _word_span_at(text, line, utf16_character)
+    if not word:
+        return None
+    matches = [item for item in scan_document_declarations(text) if item.name == word]
+    return matches[0] if len(matches) == 1 else None
+
+
+def _qualified_module_at(
+    text: str,
+    line_number: int,
+    utf16_character: int,
+) -> tuple[str | None, str]:
+    line = _line_at(text, line_number)
+    word, start, _ = _word_span_at(text, line_number, utf16_character)
+    if not word:
+        return None, ""
+    qualifier = _QUALIFIER_RE.search(line[:start])
+    module = qualifier.group("module") if qualifier else None
+    return module, word
 
 
 server = None
 
 if _PYGLS_AVAILABLE:
 
+    def _declaration_range(text: str, declaration: SonaDeclaration) -> Range:
+        line = _line_at(text, declaration.line)
+        return Range(
+            start=Position(
+                line=declaration.line,
+                character=_lsp_character(line, declaration.start),
+            ),
+            end=Position(
+                line=declaration.line,
+                character=_lsp_character(line, declaration.end),
+            ),
+        )
+
+
+    def _document_source(uri: str) -> str | None:
+        try:
+            return server.workspace.get_text_document(uri).source
+        except Exception:
+            return None
+
+
+    def _lsp_diagnostics(uri: str, text: str) -> list[Diagnostic]:
+        diagnostics: list[Diagnostic] = []
+        try:
+            canonical = canonical_diagnostics(uri, text)
+        except Exception:
+            canonical = None
+
+        if canonical is None:
+            return [
+                Diagnostic(
+                    range=Range(
+                        start=Position(line=0, character=0),
+                        end=Position(line=0, character=1),
+                    ),
+                    message=(
+                        "The canonical diagnostic pipeline encountered an "
+                        "infrastructure failure."
+                    ),
+                    severity=DiagnosticSeverity.Error,
+                    source="sona",
+                    code="SONA-PARSE-099",
+                )
+            ]
+
+        for item in canonical:
+            severity = {
+                "error": DiagnosticSeverity.Error,
+                "warning": DiagnosticSeverity.Warning,
+            }.get(item.severity, DiagnosticSeverity.Information)
+            diagnostics.append(
+                Diagnostic(
+                    range=_diagnostic_range(
+                        text,
+                        item.span.start_line,
+                        item.span.start_column,
+                        item.span.end_line,
+                        item.span.end_column,
+                    ),
+                    message=(
+                        item.message + (f" Hint: {item.hint}" if item.hint else "")
+                    ),
+                    severity=severity,
+                    source="sona",
+                    code=item.diagnostic_id,
+                )
+            )
+        return diagnostics
+
+
     class SonaLsp(LanguageServer):
         def __init__(self):
-            super().__init__("sona-lsp", "0.15.4")
+            super().__init__("sona-lsp", "0.15.5")
 
         def validate(self, uri: str, text: str) -> None:
-            diags: list[Diagnostic] = []
-            try:
-                for item in canonical_diagnostics(uri, text):
-                    severity = (
-                        DiagnosticSeverity.Error if item.severity == "error" else
-                        DiagnosticSeverity.Warning if item.severity == "warning" else
-                        DiagnosticSeverity.Information
-                    )
-                    diags.append(Diagnostic(
-                        range=Range(
-                            start=_pos(item.span.start_line, item.span.start_column),
-                            end=_pos(item.span.end_line or item.span.start_line, item.span.end_column or item.span.start_column + 1),
-                        ),
-                        message=item.message + (f" Hint: {item.hint}" if item.hint else ""),
-                        severity=severity, source="sona", code=item.diagnostic_id,
-                    ))
-            except Exception:
-                diags.append(
-                    Diagnostic(
-                        range=_range_from_point(1, 1),
-                        message="The canonical diagnostic pipeline encountered an infrastructure failure.",
-                        severity=DiagnosticSeverity.Error,
-                        source="sona",
-                        code="SONA-PARSE-099",
-                    )
-                )
+            self.publish_diagnostics(uri, _lsp_diagnostics(uri, text))
 
-            self.publish_diagnostics(uri, diags)
 
     server = SonaLsp()
-    _eprint("[sona-lsp] Server instance created")
 
     @server.feature(TEXT_DOCUMENT_DID_OPEN)
-    def did_open(params):
-        _eprint(f"[sona-lsp] did_open: {params.text_document.uri}")
-        doc = server.workspace.get_text_document(params.text_document.uri)
-        _eprint(f"[sona-lsp] doc source length: {len(doc.source)}")
-        server.validate(doc.uri, doc.source)
+    def did_open(params) -> None:
+        server.validate(params.text_document.uri, params.text_document.text)
+
 
     @server.feature(TEXT_DOCUMENT_DID_CHANGE)
-    def did_change(params):
-        _eprint(f"[sona-lsp] did_change: {params.text_document.uri}")
-        doc = server.workspace.get_text_document(params.text_document.uri)
-        server.validate(doc.uri, doc.source)
+    def did_change(params) -> None:
+        uri = params.text_document.uri
+        source = _document_source(uri)
+        if source is None:
+            server.publish_diagnostics(uri, _lsp_diagnostics(uri, ""))
+            return
+        server.validate(uri, source)
+
+
+    @server.feature(TEXT_DOCUMENT_DID_CLOSE)
+    def did_close(params) -> None:
+        server.publish_diagnostics(params.text_document.uri, [])
+
 
     @server.feature(TEXT_DOCUMENT_COMPLETION)
     def completion(params: CompletionParams) -> CompletionList:
-        doc = server.workspace.get_text_document(params.text_document.uri)
-        line = params.position.line
-        character = params.position.character
-        lines = doc.source.splitlines()
-        line_text = lines[line] if 0 <= line < len(lines) else ""
+        source = _document_source(params.text_document.uri)
+        if source is None:
+            return CompletionList(is_incomplete=False, items=[])
 
-        import_prefix, member_module = _completion_context(
-            line_text, character
-        )
-
-        items: list[CompletionItem] = []
-
-        if member_module:
-            docs = _stdlib_docs(member_module)
-            if docs:
-                for name in sorted(docs.symbols.keys()):
-                    items.append(
-                        CompletionItem(
-                            label=name,
-                            kind=CompletionItemKind.Function,
-                            detail=f"{member_module}.{name}",
-                        )
-                    )
-            return CompletionList(is_incomplete=False, items=items)
-
-        modules = _stdlib_modules()
-        if import_prefix is not None:
-            for module in modules:
-                if not import_prefix or module.startswith(import_prefix):
-                    items.append(
-                        CompletionItem(
-                            label=module,
-                            kind=CompletionItemKind.Module,
-                            detail="Sona stdlib module",
-                        )
-                    )
-            return CompletionList(is_incomplete=False, items=items)
-
-        for module in modules[:200]:
-            items.append(
-                CompletionItem(
-                    label=module,
-                    kind=CompletionItemKind.Module,
-                    detail="Sona stdlib module",
-                )
+        try:
+            line_text = _line_at(source, params.position.line)
+            character = _codepoint_index(line_text, params.position.character)
+            import_prefix, member_module, prefix = _completion_context(
+                line_text,
+                character,
             )
+            items: list[CompletionItem] = []
 
-        return CompletionList(is_incomplete=True, items=items)
+            if import_prefix is not None:
+                for module in _stdlib_modules():
+                    if not import_prefix or module.startswith(import_prefix):
+                        items.append(
+                            CompletionItem(
+                                label=module,
+                                kind=CompletionItemKind.Module,
+                                detail="Sona standard-library module",
+                            )
+                        )
+                return CompletionList(is_incomplete=False, items=items)
+
+            if member_module:
+                resolved_module = _resolve_module_name(source, member_module)
+                docs = _stdlib_docs(resolved_module)
+                if docs:
+                    for name in sorted(docs.symbols):
+                        if not prefix or name.startswith(prefix):
+                            items.append(
+                                CompletionItem(
+                                    label=name,
+                                    kind=CompletionItemKind.Function,
+                                    detail=f"{resolved_module}.{name}",
+                                )
+                            )
+                return CompletionList(is_incomplete=False, items=items)
+
+            kind_map = {
+                "class": CompletionItemKind.Class,
+                "constant": CompletionItemKind.Constant,
+                "function": CompletionItemKind.Function,
+                "module": CompletionItemKind.Module,
+                "variable": CompletionItemKind.Variable,
+            }
+            labels: set[str] = set()
+            for declaration in scan_document_declarations(source):
+                if declaration.name in labels or (
+                    prefix and not declaration.name.startswith(prefix)
+                ):
+                    continue
+                labels.add(declaration.name)
+                items.append(
+                    CompletionItem(
+                        label=declaration.name,
+                        kind=kind_map[declaration.kind],
+                        detail=declaration.detail,
+                    )
+                )
+            for keyword in _KEYWORDS:
+                if keyword not in labels and (not prefix or keyword.startswith(prefix)):
+                    items.append(
+                        CompletionItem(
+                            label=keyword,
+                            kind=CompletionItemKind.Keyword,
+                            detail="Sona keyword",
+                        )
+                    )
+            return CompletionList(is_incomplete=False, items=items)
+        except Exception:
+            return CompletionList(is_incomplete=False, items=[])
+
 
     @server.feature(TEXT_DOCUMENT_HOVER)
-    def hover(params: HoverParams) -> Hover:
-        doc = server.workspace.get_text_document(params.text_document.uri)
-        word = _word_at(
-            doc.source, params.position.line, params.position.character
-        )
-        if not word:
-            return Hover(
-                contents=MarkupContent(kind=MarkupKind.Markdown, value="")
-            )
+    def hover(params: HoverParams) -> Hover | None:
+        source = _document_source(params.text_document.uri)
+        if source is None:
+            return None
 
-        docs = _stdlib_docs(word)
-        if docs and docs.module_doc:
-            return Hover(
-                contents=MarkupContent(
-                    kind=MarkupKind.Markdown,
-                    value=f"**{word}**\n\n{docs.module_doc}",
-                )
+        try:
+            qualifier, word = _qualified_module_at(
+                source,
+                params.position.line,
+                params.position.character,
             )
+            if not word:
+                return None
 
-        lines = doc.source.splitlines()
-        if 0 <= params.position.line < len(lines):
-            line_text = lines[params.position.line]
-        else:
-            line_text = ""
-        before = line_text[: params.position.character]
-        dot = before.rfind(".")
-        if dot != -1:
-            left = before[:dot].strip().split()[-1]
-            if left.isidentifier():
-                md = _stdlib_docs(left)
-                if md and word in md.symbols and md.symbols[word]:
+            if qualifier:
+                module = _resolve_module_name(source, qualifier)
+                docs = _stdlib_docs(module)
+                if docs and word in docs.symbols:
+                    description = docs.symbols[word] or "Sona standard-library member."
                     return Hover(
                         contents=MarkupContent(
                             kind=MarkupKind.Markdown,
-                            value=(
-                                f"**{left}.{word}**\n\n{md.symbols[word]}"
-                            ),
+                            value=f"**{module}.{word}**\n\n{description}",
                         )
                     )
 
-        return Hover(
-            contents=MarkupContent(
-                kind=MarkupKind.Markdown, value=f"**{word}**"
+            declaration = _declaration_at(
+                source,
+                params.position.line,
+                params.position.character,
             )
-        )
+            if declaration:
+                if declaration.kind == "module":
+                    module = declaration.detail.removeprefix("import ")
+                    docs = _stdlib_docs(module)
+                    description = (
+                        docs.module_doc
+                        if docs and docs.module_doc
+                        else "Sona standard-library module."
+                    )
+                else:
+                    description = declaration.detail + "."
+                return Hover(
+                    contents=MarkupContent(
+                        kind=MarkupKind.Markdown,
+                        value=f"**{declaration.name}**\n\n{description}",
+                    )
+                )
 
-    # =========================================================================
-    # Go to Definition
-    # =========================================================================
+            docs = _stdlib_docs(word)
+            if docs and docs.module_doc:
+                return Hover(
+                    contents=MarkupContent(
+                        kind=MarkupKind.Markdown,
+                        value=f"**{word}**\n\n{docs.module_doc}",
+                    )
+                )
+        except Exception:
+            return None
+        return None
+
+
     @server.feature(TEXT_DOCUMENT_DEFINITION)
     def goto_definition(params: DefinitionParams) -> list[Location]:
-        """Find the definition of a symbol (function, class, variable)."""
-        doc = server.workspace.get_text_document(params.text_document.uri)
-        word = _word_at(doc.source, params.position.line, params.position.character)
-        if not word:
+        source = _document_source(params.text_document.uri)
+        if source is None:
+            return []
+        try:
+            declaration = _declaration_at(
+                source,
+                params.position.line,
+                params.position.character,
+            )
+            if declaration is None:
+                return []
+            return [
+                Location(
+                    uri=params.text_document.uri,
+                    range=_declaration_range(source, declaration),
+                )
+            ]
+        except Exception:
             return []
 
-        locations: list[Location] = []
-        lines = doc.source.splitlines()
 
-        # Search for function/class definitions
-        for i, line in enumerate(lines):
-            stripped = line.strip()
-            # Match the canonical function declaration spelling.
-            if stripped.startswith(f"func {word}(") or stripped.startswith(f"func {word} ("):
-                col = line.find(f"func {word}") + 5  # Position at name
-                locations.append(Location(
-                    uri=params.text_document.uri,
-                    range=Range(
-                        start=Position(line=i, character=col),
-                        end=Position(line=i, character=col + len(word))
-                    )
-                ))
-            # Match: variable assignment at start of line: name = 
-            elif stripped.startswith(f"{word} =") or stripped.startswith(f"{word}="):
-                col = line.find(word)
-                locations.append(Location(
-                    uri=params.text_document.uri,
-                    range=Range(
-                        start=Position(line=i, character=col),
-                        end=Position(line=i, character=col + len(word))
-                    )
-                ))
-
-        return locations
-
-    # =========================================================================
-    # Find References
-    # =========================================================================
-    @server.feature(TEXT_DOCUMENT_REFERENCES)
-    def find_references(params: ReferenceParams) -> list[Location]:
-        """Find all references to a symbol in the document."""
-        doc = server.workspace.get_text_document(params.text_document.uri)
-        word = _word_at(doc.source, params.position.line, params.position.character)
-        if not word:
-            return []
-
-        locations: list[Location] = []
-        lines = doc.source.splitlines()
-        import re
-        pattern = re.compile(r'\b' + re.escape(word) + r'\b')
-
-        for i, line in enumerate(lines):
-            for match in pattern.finditer(line):
-                locations.append(Location(
-                    uri=params.text_document.uri,
-                    range=Range(
-                        start=Position(line=i, character=match.start()),
-                        end=Position(line=i, character=match.end())
-                    )
-                ))
-
-        return locations
-
-    # =========================================================================
-    # Document Symbols (Outline)
-    # =========================================================================
     @server.feature(TEXT_DOCUMENT_DOCUMENT_SYMBOL)
-    def document_symbols(params: DocumentSymbolParams) -> list[SymbolInformation]:
-        """Provide document symbols for the Outline view."""
-        doc = server.workspace.get_text_document(params.text_document.uri)
-        lines = doc.source.splitlines()
-        symbols: list[SymbolInformation] = []
-        import re
-
-        fn_pattern = re.compile(r'^\s*func\s+(\w+)\s*\(')
-        import_pattern = re.compile(r'^\s*import\s+(\w+)')
-        var_pattern = re.compile(r'^(\w+)\s*=\s*')
-
-        for i, line in enumerate(lines):
-            # Functions
-            fn_match = fn_pattern.match(line)
-            if fn_match:
-                name = fn_match.group(1)
-                col = line.find(f"func {name}") + 5
-                symbols.append(SymbolInformation(
-                    name=name,
-                    kind=SymbolKind.Function,
-                    location=Location(
-                        uri=params.text_document.uri,
-                        range=Range(
-                            start=Position(line=i, character=col),
-                            end=Position(line=i, character=col + len(name))
-                        )
+    def document_symbols(params: DocumentSymbolParams) -> list[DocumentSymbol]:
+        source = _document_source(params.text_document.uri)
+        if source is None:
+            return []
+        kind_map = {
+            "class": SymbolKind.Class,
+            "constant": SymbolKind.Constant,
+            "function": SymbolKind.Function,
+            "module": SymbolKind.Module,
+            "variable": SymbolKind.Variable,
+        }
+        try:
+            symbols: list[DocumentSymbol] = []
+            for declaration in scan_document_declarations(source):
+                selection = _declaration_range(source, declaration)
+                line = _line_at(source, declaration.line)
+                full_range = Range(
+                    start=Position(line=declaration.line, character=0),
+                    end=Position(
+                        line=declaration.line,
+                        character=_utf16_length(line),
+                    ),
+                )
+                symbols.append(
+                    DocumentSymbol(
+                        name=declaration.display_name,
+                        detail=declaration.detail,
+                        kind=kind_map[declaration.kind],
+                        range=full_range,
+                        selection_range=selection,
                     )
-                ))
-                continue
-
-            # Imports
-            import_match = import_pattern.match(line)
-            if import_match:
-                name = import_match.group(1)
-                col = line.find(f"import {name}") + 7
-                symbols.append(SymbolInformation(
-                    name=name,
-                    kind=SymbolKind.Module,
-                    location=Location(
-                        uri=params.text_document.uri,
-                        range=Range(
-                            start=Position(line=i, character=col),
-                            end=Position(line=i, character=col + len(name))
-                        )
-                    )
-                ))
-                continue
-
-            # Top-level variables (only at column 0)
-            if not line.startswith(' ') and not line.startswith('\t'):
-                var_match = var_pattern.match(line)
-                if var_match:
-                    name = var_match.group(1)
-                    if name not in ('if', 'for', 'while', 'match', 'when', 'try', 'class', 'func', 'def'):
-                        symbols.append(SymbolInformation(
-                            name=name,
-                            kind=SymbolKind.Variable,
-                            location=Location(
-                                uri=params.text_document.uri,
-                                range=Range(
-                                    start=Position(line=i, character=0),
-                                    end=Position(line=i, character=len(name))
-                                )
-                            )
-                        ))
-
-        return symbols
-
-    # =========================================================================
-    # Code Formatting
-    # =========================================================================
-    @server.feature(TEXT_DOCUMENT_FORMATTING)
-    def formatting(params: DocumentFormattingParams) -> list[TextEdit]:
-        """Format the document with consistent style."""
-        doc = server.workspace.get_text_document(params.text_document.uri)
-        lines = doc.source.splitlines()
-        formatted_lines: list[str] = []
-        
-        # Access FormattingOptions attributes directly (not a dict)
-        tab_size = params.options.tab_size if params.options.tab_size else 4
-        use_spaces = params.options.insert_spaces if params.options.insert_spaces is not None else True
-        indent_char = " " * tab_size if use_spaces else "\t"
-
-        for line in lines:
-            # Preserve empty lines
-            if not line.strip():
-                formatted_lines.append("")
-                continue
-
-            # Calculate current indentation level
-            stripped = line.lstrip()
-            current_indent = len(line) - len(stripped)
-            
-            # Normalize indentation (convert tabs to spaces or vice versa)
-            if use_spaces:
-                # Count logical indent level
-                indent_level = 0
-                i = 0
-                while i < len(line) and line[i] in ' \t':
-                    if line[i] == '\t':
-                        indent_level += 1
-                    elif i + tab_size <= current_indent:
-                        # Check if we have tab_size spaces
-                        if line[i:i+tab_size] == ' ' * tab_size:
-                            indent_level += 1
-                            i += tab_size - 1
-                    i += 1
-                # Approximate: use current spaces / tab_size
-                indent_level = current_indent // tab_size
-                new_indent = indent_char * indent_level
-            else:
-                indent_level = current_indent // tab_size
-                new_indent = "\t" * indent_level
-
-            # Apply formatting rules
-            formatted = stripped
-            
-            # Ensure space after keywords
-            for kw in ['if', 'elif', 'else', 'for', 'while', 'func', 'def', 'class', 'return', 'import', 'from', 'match', 'when', 'try', 'catch', 'finally']:
-                if formatted.startswith(kw) and len(formatted) > len(kw):
-                    next_char = formatted[len(kw)]
-                    if next_char not in ' \t({':
-                        formatted = kw + ' ' + formatted[len(kw):]
-
-            # Ensure space around operators (basic)
-            import re
-            # Add space around = but not == or !=
-            formatted = re.sub(r'(?<!=)=(?!=)', ' = ', formatted)
-            # Clean up multiple spaces
-            formatted = re.sub(r'  +', ' ', formatted)
-            # Remove space before semicolon
-            formatted = re.sub(r'\s+;', ';', formatted)
-            # Ensure space after comma
-            formatted = re.sub(r',(?!\s)', ', ', formatted)
-            
-            formatted_lines.append(new_indent + formatted)
-
-        new_text = '\n'.join(formatted_lines)
-        if doc.source.endswith('\n'):
-            new_text += '\n'
-
-        # Return single edit replacing entire document
-        return [TextEdit(
-            range=Range(
-                start=Position(line=0, character=0),
-                end=Position(line=len(lines), character=0)
-            ),
-            new_text=new_text
-        )]
+                )
+            return symbols
+        except Exception:
+            return []
 
 
-def main(argv: Optional[Iterable[str]] = None) -> int:
+def main(argv: Iterable[str] | None = None) -> int:
     if not _PYGLS_AVAILABLE:
         _eprint("ERROR: pygls is required to run the Sona LSP.")
         _eprint("Install it with: pip install pygls")
@@ -577,14 +871,15 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
 
     parser = argparse.ArgumentParser(prog="sona-lsp")
     parser.add_argument(
-        "--stdio", action="store_true", help="Run over stdio (default)"
+        "--stdio",
+        action="store_true",
+        help="Run over stdio (default)",
     )
     parser.add_argument("--tcp", action="store_true", help="Run over TCP")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=2087)
     args = parser.parse_args(list(argv) if argv is not None else None)
 
-    # Default to stdio unless explicitly using TCP.
     if args.tcp and not args.stdio:
         _eprint(f"Starting Sona LSP on tcp://{args.host}:{args.port}")
         server.start_tcp(args.host, args.port)

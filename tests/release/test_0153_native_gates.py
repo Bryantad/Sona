@@ -1,51 +1,15 @@
 from __future__ import annotations
 
-import json
 import hashlib
-import os
-import shutil
+import json
 import subprocess
 import sys
 from pathlib import Path
 
-import pytest
-
 from sona.stdlib import native_guardian as guardian
 
-
 ROOT = Path(__file__).resolve().parents[2]
-CURRENT_VERSION = "0.15.4"
-
-
-@pytest.fixture(scope="module")
-def native_binary(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    cargo = shutil.which("cargo")
-    assert cargo is not None, "cargo is mandatory for the active native gates"
-    target = tmp_path_factory.mktemp("native-target")
-    environment = os.environ.copy()
-    environment["CARGO_TARGET_DIR"] = str(target)
-    process = subprocess.run(
-        [
-            cargo,
-            "build",
-            "--manifest-path",
-            str(ROOT / "native" / "Cargo.toml"),
-            "--release",
-            "--locked",
-            "-p",
-            "sona-cli",
-        ],
-        cwd=ROOT,
-        env=environment,
-        text=True,
-        capture_output=True,
-        shell=False,
-        timeout=180,
-    )
-    assert process.returncode == 0, process.stdout + process.stderr
-    binary = target / "release" / ("sona.exe" if os.name == "nt" else "sona")
-    assert binary.is_file()
-    return binary
+CURRENT_VERSION = "0.15.5"
 
 
 def test_native_standalone_gate_passes(tmp_path: Path, native_binary: Path):
@@ -164,12 +128,23 @@ def test_native_proof_receipt_is_redacted_canonical_and_matches_run_output(
     assert proof.stderr == normal.stderr == b"warn"
     receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
     assert receipt["schema_id"] == "sona.native-proof.schema-1"
-    assert receipt["engine"] == {
+    engine = receipt["engine"]
+    assert {key: engine[key] for key in (
+        "fallback_used",
+        "name",
+        "python_embedded",
+        "python_required",
+    )} == {
         "fallback_used": False,
         "name": "native",
         "python_embedded": False,
         "python_required": False,
     }
+    assert engine["runtime_identity"]["native_binary"] == {
+        "sha256": _sha256(native_binary.read_bytes()),
+        "bytes": native_binary.stat().st_size,
+    }
+    assert engine["runtime_identity"]["source_revision"] == "git:" + "1" * 40
     assert receipt["program"] == {
         "kind": "source",
         "source": {"sha256": _sha256(source.read_bytes()), "bytes": len(source.read_bytes())},
@@ -283,6 +258,8 @@ def test_native_proof_binds_to_guardian_and_can_be_attested(
         "baseline_snapshot_id": initialized["snapshot_id"],
         "baseline_sha256": _sha256((project / ".sona" / "guardian" / "baseline.json").read_bytes()),
         "trusted_config_sha256": _sha256((project / ".sona" / "guardian" / "trusted_config.json").read_bytes()),
+        "policy_sha256": initialized["policy_sha256"],
+        "policy_enforced": True,
         "program_baseline": "tracked",
     }
     assert str(project) not in rendered
@@ -448,10 +425,12 @@ def test_native_proof_never_records_stdin_values_or_fingerprints(
     receipt = json.loads(receipt_text)
     stdin_effect = next(item for item in receipt["effects"] if item["scope"] == "stdin")
     assert stdin_effect == {
+        "effect": "STDIN.READ",
         "operation": "read",
         "outcome": "allowed",
         "scope": "stdin",
         "sequence": 1,
+        "support": "SUPPORTED",
     }
     assert "0420" not in receipt_text
 

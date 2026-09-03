@@ -1,0 +1,15 @@
+import fs;
+
+let application_version = "1.0.0";
+let source_revision = "example-fixture-r1";
+let artifact_sha256 = "9d9d72726b51c85cb293b2383e180f4f39c12dbbe66d41acab811d5a45687de8";
+let environment_label = "local-staging";
+
+fs.copy("artifact/app.txt", ".sona/deployments/staging/app.txt", true);
+
+print("Local deployment step completed.");
+print("Application version: " + application_version);
+print("Source revision: " + source_revision);
+print("Artifact SHA-256: " + artifact_sha256);
+print("Environment label: " + environment_label);
+

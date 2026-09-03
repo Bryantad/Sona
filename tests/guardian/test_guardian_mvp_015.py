@@ -83,10 +83,19 @@ def _write_guardian_bound_native_proof(project: Path, destination: Path) -> None
             "exit_code": 0,
             "duration_ms": 0,
             "diagnostic": None,
-            "stdout": {"sha256": _sha256_label(b""), "bytes": 0},
+            "stdout": {"sha256": _sha256_label(b"hello\n"), "bytes": 6},
             "stderr": {"sha256": _sha256_label(b""), "bytes": 0},
         },
-        "effects": [],
+        "effects": [
+            {
+                "sequence": 1,
+                "effect": "STDOUT.WRITE",
+                "support": "PARTIAL",
+                "scope": "console",
+                "operation": "print",
+                "outcome": "allowed",
+            }
+        ],
         "guardian": anchor,
     }
     unsigned = json.dumps(receipt, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
@@ -177,6 +186,22 @@ def test_guardian_verifies_and_attests_a_bound_native_proof_without_receipt_path
     assert verified["status"] == "verified"
     assert verified["execution"] == {"status": "ok", "exit_code": 0}
     assert verified["guardian"]["program_baseline"] == "tracked"
+    runtime = verified["runtime_evidence"]
+    assert runtime["sona_version"] == "0.15.4"
+    assert runtime["engine"]["name"] == "native"
+    assert runtime["engine"]["fallback_used"] is False
+    assert runtime["capabilities"]["console"] is True
+    assert runtime["execution"]["stdout"]["bytes"] == 6
+    assert runtime["effects"] == [
+        {
+            "sequence": 1,
+            "effect": "STDOUT.WRITE",
+            "support": "PARTIAL",
+            "scope": "console",
+            "operation": "print",
+            "outcome": "allowed",
+        }
+    ]
     assert after == before, "receipt verification must remain read-only"
 
     attested = guardian.guardian_proof_attest(project, receipt)
@@ -194,6 +219,50 @@ def test_guardian_verifies_and_attests_a_bound_native_proof_without_receipt_path
     assert rejected["status"] == "rejected"
     assert rejected["reason"] == "guardian-drift"
     assert len(guardian.guardian_proof_history(project)) == 1
+
+
+def test_guardian_proof_verification_accepts_legacy_binding_without_policy_extension(tmp_path):
+    project = make_project(tmp_path)
+    guardian.guardian_init(project)
+    receipt = tmp_path / "legacy-bound-proof.json"
+    _write_guardian_bound_native_proof(project, receipt)
+    payload = json.loads(receipt.read_text(encoding="utf-8"))
+    payload.pop("receipt_hash")
+    payload["guardian"].pop("policy_sha256")
+    payload["guardian"].pop("policy_enforced")
+    payload["receipt_hash"] = _sha256_label(
+        json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    )
+    receipt.write_bytes(
+        json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8") + b"\n"
+    )
+
+    result = guardian.guardian_proof_verify(project, receipt)
+
+    assert result["status"] == "verified"
+    assert "policy_sha256" not in result["guardian"]
+    assert "policy_enforced" not in result["guardian"]
+
+
+def test_guardian_proof_verification_rejects_policy_identity_mismatch(tmp_path):
+    project = make_project(tmp_path)
+    guardian.guardian_init(project)
+    receipt = tmp_path / "mismatched-policy-proof.json"
+    _write_guardian_bound_native_proof(project, receipt)
+    payload = json.loads(receipt.read_text(encoding="utf-8"))
+    payload.pop("receipt_hash")
+    payload["guardian"]["policy_sha256"] = "sha256:" + ("0" * 64)
+    payload["receipt_hash"] = _sha256_label(
+        json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    )
+    receipt.write_bytes(
+        json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8") + b"\n"
+    )
+
+    result = guardian.guardian_proof_verify(project, receipt)
+
+    assert result["status"] == "rejected"
+    assert result["reason"] == "guardian-policy-mismatch"
 
 
 def test_guardian_ai_review_uses_only_verified_redacted_evidence(tmp_path):
@@ -219,13 +288,43 @@ def test_guardian_ai_review_uses_only_verified_redacted_evidence(tmp_path):
     assert reviewed["schema_id"] == "sona.guardian-proof-ai-review.schema-1"
     assert reviewed["proof_status"] == "verified"
     assert reviewed["evidence"]["local_attestation_recorded"] is False
+    runtime = reviewed["evidence"]["runtime_evidence"]
+    assert runtime["program"]["kind"] == "source"
+    assert runtime["engine"]["name"] == "native"
+    assert runtime["capabilities"]["console"] is True
+    assert runtime["execution"]["stdout"]["bytes"] == 6
+    assert runtime["effects"] == [
+        {
+            "sequence": 1,
+            "effect": "STDOUT.WRITE",
+            "support": "PARTIAL",
+            "scope": "console",
+            "operation": "print",
+            "outcome": "allowed",
+        }
+    ]
+    assert reviewed["evidence"]["observation_boundary"] == {
+        "effect_source": "instrumented-native-host-boundaries",
+        "agent_action": "not-represented",
+        "ai_request_causality": "not-established",
+    }
     assert reviewed["reviewer"] == {
         "provider_id": "deterministic",
         "model_id": "deterministic:sona",
         "advisory": True,
     }
     assert reviewed["review_input_hash"].startswith("sha256:")
+    assert reviewed["review_input_hash"] == _sha256_label(
+        json.dumps(
+            reviewed["evidence"],
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+        ).encode("utf-8")
+    )
     assert "does not add" in reviewed["review"]
+    assert "STDOUT.WRITE allowed" in reviewed["review"]
+    assert "No AGENT.ACTION" in reviewed["review"]
     assert "not part of" in reviewed["trust_boundary"]
     rendered = json.dumps(reviewed)
     assert str(project) not in rendered
@@ -278,14 +377,20 @@ def test_guardian_ai_review_routes_only_redacted_packet_to_local_ollama(tmp_path
     assert reviewed["reviewer"]["model_id"].startswith("ollama:")
     request = captured["request"]
     packet = json.loads(request.context.selected_text)
+    assert packet == reviewed["evidence"]
     assert set(packet) == {
         "schema_id",
         "proof_status",
         "receipt_hash",
         "execution",
+        "runtime_evidence",
         "guardian",
         "local_attestation_recorded",
+        "observation_boundary",
     }
+    assert packet["runtime_evidence"]["effects"][0]["effect"] == "STDOUT.WRITE"
+    assert packet["observation_boundary"]["agent_action"] == "not-represented"
+    assert packet["observation_boundary"]["ai_request_causality"] == "not-established"
     assert request.target_files == ()
     assert request.context.active_file is None
     assert request.constraints.read_only is True
@@ -411,6 +516,271 @@ def test_canonical_guardian_cli_enforces_governance_before_apply(tmp_path):
     payload = json.loads(allowed.stdout)
     assert payload["status"] == "rolled-back"
     assert Path(payload["receipt_path"]).exists()
+
+
+def test_canonical_guardian_check_and_explain_cli_are_read_only(tmp_path):
+    project = make_project(tmp_path)
+    guardian.guardian_init(project)
+    before = {path.relative_to(project).as_posix(): path.read_bytes() for path in project.rglob("*") if path.is_file()}
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(ROOT)
+
+    check = subprocess.run(
+        [sys.executable, "-m", "sona", "guardian", "check", "--project-root", str(project)],
+        cwd=project,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    assert check.returncode == 0, check.stderr or check.stdout
+    assert json.loads(check.stdout)["status"] == "ok"
+
+    explain = subprocess.run(
+        [sys.executable, "-m", "sona", "guardian", "explain", "--project-root", str(project)],
+        cwd=project,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    assert explain.returncode == 0, explain.stderr or explain.stdout
+    payload = json.loads(explain.stdout)
+    assert payload["status"] == "explained"
+    assert payload["guardian_status"] == "ok"
+    assert payload["workflow"] == ["policy", "capability-decision", "native-execution", "proof-receipt"]
+
+    after = {path.relative_to(project).as_posix(): path.read_bytes() for path in project.rglob("*") if path.is_file()}
+    assert after == before
+
+
+def test_guardian_policy_identity_is_canonical_and_machine_path_independent(tmp_path):
+    first = tmp_path / "first"
+    second = tmp_path / "second"
+    first.mkdir()
+    second.mkdir()
+    common = {
+        "schema_version": 1,
+        "capabilities": {
+            "filesystem_read": "allow",
+            "filesystem_write": "deny",
+            "network": "deny",
+        },
+    }
+    (first / "sona.guard.json").write_text(
+        json.dumps(common | {
+            "validation_commands": [["C:/Python312/python.exe", "-m", "pytest"]],
+            "excludes": ["build/windows/**"],
+        }),
+        encoding="utf-8",
+    )
+    (second / "sona.guard.json").write_text(
+        json.dumps(common | {
+            "validation_commands": [["/usr/bin/python3", "-m", "pytest"]],
+            "excludes": ["build/linux/**"],
+        }),
+        encoding="utf-8",
+    )
+
+    first_config = guardian._load_working_config(first)
+    second_config = guardian._load_working_config(second)
+    deny_policy = guardian._policy_sha256(dict(guardian.DEFAULT_CAPABILITY_POLICY))
+
+    assert first_config["policy_sha256"] == second_config["policy_sha256"]
+    assert first_config["policy_sha256"] != deny_policy
+    assert first_config["policy_sha256"].startswith("sha256:")
+    assert len(first_config["policy_sha256"]) == 71
+
+
+def test_guardian_init_creates_default_policy_without_clobber_and_is_idempotent(tmp_path):
+    project = tmp_path / "default-policy"
+    project.mkdir()
+    (project / "app.sona").write_text('print("hello")\n', encoding="utf-8")
+
+    initialized = guardian.guardian_init(project)
+    config_path = project / "sona.guard.json"
+    config = json.loads(config_path.read_text(encoding="utf-8"))
+    assert initialized["status"] == "initialized"
+    assert config["capabilities"] == guardian.DEFAULT_CAPABILITY_POLICY
+    assert initialized["policy_enforced"] is True
+    assert {item["decision"] for item in initialized["capability_decisions"]} == {"deny"}
+
+    config_bytes = config_path.read_bytes()
+    before = {
+        path.relative_to(project).as_posix(): path.read_bytes()
+        for path in project.rglob("*")
+        if path.is_file()
+    }
+    repeated = guardian.guardian_init(project)
+    after = {
+        path.relative_to(project).as_posix(): path.read_bytes()
+        for path in project.rglob("*")
+        if path.is_file()
+    }
+    assert repeated["status"] == "already-initialized"
+    assert repeated["policy_sha256"] == initialized["policy_sha256"]
+    assert config_path.read_bytes() == config_bytes
+    assert after == before
+
+
+def test_guardian_init_preserves_existing_config_bytes(tmp_path):
+    project = tmp_path / "existing-policy"
+    project.mkdir()
+    (project / "app.sona").write_text('print("hello")\n', encoding="utf-8")
+    config_path = project / "sona.guard.json"
+    config_path.write_bytes(
+        b'{\r\n  "capabilities": {"filesystem_read": "allow"},\r\n'
+        b'  "validation_commands": [], "auto_recover": false\r\n}\r\n'
+    )
+    original = config_path.read_bytes()
+
+    result = guardian.guardian_init(project)
+
+    assert result["status"] == "initialized"
+    assert config_path.read_bytes() == original
+    decisions = {item["runtime_capability"]: item["decision"] for item in result["capability_decisions"]}
+    assert decisions == {
+        "filesystem_read": "allow",
+        "filesystem_write": "deny",
+        "network": "deny",
+    }
+
+
+def test_guardian_check_and_explain_publish_policy_and_proof_readiness(tmp_path):
+    project = make_project(tmp_path)
+    initialized = guardian.guardian_init(project)
+
+    check = guardian.guardian_check(project)
+    explain = guardian.guardian_explain(project)
+
+    assert check["status"] == "ok"
+    assert check["policy"] == {
+        "status": "valid",
+        "source": "trusted-policy",
+        "policy_sha256": initialized["policy_sha256"],
+        "working_policy_sha256": initialized["policy_sha256"],
+        "working_matches_trusted": True,
+        "legacy_baseline": False,
+    }
+    assert check["proof_mode"]["ready"] is True
+    assert check["proof_mode"]["policy_enforced"] is True
+    assert explain["policy_sha256"] == initialized["policy_sha256"]
+    assert explain["proof_mode"]["ready"] is True
+    assert explain["capability_decisions"] == check["capability_decisions"]
+
+
+@pytest.mark.parametrize(
+    ("payload", "reason"),
+    [
+        ("{not-json", "configuration-unreadable"),
+        (json.dumps({"schema_version": 2}), "unsupported-config-schema"),
+        (json.dumps({"capabilities": {"process": "allow"}}), "unsupported-capability"),
+        (json.dumps({"capabilities": {"network": "ask"}}), "unsupported-capability-decision"),
+    ],
+)
+def test_guardian_check_fails_closed_with_redacted_config_diagnostics(tmp_path, payload, reason):
+    project = tmp_path / "invalid-policy"
+    project.mkdir()
+    config = project / "sona.guard.json"
+    config.write_text(payload, encoding="utf-8")
+
+    result = guardian.guardian_check(project)
+
+    assert result["status"] == "invalid-config"
+    assert result["diagnostic_id"] == "SONA-GUARD-002"
+    assert result["reason"] == reason
+    rendered = json.dumps(result)
+    assert str(project) not in rendered
+    assert payload not in rendered
+
+
+def test_guardian_init_rejects_partial_state_without_overwriting(tmp_path):
+    project = tmp_path / "partial-state"
+    state = project / ".sona" / "guardian"
+    state.mkdir(parents=True)
+    trusted = state / "trusted_config.json"
+    trusted.write_text('{"schema_version": 1}\n', encoding="utf-8")
+    original = trusted.read_bytes()
+
+    with pytest.raises(guardian.GuardianError) as caught:
+        guardian.guardian_init(project)
+
+    assert caught.value.diagnostic_id == "SONA-GUARD-004"
+    assert caught.value.reason == "partial-initialization"
+    assert trusted.read_bytes() == original
+
+
+def test_guardian_check_rejects_tampered_trusted_policy_identity(tmp_path):
+    project = make_project(tmp_path)
+    guardian.guardian_init(project)
+    trusted_path = project / ".sona" / "guardian" / "trusted_config.json"
+    trusted = json.loads(trusted_path.read_text(encoding="utf-8"))
+    trusted["policy_sha256"] = "sha256:" + ("0" * 64)
+    trusted_path.write_text(json.dumps(trusted), encoding="utf-8")
+
+    result = guardian.guardian_check(project)
+
+    assert result["status"] == "invalid-state"
+    assert result["diagnostic_id"] == "SONA-GUARD-004"
+    assert result["reason"] == "trusted-policy-hash-mismatch"
+    assert str(project) not in json.dumps(result)
+
+
+def test_guardian_init_reports_permission_failure_without_raw_os_error(tmp_path, monkeypatch):
+    project = tmp_path / "permission-project"
+    project.mkdir()
+    (project / "app.sona").write_text('print("hello")\n', encoding="utf-8")
+
+    def deny_open(*_args, **_kwargs):
+        raise PermissionError("private operating-system path and account details")
+
+    monkeypatch.setattr(guardian.os, "open", deny_open)
+    with pytest.raises(guardian.GuardianError) as caught:
+        guardian.guardian_init(project)
+
+    result = caught.value.as_result()
+    assert result["status"] == "state-write-denied"
+    assert result["diagnostic_id"] == "SONA-GUARD-005"
+    rendered = json.dumps(result)
+    assert "private operating-system" not in rendered
+    assert str(project) not in rendered
+
+
+def test_guardian_cli_redacts_invalid_root_and_supports_text_workflow(tmp_path):
+    missing = tmp_path / "private" / "missing-project"
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(ROOT)
+    failed = subprocess.run(
+        [sys.executable, "-m", "sona", "guardian", "check", "--project-root", str(missing)],
+        cwd=tmp_path,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    assert failed.returncode == 1
+    failure = json.loads(failed.stdout)
+    assert failure["diagnostic_id"] == "SONA-GUARD-001"
+    assert str(missing) not in failed.stdout + failed.stderr
+
+    project = make_project(tmp_path)
+    guardian.guardian_init(project)
+    explained = subprocess.run(
+        [
+            sys.executable, "-m", "sona", "guardian", "explain",
+            "--project-root", str(project), "--format", "text",
+        ],
+        cwd=project,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    assert explained.returncode == 0, explained.stderr or explained.stdout
+    assert "Sona Guardian" in explained.stdout
+    assert "Capabilities" in explained.stdout
+    assert "fs.read" in explained.stdout
+    assert "Proof Mode" in explained.stdout
 
 
 def test_canonical_guardian_proof_cli_verifies_attests_and_lists_history(tmp_path):
@@ -558,6 +928,7 @@ def test_guardian_public_smod_facade(tmp_path):
     assert call(module.status, str(project))["initialized"] is False
     assert call(module.init, str(project))["status"] == "initialized"
     assert call(module.verify, str(project))["status"] == "ok"
+    assert call(module.explain, str(project))["guardian_status"] == "ok"
     assert call(module.snapshot, str(project), "manual")["status"] == "snapshot-created"
     assert call(module.diff, str(project))["status"] == "ok"
     receipt = tmp_path / "native-proof.json"

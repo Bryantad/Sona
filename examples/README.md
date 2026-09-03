@@ -38,6 +38,13 @@ sona run examples/hello.sona
 | `stdlib_fs.sona` | Stable `fs` module use without modifying files. |
 | `calculator.sona` | Small multi-function tool. |
 
+## Trusted workflows
+
+The [trusted workflow examples](trusted-workflows/README.md) demonstrate four
+task-oriented paths: a controlled AI-proposal handoff, auditable calculation,
+a real Python-compatible loopback API call with Native Proof explicitly
+deferred, and a bounded local deployment-evidence reference.
+
 ## Isolation Rules
 
 - Examples do not require external services.

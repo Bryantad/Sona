@@ -326,14 +326,14 @@ checksum = "0c790de23124f9ab44544d7ac05d60440adc586479ce501c1d6d7da3cd8c9cf5"
 
 [[package]]
 name = "sona-ast"
-version = "0.15.4"
+version = "0.15.5"
 dependencies = [
  "sona-diagnostics",
 ]
 
 [[package]]
 name = "sona-bytecode"
-version = "0.15.4"
+version = "0.15.5"
 dependencies = [
  "sona-ast",
  "sona-diagnostics",
@@ -342,7 +342,7 @@ dependencies = [
 
 [[package]]
 name = "sona-cli"
-version = "0.15.4"
+version = "0.15.5"
 dependencies = [
  "chrono",
  "getrandom",
@@ -360,11 +360,11 @@ dependencies = [
 
 [[package]]
 name = "sona-diagnostics"
-version = "0.15.4"
+version = "0.15.5"
 
 [[package]]
 name = "sona-ir"
-version = "0.15.4"
+version = "0.15.5"
 dependencies = [
  "sona-ast",
  "sona-diagnostics",
@@ -372,7 +372,7 @@ dependencies = [
 
 [[package]]
 name = "sona-lexer"
-version = "0.15.4"
+version = "0.15.5"
 dependencies = [
  "sona-diagnostics",
  "sona-source",
@@ -380,7 +380,7 @@ dependencies = [
 
 [[package]]
 name = "sona-modules"
-version = "0.15.4"
+version = "0.15.5"
 dependencies = [
  "sona-bytecode",
  "sona-diagnostics",
@@ -391,7 +391,7 @@ dependencies = [
 
 [[package]]
 name = "sona-parser"
-version = "0.15.4"
+version = "0.15.5"
 dependencies = [
  "sona-ast",
  "sona-diagnostics",
@@ -401,15 +401,15 @@ dependencies = [
 
 [[package]]
 name = "sona-runtime"
-version = "0.15.4"
+version = "0.15.5"
 
 [[package]]
 name = "sona-source"
-version = "0.15.4"
+version = "0.15.5"
 
 [[package]]
 name = "sona-vm"
-version = "0.15.4"
+version = "0.15.5"
 dependencies = [
  "chrono",
  "hmac",

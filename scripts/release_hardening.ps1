@@ -1,5 +1,5 @@
 param(
-    [string]$ExpectedVersion = "0.15.4",
+    [string]$ExpectedVersion = "0.15.5",
     [switch]$SkipLanguageCertification,
     [string]$CertRoot = $env:SONA_CERT_ROOT
 )
@@ -8,8 +8,8 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 $RepoRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot ".."))
 
-if ($ExpectedVersion -ne "0.15.4") {
-    throw "The external release-hardening orchestrator is defined only for Sona 0.15.4."
+if ($ExpectedVersion -ne "0.15.5") {
+    throw "The external release-hardening orchestrator is defined only for Sona 0.15.5."
 }
 if ([string]::IsNullOrWhiteSpace($CertRoot)) {
     throw "Set SONA_CERT_ROOT or pass -CertRoot with an absolute path outside the repository."
@@ -28,7 +28,7 @@ try {
         --cert-root $ResolvedCertRoot `
         --phases $Phases
     if ($LASTEXITCODE -ne 0) {
-        throw "Sona 0.15.4 release hardening failed with exit code $LASTEXITCODE."
+        throw "Sona 0.15.5 release hardening failed with exit code $LASTEXITCODE."
     }
 } finally {
     Pop-Location

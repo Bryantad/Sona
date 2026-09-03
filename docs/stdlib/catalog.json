@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "schema_id": "sona.stdlib.catalog.schema-1",
-  "version": "0.15.4",
+  "version": "0.15.5",
   "generated_from": "sona/stdlib/MANIFEST.json",
   "source_manifest_hash": "0154_stdlib_runtime_capability",
   "moduleCount": 146,

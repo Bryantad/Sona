@@ -1,5 +1,5 @@
 """
-Sona v0.15.4 Command Line Interface with AI Integration
+Sona v0.15.5 Command Line Interface with AI Integration
 
 Enhanced CLI with profile, benchmark, suggest, and explain commands
 powered by GPT-2 and cognitive assistance features.
@@ -8,6 +8,8 @@ powered by GPT-2 and cognitive assistance features.
 import argparse
 import difflib
 import os
+import shutil
+import subprocess
 import sys
 import traceback
 from dataclasses import dataclass
@@ -15,8 +17,7 @@ from pathlib import Path
 from time import perf_counter
 
 # Import type configuration
-from .type_config import configure_types, get_type_logger, get_type_config
-
+from .type_config import configure_types, get_type_config, get_type_logger
 
 # Win UTF-8 guard - safer version that doesn't interfere with I/O operations
 if sys.platform == "win32":  # pragma: no cover - platform specific
@@ -140,7 +141,125 @@ KNOWN_COMMANDS = {
     'model',
     'govern',
     'guardian',
+    'proof',
 }
+
+
+_NATIVE_PROOF_BINARY_ENV = "SONA_NATIVE_BINARY"
+_NATIVE_PROOF_DELEGATION_GUARD = "_SONA_NATIVE_PROOF_DELEGATED"
+_PYTHON_PROOF_ACTIONS = {"verify", "inspect"}
+
+
+class NativeProofLaunchError(Exception):
+    """A redacted failure to locate or start the Native Proof producer."""
+
+    def __init__(self, message: str, hint: str):
+        super().__init__(message)
+        self.message = message
+        self.hint = hint
+
+
+def _resolve_native_proof_binary(environment: dict[str, str] | None = None) -> Path:
+    """Resolve only an explicitly configured or PATH-installed Native Core."""
+
+    environment = os.environ if environment is None else environment
+    configured = environment.get(_NATIVE_PROOF_BINARY_ENV)
+    if configured is not None:
+        expanded = os.path.expandvars(os.path.expanduser(configured.strip()))
+        if not expanded:
+            raise NativeProofLaunchError(
+                "The configured Native Core executable is unavailable.",
+                f"Set {_NATIVE_PROOF_BINARY_ENV} to the Native Core executable "
+                "or remove it to use sona-native from PATH.",
+            )
+        try:
+            candidate = Path(expanded).resolve(strict=True)
+        except OSError as exc:
+            raise NativeProofLaunchError(
+                "The configured Native Core executable is unavailable.",
+                f"Set {_NATIVE_PROOF_BINARY_ENV} to a regular Native Core "
+                "executable file.",
+            ) from exc
+        if not candidate.is_file():
+            raise NativeProofLaunchError(
+                "The configured Native Core executable is unavailable.",
+                f"Set {_NATIVE_PROOF_BINARY_ENV} to a regular Native Core "
+                "executable file.",
+            )
+    else:
+        resolved = shutil.which("sona-native", path=environment.get("PATH", ""))
+        if resolved is None:
+            raise NativeProofLaunchError(
+                "Native Core is required to create a Proof Mode receipt.",
+                "Install sona-native on PATH or set "
+                f"{_NATIVE_PROOF_BINARY_ENV} to the extracted Native Core executable.",
+            )
+        candidate = Path(resolved).resolve()
+
+    launcher = Path(sys.argv[0])
+    try:
+        if launcher.is_file() and os.path.samefile(candidate, launcher):
+            raise NativeProofLaunchError(
+                "The resolved Native Core executable points back to the "
+                "Python Sona launcher.",
+                "Install sona-native on PATH or set "
+                f"{_NATIVE_PROOF_BINARY_ENV} to the standalone Native Core executable.",
+            )
+    except OSError:
+        pass
+    return candidate
+
+
+def _proof_generation_arguments(argv: list[str]) -> list[str] | None:
+    """Return Native Proof arguments while reserving Python receipt actions."""
+
+    if len(argv) < 3 or argv[1] != "proof":
+        return None
+    first = argv[2]
+    if first in _PYTHON_PROOF_ACTIONS or first in {"-h", "--help"}:
+        return None
+    return argv[2:]
+
+
+def _delegate_native_proof(
+    arguments: list[str],
+    environment: dict[str, str] | None = None,
+) -> int:
+    """Run the sole Native Proof producer with inherited process streams."""
+
+    environment = dict(os.environ if environment is None else environment)
+    if environment.get(_NATIVE_PROOF_DELEGATION_GUARD) == "1":
+        safe_error(
+            "SonaProofLaunchError: Native Proof delegation returned to the Python CLI."
+        )
+        safe_error(
+            f"  hint: Set {_NATIVE_PROOF_BINARY_ENV} to the standalone "
+            "Native Core executable."
+        )
+        return 1
+    try:
+        binary = _resolve_native_proof_binary(environment)
+    except NativeProofLaunchError as exc:
+        safe_error(f"SonaProofLaunchError: {exc.message}")
+        safe_error(f"  hint: {exc.hint}")
+        return 1
+
+    environment[_NATIVE_PROOF_DELEGATION_GUARD] = "1"
+    try:
+        process = subprocess.run(
+            [str(binary), "proof", *arguments],
+            env=environment,
+            check=False,
+            shell=False,
+        )
+    except OSError:
+        safe_error("SonaProofLaunchError: Native Core could not be started safely.")
+        safe_error(
+            "  hint: Check the sona-native installation or "
+            f"{_NATIVE_PROOF_BINARY_ENV} configuration."
+        )
+        return 1
+    return int(process.returncode)
 
 
 def _load_default_interpreter(project_root: str | Path | None = None):
@@ -865,7 +984,7 @@ ENHANCED_COMMANDS = None  # lazy-loaded mapping
 
 
 # Version information
-SONA_VERSION = "0.15.4"
+SONA_VERSION = "0.15.5"
 AI_FEATURES_VERSION = "1.0.0"
 DEFAULT_OFFLINE_MODEL = "qwen2.5-coder:7b"
 
@@ -894,17 +1013,23 @@ def create_argument_parser() -> argparse.ArgumentParser:
     """Create the main argument parser for Sona CLI"""
     parser = SonaArgumentParser(
         prog='sona',
-        description='Sona Cognitive Programming Language v0.15.4',
+        description=(
+            'Sona v0.15.5 - simple programs with optional execution evidence'
+        ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
-            "Usage:\n"
-            "  sona <file.sona>\n"
-            "  sona run <file.sona>\n\n"
-            "Examples:\n"
-            "  sona hello.sona\n"
+            "Start with an ordinary run (no Proof Mode receipt):\n"
             "  sona run hello.sona\n"
-            "  sona run examples/hello.sona  (source checkout)\n\n"
-            "For more information, visit: https://github.com/Bryantad/Sona"
+            "  sona hello.sona\n\n"
+            "Create and verify Native execution evidence:\n"
+            "  sona proof hello.sona --receipt hello.sproof --engine native\n"
+            "  sona proof verify hello.sproof\n"
+            "  sona proof inspect hello.sproof\n\n"
+            "Add project-local policy and a trusted baseline:\n"
+            "  sona guardian init --project-root .\n"
+            "  sona guardian check --project-root .\n"
+            "  sona guardian explain --project-root .\n\n"
+            "Guide: https://github.com/Bryantad/Sona/tree/main/docs/getting-started"
         )
     )
 
@@ -927,7 +1052,10 @@ def create_argument_parser() -> argparse.ArgumentParser:
     )
 
     # Run command (default)
-    run_parser = subparsers.add_parser('run', help='Execute a Sona file')
+    run_parser = subparsers.add_parser(
+        'run',
+        help='Execute a Sona file without creating a Proof Mode receipt',
+    )
     run_parser.add_argument('file', help='Sona file to execute')
     run_parser.add_argument(
         '--safe',
@@ -1368,44 +1496,131 @@ def create_argument_parser() -> argparse.ArgumentParser:
     govern_audit.add_argument('--last', type=int, default=20)
     govern_sub.add_parser('policy')
 
+    proof_parser = subparsers.add_parser(
+        'proof',
+        help='Generate, inspect, and verify Proof Mode receipts',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        usage=(
+            'sona proof <program.sona|program.sbc> --receipt <new-receipt> '
+            '[Native Proof options]\n'
+            '       sona proof verify <receipt> [--json]\n'
+            '       sona proof inspect <receipt> [--json]'
+        ),
+        description=(
+            'Generate a receipt with Native Core using privacy-conscious '
+            'execution evidence, or verify and inspect an existing receipt. '
+            'Generation never falls back to Python.'
+        ),
+        epilog=(
+            'Generation:\n'
+            '  sona proof app.sona --receipt new.sproof --engine native\n'
+            '  --allow-fs-read       Grant filesystem reads\n'
+            '  --allow-fs-write      Grant filesystem writes\n'
+            '  --allow-network       Grant network policy\n'
+            '  --guardian-root PATH  Bind to an initialized Guardian project\n'
+            '  --summary             Print a human-readable save summary\n\n'
+            'Receipts are never overwritten. The schema-1 self-hash checks '\
+            'integrity and consistency; it does not authenticate an author, '\
+            'runtime host, or signer.'
+        ),
+    )
+    proof_sub = proof_parser.add_subparsers(dest='proof_cmd')
+    proof_help = {
+        'verify': 'Validate receipt structure, canonical bytes, and self-hash',
+        'inspect': 'Verify first, then show recorded runtime and effect facts',
+    }
+    for name in ('verify', 'inspect'):
+        sub = proof_sub.add_parser(name, help=proof_help[name])
+        sub.add_argument('receipt', help='Path to a Proof Mode receipt')
+        sub.add_argument(
+            '--json', action='store_true', help='Print machine-readable JSON'
+        )
+
     # Canonical Guardian name; the existing `guard` family remains compatible.
-    guardian_parser = subparsers.add_parser('guardian', help='Guardian project resilience commands')
+    guardian_parser = subparsers.add_parser(
+        'guardian',
+        help='Apply project-local policy and baseline checks around trusted workflows',
+        description=(
+            'Guardian manages local capability policy and a reviewed project '
+            'baseline. Start with init, then use check and explain before '
+            'running a Guardian-bound Proof Mode workflow.'
+        ),
+        epilog=(
+            'Beginner path:\n'
+            '  sona guardian init --project-root .\n'
+            '  sona guardian check --project-root .\n'
+            '  sona guardian explain --project-root .\n\n'
+            'check and explain are read-only. Commands that change project '\
+            'state require their documented apply and approval controls.'
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     guardian_sub = guardian_parser.add_subparsers(dest='guard_cmd')
-    for name in ('init', 'status', 'verify', 'diff', 'doctor', 'graph', 'audit'):
-        sub = guardian_sub.add_parser(name)
+    guardian_help = {
+        'init': 'Create policy, trusted baseline, snapshot, and local audit state',
+        'status': 'Show initialization and circuit-breaker state',
+        'verify': 'Compare current project state with the trusted baseline',
+        'check': 'Read-only readiness check for policy, baseline, drift, and Proof Mode',
+        'explain': 'Explain capability decisions, warnings, and the next safe action',
+        'diff': 'Show the compact difference from the trusted baseline',
+        'doctor': 'Diagnose Guardian configuration and readiness',
+        'graph': 'Build the project relationship graph',
+        'audit': 'Read recent Guardian audit records',
+    }
+    for name in ('init', 'status', 'verify', 'check', 'explain', 'diff', 'doctor', 'graph', 'audit'):
+        sub = guardian_sub.add_parser(name, help=guardian_help[name])
         sub.add_argument('--project-root', default=None)
+        if name in {'init', 'check', 'explain'}:
+            sub.add_argument(
+                '--format', choices=['auto', 'text', 'json'], default='auto',
+                help='Output format; auto uses text on a terminal and JSON when redirected',
+            )
         if name == 'verify':
             sub.add_argument('--run-validation', action='store_true')
         if name == 'audit':
             sub.add_argument('--limit', type=int, default=50)
-    guardian_heal = guardian_sub.add_parser('heal')
+    guardian_heal = guardian_sub.add_parser(
+        'heal', help='Preview or apply governed quarantine and recovery'
+    )
     guardian_heal.add_argument('--project-root', default=None)
     guardian_heal.add_argument('--apply', action='store_true')
     guardian_heal.add_argument('--approve', action='store_true')
-    guardian_repair = guardian_sub.add_parser('repair')
+    guardian_repair = guardian_sub.add_parser(
+        'repair', help='Compatibility name for the governed healing workflow'
+    )
     guardian_repair.add_argument('--project-root', default=None)
     guardian_repair.add_argument('--apply', action='store_true')
     guardian_repair.add_argument('--approve', action='store_true')
-    guardian_rollback = guardian_sub.add_parser('rollback')
+    guardian_rollback = guardian_sub.add_parser(
+        'rollback', help='Preview or restore a selected trusted snapshot'
+    )
     guardian_rollback.add_argument('--project-root', default=None)
     guardian_rollback.add_argument('--snapshot-id', default=None)
     guardian_rollback.add_argument('--dry-run', action='store_true')
     guardian_rollback.add_argument('--apply', action='store_true')
     guardian_rollback.add_argument('--approve', action='store_true')
-    guardian_history = guardian_sub.add_parser('history')
+    guardian_history = guardian_sub.add_parser(
+        'history', help='Read recent Guardian audit history'
+    )
     guardian_history.add_argument('--project-root', default=None)
     guardian_history.add_argument('--limit', type=int, default=50)
-    guardian_snapshot = guardian_sub.add_parser('snapshot')
+    guardian_snapshot = guardian_sub.add_parser(
+        'snapshot', help='Create a new project snapshot'
+    )
     guardian_snapshot.add_argument('--project-root', default=None)
     guardian_snapshot.add_argument('--name', default=None)
-    guardian_quarantine = guardian_sub.add_parser('quarantine')
+    guardian_quarantine = guardian_sub.add_parser(
+        'quarantine', help='Copy selected suspect files into local quarantine'
+    )
     guardian_quarantine.add_argument('--project-root', default=None)
     guardian_quarantine.add_argument('paths', nargs='*')
     guardian_quarantine.add_argument('--reason', default='manual')
-    guardian_report = guardian_sub.add_parser('report')
+    guardian_report = guardian_sub.add_parser(
+        'report', help='Print a Guardian project report'
+    )
     guardian_report.add_argument('--project-root', default=None)
     guardian_report.add_argument('--json', action='store_true')
-    guardian_proof = guardian_sub.add_parser('proof', help='Verify, attest, and review Native Proof receipts')
+    guardian_proof = guardian_sub.add_parser('proof', help='Verify, attest, and review Proof Mode receipts')
     guardian_proof_sub = guardian_proof.add_subparsers(dest='guardian_proof_cmd')
     for name in ('verify', 'attest'):
         sub = guardian_proof_sub.add_parser(name)
@@ -1490,6 +1705,8 @@ def create_argument_parser() -> argparse.ArgumentParser:
         ('init', 'Initialize Guardian for a project root'),
         ('status', 'Show Guardian status'),
         ('verify', 'Detect drift against the trusted baseline'),
+        ('check', 'Compatibility alias for read-only Guardian verification'),
+        ('explain', 'Explain Guardian workflow state and next step'),
         ('doctor', 'Show Guardian readiness and policy state'),
         ('diff', 'Show concise drift details'),
         ('graph', 'Show Guardian PARG dependency graph'),
@@ -1544,22 +1761,22 @@ def create_argument_parser() -> argparse.ArgumentParser:
     add_guard_root(report_parser)
     report_parser.add_argument('--json', action='store_true', help='Print JSON report')
 
-    proof_parser = guard_sub.add_parser('proof', help='Verify, attest, and review Native Proof receipts')
-    proof_sub = proof_parser.add_subparsers(dest='guardian_proof_cmd', help='Native Proof operations')
+    proof_parser = guard_sub.add_parser('proof', help='Verify, attest, and review Proof Mode receipts')
+    proof_sub = proof_parser.add_subparsers(dest='guardian_proof_cmd', help='Proof Mode operations')
     for name, help_text in [
-        ('verify', 'Verify a Guardian-bound Native Proof receipt'),
-        ('attest', 'Record a successful Guardian-bound Native Proof receipt'),
+        ('verify', 'Verify a Guardian-bound Proof Mode receipt'),
+        ('attest', 'Record a successful Guardian-bound Proof Mode receipt'),
     ]:
         sub = proof_sub.add_parser(name, help=help_text)
         add_guard_root(sub)
-        sub.add_argument('--receipt', required=True, help='Path to a Native Proof receipt')
+        sub.add_argument('--receipt', required=True, help='Path to a Proof Mode receipt')
     proof_review_parser = proof_sub.add_parser('review', help='Run governed advisory analysis over verified Proof facts')
     add_guard_root(proof_review_parser)
-    proof_review_parser.add_argument('--receipt', required=True, help='Path to a Native Proof receipt')
+    proof_review_parser.add_argument('--receipt', required=True, help='Path to a Proof Mode receipt')
     proof_review_parser.add_argument('--provider', default=None, help='Governed provider id, such as ollama or deterministic')
     proof_review_parser.add_argument('--model', default=None, help='Optional registered model id')
     proof_review_parser.add_argument('--allow-network', action='store_true', help='Explicitly permit a configured remote provider; local Ollama does not require this')
-    proof_history_parser = proof_sub.add_parser('history', help='Show Native Proof attestations')
+    proof_history_parser = proof_sub.add_parser('history', help='Show Proof Mode attestations')
     add_guard_root(proof_history_parser)
     proof_history_parser.add_argument('--limit', type=int, default=50, help='Maximum attestations to print')
 
@@ -2279,7 +2496,7 @@ def handle_repl_command(args) -> int:
         from sona.interpreter import SonaInterpreter
         interpreter = SonaInterpreter()
 
-        safe_print("Sona REPL v0.15.4 - Type 'exit' to quit; ':reset' clears state")
+        safe_print("Sona REPL v0.15.5 - Type 'exit' to quit; ':reset' clears state")
         if args.ai:
             try:
                 interpreter.enable_ai()
@@ -2491,7 +2708,7 @@ def handle_model_command(args) -> int:
                 if item is None:
                     continue
                 if item.provider_id in {'claude', 'codex'}:
-                    state, detail = 'unavailable', 'Provider is intentionally unavailable in 0.15.4.'
+                    state, detail = 'unavailable', 'Provider is intentionally unavailable in 0.15.5.'
                 elif not item.enabled:
                     state, detail = 'disabled', 'Descriptor is disabled.'
                 elif item.provider_id == 'deterministic':
@@ -2774,6 +2991,85 @@ def handle_probe_command(args) -> int:
         return 1
 
 
+def handle_proof_command(args) -> int:
+    from .proof import ProofDiagnostic
+
+    try:
+        import json
+        from .proof import (
+            inspect_receipt,
+            render_inspection,
+            render_verification,
+            verify_receipt,
+        )
+
+        command = getattr(args, 'proof_cmd', None)
+        receipt = getattr(args, 'receipt', None)
+        if command == 'verify':
+            result = verify_receipt(receipt)
+            if getattr(args, 'json', False):
+                print(json.dumps(result, indent=2, sort_keys=True))
+            else:
+                safe_print(render_verification(result))
+            return 0
+        if command == 'inspect':
+            result = inspect_receipt(receipt)
+            if getattr(args, 'json', False):
+                print(json.dumps(result, indent=2, sort_keys=True))
+            else:
+                safe_print(render_inspection(result))
+            return 0 if result.get('status') == 'valid' else 1
+        safe_print("[ERROR] Missing Proof command. Try: sona proof --help")
+        return 1
+    except ProofDiagnostic as diagnostic:
+        if getattr(args, 'json', False):
+            print(json.dumps({"status": "invalid", "diagnostic": diagnostic.to_dict()}, indent=2, sort_keys=True))
+        else:
+            safe_print(str(diagnostic))
+        return 1
+    except Exception as e:  # pragma: no cover
+        safe_print(f"[ERROR] proof command error: {e}")
+        return 1
+
+
+def _render_guardian_workflow(command: str, result: dict) -> str:
+    """Render the canonical Guardian workflow without changing JSON contracts."""
+    lines = ["Sona Guardian", ""]
+    status = str(result.get('status', 'unknown'))
+    if command == 'init':
+        label = 'READY' if status in {'initialized', 'already-initialized'} else status.upper()
+        lines.append(f"State          {label}")
+        lines.append(f"Baseline       {result.get('snapshot_id') or 'not available'}")
+    elif command == 'explain':
+        lines.append(f"State          {str(result.get('guardian_status', status)).upper()}")
+    else:
+        lines.append(f"State          {status.upper()}")
+        proof = result.get('proof_mode', {})
+        lines.append(f"Proof Mode     {'READY' if proof.get('ready') else 'NOT READY'}")
+    policy_hash = result.get('policy_sha256') or result.get('policy', {}).get('policy_sha256')
+    if policy_hash:
+        lines.append(f"Policy         {policy_hash}")
+    decisions = result.get('capability_decisions', [])
+    if decisions:
+        lines.extend(["", "Capabilities"])
+        for decision in decisions:
+            lines.append(
+                f"- {decision.get('capability', 'unknown'):<14} "
+                f"{str(decision.get('decision', 'unknown')).upper()}"
+            )
+    message = result.get('message')
+    if message:
+        lines.extend(["", str(message)])
+    warnings = result.get('warnings', [])
+    if warnings:
+        lines.extend(["", "Warnings"])
+        lines.extend(f"- {warning}" for warning in warnings)
+    next_step = result.get('next_step') or result.get('hint')
+    if next_step:
+        lines.extend(["", f"Next: {next_step}"])
+    return "\n".join(lines)
+
+
 def handle_guard_command(args) -> int:
     try:
         import json
@@ -2808,6 +3104,10 @@ def handle_guard_command(args) -> int:
                 project_root,
                 run_validation=getattr(args, 'run_validation', False),
             )
+        elif command == 'check':
+            result = guardian.guardian_check(project_root)
+        elif command == 'explain':
+            result = guardian.guardian_explain(project_root)
         elif command == 'doctor':
             result = guardian.guardian_doctor(project_root)
         elif command == 'snapshot':
@@ -2866,11 +3166,38 @@ def handle_guard_command(args) -> int:
             safe_print(f"[ERROR] Unknown Guardian command: {command}")
             return 1
 
-        print(json.dumps(redact(result), indent=2, sort_keys=True))
+        clean_result = redact(result)
+        output_format = getattr(args, 'format', 'json')
+        if output_format == 'auto':
+            output_format = 'text' if sys.stdout.isatty() else 'json'
+        if output_format == 'text' and isinstance(clean_result, dict) and command in {'init', 'check', 'explain'}:
+            print(_render_guardian_workflow(command, clean_result))
+        else:
+            print(json.dumps(clean_result, indent=2, sort_keys=True))
         status = result.get('status') if isinstance(result, dict) else None
-        return 1 if status in {'denied', 'failed', 'blocked', 'approval-required', 'rejected', 'review-unavailable'} else 0
-    except Exception as e:  # pragma: no cover
-        safe_print(f"[ERROR] guardian command error: {e}")
+        failed_statuses = {
+            'denied', 'failed', 'blocked', 'approval-required', 'rejected',
+            'review-unavailable', 'invalid-project-root', 'invalid-config',
+            'invalid-state', 'state-write-denied',
+        }
+        if command == 'check' and status in {'drift', 'uninitialized'}:
+            return 1
+        if command == 'explain' and result.get('guardian_status') in {'drift', 'uninitialized'}:
+            return 1
+        return 1 if status in failed_statuses else 0
+    except Exception as error:  # pragma: no cover
+        failure = (
+            error.as_result()
+            if callable(getattr(error, 'as_result', None))
+            else {
+                "schema_version": 1,
+                "status": "failed",
+                "diagnostic_id": "SONA-GUARD-900",
+                "message": "Guardian command failed safely.",
+                "hint": "Run `sona guardian check` and review project-local Guardian configuration and state.",
+            }
+        )
+        safe_print(json.dumps(failure, indent=2, sort_keys=True))
         return 1
 
 
@@ -3156,6 +3483,18 @@ def handle_verify_command(args) -> int:
 
 def main() -> int:
     """Main CLI entry point"""
+    proof_arguments = _proof_generation_arguments(sys.argv)
+    if proof_arguments is not None:
+        return _delegate_native_proof(proof_arguments)
+
+    # Keep package management on one implementation path. The ``spm``
+    # console script and ``sona pkg`` both use the hardened local-only parser
+    # and transaction engine instead of maintaining two command surfaces.
+    if len(sys.argv) > 1 and sys.argv[1] == 'pkg':
+        from .spm import main as spm_main
+
+        return spm_main(sys.argv[2:], prog='sona pkg')
+
     direct_result = _handle_direct_file_invocation(sys.argv)
     if direct_result is not None:
         return direct_result
@@ -3267,6 +3606,8 @@ def main() -> int:
         return handle_ai_review_command(args)
     elif args.command == 'probe':
         return handle_probe_command(args)
+    elif args.command == 'proof':
+        return handle_proof_command(args)
     elif args.command in {'guard', 'guardian'}:
         return handle_guard_command(args)
     elif args.command == 'doctor':

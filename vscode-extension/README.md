@@ -7,22 +7,20 @@
 
 Visual Studio Code support for the Sona programming language.
 
-## What's New in 0.15.4
+## What's New in 0.15.5
 
-Sona `0.15.4` adds a release-trust workflow while preserving the extension's
-existing editor and AI Console surface.
+Sona `0.15.5` adds a CLI-backed **Proof Mode Explorer** to the
+Sona activity bar. It displays execution status, shared-verifier status, Native
+Core identity, capabilities, observed effects, Guardian binding, and redacted
+evidence identities.
 
-- `sona-native proof file.sona --guardian-root . --summary` can bind redacted
-  Native Proof execution evidence to an initialized Guardian baseline.
-- `sona guardian proof verify`, `attest`, `review`, and `history` provide local
-  receipt verification, audit history, and governed advisory analysis without
-  storing program paths or output in the Guardian attestation or AI context.
-- Proof review defaults to Sona's deterministic local analyst and can use a
-  configured local Ollama provider; AI output never becomes proof or attestation.
-- The extension continues to use the separately installed `sona` CLI for its
-  editor commands; install `sona-native` alongside it when using Native Proof.
-- Existing **Run Sona File** command and `.sona` / `.smod` syntax highlighting
-  remain activation-safe.
+The explorer does not verify receipts in TypeScript. **Verify Receipt** and
+**Inspect Receipt** call the installed Sona CLI and display the shared Proof
+Mode verifier's normalized result.
+
+It also uses the stabilized language server for diagnostics, completion, hover,
+local definition lookup, and document symbols. Guardian review and AI remain
+outside the receipt verification chain, and Native HTTP remains unavailable.
 
 ## How to Use Sona in VS Code
 
@@ -54,9 +52,9 @@ existing editor and AI Console surface.
 
    ```bash
    sona --version
-sona --help
-sona check hello.sona
-sona check hello.sona --json
+   sona --help
+   sona check hello.sona
+   sona check hello.sona --json
    ```
 
 4. Create `hello.sona`:
@@ -76,11 +74,29 @@ See the full quickstart in `docs/QUICKSTART.md`.
 ## Features
 
 - Syntax highlighting for `.sona` and `.smod`.
+- Canonical diagnostics, completion, hover, local go to definition, and
+  document symbols through the Sona language server.
 - Run, check, format, profile, benchmark, and transpile commands.
 - REPL integration for interactive exploration.
 - Optional AI-assisted explain and suggestion commands.
 - Preview Sona AI Console with local Sona-owned chat, selectable agent modes, and provider-ready routing.
 - Cognitive accessibility workflows including Focus Mode, Working Memory, and user profiles.
+
+## Language Server
+
+The extension starts `python -P -m sona.lsp_server --stdio` for Sona files. The
+selected Python environment must be able to import both `sona.lsp_server` and
+pygls; installing `sona-lang` supplies the supported dependency set.
+
+Set `sona.cli.pythonPath` when you want a specific interpreter. When that
+setting is not explicitly configured, the extension checks the workspace
+`.venv` before using `python` from `PATH`.
+
+Sona `0.15.5` supports canonical diagnostics, local and stdlib completion,
+known-symbol hover, current-document definition, and top-level document
+symbols. References, rename, cross-file indexing, and LSP formatting remain
+deferred and are not advertised by the server. The **Sona: Format Code** command
+is a separate CLI-backed command, not an LSP formatting capability.
 
 ## Useful Commands
 
@@ -88,6 +104,11 @@ See the full quickstart in `docs/QUICKSTART.md`.
 | --- | --- |
 | **Sona: Welcome & Setup** | Opens extension onboarding. |
 | **Sona: Run Sona File** | Runs the active Sona file. |
+| **Sona: Run with Proof Mode** | Runs the active saved Sona file with Native Core and creates a new receipt. |
+| **Sona: Verify Receipt** | Validates a receipt with the shared Proof Mode verifier. |
+| **Sona: Inspect Receipt** | Displays verified receipt facts in the Proof Mode Explorer. |
+| **Sona: Open Receipt** | Opens the current receipt as a document. |
+| **Sona: Explain with Guardian** | Runs the existing local Guardian receipt review for a trusted workspace. |
 | **Sona: Check Syntax** | Checks syntax for the active Sona file. |
 | **Sona: Format Code** | Formats Sona code. |
 | **Sona: Start REPL** | Starts an interactive Sona shell. |
@@ -114,6 +135,16 @@ See the full quickstart in `docs/QUICKSTART.md`.
 
 Sona AI Console is a preview feature. Claude and Codex are placeholder agent modes unless a proper provider integration is added; the extension does not control external AI extensions.
 
+For receipts produced by the new 0.15.5 Native runtime, the explorer also
+shows the validated Native executable digest and an optional build-supplied
+source revision. These are correlation identities from the shared verifier,
+not authenticated provenance.
+
+Proof Mode execution and Guardian review are disabled for untrusted VS Code
+workspaces. Receipt verification and inspection are read-only. The extension
+invokes Python in safe-path mode and does not add the workspace to
+`PYTHONPATH`.
+
 ## Proof and Guardian Guides
 
 - [Native Proof Mode](https://github.com/Bryantad/Sona/blob/main/docs/guides/proof-mode.md)
@@ -122,7 +153,7 @@ Sona AI Console is a preview feature. Claude and Codex are placeholder agent mod
 
 ## Release Notes
 
-- [0.15.4 release notes](https://github.com/Bryantad/Sona/blob/main/RELEASE_NOTES_v0.15.4.md)
+- [0.15.5 release notes](https://github.com/Bryantad/Sona/blob/main/RELEASE_NOTES_v0.15.5.md)
 
 ## License
 

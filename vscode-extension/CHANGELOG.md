@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.15.5
+
+- Adds a CLI-backed Proof Mode Explorer for running Native Proof Mode,
+  verifying and inspecting receipts, opening receipt files, and invoking local
+  Guardian explanation from trusted workspaces.
+- Shows validated Native executable identity and optional build-supplied source
+  revision as correlation data, without claiming authenticated provenance.
+- Uses the stabilized Sona language server for diagnostics, completion, hover,
+  local definition lookup, and document symbols.
+- Resolves the configured Python interpreter predictably and disables mutating
+  Proof/Guardian actions in untrusted workspaces.
+- Keeps receipt verification in the shared Sona verifier and preserves the
+  separately installed CLI/runtime model.
+
 ## 0.15.4
 
 - Aligns the tracked extension metadata with Sona 0.15.4's standard-library

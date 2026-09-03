@@ -1,0 +1,33 @@
+{
+  "schema_id": "sona.proof-interoperability-vectors.schema-1",
+  "vectors": [
+    {
+      "name": "basic-success",
+      "canonical_payload": "{\"capabilities\":{\"console\":true,\"environment\":false,\"filesystem_read\":false,\"filesystem_write\":false,\"network\":false,\"process\":false},\"effects\":[],\"engine\":{\"fallback_used\":false,\"name\":\"native\",\"python_embedded\":false,\"python_required\":false},\"execution\":{\"diagnostic\":null,\"duration_ms\":0,\"exit_code\":0,\"status\":\"ok\",\"stderr\":{\"bytes\":0,\"sha256\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"},\"stdout\":{\"bytes\":0,\"sha256\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"}},\"generated_at_utc\":\"2026-08-21T00:00:00Z\",\"program\":{\"kind\":\"source\",\"source\":{\"bytes\":0,\"sha256\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\"}},\"receipt_type\":\"native_execution_proof\",\"schema\":1,\"schema_id\":\"sona.native-proof.schema-1\",\"sona_version\":\"0.15.4\"}",
+      "canonical_payload_sha256": "sha256:7cba0f32e2bbcec133eb063a8ca1208c6df3a852595693d028582d339d621233",
+      "expected_receipt_hash": "sha256:7cba0f32e2bbcec133eb063a8ca1208c6df3a852595693d028582d339d621233",
+      "expected_verifier_outcome": "valid"
+    },
+    {
+      "name": "runtime-failure",
+      "canonical_payload": "{\"capabilities\":{\"console\":true,\"environment\":false,\"filesystem_read\":false,\"filesystem_write\":false,\"network\":false,\"process\":false},\"effects\":[],\"engine\":{\"fallback_used\":false,\"name\":\"native\",\"python_embedded\":false,\"python_required\":false},\"execution\":{\"diagnostic\":{\"category\":\"parser\",\"code\":\"E0001\",\"id\":\"SONA-PARSE-001\",\"location\":{\"end_column\":2,\"end_line\":1,\"start_column\":1,\"start_line\":1}},\"duration_ms\":0,\"exit_code\":1,\"status\":\"failed\",\"stderr\":{\"bytes\":0,\"sha256\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"},\"stdout\":{\"bytes\":0,\"sha256\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"}},\"generated_at_utc\":\"2026-08-21T00:00:00Z\",\"program\":{\"kind\":\"source\",\"source\":{\"bytes\":0,\"sha256\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\"}},\"receipt_type\":\"native_execution_proof\",\"schema\":1,\"schema_id\":\"sona.native-proof.schema-1\",\"sona_version\":\"0.15.4\"}",
+      "canonical_payload_sha256": "sha256:4f5d3271f379e294ff43bc215b46d793e122df5f758450339183e199a00e1a37",
+      "expected_receipt_hash": "sha256:4f5d3271f379e294ff43bc215b46d793e122df5f758450339183e199a00e1a37",
+      "expected_verifier_outcome": "valid"
+    },
+    {
+      "name": "capability-denial",
+      "canonical_payload": "{\"capabilities\":{\"console\":true,\"environment\":false,\"filesystem_read\":false,\"filesystem_write\":false,\"network\":false,\"process\":false},\"effects\":[{\"operation\":\"fs.read_text\",\"outcome\":\"denied\",\"scope\":\"filesystem\",\"sequence\":1,\"target\":\"hmac-sha256:1111111111111111111111111111111111111111111111111111111111111111\"}],\"engine\":{\"fallback_used\":false,\"name\":\"native\",\"python_embedded\":false,\"python_required\":false},\"execution\":{\"diagnostic\":{\"category\":\"capability\",\"code\":\"E0601\",\"id\":\"SONA-FS-005\",\"location\":{\"end_column\":1,\"end_line\":1,\"start_column\":1,\"start_line\":1}},\"duration_ms\":0,\"exit_code\":1,\"status\":\"failed\",\"stderr\":{\"bytes\":0,\"sha256\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"},\"stdout\":{\"bytes\":0,\"sha256\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"}},\"generated_at_utc\":\"2026-08-21T00:00:00Z\",\"program\":{\"kind\":\"source\",\"source\":{\"bytes\":0,\"sha256\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\"}},\"receipt_type\":\"native_execution_proof\",\"schema\":1,\"schema_id\":\"sona.native-proof.schema-1\",\"sona_version\":\"0.15.4\"}",
+      "canonical_payload_sha256": "sha256:9f722df6d387bcbdf7e94fed6860f55cc56c028d4f9d5343da7bf813411e625d",
+      "expected_receipt_hash": "sha256:9f722df6d387bcbdf7e94fed6860f55cc56c028d4f9d5343da7bf813411e625d",
+      "expected_verifier_outcome": "valid"
+    },
+    {
+      "name": "filesystem-read",
+      "canonical_payload": "{\"capabilities\":{\"console\":true,\"environment\":false,\"filesystem_read\":true,\"filesystem_write\":false,\"network\":false,\"process\":false},\"effects\":[{\"operation\":\"fs.read_text\",\"outcome\":\"allowed\",\"scope\":\"filesystem\",\"sequence\":1,\"target\":\"hmac-sha256:1111111111111111111111111111111111111111111111111111111111111111\"}],\"engine\":{\"fallback_used\":false,\"name\":\"native\",\"python_embedded\":false,\"python_required\":false},\"execution\":{\"diagnostic\":null,\"duration_ms\":0,\"exit_code\":0,\"status\":\"ok\",\"stderr\":{\"bytes\":0,\"sha256\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"},\"stdout\":{\"bytes\":0,\"sha256\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"}},\"generated_at_utc\":\"2026-08-21T00:00:00Z\",\"program\":{\"kind\":\"source\",\"source\":{\"bytes\":0,\"sha256\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\"}},\"receipt_type\":\"native_execution_proof\",\"schema\":1,\"schema_id\":\"sona.native-proof.schema-1\",\"sona_version\":\"0.15.4\"}",
+      "canonical_payload_sha256": "sha256:ddd31e0783ec3a48f1711da2f0fe8a3cda79ed832877af8aaf040f2883a47899",
+      "expected_receipt_hash": "sha256:ddd31e0783ec3a48f1711da2f0fe8a3cda79ed832877af8aaf040f2883a47899",
+      "expected_verifier_outcome": "valid"
+    }
+  ]
+}

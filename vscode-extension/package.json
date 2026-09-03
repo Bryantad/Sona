@@ -1,8 +1,8 @@
 {
   "name": "sona-ai-native-programming",
   "displayName": "Sona: AI-Native Programming with Cognitive Accessibility",
-  "description": "AI-native programming with Sona 0.15.4 diagnostics, Guardian-bound Native Proof, governed AI review, local runtime integration, and the preview Sona AI Console.",
-  "version": "0.15.4",
+  "description": "AI-native programming with Sona diagnostics, a CLI-backed Proof Mode Explorer, Guardian workflows, local runtime integration, and the preview Sona AI Console.",
+  "version": "0.15.5",
   "publisher": "Waycoreinc",
   "icon": "assets/icon.png",
   "engines": {
@@ -60,6 +60,10 @@
     },
     "views": {
       "sona": [
+        {
+          "id": "sona.proofModeExplorer",
+          "name": "Proof Mode"
+        },
         {
           "id": "sona.aiConsole",
           "name": "Sona AI Console",
@@ -127,6 +131,42 @@
         "title": "Run Sona File",
         "category": "Sona",
         "icon": "$(play)"
+      },
+      {
+        "command": "sona.proofMode.run",
+        "title": "Run with Proof Mode",
+        "category": "Sona",
+        "icon": "$(shield)"
+      },
+      {
+        "command": "sona.proofMode.verifyReceipt",
+        "title": "Verify Receipt",
+        "category": "Sona",
+        "icon": "$(verified-filled)"
+      },
+      {
+        "command": "sona.proofMode.inspectReceipt",
+        "title": "Inspect Receipt",
+        "category": "Sona",
+        "icon": "$(eye)"
+      },
+      {
+        "command": "sona.proofMode.openReceipt",
+        "title": "Open Receipt",
+        "category": "Sona",
+        "icon": "$(json)"
+      },
+      {
+        "command": "sona.proofMode.refresh",
+        "title": "Refresh Proof Mode",
+        "category": "Sona",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "sona.proofMode.explainWithGuardian",
+        "title": "Explain with Guardian",
+        "category": "Sona",
+        "icon": "$(comment-discussion)"
       },
       {
         "command": "sona.transpile",
@@ -230,6 +270,30 @@
           "when": "editorLangId == sona"
         },
         {
+          "command": "sona.proofMode.run",
+          "when": "editorLangId == sona && isWorkspaceTrusted"
+        },
+        {
+          "command": "sona.proofMode.verifyReceipt",
+          "when": "true"
+        },
+        {
+          "command": "sona.proofMode.inspectReceipt",
+          "when": "true"
+        },
+        {
+          "command": "sona.proofMode.openReceipt",
+          "when": "true"
+        },
+        {
+          "command": "sona.proofMode.refresh",
+          "when": "true"
+        },
+        {
+          "command": "sona.proofMode.explainWithGuardian",
+          "when": "isWorkspaceTrusted"
+        },
+        {
           "command": "sona.transpile",
           "when": "editorLangId == sona"
         },
@@ -276,9 +340,46 @@
       ],
       "view/title": [
         {
+          "command": "sona.proofMode.run",
+          "when": "view == sona.proofModeExplorer && editorLangId == sona && isWorkspaceTrusted",
+          "group": "navigation@1"
+        },
+        {
+          "command": "sona.proofMode.verifyReceipt",
+          "when": "view == sona.proofModeExplorer",
+          "group": "navigation@2"
+        },
+        {
+          "command": "sona.proofMode.inspectReceipt",
+          "when": "view == sona.proofModeExplorer",
+          "group": "navigation@3"
+        },
+        {
+          "command": "sona.proofMode.refresh",
+          "when": "view == sona.proofModeExplorer",
+          "group": "navigation@4"
+        },
+        {
           "command": "sona.aiConsole.clear",
           "when": "view == sona.aiConsole",
           "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "sona.proofMode.openReceipt",
+          "when": "view == sona.proofModeExplorer && viewItem == sonaProofReceipt",
+          "group": "inline@1"
+        },
+        {
+          "command": "sona.proofMode.verifyReceipt",
+          "when": "view == sona.proofModeExplorer && viewItem == sonaProofReceipt",
+          "group": "inline@2"
+        },
+        {
+          "command": "sona.proofMode.explainWithGuardian",
+          "when": "view == sona.proofModeExplorer && viewItem == sonaProofReceipt && isWorkspaceTrusted",
+          "group": "inline@3"
         }
       ],
       "editor/context": [
@@ -293,6 +394,11 @@
           "command": "sona.run",
           "when": "editorLangId == sona",
           "group": "execution"
+        },
+        {
+          "command": "sona.proofMode.run",
+          "when": "editorLangId == sona && isWorkspaceTrusted",
+          "group": "execution@2"
         },
         {
           "command": "sona.transpile",
@@ -333,7 +439,7 @@
         "sona.cli.pythonPath": {
           "type": "string",
           "default": "python",
-          "description": "Path to Python executable for running Sona CLI"
+          "description": "Path to the Python executable used by the Sona CLI and language server"
         },
         "sona.cli.timeout": {
           "type": "number",
@@ -407,7 +513,14 @@
   },
   "activationEvents": [
     "onLanguage:sona",
+    "onView:sona.proofModeExplorer",
     "onView:sona.aiConsole",
+    "onCommand:sona.proofMode.run",
+    "onCommand:sona.proofMode.verifyReceipt",
+    "onCommand:sona.proofMode.inspectReceipt",
+    "onCommand:sona.proofMode.openReceipt",
+    "onCommand:sona.proofMode.refresh",
+    "onCommand:sona.proofMode.explainWithGuardian",
     "onCommand:sona.aiConsole.focus",
     "onCommand:sona.aiConsole.clear",
     "onCommand:sona.aiConsole.selectAgent",

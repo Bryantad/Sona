@@ -1,8 +1,8 @@
-name: Sona 0.15.4 certification
+name: Sona 0.15.5 certification
 
 on:
   push:
-    branches: [main, release/0.15.4]
+    branches: [main, release/0.15.5]
   pull_request:
     branches: [main]
   workflow_dispatch:

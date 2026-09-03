@@ -15,7 +15,7 @@ sona-native run app.sona --engine native --allow-fs-read --allow-fs-write
 ```
 
 `--allow-network` grants the network policy bit, but native HTTP remains
-unavailable in 0.15.4. Process execution and environment access cannot be
+unavailable in 0.15.5. Process execution and environment access cannot be
 granted through these flags.
 
 Workspace `.smod` modules retain precedence over built-in Native Core host

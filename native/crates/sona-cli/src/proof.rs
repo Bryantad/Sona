@@ -45,6 +45,14 @@ struct ProofContext {
     forced_duration_ms: Option<u64>,
     fault: Option<PersistenceFault>,
     guardian_binding: Option<Value>,
+    runtime_identity: Option<RuntimeIdentity>,
+}
+
+#[derive(Clone, Debug)]
+struct RuntimeIdentity {
+    native_binary_sha256: String,
+    native_binary_bytes: u64,
+    source_revision: Option<String>,
 }
 
 #[derive(Debug)]
@@ -77,6 +85,7 @@ impl From<DiagnosticList> for ProofFailure {
 
 impl ProofContext {
     fn production() -> SonaResult<Self> {
+        let runtime_identity = RuntimeIdentity::production()?;
         let mut target_key = vec![0u8; 32];
         getrandom::getrandom(&mut target_key).map_err(|_| {
             proof_error(
@@ -92,8 +101,56 @@ impl ProofContext {
             forced_duration_ms: None,
             fault: None,
             guardian_binding: None,
+            runtime_identity: Some(runtime_identity),
         })
     }
+}
+
+impl RuntimeIdentity {
+    fn production() -> SonaResult<Self> {
+        let executable = std::env::current_exe().map_err(|_| runtime_identity_error())?;
+        let bytes = fs::read(executable).map_err(|_| runtime_identity_error())?;
+        let native_binary_bytes =
+            u64::try_from(bytes.len()).map_err(|_| runtime_identity_error())?;
+        Ok(Self {
+            native_binary_sha256: sha256_label(&bytes),
+            native_binary_bytes,
+            source_revision: build_source_revision(),
+        })
+    }
+
+    fn as_json(&self) -> Value {
+        let mut value = json!({
+            "native_binary": {
+                "bytes": self.native_binary_bytes,
+                "sha256": self.native_binary_sha256
+            }
+        });
+        if let Some(revision) = &self.source_revision {
+            value
+                .as_object_mut()
+                .expect("runtime identity is an object")
+                .insert("source_revision".to_string(), json!(revision));
+        }
+        value
+    }
+}
+
+fn build_source_revision() -> Option<String> {
+    let revision = option_env!("SONA_SOURCE_COMMIT")?.trim();
+    if revision.len() != 40 || !revision.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+        return None;
+    }
+    Some(format!("git:{}", revision.to_ascii_lowercase()))
+}
+
+fn runtime_identity_error() -> DiagnosticList {
+    proof_error(
+        "PROOF-009",
+        "E0600",
+        "Native runtime identity could not be established.",
+        "Use an intact Native Core executable that can read its own binary bytes.",
+    )
 }
 
 #[derive(Clone, Debug)]
@@ -117,6 +174,36 @@ struct ProofInvocation {
     receipt_path: PathBuf,
     guardian_root: Option<PathBuf>,
     summary: bool,
+}
+
+#[derive(Clone, Debug)]
+struct GuardianCapabilityPolicy {
+    filesystem_read: bool,
+    filesystem_write: bool,
+    network: bool,
+    policy_sha256: String,
+}
+
+#[derive(Clone, Debug)]
+struct GuardianBinding {
+    receipt: Value,
+    policy: Option<GuardianCapabilityPolicy>,
+}
+
+impl GuardianBinding {
+    fn effective_capabilities(&self, requested: &RuntimeCapabilities) -> RuntimeCapabilities {
+        let Some(policy) = self.policy.as_ref() else {
+            return requested.clone();
+        };
+        RuntimeCapabilities {
+            console: requested.console,
+            filesystem_read: requested.filesystem_read && policy.filesystem_read,
+            filesystem_write: requested.filesystem_write && policy.filesystem_write,
+            network: requested.network && policy.network,
+            process: requested.process,
+            environment: requested.environment,
+        }
+    }
 }
 
 /// Run Proof Mode.  The command returns an existing program diagnostic when
@@ -150,10 +237,14 @@ fn run_with_context(
         .as_deref()
         .map(|root| load_guardian_binding(root, &prepared))
         .transpose()?;
+    let requested_capabilities = super::runtime_capabilities(args);
+    let capabilities = guardian_binding
+        .as_ref()
+        .map(|binding| binding.effective_capabilities(&requested_capabilities))
+        .unwrap_or(requested_capabilities);
     let mut context = supplied_context.unwrap_or(ProofContext::production()?);
-    context.guardian_binding = guardian_binding;
+    context.guardian_binding = guardian_binding.map(|binding| binding.receipt);
     let identity = prepared.identity.clone();
-    let capabilities = super::runtime_capabilities(args);
     let started = Instant::now();
     let (mut evidence, program_error) =
         execute_prepared(prepared, capabilities.clone(), &context.target_key);
@@ -298,7 +389,7 @@ fn parse_invocation(args: &[String]) -> SonaResult<ProofInvocation> {
 /// This is deliberately Native Core-only: it reads Guardian's persisted state
 /// without importing Python, running Guardian, or recording an audit event.
 /// The result never includes an operating-system path or Guardian's inventory.
-fn load_guardian_binding(root: &Path, prepared: &PreparedProgram) -> SonaResult<Value> {
+fn load_guardian_binding(root: &Path, prepared: &PreparedProgram) -> SonaResult<GuardianBinding> {
     let root = fs::canonicalize(root).map_err(|_| guardian_binding_error())?;
     if !fs::metadata(&root)
         .map(|metadata| metadata.is_dir())
@@ -378,12 +469,75 @@ fn load_guardian_binding(root: &Path, prepared: &PreparedProgram) -> SonaResult<
         return Err(guardian_binding_error());
     }
 
-    Ok(json!({
+    let policy = load_guardian_policy(trusted_config_object)?;
+    let mut receipt = json!({
         "schema_id": GUARDIAN_BINDING_SCHEMA_ID,
         "baseline_snapshot_id": snapshot_id,
         "baseline_sha256": sha256_label(&baseline_bytes),
         "trusted_config_sha256": sha256_label(&trusted_config_bytes),
         "program_baseline": "tracked"
+    });
+    if let Some(policy) = policy.as_ref() {
+        let object = receipt
+            .as_object_mut()
+            .expect("Guardian receipt binding is an object");
+        object.insert("policy_sha256".to_string(), json!(policy.policy_sha256));
+        object.insert("policy_enforced".to_string(), json!(true));
+    }
+    Ok(GuardianBinding { receipt, policy })
+}
+
+fn load_guardian_policy(
+    trusted_config: &Map<String, Value>,
+) -> SonaResult<Option<GuardianCapabilityPolicy>> {
+    let capabilities = trusted_config.get("capabilities");
+    let supplied_hash = trusted_config.get("policy_sha256");
+    if capabilities.is_none() && supplied_hash.is_none() {
+        return Ok(None);
+    }
+    let capabilities = capabilities
+        .and_then(Value::as_object)
+        .ok_or_else(guardian_binding_error)?;
+    let supplied_hash = supplied_hash
+        .and_then(Value::as_str)
+        .filter(|value| value.starts_with("sha256:") && value.len() == 71)
+        .ok_or_else(guardian_binding_error)?;
+    let expected_names = ["filesystem_read", "filesystem_write", "network"];
+    if capabilities.len() != expected_names.len()
+        || capabilities
+            .keys()
+            .any(|name| !expected_names.contains(&name.as_str()))
+    {
+        return Err(guardian_binding_error());
+    }
+    let decision = |name: &str| -> SonaResult<bool> {
+        match capabilities.get(name).and_then(Value::as_str) {
+            Some("allow") => Ok(true),
+            Some("deny") => Ok(false),
+            _ => Err(guardian_binding_error()),
+        }
+    };
+    let filesystem_read = decision("filesystem_read")?;
+    let filesystem_write = decision("filesystem_write")?;
+    let network = decision("network")?;
+    let canonical_policy = json!({
+        "schema_version": 1,
+        "capabilities": {
+            "filesystem_read": if filesystem_read { "allow" } else { "deny" },
+            "filesystem_write": if filesystem_write { "allow" } else { "deny" },
+            "network": if network { "allow" } else { "deny" }
+        }
+    });
+    let canonical = serde_json::to_vec(&canonical_policy).map_err(|_| guardian_binding_error())?;
+    let expected_hash = sha256_label(&canonical);
+    if supplied_hash != expected_hash {
+        return Err(guardian_binding_error());
+    }
+    Ok(Some(GuardianCapabilityPolicy {
+        filesystem_read,
+        filesystem_write,
+        network,
+        policy_sha256: expected_hash,
     }))
 }
 
@@ -620,18 +774,25 @@ fn build_receipt_for_program(
         .map(effect_json)
         .collect::<Vec<_>>();
     let diagnostic = program_error.and_then(execution_diagnostic_json);
+    let mut engine = json!({
+        "name": "native",
+        "python_required": false,
+        "python_embedded": false,
+        "fallback_used": false
+    });
+    if let Some(runtime_identity) = &context.runtime_identity {
+        engine
+            .as_object_mut()
+            .expect("engine identity is an object")
+            .insert("runtime_identity".to_string(), runtime_identity.as_json());
+    }
     let mut receipt = json!({
         "schema_id": SCHEMA_ID,
         "schema": 1,
         "receipt_type": "native_execution_proof",
         "generated_at_utc": context.timestamp_utc,
         "sona_version": version,
-        "engine": {
-            "name": "native",
-            "python_required": false,
-            "python_embedded": false,
-            "fallback_used": false
-        },
+        "engine": engine,
         "program": Value::Object(program),
         "capabilities": {
             "console": capabilities.console,
@@ -663,6 +824,10 @@ fn build_receipt_for_program(
 fn effect_json(effect: &NativeProofEffect) -> Value {
     let mut value = Map::new();
     value.insert("sequence".to_string(), json!(effect.sequence));
+    if let Some((normalized, support)) = classify_effect(&effect.scope, &effect.operation) {
+        value.insert("effect".to_string(), json!(normalized));
+        value.insert("support".to_string(), json!(support));
+    }
     value.insert("scope".to_string(), json!(effect.scope));
     value.insert("operation".to_string(), json!(effect.operation));
     value.insert("outcome".to_string(), json!(effect.outcome));
@@ -670,6 +835,39 @@ fn effect_json(effect: &NativeProofEffect) -> Value {
         value.insert("target".to_string(), json!(target));
     }
     Value::Object(value)
+}
+
+fn classify_effect(scope: &str, operation: &str) -> Option<(&'static str, &'static str)> {
+    match (scope, operation) {
+        ("filesystem", "fs.read_text") => Some(("FS.READ", "SUPPORTED")),
+        ("filesystem", "fs.exists" | "fs.is_file" | "fs.is_dir") => Some(("FS.READ", "PARTIAL")),
+        ("filesystem", "fs.write_text") => Some(("FS.WRITE", "PARTIAL")),
+        ("filesystem", "fs.append_text") => Some(("FS.APPEND", "SUPPORTED")),
+        ("filesystem", "fs.create_dir") => Some(("FS.CREATE", "SUPPORTED")),
+        ("filesystem", "fs.remove") => Some(("FS.DELETE", "SUPPORTED")),
+        ("filesystem", "fs.rename.source" | "fs.rename.destination") => {
+            Some(("FS.RENAME", "SUPPORTED"))
+        }
+        ("filesystem", "fs.copy.source") => Some(("FS.READ", "SUPPORTED")),
+        ("filesystem", "fs.copy.destination") => Some(("FS.WRITE", "PARTIAL")),
+        ("filesystem", "fs.list_dir") => Some(("FS.LIST", "SUPPORTED")),
+        ("console", "print" | "io.write_stdout") => Some(("STDOUT.WRITE", "PARTIAL")),
+        ("console", "io.write_stderr") => Some(("STDERR.WRITE", "PARTIAL")),
+        ("console", "io.flush") => Some(("CONSOLE.FLUSH", "PARTIAL")),
+        ("stdin", "read") => Some(("STDIN.READ", "SUPPORTED")),
+        ("network", "http.get" | "http.post" | "http.put" | "http.patch" | "http.delete") => {
+            Some(("NET.REQUEST", "UNAVAILABLE"))
+        }
+        ("clock", "date.today" | "time.now" | "time.timestamp" | "time.monotonic") => {
+            Some(("CLOCK.READ", "SUPPORTED"))
+        }
+        ("clock", "time.sleep") => Some(("CLOCK.SLEEP", "SUPPORTED")),
+        ("random", "random.float" | "random.integer" | "random.choice" | "random.shuffle") => {
+            Some(("RANDOM.READ", "SUPPORTED"))
+        }
+        ("random", "random.seed") => Some(("RANDOM.SEED", "SUPPORTED")),
+        _ => None,
+    }
 }
 
 fn execution_diagnostic_json(diagnostics: &DiagnosticList) -> Option<Value> {
@@ -894,6 +1092,21 @@ mod tests {
             forced_duration_ms: Some(9),
             fault,
             guardian_binding: None,
+            runtime_identity: None,
+        }
+    }
+
+    #[test]
+    fn production_runtime_identity_hashes_the_running_binary() {
+        let identity = RuntimeIdentity::production().unwrap();
+        let executable = std::env::current_exe().unwrap();
+        let bytes = fs::read(executable).unwrap();
+
+        assert_eq!(identity.native_binary_sha256, sha256_label(&bytes));
+        assert_eq!(identity.native_binary_bytes, bytes.len() as u64);
+        if let Some(revision) = identity.source_revision {
+            assert!(revision.starts_with("git:"));
+            assert_eq!(revision.len(), 44);
         }
     }
 
@@ -975,6 +1188,58 @@ mod tests {
     }
 
     #[test]
+    fn guardian_policy_identity_and_capability_intersection_are_stable() {
+        let trusted = json!({
+            "capabilities": {
+                "filesystem_read": "allow",
+                "filesystem_write": "deny",
+                "network": "deny"
+            },
+            "policy_sha256": "sha256:5514e467c84d447e77b4b24a2af9148b393e0c42f8c4eabc591d1f8e77279c84"
+        });
+        let policy = load_guardian_policy(trusted.as_object().unwrap())
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            policy.policy_sha256,
+            "sha256:5514e467c84d447e77b4b24a2af9148b393e0c42f8c4eabc591d1f8e77279c84"
+        );
+        let binding = GuardianBinding {
+            receipt: json!({}),
+            policy: Some(policy),
+        };
+        let requested = RuntimeCapabilities {
+            console: true,
+            filesystem_read: true,
+            filesystem_write: true,
+            network: true,
+            process: false,
+            environment: false,
+        };
+        let effective = binding.effective_capabilities(&requested);
+        assert!(effective.filesystem_read);
+        assert!(!effective.filesystem_write);
+        assert!(!effective.network);
+    }
+
+    #[test]
+    fn guardian_legacy_policy_is_compatible_and_invalid_identity_fails_closed() {
+        assert!(load_guardian_policy(json!({}).as_object().unwrap())
+            .unwrap()
+            .is_none());
+        let invalid = json!({
+            "capabilities": {
+                "filesystem_read": "deny",
+                "filesystem_write": "deny",
+                "network": "deny"
+            },
+            "policy_sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        });
+        let error = load_guardian_policy(invalid.as_object().unwrap()).unwrap_err();
+        assert_eq!(error.0[0].diagnostic_id, "PROOF-008");
+    }
+
+    #[test]
     fn proof_summary_is_concise_and_operator_friendly() {
         let receipt = json!({
             "execution": {
@@ -1012,6 +1277,96 @@ mod tests {
         let mut with_newline = canonical;
         with_newline.push(b'\n');
         assert_ne!(hash, sha256_label(&with_newline));
+    }
+
+    #[test]
+    fn shared_schema1_vectors_lock_rust_canonicalization_and_receipt_hashing() {
+        let corpus: Value = serde_json::from_str(include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../tests/proof/vectors/schema1-vectors.json"
+        )))
+        .unwrap();
+        assert_eq!(
+            corpus["schema_id"],
+            "sona.proof-interoperability-vectors.schema-1"
+        );
+
+        for vector in corpus["vectors"].as_array().unwrap() {
+            let expected_payload = vector["canonical_payload"].as_str().unwrap();
+            let unsigned: Value = serde_json::from_str(expected_payload).unwrap();
+            assert_eq!(
+                canonical_json(&unsigned).unwrap(),
+                expected_payload.as_bytes()
+            );
+            assert_eq!(
+                sha256_label(expected_payload.as_bytes()),
+                vector["canonical_payload_sha256"].as_str().unwrap()
+            );
+
+            let receipt = seal_receipt(unsigned).unwrap();
+            assert_eq!(receipt["receipt_hash"], vector["expected_receipt_hash"]);
+            assert_eq!(vector["expected_verifier_outcome"], "valid");
+        }
+    }
+
+    #[test]
+    fn shared_effect_vocabulary_locks_rust_classification() {
+        let corpus: Value = serde_json::from_str(include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../tests/proof/vectors/effect-vocabulary.json"
+        )))
+        .unwrap();
+        assert_eq!(corpus["schema_id"], "sona.proof-effect-vocabulary.schema-1");
+        assert_eq!(
+            corpus["support_statuses"],
+            json!(["SUPPORTED", "PARTIAL", "UNOBSERVED", "UNAVAILABLE"])
+        );
+
+        for mapping in corpus["mappings"].as_array().unwrap() {
+            assert_eq!(
+                classify_effect(
+                    mapping["scope"].as_str().unwrap(),
+                    mapping["operation"].as_str().unwrap(),
+                ),
+                Some((
+                    mapping["effect"].as_str().unwrap(),
+                    mapping["support"].as_str().unwrap(),
+                ))
+            );
+        }
+
+        assert_eq!(corpus["unobserved"][0]["effect"], "NET.CONNECT");
+        assert_eq!(corpus["unobserved"][0]["support"], "UNOBSERVED");
+        assert_eq!(classify_effect("network", "net.connect"), None);
+    }
+
+    #[test]
+    fn effect_json_adds_normalized_fields_without_replacing_raw_evidence() {
+        let recognized = effect_json(&NativeProofEffect {
+            sequence: 1,
+            scope: "filesystem".to_string(),
+            operation: "fs.read_text".to_string(),
+            outcome: "allowed".to_string(),
+            target: Some(format!("hmac-sha256:{}", "1".repeat(64))),
+        });
+        assert_eq!(recognized["effect"], "FS.READ");
+        assert_eq!(recognized["support"], "SUPPORTED");
+        assert_eq!(recognized["scope"], "filesystem");
+        assert_eq!(recognized["operation"], "fs.read_text");
+        assert_eq!(recognized["outcome"], "allowed");
+        assert!(recognized.get("target").is_some());
+
+        let unknown = effect_json(&NativeProofEffect {
+            sequence: 2,
+            scope: "future-runtime".to_string(),
+            operation: "future.operation".to_string(),
+            outcome: "allowed".to_string(),
+            target: None,
+        });
+        assert!(unknown.get("effect").is_none());
+        assert!(unknown.get("support").is_none());
+        assert_eq!(unknown["scope"], "future-runtime");
+        assert_eq!(unknown["operation"], "future.operation");
     }
 
     #[test]

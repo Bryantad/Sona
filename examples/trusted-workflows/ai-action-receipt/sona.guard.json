@@ -1,0 +1,10 @@
+{
+  "capabilities": {
+    "filesystem_read": "allow",
+    "filesystem_write": "allow",
+    "network": "deny"
+  },
+  "schema_version": 1,
+  "validation_commands": []
+}
+
