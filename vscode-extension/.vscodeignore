@@ -9,6 +9,9 @@ tsconfig.json
 node_modules/**
 out/aiConsole/**
 out/lspClient.js
+out/proofModeExplorer.js
+out/proofModeModel.js
+out/pythonEnvironment.js
 out/sonaCliIntegration.js
 out/aiIntegration.js
 .vscode/**

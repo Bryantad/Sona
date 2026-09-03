@@ -15,10 +15,23 @@ async function main() {
   assert(packageJson.contributes.viewsContainers.activitybar.some(container => container.id === "sona"));
   assert(packageJson.contributes.views.sona.some(view => view.id === "sona.aiConsole"));
   assert(packageJson.activationEvents.includes("onView:sona.aiConsole"));
+  assert(packageJson.contributes.views.sona.some(view => view.id === "sona.proofModeExplorer"));
+  assert(packageJson.activationEvents.includes("onView:sona.proofModeExplorer"));
+  for (const command of [
+    "sona.proofMode.run",
+    "sona.proofMode.verifyReceipt",
+    "sona.proofMode.inspectReceipt",
+    "sona.proofMode.openReceipt",
+    "sona.proofMode.refresh",
+    "sona.proofMode.explainWithGuardian"
+  ]) {
+    assertCommand(command);
+  }
 
   const registry = require(path.join(root, "out", "aiConsole", "agentRegistry.js"));
   const providers = require(path.join(root, "out", "aiConsole", "providers.js"));
   const backendTransport = require(path.join(root, "out", "aiConsole", "backendTransport.js"));
+  const proofModeModel = require(path.join(root, "out", "proofModeModel.js"));
 
   const agents = registry.getAgents();
   assert.deepStrictEqual(
@@ -75,6 +88,7 @@ async function main() {
   assert(unsupported.text.includes("Unsupported task"));
 
   await assertBackendFailureHandling(backendTransport, sonaRequest, root);
+  assertProofModeModel(proofModeModel);
 
   const viewSource = fs.readFileSync(path.join(root, "src", "aiConsole", "sonaAiConsoleView.ts"), "utf8");
   assert(viewSource.includes("Content-Security-Policy"));
@@ -85,12 +99,95 @@ async function main() {
   assert(transportSource.includes('"-m", "sona", "ai", "task"'));
   assert(!transportSource.includes("/api/generate"));
 
+  const cliSource = fs.readFileSync(path.join(root, "src", "sonaCliIntegration.ts"), "utf8");
+  const proofModelSource = fs.readFileSync(path.join(root, "src", "proofModeModel.ts"), "utf8");
+  assert(cliSource.includes('const commandArgs = ["-P", "-m", "sona", ...args]'));
+  assert(cliSource.includes("delete env.PYTHONPATH"));
+  assert(cliSource.includes('"proof", "inspect"') || cliSource.includes('"proof",\n      "inspect"'));
+  assert(cliSource.includes("requireTrustedWorkspace"));
+  assert(!proofModelSource.includes("createHash"));
+  assert(!proofModelSource.includes("canonicalJson"));
+  assert(!proofModelSource.includes("canonical_json"));
+  assert(!proofModelSource.includes("Sona Proof"));
+
   assertNoHardcodedSecrets([
     path.join(root, "src", "aiConsole"),
     path.join(root, "media")
   ]);
 
-  console.log("Sona AI Console smoke checks passed.");
+  console.log("Sona extension smoke checks passed.");
+}
+
+function assertProofModeModel(proofModeModel) {
+  const payload = {
+    status: "valid",
+    schema_id: "sona.native-proof.schema-1",
+    sona_version: "0.15.5",
+    receipt_hash: `sha256:${"a".repeat(64)}`,
+    generated_at_utc: "2026-08-24T12:00:00Z",
+    guardian_bound: false,
+    engine: {
+      label: "Native Core",
+      python_required: false,
+      python_embedded: false,
+      fallback_used: false,
+      runtime_identity: {
+        native_binary: {
+          bytes: 456,
+          sha256: `sha256:${"4".repeat(64)}`
+        },
+        source_revision: `git:${"5".repeat(40)}`
+      }
+    },
+    execution: {
+      status: "ok",
+      exit_code: 0,
+      duration_ms: 2,
+      stdout: { bytes: 3, sha256: `sha256:${"b".repeat(64)}` },
+      stderr: { bytes: 0, sha256: `sha256:${"c".repeat(64)}` },
+      diagnostic: null
+    },
+    program: {
+      kind: "source",
+      source: { bytes: 14, sha256: `sha256:${"d".repeat(64)}` }
+    },
+    capabilities: {
+      console: true,
+      filesystem_read: true,
+      filesystem_write: false,
+      network: false,
+      process: false,
+      environment: false
+    },
+    effects: [
+      { sequence: 1, scope: "filesystem", operation: "fs.read_text", outcome: "allowed", effect: "FS.READ", support: "SUPPORTED" },
+      { sequence: 2, scope: "filesystem", operation: "fs.read_text", outcome: "allowed", effect: "FS.READ", support: "SUPPORTED" },
+      { sequence: 3, scope: "console", operation: "print", outcome: "allowed", effect: "STDOUT.WRITE", support: "PARTIAL" }
+    ]
+  };
+
+  const valid = proofModeModel.parseProofModeCliOutput(JSON.stringify(payload));
+  assert.strictEqual(valid.state, "valid");
+  assert.strictEqual(valid.engineLabel, "Native Core");
+  assert.strictEqual(valid.pythonInvolved, false);
+  assert.strictEqual(valid.fallbackUsed, false);
+  assert.strictEqual(valid.sourceRevision, `git:${"5".repeat(40)}`);
+  assert.ok(valid.identities.some(identity => identity.label === "native binary"));
+  assert.strictEqual(valid.effects.find(effect => effect.effect === "FS.READ").count, 2);
+  assert.strictEqual(valid.capabilities.find(capability => capability.label === "fs.write").granted, false);
+
+  const invalid = proofModeModel.parseProofModeCliOutput(JSON.stringify({
+    status: "invalid",
+    diagnostic: {
+      diagnostic_id: "PROOF-VERIFY-005",
+      message: "Receipt hash mismatch."
+    }
+  }));
+  assert.strictEqual(invalid.state, "invalid");
+  assert.strictEqual(invalid.diagnosticId, "PROOF-VERIFY-005");
+
+  const unavailable = proofModeModel.parseProofModeCliOutput("not-json");
+  assert.strictEqual(unavailable.state, "unavailable");
 }
 
 async function assertBackendFailureHandling(backendTransport, request, root) {

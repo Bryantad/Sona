@@ -29,5 +29,5 @@ The compact spellings `startswith`, `endswith`, `randint`, and `random` remain
 quiet aliases.
 
 Seeded calls are repeatable within one engine. Python preserves its 0.15.3
-generator, while Native Core uses a bounded internal generator, so 0.15.4
+generator, while Native Core uses a bounded internal generator, so 0.15.5
 does not claim identical cross-engine random sequences.

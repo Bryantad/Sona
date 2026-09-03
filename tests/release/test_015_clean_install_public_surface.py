@@ -10,7 +10,7 @@ def test_release_hardening_script_delegates_to_external_orchestrator():
     script = (ROOT / "scripts" / "release_hardening.ps1").read_text(encoding="utf-8")
 
     required_fragments = [
-        '[string]$ExpectedVersion = "0.15.4"',
+        '[string]$ExpectedVersion = "0.15.5"',
         "$env:SONA_CERT_ROOT",
         "tools/release/certify_0153.py",
         "python,native,gates,extension,packaging",

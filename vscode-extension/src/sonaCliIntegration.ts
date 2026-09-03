@@ -1,6 +1,11 @@
+import * as fs from "fs";
 import * as path from "path";
 import { spawn } from "child_process";
 import * as vscode from "vscode";
+
+import { ProofModeExplorerProvider, ProofModeTreeItem } from "./proofModeExplorer";
+import { parseProofModeCliOutput, ProofModeModel } from "./proofModeModel";
+import { resolveSonaPythonPath } from "./pythonEnvironment";
 
 interface SonaConfig {
   pythonPath: string;
@@ -22,6 +27,7 @@ export class SonaCliIntegration {
   private readonly config: SonaConfig;
   private readonly outputChannel: vscode.OutputChannel;
   private readonly statusBarItem: vscode.StatusBarItem;
+  private readonly proofModeExplorer: ProofModeExplorerProvider;
   private terminal: vscode.Terminal | undefined;
   private userProfile: string;
 
@@ -30,8 +36,16 @@ export class SonaCliIntegration {
     this.config = this.loadConfiguration();
     this.outputChannel = vscode.window.createOutputChannel("Sona");
     this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+    this.proofModeExplorer = new ProofModeExplorerProvider();
     this.userProfile = this.loadUserProfile();
     this.initializeStatusBar();
+    this.context.subscriptions.push(
+      this.proofModeExplorer,
+      vscode.window.registerTreeDataProvider(
+        ProofModeExplorerProvider.viewType,
+        this.proofModeExplorer
+      )
+    );
     this.registerCommands();
     void this.checkSonaInstallation();
   }
@@ -39,7 +53,7 @@ export class SonaCliIntegration {
   private loadConfiguration(): SonaConfig {
     const config = vscode.workspace.getConfiguration("sona");
     return {
-      pythonPath: config.get<string>("cli.pythonPath", "python"),
+      pythonPath: resolveSonaPythonPath(),
       timeout: config.get<number>("cli.timeout", 30000),
       autoSetup: config.get<boolean>("ai.autoSetup", true)
     };
@@ -90,13 +104,11 @@ export class SonaCliIntegration {
 
   private runSonaCommand(args: string[], input?: string): Promise<CommandResult> {
     return new Promise(resolve => {
-      const commandArgs = ["-m", "sona", ...args];
+      const commandArgs = ["-P", "-m", "sona", ...args];
       this.outputChannel.appendLine(`Running: ${this.config.pythonPath} ${commandArgs.join(" ")}`);
       const cwd = this.getCommandCwd();
       const env = { ...process.env };
-      if (cwd) {
-        env.PYTHONPATH = cwd + (env.PYTHONPATH ? path.delimiter + env.PYTHONPATH : "");
-      }
+      delete env.PYTHONPATH;
 
       const child = spawn(this.config.pythonPath, commandArgs, {
         cwd,
@@ -162,6 +174,24 @@ export class SonaCliIntegration {
       vscode.commands.registerCommand("sona.setup.manual", () => this.setupManual()),
       vscode.commands.registerCommand("sona.selectUserProfile", () => this.selectUserProfile()),
       vscode.commands.registerCommand("sona.run", () => this.runCurrentFile()),
+      vscode.commands.registerCommand("sona.proofMode.run", () => this.runWithProofMode()),
+      vscode.commands.registerCommand(
+        "sona.proofMode.verifyReceipt",
+        candidate => this.verifyProofModeReceipt(candidate)
+      ),
+      vscode.commands.registerCommand(
+        "sona.proofMode.inspectReceipt",
+        candidate => this.inspectProofModeReceipt(candidate)
+      ),
+      vscode.commands.registerCommand(
+        "sona.proofMode.openReceipt",
+        candidate => this.openProofModeReceipt(candidate)
+      ),
+      vscode.commands.registerCommand("sona.proofMode.refresh", () => this.refreshProofModeReceipt()),
+      vscode.commands.registerCommand(
+        "sona.proofMode.explainWithGuardian",
+        candidate => this.explainProofModeWithGuardian(candidate)
+      ),
       vscode.commands.registerCommand("sona.transpile", () => this.transpileCurrentFile()),
       vscode.commands.registerCommand("sona.repl", () => this.startRepl()),
       vscode.commands.registerCommand("sona.check", () => this.checkCurrentFile()),
@@ -334,6 +364,251 @@ export class SonaCliIntegration {
     await doc.save();
     const result = await this.runSonaCommand(["run", doc.fileName]);
     this.showCommandResult("Sona Run Output", result, "Run failed");
+  }
+
+  private requireTrustedWorkspace(action: string): boolean {
+    if (vscode.workspace.isTrusted) {
+      return true;
+    }
+    void vscode.window.showWarningMessage(
+      `${action} is disabled until this workspace is trusted.`
+    );
+    return false;
+  }
+
+  private async pickProofModeReceipt(
+    candidate: unknown,
+    title: string
+  ): Promise<vscode.Uri | undefined> {
+    if (candidate instanceof vscode.Uri) {
+      return candidate;
+    }
+    if (candidate instanceof ProofModeTreeItem && candidate.resourceUri) {
+      return candidate.resourceUri;
+    }
+    const picked = await vscode.window.showOpenDialog({
+      canSelectFiles: true,
+      canSelectFolders: false,
+      canSelectMany: false,
+      title,
+      openLabel: title,
+      filters: {
+        "Proof Mode receipts": ["sproof", "json"],
+        "All files": ["*"]
+      }
+    });
+    return picked?.[0];
+  }
+
+  private async revealProofModeExplorer(): Promise<void> {
+    await vscode.commands.executeCommand(`${ProofModeExplorerProvider.viewType}.focus`);
+  }
+
+  private appendProofModeOutput(title: string, result: CommandResult): void {
+    this.outputChannel.appendLine(`\n--- ${title} ---`);
+    if (result.output.trim()) {
+      this.outputChannel.appendLine(result.output.trimEnd());
+    }
+    if (result.error && result.error !== result.output) {
+      this.outputChannel.appendLine(result.error.trimEnd());
+    }
+  }
+
+  private showProofModeModel(
+    receipt: vscode.Uri,
+    model: ProofModeModel,
+    programLabel?: string
+  ): void {
+    this.proofModeExplorer.showReceipt(receipt, model, programLabel);
+    void this.revealProofModeExplorer();
+  }
+
+  private async inspectProofModeReceiptPath(
+    receipt: vscode.Uri,
+    programLabel?: string,
+    announce = true
+  ): Promise<ProofModeModel> {
+    const result = await this.runSonaCommand([
+      "proof",
+      "inspect",
+      receipt.fsPath,
+      "--json"
+    ]);
+    this.appendProofModeOutput("Proof Mode Inspection", result);
+    const model = parseProofModeCliOutput(result.output);
+    this.showProofModeModel(receipt, model, programLabel);
+
+    if (!announce) {
+      return model;
+    }
+    if (model.state === "valid") {
+      void vscode.window.showInformationMessage("Proof Mode receipt is valid and ready to inspect.");
+    } else if (model.state === "invalid") {
+      void vscode.window.showWarningMessage(
+        `${model.diagnosticId || "Proof Mode verifier"}: receipt is invalid.`
+      );
+    } else {
+      void vscode.window.showErrorMessage(
+        "Proof Mode inspection output could not be displayed. Open the Sona output for details."
+      );
+    }
+    return model;
+  }
+
+  private async runWithProofMode(): Promise<void> {
+    if (!this.requireTrustedWorkspace("Run with Proof Mode")) {
+      return;
+    }
+    const document = this.activeSavedFile("sona");
+    if (!document) {
+      return;
+    }
+    await document.save();
+
+    const parsed = path.parse(document.fileName);
+    const receipt = await vscode.window.showSaveDialog({
+      title: "Save Proof Mode Receipt",
+      saveLabel: "Create Receipt",
+      defaultUri: vscode.Uri.file(path.join(parsed.dir, `${parsed.name}.sproof`)),
+      filters: { "Proof Mode receipt": ["sproof"] }
+    });
+    if (!receipt) {
+      return;
+    }
+    if (fs.existsSync(receipt.fsPath)) {
+      void vscode.window.showWarningMessage(
+        "Proof Mode will not overwrite an existing receipt. Choose a new receipt path."
+      );
+      return;
+    }
+
+    const programLabel = path.basename(document.fileName);
+    this.proofModeExplorer.showRunning(programLabel);
+    await this.revealProofModeExplorer();
+    const result = await this.runSonaCommand([
+      "proof",
+      document.fileName,
+      "--receipt",
+      receipt.fsPath,
+      "--engine",
+      "native",
+      "--summary"
+    ]);
+    this.appendProofModeOutput("Run with Proof Mode", result);
+    if (!result.success) {
+      this.proofModeExplorer.showError("Native Proof Mode execution failed safely.");
+      void vscode.window.showErrorMessage(
+        "Proof Mode execution failed. Open the Sona output for the diagnostic."
+      );
+      return;
+    }
+
+    const model = await this.inspectProofModeReceiptPath(receipt, programLabel, false);
+    if (model.state === "valid") {
+      void vscode.window.showInformationMessage(
+        `Proof Mode completed for ${programLabel}. The receipt was verified.`
+      );
+    } else {
+      void vscode.window.showWarningMessage(
+        "Proof Mode execution completed, but the receipt did not pass shared verification."
+      );
+    }
+  }
+
+  private async verifyProofModeReceipt(candidate?: unknown): Promise<void> {
+    const receipt = await this.pickProofModeReceipt(candidate, "Verify Receipt");
+    if (!receipt) {
+      return;
+    }
+    const result = await this.runSonaCommand([
+      "proof",
+      "verify",
+      receipt.fsPath,
+      "--json"
+    ]);
+    this.appendProofModeOutput("Proof Mode Verification", result);
+    const model = parseProofModeCliOutput(result.output);
+    this.showProofModeModel(receipt, model);
+    if (model.state === "valid") {
+      void vscode.window.showInformationMessage("Proof Mode receipt verified.");
+    } else if (model.state === "invalid") {
+      void vscode.window.showWarningMessage(
+        `${model.diagnosticId || "Proof Mode verifier"}: receipt verification failed.`
+      );
+    } else {
+      void vscode.window.showErrorMessage(
+        "Proof Mode verification output could not be displayed. Open the Sona output for details."
+      );
+    }
+  }
+
+  private async inspectProofModeReceipt(candidate?: unknown): Promise<void> {
+    const receipt = await this.pickProofModeReceipt(candidate, "Inspect Receipt");
+    if (receipt) {
+      await this.inspectProofModeReceiptPath(receipt);
+    }
+  }
+
+  private async openProofModeReceipt(candidate?: unknown): Promise<void> {
+    const receipt = candidate
+      ? await this.pickProofModeReceipt(candidate, "Open Receipt")
+      : this.proofModeExplorer.getCurrentReceipt()
+        || await this.pickProofModeReceipt(undefined, "Open Receipt");
+    if (!receipt) {
+      return;
+    }
+    try {
+      const document = await vscode.workspace.openTextDocument(receipt);
+      await vscode.window.showTextDocument(document, { preview: true });
+    } catch {
+      void vscode.window.showErrorMessage("The Proof Mode receipt could not be opened.");
+    }
+  }
+
+  private async refreshProofModeReceipt(): Promise<void> {
+    const receipt = this.proofModeExplorer.getCurrentReceipt();
+    if (receipt) {
+      await this.inspectProofModeReceiptPath(receipt, undefined, false);
+      return;
+    }
+    await this.inspectProofModeReceipt();
+  }
+
+  private async explainProofModeWithGuardian(candidate?: unknown): Promise<void> {
+    if (!this.requireTrustedWorkspace("Explain with Guardian")) {
+      return;
+    }
+    const receipt = candidate
+      ? await this.pickProofModeReceipt(candidate, "Explain Receipt with Guardian")
+      : this.proofModeExplorer.getCurrentReceipt()
+        || await this.pickProofModeReceipt(undefined, "Explain Receipt with Guardian");
+    if (!receipt) {
+      return;
+    }
+    const workspaceFolder = vscode.workspace.getWorkspaceFolder(receipt);
+    const projectRoot = workspaceFolder?.uri.fsPath
+      || this.getCommandCwd()
+      || path.dirname(receipt.fsPath);
+    const result = await this.runSonaCommand([
+      "guardian",
+      "proof",
+      "review",
+      "--project-root",
+      projectRoot,
+      "--receipt",
+      receipt.fsPath
+    ]);
+    this.appendProofModeOutput("Guardian Proof Mode Explanation", result);
+    this.outputChannel.show(true);
+    if (result.success) {
+      void vscode.window.showInformationMessage(
+        "Guardian explanation is available in the Sona output."
+      );
+    } else {
+      void vscode.window.showWarningMessage(
+        "Guardian could not explain this receipt. Open the Sona output for the governed result."
+      );
+    }
   }
 
   private async transpileCurrentFile(): Promise<void> {
@@ -583,7 +858,7 @@ export class SonaCliIntegration {
     return `<!DOCTYPE html>
 <html>
 <body>
-  <h1>Welcome to Sona 0.15.4</h1>
+  <h1>Welcome to Sona 0.15.5</h1>
   <p>The AI-native programming language with cognitive accessibility features.</p>
   <button onclick="vscode.postMessage({command: 'setupAzure'})">Setup Azure</button>
   <button onclick="vscode.postMessage({command: 'setupManual'})">Manual Setup</button>

@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.15.5
+
+- Added shared `sona proof verify` and `sona proof inspect` commands with
+  schema-1 compatibility, canonical JSON enforcement, self-hash validation,
+  fail-closed diagnostics, and normalized human/JSON output.
+- Extended new receipts with validated Native executable identity and an
+  optional build-supplied source revision while preserving 0.15.4 receipts.
+- Hardened Guardian policy, effect evaluation, zero-configuration onboarding,
+  local explanation, and Guardian-bound Proof Mode workflows without adding
+  signatures, PKI, remote attestation, or cloud services.
+- Stabilized the language server's supported diagnostics, completion, hover,
+  local definition, and document-symbol surface.
+- Added a CLI-backed Proof Mode Explorer to the VS Code extension; receipt
+  verification remains in the shared Python verifier, not TypeScript.
+- Hardened local-only SPM initialization, locking, installation, verification,
+  path containment, integrity checking, and rollback behavior.
+- Added four executable trusted-workflow examples for AI action evidence,
+  auditable calculation, a compatibility-runtime service API, and bounded
+  local deployment evidence.
+- Added the normative schema-1 specification, canonicalization contract,
+  effect vocabulary, compatibility rules, threat model, and assurance levels.
+- Preserved Sona syntax, schema-1 required fields, frozen 0.15.4 vectors,
+  Python compatibility behavior, and explicit Native HTTP limitations.
+
 ## 0.15.4
 
 - Established one schema-2 standard-library manifest and generated catalog for

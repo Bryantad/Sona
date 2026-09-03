@@ -1,6 +1,9 @@
-# Native Proof Mode Guide
+# Proof Mode Guide
 
-Native Proof Mode runs one `.sona` program or source-backed `.sbc` container in
+New to Sona's trust workflow? Complete
+[Get Started with Proof Mode](../getting-started/README.md) first.
+
+Proof Mode runs one `.sona` program or source-backed `.sbc` container in
 Native Core and publishes a redacted, self-hashed JSON receipt for that
 execution. Use it when you need durable evidence of what engine ran, what
 capabilities were granted, whether execution succeeded, and which observable
@@ -10,33 +13,38 @@ Proof Mode is an evidence layer around Native Core. It does not change program
 semantics, prove Python/Native parity, identify a signer, or attest the machine
 or operating system.
 
-## Choose the correct executable
+## Install both command surfaces
 
-Sona 0.15.4 has separate Python-compatible and Native Core command surfaces:
+Sona 0.15.5 has separate Python-compatible and Native Core command surfaces:
 
 | Command | Purpose |
 | --- | --- |
-| `sona` | Python-compatible CLI, Guardian, package tools, and developer intelligence |
+| `sona` | User-facing coordinator, receipt verification, Guardian, package tools, and developer intelligence |
 | `sona-native` | Convenient installed name for the standalone Native Core executable |
 | `sona.exe` | Filename inside the Windows Native Core release ZIP |
 
-This guide uses `sona-native`. If you extracted the Native Core ZIP without
-renaming its executable, substitute `.\sona.exe`. On another platform or a
-local Native Core build, substitute the path to that `sona` binary.
+The installed `sona` command coordinates the complete workflow. For generation,
+it delegates directly to `sona-native`; Native Core remains the only receipt
+producer and no Python-compatible execution or fallback is allowed. Receipt
+verification and inspection remain in the Python command.
 
-The Python CLI does not implement `sona proof`. A command such as
-`sona proof app.sona ...` works only when `sona` is the Native Core executable.
+Generation discovers `sona-native` on `PATH`. If you extracted an archive and
+did not install that command, set `SONA_NATIVE_BINARY` to the standalone
+`sona` or `sona.exe` path. An explicitly configured path must be a regular file
+and takes priority over `PATH`. Sona never resolves a generic `sona` from
+`PATH`, which prevents delegation from returning to the Python launcher.
 
 Check the installed native command:
 
 ```powershell
 sona-native --version
+sona proof --help
 ```
 
 Expected shape:
 
 ```text
-Sona native 0.15.4
+Sona native 0.15.5
 ```
 
 ## First proof receipt
@@ -56,7 +64,7 @@ New-Item -ItemType Directory -Path .\.sona\receipts | Out-Null
 $receipt = Join-Path (Resolve-Path .\.sona\receipts) `
   ("hello-proof-{0}.json" -f [guid]::NewGuid())
 
-sona-native proof .\hello.sona `
+sona proof .\hello.sona `
   --receipt $receipt `
   --engine native `
   --summary
@@ -105,7 +113,7 @@ failure never becomes a successful proof claim.
 ## Command anatomy
 
 ```text
-sona-native proof <program.sona|program.sbc>
+sona proof <program.sona|program.sbc>
   --receipt <new-receipt.json>
   [--engine native]
   [--summary]
@@ -120,6 +128,10 @@ is optional but useful in release scripts because it makes the intended engine
 explicit. `--guardian-root` is covered in the
 [combined Proof and Guardian guide](proof-and-guardian.md).
 
+Direct `sona-native proof ...` remains supported for native-only environments
+and low-level runtime testing. Both forms invoke the same Rust producer and
+produce the same schema-1 receipt.
+
 ## Receipt contents
 
 Receipts use `sona.native-proof.schema-1` and contain these sections:
@@ -127,10 +139,10 @@ Receipts use `sona.native-proof.schema-1` and contain these sections:
 | Section | Meaning |
 | --- | --- |
 | `program` | Input kind, byte count, and SHA-256 identity; source text and paths are omitted |
-| `engine` | Native engine identity plus explicit no-Python and no-fallback flags |
+| `engine` | Native engine identity, explicit no-Python/no-fallback flags, and optional validated executable/source-revision identity |
 | `capabilities` | Capabilities granted for this execution |
 | `execution` | Status, exit code, duration, stable diagnostic metadata, and stdout/stderr byte counts and hashes |
-| `effects` | Ordered, redacted observations such as console output or filesystem attempts |
+| `effects` | Ordered, redacted host-boundary observations with low-level operation, normalized identifier, outcome, and support status |
 | `guardian` | Present only for an explicitly Guardian-bound proof |
 | `receipt_hash` | SHA-256 of the canonical receipt with this member omitted |
 
@@ -146,6 +158,22 @@ $proof.effects
 $proof.receipt_hash
 ```
 
+Most users should use the built-in verified views instead of reading JSON:
+
+```powershell
+sona proof verify $receipt
+sona proof inspect $receipt
+```
+
+Both views first state whether the receipt and integrity checks are valid,
+whether execution succeeded, what ran, which runtime and engine ran, whether
+Python or fallback was involved, the Guardian binding state, capabilities, and
+observed effects. Program, Native binary, output, and receipt SHA-256 identities
+follow those plain-language facts. A build-supplied source revision is shown
+when available. These runtime correlation fields are not authenticated
+provenance. Use `--json` on either command for the existing machine-readable
+verifier result.
+
 Proof receipts never include source text, raw program or project paths,
 stdout/stderr bodies, stdin values, environment values, credentials, network
 request bodies, temporary paths, or raw operating-system error text.
@@ -160,7 +188,7 @@ Native Core grants console access by default. Filesystem access is denied until
 the corresponding flag is supplied:
 
 ```powershell
-sona-native proof .\reader.sona `
+sona proof .\reader.sona `
   --receipt .\.sona\receipts\reader-proof.json `
   --allow-fs-read
 ```
@@ -169,8 +197,19 @@ sona-native proof .\reader.sona `
 the program actually needs. The receipt records both allowed and denied
 observed effects.
 
+Current receipts retain the exact low-level observation and add normalized
+automation fields. For example, `filesystem` / `fs.read_text` is exposed as
+`FS.READ` with `SUPPORTED` observation coverage. Console writes are `PARTIAL`
+because the aggregate stream hashes can cover bytes beyond the semantic write
+records. Outcome (`allowed`, `denied`, `failed`, or `unavailable`) says what
+happened to one attempt; support says how completely that boundary is modeled.
+
+An absent effect is not proof that the operating system or uninstrumented code
+performed no such activity. See the [effect vocabulary](../spec/proof/effects.md)
+for the complete mapping and limits.
+
 `--allow-network` records that network policy was granted, but Native Core HTTP
-remains unavailable in 0.15.4. Process and environment capabilities remain
+remains unavailable in 0.15.5. Process and environment capabilities remain
 disabled.
 
 The receipt-writing operation is owned by the Proof runner. Publishing the
@@ -215,25 +254,54 @@ diagnostics and do not publish a Proof receipt.
 | `PROOF-007` | Receipt finalization or durability failed | Do not claim publication; inspect the destination before retrying |
 | `PROOF-008` | Guardian binding unavailable or inconsistent | Initialize Guardian and prove an unchanged baseline-tracked program |
 
-`sona-native proof --help` is not a supported parser form in 0.15.4 because
-Proof Mode expects the program path first. Use `sona-native --help` for the
-Native Core command summary and this guide for the complete option contract.
+`sona proof --help` describes the coordinated generation, verification, and
+inspection workflow. The low-level Native parser still expects the program
+path first; use `sona-native --help` for its command summary.
+
+If `sona proof <program> ...` cannot find or start Native Core, it fails before
+execution with `SonaProofLaunchError`, prints an installation or
+`SONA_NATIVE_BINARY` hint, and does not create a receipt. Raw operating-system
+launch errors are not exposed.
+
+## VS Code Proof Mode Explorer
+
+The Sona `0.15.5` development extension adds a Proof Mode tree to the Sona
+activity bar. Its actions are thin clients over the installed CLI:
+
+```text
+Run with Proof Mode
+Verify Receipt
+Inspect Receipt
+Open Receipt
+Explain with Guardian
+```
+
+After a valid receipt is inspected, the tree shows execution result, Native
+Core identity, whether Python or fallback was involved, capabilities, grouped
+observed effects, Guardian binding, and redacted evidence identities.
+
+The extension does not implement receipt verification or receipt hashing in
+TypeScript. It calls `sona proof verify --json` or `sona proof inspect --json`
+and displays the shared verifier's normalized result. Program execution and
+Guardian review require a trusted VS Code workspace. A requested receipt path
+is never overwritten silently.
 
 ## Security claim and limits
 
-Proof Mode gives you redacted, self-hashed,
-tamper-evident-after-creation evidence for one Native Core execution. It does
-not provide:
+Proof Mode gives you redacted, self-hashed, integrity-checkable evidence for
+one Native Core execution. An actor who replaces the receipt can recompute its
+self-hash, so schema-1 does not authenticate the evidence. It does not provide:
 
 - cryptographic signer identity;
 - trusted hardware or operating-system integrity;
 - remote or machine attestation;
+- a protected trust anchor;
 - protection from an actor who can replace both evidence and trusted local
   state; or
 - proof that Python-compatible and Native Core executions are semantically
   identical.
 
 For a receipt tied to known local project state, continue with
-[Using Native Proof and Guardian Together](proof-and-guardian.md). For the
+[Using Proof Mode and Guardian Together](proof-and-guardian.md). For the
 field-level contract, see the
-[Native Proof Mode reference](../reference/native-proof-mode.md).
+[Proof Mode reference](../reference/native-proof-mode.md).

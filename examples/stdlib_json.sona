@@ -1,6 +1,6 @@
 import json;
 
-let data = {"language": "Sona", "version": "0.15.4"};
+let data = {"language": "Sona", "version": "0.15.5"};
 let text = json.dumps(data);
 
 print(text);

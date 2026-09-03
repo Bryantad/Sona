@@ -305,7 +305,7 @@ Windows x86-64, Linux x86-64/ARM64, and macOS Intel/Apple Silicon with Python
 
 ## Trust and preview limits
 
-- Native Proof is redacted, self-hashed, tamper-evident-after-creation
+- Native Proof is redacted, self-hashed, and integrity-checkable
   evidence. It is not signer identity, trusted timestamping, trusted-hardware
   proof, operating-system integrity proof, remote attestation, or a claim of
   Python/Native semantic parity.

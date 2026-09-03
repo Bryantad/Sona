@@ -5,6 +5,10 @@ This guide gets a new developer from install to a working `.sona` program in
 
 Estimated time: 5-10 minutes.
 
+For the next 10-minute path—from a first program through Proof Mode,
+verification, Guardian policy, and an intentional capability denial—continue
+with [Get Started with Proof Mode](getting-started/README.md).
+
 Documentation truth rule: if this page and runtime behavior disagree, runtime
 behavior wins and this page must be corrected before release.
 
@@ -25,7 +29,7 @@ sona --version
 Expected shape:
 
 ```text
-Sona 0.15.4
+Sona 0.15.5
 ```
 
 ## 2. Create `hello.sona`

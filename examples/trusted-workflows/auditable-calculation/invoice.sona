@@ -1,0 +1,11 @@
+let subtotal_cents = 12500;
+let tax_cents = 875;
+let discount_cents = 500;
+let gross_cents = subtotal_cents + tax_cents;
+let total_cents = gross_cents - discount_cents;
+
+print("Invoice example");
+print("Subtotal cents: " + subtotal_cents);
+print("Tax cents: " + tax_cents);
+print("Discount cents: " + discount_cents);
+print("Total cents: " + total_cents);

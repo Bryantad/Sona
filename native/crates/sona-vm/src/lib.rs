@@ -1005,9 +1005,16 @@ mod tests {
         );
         let mut vm = Vm::new(None);
         vm.config.capabilities.network = true;
+        vm.enable_proof_observation(vec![7; 32]);
         let error = vm.execute(&bytecode).unwrap_err();
         assert_eq!(error.0[0].diagnostic_id, "SONA-HTTP-005");
         assert!(!error.0[0].message.contains("secret"));
+        let evidence = vm.take_proof_evidence().unwrap();
+        assert_eq!(evidence.effects().len(), 1);
+        assert_eq!(evidence.effects()[0].scope, "network");
+        assert_eq!(evidence.effects()[0].operation, "http.get");
+        assert_eq!(evidence.effects()[0].outcome, "unavailable");
+        assert_eq!(evidence.effects()[0].target, None);
     }
 
     #[test]
@@ -1020,5 +1027,47 @@ mod tests {
         vm.execute(&bytecode).unwrap();
         assert_eq!(vm.output().len(), 2);
         assert_eq!(vm.output()[0], vm.output()[1]);
+    }
+
+    #[test]
+    fn proof_observes_clock_and_random_boundaries_without_argument_values() {
+        let bytecode = compile_source(
+            "nondeterminism.sona",
+            concat!(
+                "import date; import time; import random; ",
+                "random.seed(424242); random.integer(1, 100); random.float(); ",
+                "date.today(); time.monotonic();"
+            ),
+        );
+        let mut vm = Vm::new(None);
+        vm.enable_proof_observation(vec![7; 32]);
+        vm.execute(&bytecode).unwrap();
+        let evidence = vm.take_proof_evidence().unwrap();
+
+        let observed: Vec<(&str, &str, &str)> = evidence
+            .effects()
+            .iter()
+            .map(|effect| {
+                (
+                    effect.scope.as_str(),
+                    effect.operation.as_str(),
+                    effect.outcome.as_str(),
+                )
+            })
+            .collect();
+        assert_eq!(
+            observed,
+            vec![
+                ("random", "random.seed", "allowed"),
+                ("random", "random.integer", "allowed"),
+                ("random", "random.float", "allowed"),
+                ("clock", "date.today", "allowed"),
+                ("clock", "time.monotonic", "allowed"),
+            ]
+        );
+        assert!(evidence
+            .effects()
+            .iter()
+            .all(|effect| effect.target.is_none()));
     }
 }

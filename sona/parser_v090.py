@@ -150,7 +150,7 @@ class SonaParserv090:
             if unsupported:
                 feature, line, column = unsupported
                 raise SonaSyntaxError(
-                    f"SONA-SEM-099: '{feature}' syntax is recognized but is not certified for execution in Sona 0.15.4.",
+                    f"SONA-SEM-099: '{feature}' syntax is recognized but is not certified for execution in Sona 0.15.5.",
                     location=SourceLocation(file=filename, line=line, column=column),
                     suggestion="Use certified 0.15.x syntax or retain legacy compatibility mode while migrating.",
                     diagnostic_id="SONA-SEM-099",

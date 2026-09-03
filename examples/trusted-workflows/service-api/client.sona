@@ -1,0 +1,5 @@
+import http;
+
+let response = http.get("http://127.0.0.1:8765/status", 2);
+print("Service status: " + response.status);
+print(response.body);

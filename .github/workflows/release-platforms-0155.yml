@@ -1,0 +1,358 @@
+name: Sona 0.15.5 cross-platform release candidates
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v0.15.5"
+      - "v0.15.5-rc.*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sona-0155-platforms-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  SONA_VERSION: "0.15.5"
+
+jobs:
+  portable:
+    name: Portable wheel, sdist, VSIX, and test kit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Build Python distributions outside the checkout
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build --outdir "${RUNNER_TEMP}/portable-input"
+
+      - name: Compile, test, audit, and package the VSIX
+        working-directory: vscode-extension
+        run: |
+          npm ci --omit=optional --no-audit --fund=false
+          npm run compile
+          git diff --exit-code -- out
+          npm test
+          npm audit --omit=dev --audit-level=high
+          npx --no-install vsce package \
+            --out "${RUNNER_TEMP}/portable-input/sona-ai-native-programming-0.15.5.vsix"
+
+      - name: Inspect portable artifacts and build the machine test kit
+        run: |
+          python tools/release/platform_release_0155.py portable \
+            --wheel "${RUNNER_TEMP}/portable-input/sona_lang-0.15.5-py3-none-any.whl" \
+            --sdist "${RUNNER_TEMP}/portable-input/sona_lang-0.15.5.tar.gz" \
+            --vsix "${RUNNER_TEMP}/portable-input/sona-ai-native-programming-0.15.5.vsix" \
+            --output-dir "${RUNNER_TEMP}/portable-output"
+
+      - name: Preserve portable release candidates
+        uses: actions/upload-artifact@v4
+        with:
+          name: portable-0.15.5
+          path: ${{ runner.temp }}/portable-output/*
+          if-no-files-found: error
+          retention-days: 30
+
+  native:
+    name: Native ${{ matrix.platform }} ${{ matrix.architecture }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-2025
+            platform: windows
+            architecture: x86_64
+            target: x86_64-pc-windows-msvc
+            artifact: native-windows-x86_64
+          - runner: ubuntu-24.04
+            platform: linux
+            architecture: x86_64
+            target: x86_64-unknown-linux-musl
+            artifact: native-linux-x86_64-musl
+          - runner: ubuntu-24.04-arm
+            platform: linux
+            architecture: aarch64
+            target: aarch64-unknown-linux-musl
+            artifact: native-linux-aarch64-musl
+          - runner: macos-15-intel
+            platform: macos
+            architecture: x86_64
+            target: x86_64-apple-darwin
+            artifact: native-macos-x86_64
+          - runner: macos-15
+            platform: macos
+            architecture: aarch64
+            target: aarch64-apple-darwin
+            artifact: native-macos-aarch64
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Enable Visual Studio dependency inspection
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Install Linux static-link inspection tools
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes musl-tools file
+
+      - name: Configure the pinned Rust target
+        run: >-
+          rustup toolchain install 1.94.0
+          --profile minimal
+          --component rustfmt
+          --component clippy
+          --target ${{ matrix.target }}
+
+      - name: Select the native musl linker
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          if [[ "${{ matrix.architecture }}" == "x86_64" ]]; then
+            echo "CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER=musl-gcc" >> "${GITHUB_ENV}"
+          else
+            echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=musl-gcc" >> "${GITHUB_ENV}"
+          fi
+
+      - name: Build, execute, inspect, and package Native Core
+        run: >-
+          python tools/release/platform_release_0155.py native
+          --platform ${{ matrix.platform }}
+          --architecture ${{ matrix.architecture }}
+          --target ${{ matrix.target }}
+          --output-dir "${{ runner.temp }}/native-output"
+
+      - name: Preserve the host-certified native candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ runner.temp }}/native-output/*
+          if-no-files-found: error
+          retention-days: 30
+
+  desktop-verify:
+    name: Verify ${{ matrix.platform }} ${{ matrix.architecture }} / Python ${{ matrix.python }}
+    needs: [portable, native]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-2025
+            platform: windows
+            architecture: x86_64
+            python: "3.11"
+            native_artifact: native-windows-x86_64
+            native_archive: sona-native-0.15.5-windows-x86_64.zip
+          - runner: windows-2025
+            platform: windows
+            architecture: x86_64
+            python: "3.12"
+            native_artifact: native-windows-x86_64
+            native_archive: sona-native-0.15.5-windows-x86_64.zip
+          - runner: ubuntu-24.04
+            platform: linux
+            architecture: x86_64
+            python: "3.11"
+            native_artifact: native-linux-x86_64-musl
+            native_archive: sona-native-0.15.5-linux-x86_64-musl.tar.gz
+          - runner: ubuntu-24.04
+            platform: linux
+            architecture: x86_64
+            python: "3.12"
+            native_artifact: native-linux-x86_64-musl
+            native_archive: sona-native-0.15.5-linux-x86_64-musl.tar.gz
+          - runner: ubuntu-24.04-arm
+            platform: linux
+            architecture: aarch64
+            python: "3.11"
+            native_artifact: native-linux-aarch64-musl
+            native_archive: sona-native-0.15.5-linux-aarch64-musl.tar.gz
+          - runner: ubuntu-24.04-arm
+            platform: linux
+            architecture: aarch64
+            python: "3.12"
+            native_artifact: native-linux-aarch64-musl
+            native_archive: sona-native-0.15.5-linux-aarch64-musl.tar.gz
+          - runner: macos-15-intel
+            platform: macos
+            architecture: x86_64
+            python: "3.11"
+            native_artifact: native-macos-x86_64
+            native_archive: sona-native-0.15.5-macos-x86_64.tar.gz
+          - runner: macos-15-intel
+            platform: macos
+            architecture: x86_64
+            python: "3.12"
+            native_artifact: native-macos-x86_64
+            native_archive: sona-native-0.15.5-macos-x86_64.tar.gz
+          - runner: macos-15
+            platform: macos
+            architecture: aarch64
+            python: "3.11"
+            native_artifact: native-macos-aarch64
+            native_archive: sona-native-0.15.5-macos-aarch64.tar.gz
+          - runner: macos-15
+            platform: macos
+            architecture: aarch64
+            python: "3.12"
+            native_artifact: native-macos-aarch64
+            native_archive: sona-native-0.15.5-macos-aarch64.tar.gz
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: portable-0.15.5
+          path: ${{ runner.temp }}/candidate/portable
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ matrix.native_artifact }}
+          path: ${{ runner.temp }}/candidate/native
+
+      - name: Install the exact wheel
+        run: >-
+          python -m pip install
+          "${{ runner.temp }}/candidate/portable/sona_lang-0.15.5-py3-none-any.whl"
+
+      - name: Check installed dependencies
+        run: python -m pip check
+
+      - name: Run the complete platform and trust-chain verifier
+        run: >-
+          python tools/release/platform_release_0155.py verify
+          --wheel "${{ runner.temp }}/candidate/portable/sona_lang-0.15.5-py3-none-any.whl"
+          --sdist "${{ runner.temp }}/candidate/portable/sona_lang-0.15.5.tar.gz"
+          --vsix "${{ runner.temp }}/candidate/portable/sona-ai-native-programming-0.15.5.vsix"
+          --native-archive "${{ runner.temp }}/candidate/native/${{ matrix.native_archive }}"
+          --report "${{ runner.temp }}/verification/sona-${{ matrix.platform }}-${{ matrix.architecture }}-python-${{ matrix.python }}.json"
+
+      - name: Preserve machine verification evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: verification-${{ matrix.platform }}-${{ matrix.architecture }}-py${{ matrix.python }}
+          path: ${{ runner.temp }}/verification/*.json
+          if-no-files-found: error
+          retention-days: 30
+
+  mobile-compile:
+    name: Experimental compile-only ${{ matrix.label }}
+    runs-on: ${{ matrix.runner }}
+    continue-on-error: true
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: Android ARM64
+            runner: ubuntu-24.04
+            target: aarch64-linux-android
+          - label: iOS ARM64
+            runner: macos-15
+            target: aarch64-apple-ios
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure the pinned compile-only Rust target
+        run: >-
+          rustup toolchain install 1.94.0
+          --profile minimal
+          --target ${{ matrix.target }}
+
+      - name: Compile-check without making a mobile support claim
+        run: >-
+          cargo check
+          --manifest-path native/Cargo.toml
+          --workspace
+          --all-targets
+          --all-features
+          --locked
+          --target ${{ matrix.target }}
+
+  assemble:
+    name: Assemble exact cross-platform candidate
+    needs: [portable, native, desktop-verify]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: portable-0.15.5
+          path: ${{ runner.temp }}/assembly-input/portable
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: native-*
+          path: ${{ runner.temp }}/assembly-input/native
+
+      - name: Validate evidence and create checksums and manifest
+        run: >-
+          python tools/release/platform_release_0155.py assemble
+          --input-root "${{ runner.temp }}/assembly-input"
+          --output-dir "${{ runner.temp }}/release-candidate"
+
+      - name: Download desktop verification reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: verification-*
+          path: ${{ runner.temp }}/verification-evidence
+
+      - name: Preserve exact release candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: sona-0.15.5-cross-platform-release-candidate
+          path: ${{ runner.temp }}/release-candidate/*
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Preserve cross-platform verification evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: sona-0.15.5-cross-platform-verification-evidence
+          path: ${{ runner.temp }}/verification-evidence/**/*.json
+          if-no-files-found: error
+          retention-days: 30

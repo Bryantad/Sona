@@ -1,0 +1,8 @@
+import fs;
+
+let proposal = fs.read_text("proposal.txt");
+let controlled_result = "Reviewed external proposal:\n" + proposal;
+fs.write_text(".sona/workflow/action-output.txt", controlled_result);
+
+print("Controlled proposal action completed.");
+

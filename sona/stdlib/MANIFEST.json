@@ -1,10 +1,10 @@
 {
   "schema": 2,
   "schema_id": "sona.stdlib.manifest.schema-2",
-  "version": "0.15.4",
+  "version": "0.15.5",
   "stdlib_cap": 146,
   "manifest_hash": "0154_stdlib_runtime_capability",
-  "description": "Sona v0.15.4 Standard Library - Cohesion and Runtime Capability",
+  "description": "Sona v0.15.5 Standard Library - Cohesion and Runtime Capability",
   "support_values": [
     "PASS",
     "PARTIAL",
@@ -2301,6 +2301,11 @@
         },
         {
           "name": "check",
+          "signature": "(project_root=nil)",
+          "disposition": "KEEP"
+        },
+        {
+          "name": "explain",
           "signature": "(project_root=nil)",
           "disposition": "KEEP"
         },

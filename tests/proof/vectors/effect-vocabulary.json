@@ -1,0 +1,51 @@
+{
+  "schema_id": "sona.proof-effect-vocabulary.schema-1",
+  "support_statuses": [
+    "SUPPORTED",
+    "PARTIAL",
+    "UNOBSERVED",
+    "UNAVAILABLE"
+  ],
+  "mappings": [
+    {"scope": "filesystem", "operation": "fs.read_text", "effect": "FS.READ", "support": "SUPPORTED"},
+    {"scope": "filesystem", "operation": "fs.exists", "effect": "FS.READ", "support": "PARTIAL"},
+    {"scope": "filesystem", "operation": "fs.is_file", "effect": "FS.READ", "support": "PARTIAL"},
+    {"scope": "filesystem", "operation": "fs.is_dir", "effect": "FS.READ", "support": "PARTIAL"},
+    {"scope": "filesystem", "operation": "fs.write_text", "effect": "FS.WRITE", "support": "PARTIAL"},
+    {"scope": "filesystem", "operation": "fs.append_text", "effect": "FS.APPEND", "support": "SUPPORTED"},
+    {"scope": "filesystem", "operation": "fs.create_dir", "effect": "FS.CREATE", "support": "SUPPORTED"},
+    {"scope": "filesystem", "operation": "fs.remove", "effect": "FS.DELETE", "support": "SUPPORTED"},
+    {"scope": "filesystem", "operation": "fs.rename.source", "effect": "FS.RENAME", "support": "SUPPORTED"},
+    {"scope": "filesystem", "operation": "fs.rename.destination", "effect": "FS.RENAME", "support": "SUPPORTED"},
+    {"scope": "filesystem", "operation": "fs.copy.source", "effect": "FS.READ", "support": "SUPPORTED"},
+    {"scope": "filesystem", "operation": "fs.copy.destination", "effect": "FS.WRITE", "support": "PARTIAL"},
+    {"scope": "filesystem", "operation": "fs.list_dir", "effect": "FS.LIST", "support": "SUPPORTED"},
+    {"scope": "console", "operation": "print", "effect": "STDOUT.WRITE", "support": "PARTIAL"},
+    {"scope": "console", "operation": "io.write_stdout", "effect": "STDOUT.WRITE", "support": "PARTIAL"},
+    {"scope": "console", "operation": "io.write_stderr", "effect": "STDERR.WRITE", "support": "PARTIAL"},
+    {"scope": "console", "operation": "io.flush", "effect": "CONSOLE.FLUSH", "support": "PARTIAL"},
+    {"scope": "stdin", "operation": "read", "effect": "STDIN.READ", "support": "SUPPORTED"},
+    {"scope": "network", "operation": "http.get", "effect": "NET.REQUEST", "support": "UNAVAILABLE"},
+    {"scope": "network", "operation": "http.post", "effect": "NET.REQUEST", "support": "UNAVAILABLE"},
+    {"scope": "network", "operation": "http.put", "effect": "NET.REQUEST", "support": "UNAVAILABLE"},
+    {"scope": "network", "operation": "http.patch", "effect": "NET.REQUEST", "support": "UNAVAILABLE"},
+    {"scope": "network", "operation": "http.delete", "effect": "NET.REQUEST", "support": "UNAVAILABLE"},
+    {"scope": "clock", "operation": "date.today", "effect": "CLOCK.READ", "support": "SUPPORTED"},
+    {"scope": "clock", "operation": "time.now", "effect": "CLOCK.READ", "support": "SUPPORTED"},
+    {"scope": "clock", "operation": "time.timestamp", "effect": "CLOCK.READ", "support": "SUPPORTED"},
+    {"scope": "clock", "operation": "time.monotonic", "effect": "CLOCK.READ", "support": "SUPPORTED"},
+    {"scope": "clock", "operation": "time.sleep", "effect": "CLOCK.SLEEP", "support": "SUPPORTED"},
+    {"scope": "random", "operation": "random.float", "effect": "RANDOM.READ", "support": "SUPPORTED"},
+    {"scope": "random", "operation": "random.integer", "effect": "RANDOM.READ", "support": "SUPPORTED"},
+    {"scope": "random", "operation": "random.choice", "effect": "RANDOM.READ", "support": "SUPPORTED"},
+    {"scope": "random", "operation": "random.shuffle", "effect": "RANDOM.READ", "support": "SUPPORTED"},
+    {"scope": "random", "operation": "random.seed", "effect": "RANDOM.SEED", "support": "SUPPORTED"}
+  ],
+  "unobserved": [
+    {
+      "effect": "NET.CONNECT",
+      "support": "UNOBSERVED",
+      "reason": "Native Core has no independently instrumented connection boundary."
+    }
+  ]
+}

@@ -1,8 +1,8 @@
-import * as fs from "fs";
-import * as path from "path";
 import { spawnSync } from "child_process";
 import * as vscode from "vscode";
 import { LanguageClient } from "vscode-languageclient/node";
+
+import { resolveSonaPythonPath } from "./pythonEnvironment";
 
 let client: LanguageClient | undefined;
 let outputChannel: vscode.LogOutputChannel | undefined;
@@ -36,8 +36,8 @@ function showDependencyError(pythonPath: string, details: string): void {
     return;
   }
   dependencyPromptShown = true;
-  const installCmd = `${quoteForShell(pythonPath)} -m pip install pygls`;
-  const message = "Sona LSP requires pygls in the selected Python environment. Install pygls, then reload VS Code.";
+  const installCmd = `${quoteForShell(pythonPath)} -m pip install --upgrade sona-lang`;
+  const message = "The selected Python environment cannot load the Sona language server. Install or upgrade sona-lang, then reload VS Code.";
   void vscode.window
     .showErrorMessage(message, "Copy install command", "Open Sona LSP output")
     .then(choice => {
@@ -56,7 +56,7 @@ function showDependencyError(pythonPath: string, details: string): void {
 
 function runDependencyPreflight(pythonPath: string): { ok: boolean; reason?: string } {
   try {
-    const probe = spawnSync(pythonPath, ["-c", "import pygls"], {
+    const probe = spawnSync(pythonPath, ["-P", "-c", "import pygls, sona.lsp_server"], {
       encoding: "utf8",
       timeout: 5000,
       windowsHide: true
@@ -76,26 +76,6 @@ function runDependencyPreflight(pythonPath: string): { ok: boolean; reason?: str
   }
 }
 
-function resolvePythonPath(): string {
-  const cfg = vscode.workspace.getConfiguration("sona");
-  const configured = cfg.get<string>("pythonPath") || cfg.get<string>("cli.pythonPath");
-  if (configured && configured.trim()) {
-    return configured.trim();
-  }
-  const workspace = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-  if (workspace) {
-    const winCandidate = path.join(workspace, ".venv", "Scripts", "python.exe");
-    const posixCandidate = path.join(workspace, ".venv", "bin", "python");
-    if (process.platform === "win32" && fs.existsSync(winCandidate)) {
-      return winCandidate;
-    }
-    if (process.platform !== "win32" && fs.existsSync(posixCandidate)) {
-      return posixCandidate;
-    }
-  }
-  return "python";
-}
-
 export function startSonaLsp(context: vscode.ExtensionContext): void {
   if (client) {
     return;
@@ -105,7 +85,7 @@ export function startSonaLsp(context: vscode.ExtensionContext): void {
     return;
   }
 
-  const pythonPath = resolvePythonPath();
+  const pythonPath = resolveSonaPythonPath();
   ensureOutputChannel();
   appendOutput(`[sona-lsp] resolved pythonPath: ${pythonPath}`);
   const preflight = runDependencyPreflight(pythonPath);
@@ -116,11 +96,11 @@ export function startSonaLsp(context: vscode.ExtensionContext): void {
     return;
   }
 
-  appendOutput(`[sona-lsp] starting: ${pythonPath} -m sona.lsp_server --stdio`);
+  appendOutput(`[sona-lsp] starting: ${pythonPath} -P -m sona.lsp_server --stdio`);
   client = new LanguageClient(
     "sona-lsp",
     "Sona Language Server",
-    { command: pythonPath, args: ["-m", "sona.lsp_server", "--stdio"] },
+    { command: pythonPath, args: ["-P", "-m", "sona.lsp_server", "--stdio"] },
     {
       documentSelector: [{ scheme: "file", language: "sona" }],
       outputChannel: ensureOutputChannel()

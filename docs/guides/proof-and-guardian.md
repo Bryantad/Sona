@@ -1,15 +1,21 @@
-# Using Native Proof and Guardian Together
+# Using Proof Mode and Guardian Together
 
-Native Proof Mode and Guardian solve different parts of a local release-trust
+Proof Mode and Guardian solve different parts of a local release-trust
 workflow:
 
-- **Native Proof Mode** records redacted evidence for one Native Core
+- **Proof Mode** records redacted evidence for one Native Core
   execution.
-- **Guardian** records which project state was trusted and detects later drift.
-- **Guardian-bound Proof** ties the execution receipt to that trusted baseline.
+- **Guardian** records which capability policy and project state were trusted,
+  applies supported decisions to Native Core, and detects later drift.
+- **Guardian-bound Proof Mode** ties the execution receipt to that policy and
+  trusted baseline.
 - **Guardian attestation** records that a successful bound receipt was checked
   while the current project was still clean.
 - **AI review** explains verified redacted facts but adds no trust.
+
+In this guide, Guardian "attestation" means a project-local audit record made
+after repeat verification and a clean-state check. It is not cryptographic,
+remote, hardware, operating-system, or trusted-runtime attestation.
 
 The integration is explicit at every step. Neither subsystem silently enables
 or mutates the other.
@@ -19,10 +25,10 @@ or mutates the other.
 ```mermaid
 flowchart TD
     A["Reviewed project files"] --> B["sona guardian init"]
-    B --> C["Trusted baseline and snapshot"]
-    C -->|"read only"| D["sona-native proof --guardian-root"]
+    B --> C["Trusted policy, baseline, and snapshot"]
+    C -->|"capability decision"| D["sona proof --guardian-root"]
     A --> D
-    D --> E["Self-hashed Native Proof receipt with redacted Guardian anchor"]
+    D --> E["Self-hashed Proof Mode receipt with redacted Guardian anchor"]
     E --> F["sona guardian proof verify"]
     C --> F
     F --> G{"Verified receipt?"}
@@ -35,13 +41,13 @@ flowchart TD
     L --> M["Advisory deterministic or governed AI explanation"]
 ```
 
-## What each step proves
+## What each step establishes and does not establish
 
 | Step | What it establishes | What it does not establish |
 | --- | --- | --- |
-| `guardian init` | A local trusted configuration, file-hash baseline, and snapshot | That the project is globally safe or authored by a known signer |
+| `guardian init` | A local trusted capability policy, file-hash baseline, and snapshot | That the project is globally safe or authored by a known signer |
 | Native `proof` | One redacted, self-hashed Native Core execution record | Machine integrity, identity, remote attestation, or Python parity |
-| `proof --guardian-root` | The exact input was inside the project and matched a tracked baseline hash before execution | That the project can never drift after execution |
+| `proof --guardian-root` | The exact input matched the baseline and supported requested capabilities were intersected with trusted Guardian decisions | That the project can never drift after execution or that Native HTTP is implemented |
 | `guardian proof verify` | Receipt canonicality, self-hash, Native/no-Python identity, matching Guardian anchor, and baseline-tracked program identity | That the current working tree is clean |
 | `guardian proof attest` | A successful verified receipt was checked while `guardian verify` reported a clean current project | A remote signature, hardware root of trust, or third-party timestamp |
 | `guardian proof review` | A governed reviewer analyzed the verified redacted packet | Any additional verification, signature, attestation, or trust |
@@ -62,12 +68,13 @@ sona-native --version
 Expected shapes:
 
 ```text
-Sona 0.15.4
-Sona native 0.15.4
+Sona 0.15.5
+Sona native 0.15.5
 ```
 
-This guide uses the installed name `sona-native`. If you are running the
-executable directly from the Native Core ZIP, replace it with `.\sona.exe`.
+The user-facing `sona proof` command delegates generation to `sona-native` on
+`PATH`. For an archive-local Native Core executable, set `SONA_NATIVE_BINARY`
+to `.\sona.exe`. Direct `sona-native proof ...` remains equivalent.
 
 ## Complete PowerShell workflow
 
@@ -82,7 +89,7 @@ $project = Join-Path $env:TEMP `
 New-Item -ItemType Directory -Path $project | Out-Null
 Set-Location $project
 
-'print("Guardian-bound Native Proof: OK")' |
+'print("Guardian-bound Proof Mode: OK")' |
   Set-Content -LiteralPath .\hello.sona -Encoding ascii
 New-Item -ItemType Directory -Path .\.sona\receipts | Out-Null
 ```
@@ -95,11 +102,13 @@ Mode requires it to exist before publishing a receipt.
 
 ```powershell
 sona guardian init --project-root .
-sona guardian verify --project-root .
+sona guardian check --project-root .
+sona guardian explain --project-root .
 ```
 
-Do not continue unless initialization reports `status: "initialized"` and
-verification reports `status: "ok"`.
+Do not continue unless initialization reports `initialized` (or the safe
+`already-initialized` no-op), check reports `status: "ok"`, and Proof Mode is
+reported as ready.
 
 ### 3. Create a unique receipt path
 
@@ -111,10 +120,10 @@ $receipt = Join-Path (Resolve-Path .\.sona\receipts) `
   ("hello-proof-{0}.json" -f [guid]::NewGuid())
 ```
 
-### 4. Run a Guardian-bound Native Proof
+### 4. Run Guardian-bound Proof Mode
 
 ```powershell
-sona-native proof .\hello.sona `
+sona proof .\hello.sona `
   --receipt $receipt `
   --engine native `
   --guardian-root . `
@@ -132,7 +141,9 @@ Before executing the program, Native Core:
 2. safely reads `.sona/guardian/baseline.json` and `trusted_config.json`;
 3. confirms the program is inside that project;
 4. confirms its exact source hash is tracked by the active baseline; and
-5. builds a redacted Guardian anchor.
+5. validates the canonical trusted capability policy;
+6. intersects capability requests with Guardian's trusted decisions; and
+7. builds a redacted Guardian anchor.
 
 If any binding check fails, Native Core emits `PROOF-008`, does not execute the
 program, and does not publish a receipt.
@@ -145,6 +156,8 @@ The receipt's `guardian` member contains only:
   "baseline_snapshot_id": "...",
   "baseline_sha256": "sha256:...",
   "trusted_config_sha256": "sha256:...",
+  "policy_sha256": "sha256:...",
+  "policy_enforced": true,
   "program_baseline": "tracked"
 }
 ```
@@ -167,7 +180,7 @@ Expected result:
 ```json
 {
   "status": "verified",
-  "message": "Native Proof receipt matches this Guardian baseline."
+  "message": "Proof Mode receipt matches this Guardian baseline and declared policy binding."
 }
 ```
 
@@ -235,7 +248,8 @@ an attestation and does not appear as one.
 Rejected, noncanonical, wrongly bound, or unsupported receipts never reach a
 provider.
 
-The exact canonical review packet contains only:
+The exact canonical review packet contains verified, redacted facts only. Its
+shape is:
 
 ```json
 {
@@ -246,6 +260,43 @@ The exact canonical review packet contains only:
     "status": "ok",
     "exit_code": 0
   },
+  "runtime_evidence": {
+    "sona_version": "0.15.5",
+    "program": {
+      "kind": "source",
+      "source": {"sha256": "sha256:...", "bytes": 123}
+    },
+    "engine": {
+      "name": "native",
+      "python_required": false,
+      "python_embedded": false,
+      "fallback_used": false
+    },
+    "capabilities": {
+      "console": true,
+      "filesystem_read": true,
+      "filesystem_write": false,
+      "network": false,
+      "process": false,
+      "environment": false
+    },
+    "execution": {
+      "status": "ok",
+      "exit_code": 0,
+      "stdout": {"sha256": "sha256:...", "bytes": 8},
+      "stderr": {"sha256": "sha256:...", "bytes": 0}
+    },
+    "effects": [
+      {
+        "sequence": 1,
+        "effect": "FS.READ",
+        "support": "SUPPORTED",
+        "scope": "filesystem",
+        "operation": "fs.read_text",
+        "outcome": "allowed"
+      }
+    ]
+  },
   "guardian": {
     "schema_id": "sona.guardian-proof-binding.schema-1",
     "baseline_snapshot_id": "...",
@@ -253,31 +304,44 @@ The exact canonical review packet contains only:
     "trusted_config_sha256": "sha256:...",
     "program_baseline": "tracked"
   },
-  "local_attestation_recorded": true
+  "local_attestation_recorded": true,
+  "observation_boundary": {
+    "effect_source": "instrumented-native-host-boundaries",
+    "agent_action": "not-represented",
+    "ai_request_causality": "not-established"
+  }
 }
 ```
 
 Sona returns `review_input_hash`, the SHA-256 identity of this exact packet. It
 does not provide project paths, receipt paths, source, selected workspace
 files, stdout/stderr bodies, environment values, or credentials as review
-context.
+context. Effect target fingerprints are also removed before provider routing.
+
+The packet lets a reviewer explain real capabilities and observed effects. It
+does not establish `AGENT.ACTION`, AI authorship, or a causal link from an AI
+request to the execution. Developer-intelligence task records are separate
+application metadata and are not Proof Mode receipts.
 
 Proof review writes no AI task receipt and does not mutate `.sona/guardian`.
 Provider-routing decisions may be written to the separate
 `.sona/governance/audit.jsonl` governance audit.
 
+See [Proof Mode and Trusted Automation](../spec/proof/automation.md) for the
+normative AI/evidence boundary.
+
 ## Order-sensitive behavior
 
 ### The program changes after Guardian initialization
 
-Native Proof with `--guardian-root` fails with `PROOF-008` before execution
+Proof Mode with `--guardian-root` fails with `PROOF-008` before execution
 because the exact source no longer matches the baseline. Review the change and
 intentionally establish a new baseline before proving it.
 
 ### The project drifts after receipt creation
 
-`guardian proof verify` can still report `verified` because the immutable
-receipt remains correctly bound to the trusted baseline. A new
+`guardian proof verify` can still report `verified` because the stored
+canonical receipt remains correctly bound to the selected local baseline. A new
 `guardian proof attest` rejects with `guardian-drift` until the live project is
 clean or intentionally re-baselined.
 
@@ -295,7 +359,7 @@ published canonical byte form.
 
 ### The receipt was created without `--guardian-root`
 
-It remains a standalone Native Proof receipt, but Guardian rejects it as
+It remains a standalone Proof Mode receipt, but Guardian rejects it as
 `unbound-receipt`. Generate a new receipt explicitly bound to the initialized
 project.
 
@@ -310,6 +374,7 @@ project.
 | `unsupported-receipt` | The file is not a schema-1 Native Core/no-Python Proof receipt |
 | `unbound-receipt` | The proof was not created with `--guardian-root` |
 | `guardian-binding-mismatch` | Receipt anchor does not match this Guardian baseline |
+| `guardian-policy-mismatch` | Receipt policy identity does not match the trusted Guardian capability policy |
 | `program-not-baseline-tracked` | Program identity is absent from the trusted baseline |
 | `execution-not-successful` | A failed execution cannot be attested |
 | `guardian-drift` | The current project is not clean enough for a new attestation |
@@ -320,9 +385,9 @@ project.
 For each release candidate:
 
 1. review project files and `sona.guard.json`;
-2. initialize or deliberately refresh the Guardian baseline;
-3. require `sona guardian verify` to return `ok`;
-4. generate a unique Guardian-bound Native Proof receipt;
+2. initialize Guardian without replacing existing state;
+3. require `sona guardian check` to return `ok` and Proof Mode readiness;
+4. generate a unique Guardian-bound Proof Mode receipt;
 5. require `sona guardian proof verify` to return `verified`;
 6. require `sona guardian proof attest` to return `attested`;
 7. optionally run deterministic or governed AI review;
@@ -337,12 +402,13 @@ the Python wheel or VSIX.
 
 ## Limits of the combined claim
 
-The combined workflow creates a strong local, tamper-evident-after-creation
-chain between reviewed project state and one Native Core execution. It is still
-not signer identity, trusted timestamping, remote attestation, hardware-backed
-integrity, malware detection, or protection against an actor able to replace
-both the receipt and local Guardian state.
+The combined workflow creates a self-consistent local chain between reviewed
+project state and one Native Core execution. It provides deterministic
+integrity checking, not authentication. It does not provide signer identity,
+trusted timestamping, cryptographic or remote attestation, hardware-backed
+integrity, malware detection, a protected trust anchor, or protection against
+an actor able to replace and re-hash both the receipt and local Guardian state.
 
-Continue with the standalone [Native Proof Mode guide](proof-mode.md), the
+Continue with the standalone [Proof Mode guide](proof-mode.md), the
 standalone [Guardian guide](guardian.md), or the field-level
-[Native Proof reference](../reference/native-proof-mode.md).
+[Proof Mode reference](../reference/native-proof-mode.md).

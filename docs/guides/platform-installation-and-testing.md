@@ -1,6 +1,6 @@
-# Platform Installation and Testing for Sona 0.15.4
+# Platform Installation and Testing for Sona 0.15.5
 
-Sona 0.15.4 uses one portable Python wheel, one Python source distribution,
+Sona 0.15.5 uses one portable Python wheel, one Python source distribution,
 and one VSIX across supported desktop operating systems. Native Core is
 different: every operating system and CPU architecture receives its own
 host-built, host-executed archive.
@@ -14,17 +14,17 @@ matching host.
 
 | Operating system | Architecture | Python CLI and Guardian | Native Core artifact |
 | --- | --- | --- | --- |
-| Windows | x86-64 | Python 3.11 and 3.12 | `sona-native-0.15.4-windows-x86_64.zip` |
-| Linux | x86-64 | Python 3.11 and 3.12 | `sona-native-0.15.4-linux-x86_64-musl.tar.gz` |
-| Linux | ARM64 | Python 3.11 and 3.12 | `sona-native-0.15.4-linux-aarch64-musl.tar.gz` |
-| macOS | Intel x86-64 | Python 3.11 and 3.12 | `sona-native-0.15.4-macos-x86_64.tar.gz` |
-| macOS | Apple Silicon ARM64 | Python 3.11 and 3.12 | `sona-native-0.15.4-macos-aarch64.tar.gz` |
+| Windows | x86-64 | Python 3.11 and 3.12 | `sona-native-0.15.5-windows-x86_64.zip` |
+| Linux | x86-64 | Python 3.11 and 3.12 | `sona-native-0.15.5-linux-x86_64-musl.tar.gz` |
+| Linux | ARM64 | Python 3.11 and 3.12 | `sona-native-0.15.5-linux-aarch64-musl.tar.gz` |
+| macOS | Intel x86-64 | Python 3.11 and 3.12 | `sona-native-0.15.5-macos-x86_64.tar.gz` |
+| macOS | Apple Silicon ARM64 | Python 3.11 and 3.12 | `sona-native-0.15.5-macos-aarch64.tar.gz` |
 
 The Linux artifacts use static musl linking. The two macOS artifacts are
 architecture-specific rather than a single universal binary, so users can
 verify exactly which executable they received.
 
-These names describe the intended 0.15.4 release matrix. Attach an artifact to
+These names describe the intended 0.15.5 release matrix. Attach an artifact to
 a GitHub Release only after the cross-platform workflow passes from the final
 release commit. A prepared filename is not certification evidence.
 
@@ -34,11 +34,11 @@ The same copies of these files are tested on every desktop target:
 
 | Artifact | Purpose |
 | --- | --- |
-| `sona_lang-0.15.4-py3-none-any.whl` | Python-compatible CLI, Guardian, LSP server, and compatibility runtime |
-| `sona_lang-0.15.4.tar.gz` | Python source distribution |
-| `sona-ai-native-programming-0.15.4.vsix` | Desktop VS Code extension |
-| `sona-0.15.4-platform-test-kit.zip` | Standard-library-only verifier and instructions |
-| `sona-0.15.4-release-manifest.json` | Source commit and host-tested platform matrix |
+| `sona_lang-0.15.5-py3-none-any.whl` | Python-compatible CLI, Guardian, LSP server, and compatibility runtime |
+| `sona_lang-0.15.5.tar.gz` | Python source distribution |
+| `sona-ai-native-programming-0.15.5.vsix` | Desktop VS Code extension |
+| `sona-0.15.5-platform-test-kit.zip` | Standard-library-only verifier and instructions |
+| `sona-0.15.5-release-manifest.json` | Source commit and host-tested platform matrix |
 | `SHA256SUMS.txt` | SHA-256 authority for the assembled release candidate |
 
 The VSIX is portable JavaScript, but its Run, Guardian, and intelligence
@@ -69,10 +69,10 @@ Use Python 3.11 or 3.12. Do not bypass Sona's `<3.13` package bound.
 
 ```bash
 python3 --version
-python3 -m venv .sona-0154-venv
-source .sona-0154-venv/bin/activate
+python3 -m venv .sona-0155-venv
+source .sona-0155-venv/bin/activate
 python -m pip install --upgrade pip
-python -m pip install ./sona_lang-0.15.4-py3-none-any.whl
+python -m pip install ./sona_lang-0.15.5-py3-none-any.whl
 sona --version
 ```
 
@@ -80,30 +80,30 @@ Extract the archive matching `uname -m`:
 
 ```bash
 uname -m
-tar -xzf sona-native-0.15.4-linux-x86_64-musl.tar.gz
+tar -xzf sona-native-0.15.5-linux-x86_64-musl.tar.gz
 chmod 755 ./sona
 ./sona --version
 ```
 
 For ARM64, substitute
-`sona-native-0.15.4-linux-aarch64-musl.tar.gz`.
+`sona-native-0.15.5-linux-aarch64-musl.tar.gz`.
 
 Install the VSIX when desktop VS Code is available:
 
 ```bash
-code --install-extension ./sona-ai-native-programming-0.15.4.vsix
+code --install-extension ./sona-ai-native-programming-0.15.5.vsix
 ```
 
 Run the complete Python, Guardian, Native Proof, attestation, and deterministic
 review test:
 
 ```bash
-python -m zipfile -e sona-0.15.4-platform-test-kit.zip ./sona-test-kit
-python ./sona-test-kit/sona-0.15.4-platform-test-kit/verify.py verify \
-  --wheel ./sona_lang-0.15.4-py3-none-any.whl \
-  --sdist ./sona_lang-0.15.4.tar.gz \
-  --vsix ./sona-ai-native-programming-0.15.4.vsix \
-  --native-archive ./sona-native-0.15.4-linux-x86_64-musl.tar.gz \
+python -m zipfile -e sona-0.15.5-platform-test-kit.zip ./sona-test-kit
+python ./sona-test-kit/sona-0.15.5-platform-test-kit/verify.py verify \
+  --wheel ./sona_lang-0.15.5-py3-none-any.whl \
+  --sdist ./sona_lang-0.15.5.tar.gz \
+  --vsix ./sona-ai-native-programming-0.15.5.vsix \
+  --native-archive ./sona-native-0.15.5-linux-x86_64-musl.tar.gz \
   --report ./sona-linux-verification.json
 ```
 
@@ -116,10 +116,10 @@ Create a Python 3.11 or 3.12 environment and install the same wheel:
 
 ```bash
 python3 --version
-python3 -m venv .sona-0154-venv
-source .sona-0154-venv/bin/activate
+python3 -m venv .sona-0155-venv
+source .sona-0155-venv/bin/activate
 python -m pip install --upgrade pip
-python -m pip install ./sona_lang-0.15.4-py3-none-any.whl
+python -m pip install ./sona_lang-0.15.5-py3-none-any.whl
 sona --version
 ```
 
@@ -127,12 +127,12 @@ Choose the Native Core archive using `uname -m`:
 
 ```bash
 uname -m
-tar -xzf sona-native-0.15.4-macos-aarch64.tar.gz
+tar -xzf sona-native-0.15.5-macos-aarch64.tar.gz
 chmod 755 ./sona
 ./sona --version
 ```
 
-Intel Macs use `sona-native-0.15.4-macos-x86_64.tar.gz`.
+Intel Macs use `sona-native-0.15.5-macos-x86_64.tar.gz`.
 
 The CI-built macOS preview artifacts are unsigned unless the release process
 adds Apple Developer ID signing and notarization. Check the SHA-256 manifest
@@ -147,13 +147,13 @@ the Native Core archive with the correct macOS filename.
 After installing the wheel and extracting the Native Core ZIP, run:
 
 ```powershell
-Expand-Archive .\sona-0.15.4-platform-test-kit.zip -DestinationPath .\sona-test-kit
+Expand-Archive .\sona-0.15.5-platform-test-kit.zip -DestinationPath .\sona-test-kit
 
-python .\sona-test-kit\sona-0.15.4-platform-test-kit\verify.py verify `
-  --wheel .\sona_lang-0.15.4-py3-none-any.whl `
-  --sdist .\sona_lang-0.15.4.tar.gz `
-  --vsix .\sona-ai-native-programming-0.15.4.vsix `
-  --native-archive .\sona-native-0.15.4-windows-x86_64.zip `
+python .\sona-test-kit\sona-0.15.5-platform-test-kit\verify.py verify `
+  --wheel .\sona_lang-0.15.5-py3-none-any.whl `
+  --sdist .\sona_lang-0.15.5.tar.gz `
+  --vsix .\sona-ai-native-programming-0.15.5.vsix `
+  --native-archive .\sona-native-0.15.5-windows-x86_64.zip `
   --report .\sona-windows-verification.json
 ```
 
@@ -177,7 +177,7 @@ attestation, a trusted timestamp, or hardware-backed identity.
 
 ## Android
 
-Android is experimental in 0.15.4, not a supported Native Core release target.
+Android is experimental in 0.15.5, not a supported Native Core release target.
 
 The least misleading evaluation path is a Termux-like environment with Python
 3.11 or 3.12. If the available Python is 3.13 or newer, stop rather than using
@@ -186,10 +186,10 @@ The least misleading evaluation path is a Termux-like environment with Python
 After installing the wheel, run the portable Python and Guardian subset:
 
 ```bash
-python -m zipfile -e sona-0.15.4-platform-test-kit.zip ./sona-test-kit
-python ./sona-test-kit/sona-0.15.4-platform-test-kit/verify.py verify \
+python -m zipfile -e sona-0.15.5-platform-test-kit.zip ./sona-test-kit
+python ./sona-test-kit/sona-0.15.5-platform-test-kit/verify.py verify \
   --python-only \
-  --wheel ./sona_lang-0.15.4-py3-none-any.whl \
+  --wheel ./sona_lang-0.15.5-py3-none-any.whl \
   --report ./sona-android-python-verification.json
 ```
 
@@ -204,7 +204,7 @@ execution, Guardian integration, or mobile support.
 
 ## iOS and iPadOS
 
-Sona 0.15.4 does not provide an installable iOS CLI, `.ipa`, or App Store
+Sona 0.15.5 does not provide an installable iOS CLI, `.ipa`, or App Store
 package. iOS requires an application wrapper, code signing, provisioning,
 sandbox-aware filesystem design, and device or simulator tests. A normal
 desktop `pip install`, VSIX, or terminal binary distribution is not an honest
@@ -218,7 +218,7 @@ instead of trying to ship the desktop CLI unchanged.
 
 ## GitHub Actions release gate
 
-`.github/workflows/release-platforms-0154.yml` builds without publishing. It:
+`.github/workflows/release-platforms-0155.yml` builds without publishing. It:
 
 1. builds and inspects the wheel, sdist, and VSIX once;
 2. builds each Native Core archive on its matching host;
