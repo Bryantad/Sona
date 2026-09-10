@@ -34,6 +34,22 @@ DIAGNOSTIC_IDS = {
     "guardian_failure": "SONA-GUARD-001",
     "guardian_drift": "SONA-GUARD-002",
     "guardian_read_only": "SONA-GUARD-003",
+    "native_launch_unavailable": "SONA-NATIVE-LAUNCH-001",
+    "native_version_invalid": "SONA-NATIVE-LAUNCH-002",
+    "native_version_mismatch": "SONA-NATIVE-LAUNCH-003",
+    "native_version_timeout": "SONA-NATIVE-LAUNCH-004",
+    "native_delegation_recursion": "SONA-NATIVE-LAUNCH-005",
+    "guide_unknown_diagnostic": "SONA-GUIDE-001",
+    "guide_invalid_request": "SONA-GUIDE-002",
+    "guide_stale_edit": "SONA-GUIDE-003",
+    "guide_fix_unavailable": "SONA-GUIDE-004",
+    "guide_profile_invalid": "SONA-GUIDE-005",
+    "guide_profile_write": "SONA-GUIDE-006",
+    "example_unknown": "SONA-EXAMPLE-001",
+    "example_catalog_invalid": "SONA-EXAMPLE-002",
+    "example_execution_unavailable": "SONA-EXAMPLE-003",
+    "example_execution_limit": "SONA-EXAMPLE-004",
+    "example_check_failed": "SONA-EXAMPLE-005",
 }
 
 

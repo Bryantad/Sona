@@ -78,7 +78,7 @@ def classify_effect(scope: str, operation: str) -> tuple[str, str] | None:
     return EFFECT_CLASSIFICATIONS.get((scope, operation))
 
 
-@dataclass(frozen=True)
+@dataclass
 class ProofDiagnostic(Exception):
     """A safe, user-facing Proof verification diagnostic."""
 

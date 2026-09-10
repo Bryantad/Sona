@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.15.6
+
+- Added the deterministic Sona Guide layer for Guided, Balanced, and Expert
+  explanations, focused diagnostics, preview-first quick fixes, local learning
+  profiles, executable examples, and lessons.
+- Added Guide-backed CLI, LSP, and VS Code workflows while preserving the
+  canonical diagnostic and Proof Mode / Guardian fact contracts.
+- Hardened Native executable selection, version preflight, runtime diagnostic
+  handoff, and standard-library migration guidance.
+- Added release-candidate packaging, acceptance auditing, and platform
+  certification workflow definitions for portable artifacts and Native Core.
+- Preserved Sona syntax, schema-1 Proof Mode compatibility, local-only
+  learning state, and the explicit limits on authentication and attestation.
+
 ## 0.15.5
 
 - Added shared `sona proof verify` and `sona proof inspect` commands with

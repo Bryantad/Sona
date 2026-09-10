@@ -175,7 +175,7 @@ impl Vm {
                 "E0104",
                 "SONA-STDLIB-001",
                 format!("Native host export '{name}' is not implemented."),
-                "Use an export listed in the 0.15.5 native support matrix.",
+                "Use an export listed in the 0.15.6 native support matrix.",
             )),
         };
         self.record_host_effect(name, &args, &result);
@@ -411,7 +411,7 @@ impl Vm {
     fn http_unavailable(&self, name: &str, args: &[Value]) -> SonaResult<Value> {
         arity(name, args, 1, 2)?;
         let message = if self.config.capabilities.network {
-            "Native HTTP transport is unavailable in Sona 0.15.5."
+            "Native HTTP transport is unavailable in Sona 0.15.6."
         } else {
             "Native network access requires --allow-network."
         };
@@ -419,7 +419,7 @@ impl Vm {
             "E0600",
             "SONA-HTTP-005",
             message,
-            "Use Python compatibility for HTTP in 0.15.5 or grant network access in a future supported Native Core release.",
+            "Use Python compatibility for HTTP in 0.15.6 or grant network access in a future supported Native Core release.",
         ))
     }
 

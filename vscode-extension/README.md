@@ -1,4 +1,4 @@
-# Sona: AI-Native Programming with Cognitive Accessibility
+# Sona: Cognitive Developer Experience
 
 [![Source Version](https://img.shields.io/github/v/tag/Bryantad/Sona?label=source&sort=semver)](https://github.com/Bryantad/Sona/tags)
 [![Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/Waycoreinc.sona-ai-native-programming?label=marketplace)](https://marketplace.visualstudio.com/items?itemName=Waycoreinc.sona-ai-native-programming)
@@ -7,9 +7,9 @@
 
 Visual Studio Code support for the Sona programming language.
 
-## What's New in 0.15.5
+## What's New in 0.15.6
 
-Sona `0.15.5` adds a CLI-backed **Proof Mode Explorer** to the
+Sona `0.15.6` adds a CLI-backed **Proof Mode Explorer** to the
 Sona activity bar. It displays execution status, shared-verifier status, Native
 Core identity, capabilities, observed effects, Guardian binding, and redacted
 evidence identities.
@@ -80,7 +80,7 @@ See the full quickstart in `docs/QUICKSTART.md`.
 - REPL integration for interactive exploration.
 - Optional AI-assisted explain and suggestion commands.
 - Preview Sona AI Console with local Sona-owned chat, selectable agent modes, and provider-ready routing.
-- Cognitive accessibility workflows including Focus Mode, Working Memory, and user profiles.
+- Sona Guide workflows for focused diagnostics, explanation detail, and local learning examples.
 
 ## Language Server
 
@@ -92,7 +92,7 @@ Set `sona.cli.pythonPath` when you want a specific interpreter. When that
 setting is not explicitly configured, the extension checks the workspace
 `.venv` before using `python` from `PATH`.
 
-Sona `0.15.5` supports canonical diagnostics, local and stdlib completion,
+Sona `0.15.6` supports canonical diagnostics, local and stdlib completion,
 known-symbol hover, current-document definition, and top-level document
 symbols. References, rename, cross-file indexing, and LSP formatting remain
 deferred and are not advertised by the server. The **Sona: Format Code** command
@@ -121,7 +121,7 @@ is a separate CLI-backed command, not an LSP formatting capability.
 {
   "sona.cli.pythonPath": "python",
   "sona.cli.timeout": 30000,
-  "sona.userProfile": "neurotypical",
+  "sona.displayPreference": "standard",
   "sona.ai.autoSetup": true,
   "sona.ai.defaultAgent": "sona",
   "sona.ai.qwen.enabled": false,
@@ -135,7 +135,7 @@ is a separate CLI-backed command, not an LSP formatting capability.
 
 Sona AI Console is a preview feature. Claude and Codex are placeholder agent modes unless a proper provider integration is added; the extension does not control external AI extensions.
 
-For receipts produced by the new 0.15.5 Native runtime, the explorer also
+For receipts produced by the new 0.15.6 Native runtime, the explorer also
 shows the validated Native executable digest and an optional build-supplied
 source revision. These are correlation identities from the shared verifier,
 not authenticated provenance.
@@ -153,7 +153,7 @@ invokes Python in safe-path mode and does not add the workspace to
 
 ## Release Notes
 
-- [0.15.5 release notes](https://github.com/Bryantad/Sona/blob/main/RELEASE_NOTES_v0.15.5.md)
+- [0.15.6 release notes](https://github.com/Bryantad/Sona/blob/main/RELEASE_NOTES_v0.15.6.md)
 
 ## License
 

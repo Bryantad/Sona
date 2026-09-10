@@ -1,6 +1,6 @@
 # Proof Compatibility
 
-Sona 0.15.5 preserves schema-1 compatibility with Sona 0.15.4 Proof Mode
+Sona 0.15.6 preserves schema-1 compatibility with Sona 0.15.4 Proof Mode
 receipts.
 
 Compatibility rules:

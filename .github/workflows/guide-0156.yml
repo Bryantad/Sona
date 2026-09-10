@@ -1,0 +1,44 @@
+name: Sona Guide parity
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, codex/0.15.6-guide]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  guide:
+    name: Guide CLI and editor on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Install the source runtime and test runner
+        run: python -m pip install -e . pytest build setuptools wheel
+      - name: Install the locked Native toolchain for executable lessons
+        uses: dtolnay/rust-toolchain@1.94.0
+      - name: Check Guide, LSP, every catalog example, trusted workflows, docs and installed packages
+        run: python -m pytest tests/guide tests/lsp tests/examples -q -ra
+      - name: Compile and test the editor against that runtime
+        working-directory: vscode-extension
+        env:
+          SONA_TEST_PYTHON: python
+        run: |
+          npm ci --omit=optional --no-audit --fund=false
+          npm run compile
+          npm test
+          npm run test:guide

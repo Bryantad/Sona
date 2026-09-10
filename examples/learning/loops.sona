@@ -1,0 +1,6 @@
+let total = 0;
+for value in [1, 2, 3] {
+    print(value);
+    total = total + value;
+}
+print("Total: " + total);

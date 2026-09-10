@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "revision": 1,
+  "examples": [
+    {"name":"hello","source":"hello.sona","assets":[],"runtime":"python","concept":null,"stdout":"Hello from Sona 0.15.6!\n"},
+    {"name":"variables","source":"variables_math.sona","assets":[],"runtime":"python","concept":"variables","stdout":"Apples: 4\nOranges: 3\nTotal fruit: 7\n"},
+    {"name":"functions","source":"functions.sona","assets":[],"runtime":"python","concept":"functions","stdout":"Hello, Sona developer!\n2 + 3 = 5\n"},
+    {"name":"control-flow","source":"control_flow.sona","assets":[],"runtime":"python","concept":null,"stdout":"Grade: B\nCountdown: 3\nCountdown: 2\nCountdown: 1\nControl flow complete\n"},
+    {"name":"math","source":"stdlib_math.sona","assets":[],"runtime":"python","concept":"modules","stdout":"Radius: 3\nCircle area: 28.274333882308138\n"},
+    {"name":"string","source":"stdlib_string.sona","assets":[],"runtime":"python","concept":null,"stdout":"Name: Sona Developer\nHas Sona: True\n"},
+    {"name":"json","source":"stdlib_json.sona","assets":[],"runtime":"python","concept":null,"stdout":"{\"language\": \"Sona\", \"version\": \"0.15.6\"}\nValid JSON: True\n"},
+    {"name":"filesystem","source":"stdlib_fs.sona","assets":["hello.sona"],"runtime":"python","concept":null,"stdout":"Sample exists: True\nSample is file: True\n"},
+    {"name":"calculator","source":"calculator.sona","assets":[],"runtime":"python","concept":null,"stdout":"Add: 16\nSubtract: 8\nMultiply: 48\nDivide: 3.0\n"},
+    {"name":"conditions","source":"learning/conditions.sona","assets":[],"runtime":"python","concept":"conditions","stdout":"Ready\n"},
+    {"name":"loops","source":"learning/loops.sona","assets":[],"runtime":"python","concept":"loops","stdout":"1\n2\n3\nTotal: 6\n"},
+    {"name":"collections","source":"learning/collections.sona","assets":[],"runtime":"python","concept":"collections","stdout":"Sona\n5\n"},
+    {"name":"files","source":"learning/files.sona","assets":[],"runtime":"python","concept":"files","stdout":"Sona file practice\n"},
+    {"name":"guardian","source":"learning/guardian.sona","assets":[],"runtime":"guardian-proof","concept":"guardian","stdout":""},
+    {"name":"proof-mode","source":"learning/proof-mode.sona","assets":[],"runtime":"native-proof","concept":"proof-mode","stdout":"Proof Mode is working\n"}
+  ]
+}

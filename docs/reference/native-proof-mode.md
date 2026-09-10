@@ -200,7 +200,7 @@ Python/native semantic parity. Guardian state is not a protected trust anchor;
 a local user who can alter and re-hash both receipt and Guardian state is
 outside this trust claim.
 
-New 0.15.5 producers also identify the running Native CLI executable by
+New 0.15.6 producers also identify the running Native CLI executable by
 SHA-256 and byte count. Release builds may include their full build-supplied
 Git revision. `sona proof inspect` displays both after shared verification.
 They are correlation fields inside the self-hashed receipt, not authenticated

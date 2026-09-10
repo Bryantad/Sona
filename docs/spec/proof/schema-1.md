@@ -55,7 +55,7 @@ baseline fields and validates policy identity when the extension is present.
 
 ## Optional Native runtime identity
 
-New 0.15.5 Native producers add `engine.runtime_identity` without changing the
+New 0.15.6 Native producers add `engine.runtime_identity` without changing the
 required schema-1 engine fields. The object contains:
 
 - `native_binary.sha256`: SHA-256 of the running Native CLI executable;

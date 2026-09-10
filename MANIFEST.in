@@ -10,7 +10,10 @@ prune dist-pypi
 prune dist-pypi-*
 prune dist-readme-check
 prune docs
-prune examples
+include examples/hello.sona examples/variables_math.sona examples/functions.sona
+include examples/control_flow.sona examples/stdlib_math.sona examples/stdlib_string.sona
+include examples/stdlib_json.sona examples/stdlib_fs.sona examples/calculator.sona
+recursive-include examples/learning *.sona
 prune extensions
 prune htmlcov
 prune planning

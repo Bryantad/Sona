@@ -24,6 +24,6 @@ requests, timeouts, transports, body limits, and capability denials use
 `SONA-HTTP-001` through `SONA-HTTP-005`. Diagnostic URLs omit credentials and
 queries.
 
-Native Core 0.15.5 can import `http`, but every request returns the stable
+Native Core 0.15.6 can import `http`, but every request returns the stable
 `SONA-HTTP-005` unavailable diagnostic. `--allow-network` grants policy only;
 it does not claim a native transport implementation.

@@ -68,8 +68,8 @@ sona-native --version
 Expected shapes:
 
 ```text
-Sona 0.15.5
-Sona native 0.15.5
+Sona 0.15.6
+Sona native 0.15.6
 ```
 
 The user-facing `sona proof` command delegates generation to `sona-native` on
@@ -261,7 +261,7 @@ shape is:
     "exit_code": 0
   },
   "runtime_evidence": {
-    "sona_version": "0.15.5",
+    "sona_version": "0.15.6",
     "program": {
       "kind": "source",
       "source": {"sha256": "sha256:...", "bytes": 123}

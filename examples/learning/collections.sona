@@ -1,0 +1,4 @@
+let values = [5, 10, 20];
+let project = {"name": "Sona"};
+print(project["name"]);
+print(values[0]);

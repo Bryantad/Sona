@@ -1,6 +1,6 @@
-# Packages in Sona v0.15.5 (local only)
+# Packages in Sona v0.15.6 (local only)
 
-Sona `0.15.5` does not ship a public package registry. This release hardens
+Sona `0.15.6` does not ship a public package registry. This release hardens
 the existing local-path Sona Package Manager (SPM)
 without adding downloads, publishing, or package signing.
 
@@ -38,13 +38,13 @@ existing manifest.
   "devDependencies": {},
   "name": "my-project",
   "sona": {
-    "minVersion": "0.15.5"
+    "minVersion": "0.15.6"
   },
   "spm": {
     "modulesDir": ".sona_modules",
     "schema": 2
   },
-  "version": "0.15.5"
+  "version": "0.15.6"
 }
 ```
 

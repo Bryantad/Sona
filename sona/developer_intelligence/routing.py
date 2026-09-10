@@ -52,7 +52,7 @@ def route(request: TaskRequest, registry: ModelRegistry, config: dict[str, Any],
             candidates = [item for _index, item in sorted(indexed, key=lambda pair: (pair[1].locality != "local", pair[0]))]
     for item in candidates:
         if item.provider_id in {"claude", "codex"}:
-            explanations.append(f"{item.model_id}: provider is unavailable in Sona 0.15.5")
+            explanations.append(f"{item.model_id}: provider is unavailable in Sona 0.15.6")
             continue
         if not item.enabled:
             explanations.append(f"{item.model_id}: disabled")

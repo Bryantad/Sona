@@ -135,7 +135,7 @@ def evaluate(
 ) -> GovernanceDecision:
     mode = policy.get("mode", "enforce")
     if capability in {"read_secrets", "run_shell", "install_packages"}:
-        action, reason = "deny", f"{capability} is denied by the Sona 0.15.5 hard safety boundary."
+        action, reason = "deny", f"{capability} is denied by the Sona 0.15.6 hard safety boundary."
     elif mode == "off":
         action, reason = "not_applicable", "Governance mode is off."
     else:

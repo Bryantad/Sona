@@ -1,4 +1,4 @@
-# Sona 0.15.5 Standard Library
+# Sona 0.15.6 Standard Library
 
 The certified foundation has eleven public modules: `collection`, `date`,
 `fs`, `http`, `io`, `json`, `math`, `random`, `stdin`, `string`, and `time`.

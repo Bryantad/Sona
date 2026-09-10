@@ -9,6 +9,7 @@
     "outDir": "out",
     "rootDir": "src",
     "sourceMap": false,
+    "newLine": "lf",
     "strict": true,
     "noImplicitAny": false,
     "esModuleInterop": true,

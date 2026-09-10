@@ -312,7 +312,7 @@ def test_crypto_preview_wrapper_behavior():
 
 def test_manifest_source_and_stability_classifications():
     data, entries = manifest_entries()
-    assert data["version"] == "0.15.5"
+    assert data["version"] == "0.15.6"
     assert data["manifest_hash"] == "0154_stdlib_runtime_capability"
     assert {entry["source"] for entry in data["modules"]} <= {"sona", "sona+intrinsic", "intrinsic"}
 

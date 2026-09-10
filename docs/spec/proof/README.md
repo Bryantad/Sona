@@ -1,7 +1,7 @@
 # Proof Mode Specification
 
 This directory defines the Proof Mode schema and verification contracts
-used by Sona 0.15.5 foundation work.
+used by Sona 0.15.6 foundation work.
 
 Proof Mode receipts are local execution evidence. They are not signatures,
 identity assertions, trusted timestamps, operating-system integrity claims,

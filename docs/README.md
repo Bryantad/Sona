@@ -1,6 +1,6 @@
 # Sona Documentation
 
-This folder contains the current user-facing documentation for Sona `0.15.5`.
+This folder contains the current user-facing documentation for Sona `0.15.6`.
 Historical planning notes, implementation journals, test reports, and retired
 feature drafts are intentionally not part of the published branch structure.
 
@@ -15,7 +15,7 @@ feature drafts are intentionally not part of the published branch structure.
 - [Using Proof Mode and Guardian Together](guides/proof-and-guardian.md)
 - [Platform Installation and Testing](guides/platform-installation-and-testing.md)
 - [Proof Mode Technical Reference](reference/native-proof-mode.md)
-- [0.15.5 Standard Library Catalog](reference/stdlib/README.md)
+- [0.15.6 Standard Library Catalog](reference/stdlib/README.md)
 - [Accessibility Reference](ACCESSIBILITY_REFERENCE.md)
 - [Guardian Reference](GUARDIAN_REFERENCE.md)
 - [Diagnostics Guide](errors/v0.14-diagnostics.md)
@@ -24,10 +24,14 @@ feature drafts are intentionally not part of the published branch structure.
 
 ## Roadmaps
 
-Sona `0.15.5` keeps Python as the compatibility engine and ships Native Core as
+- [0.15.6 Sona Guide development](guides/sona-guide.md)
+- [0.15.6 executable learning and installed examples](guides/learning-and-examples.md)
+- [Native command ownership and version checks](guides/native-command-selection.md)
+
+Sona `0.15.6` keeps Python as the compatibility engine and ships Native Core as
 a bounded preview. LLVM code generation, self-hosting, package publishing,
 cross-file LSP indexing, formatter support, debugger support, and benchmark
-expansion remain staged roadmap items, not completed `0.15.5` features.
+expansion remain staged roadmap items, not completed `0.15.6` features.
 
 - [Native Independence](roadmap/SONA_NATIVE_INDEPENDENCE.md)
 - [Compiler Architecture](compiler/ARCHITECTURE.md)
@@ -36,10 +40,10 @@ expansion remain staged roadmap items, not completed `0.15.5` features.
 - [Runtime Independence Plan](compiler/RUNTIME_INDEPENDENCE_PLAN.md)
 - [Package Manager Roadmap](spm/SONA_PACKAGE_MANAGER_ROADMAP.md)
 - [Trusted Workflow Examples](../examples/trusted-workflows/README.md)
-- [Deployment Contract Investigation](plans/0.15.5-deployment-contract.md)
+- [Deployment Contract Investigation](plans/0.15.6-deployment-contract.md)
 - [Proof Mode Assurance Levels](spec/proof/assurance.md)
-- [0.15.5 Trust Claims Audit](plans/0.15.5-trust-claims-audit.md)
-- [0.15.5 Runtime Identity Review](plans/0.15.5-runtime-identity-review.md)
+- [0.15.6 Trust Claims Audit](plans/0.15.6-trust-claims-audit.md)
+- [0.15.6 Runtime Identity Review](plans/0.15.6-runtime-identity-review.md)
 - [LSP Roadmap](devex/LSP_ROADMAP.md)
 - [Formatter Roadmap](devex/FORMATTER_ROADMAP.md)
 - [Debugger Roadmap](devex/DEBUGGER_ROADMAP.md)
@@ -54,6 +58,7 @@ expansion remain staged roadmap items, not completed `0.15.5` features.
 ## Documentation Rules
 
 - README and Quickstart examples must use local files, not repository-only paths.
-- Repository examples are source-checkout validation assets only.
+- Manifest-declared examples are source-checkout validation assets and packaged
+  learning resources. Other historical examples remain checkout-only.
 - Planning files, test reports, and implementation notes stay local unless they
   become stable public documentation.

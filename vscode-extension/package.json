@@ -1,8 +1,8 @@
 {
   "name": "sona-ai-native-programming",
-  "displayName": "Sona: AI-Native Programming with Cognitive Accessibility",
+  "displayName": "Sona: Cognitive Developer Experience",
   "description": "AI-native programming with Sona diagnostics, a CLI-backed Proof Mode Explorer, Guardian workflows, local runtime integration, and the preview Sona AI Console.",
-  "version": "0.15.5",
+  "version": "0.15.6",
   "publisher": "Waycoreinc",
   "icon": "assets/icon.png",
   "engines": {
@@ -21,13 +21,11 @@
     "cognitive",
     "cognitive-programming-language",
     "cognitive programming language",
-    "accessibility",
     "guardian",
     "proof",
     "release-evidence",
-    "adhd",
-    "dyslexia",
-    "neurotypical"
+    "guide",
+    "learning"
   ],
   "repository": {
     "type": "git",
@@ -72,6 +70,12 @@
       ]
     },
     "commands": [
+      { "command": "sona.guide.explainDiagnostic", "title": "Explain Diagnostic (Offline)", "category": "Sona Guide" },
+      { "command": "sona.guide.explainSelection", "title": "Explain Selection (Offline)", "category": "Sona Guide" },
+      { "command": "sona.guide.focus", "title": "Show Focused Diagnostics", "category": "Sona Guide" },
+      { "command": "sona.guide.setup", "title": "Choose Guidance Detail", "category": "Sona Guide" },
+      { "command": "sona.guide.explainProof", "title": "Explain Proof Mode Receipt (Offline)", "category": "Sona Guide" },
+      { "command": "sona.guide.explainGuardian", "title": "Explain Guardian State (Offline)", "category": "Sona Guide" },
       {
         "command": "sona.aiConsole.focus",
         "title": "Sona: Open AI Console",
@@ -122,7 +126,7 @@
       },
       {
         "command": "sona.selectUserProfile",
-        "title": "Select User Profile",
+        "title": "Select Display Preference",
         "category": "Sona",
         "icon": "$(person)"
       },
@@ -237,6 +241,9 @@
     ],
     "menus": {
       "commandPalette": [
+        { "command": "sona.guide.explainDiagnostic", "when": "editorLangId == sona" },
+        { "command": "sona.guide.explainSelection", "when": "editorLangId == sona && editorHasSelection" },
+        { "command": "sona.guide.focus", "when": "editorLangId == sona" },
         {
           "command": "sona.aiConsole.focus",
           "when": "true"
@@ -390,6 +397,9 @@
         }
       ],
       "sona.contextMenu": [
+        { "command": "sona.guide.explainDiagnostic", "when": "editorLangId == sona", "group": "guide@1" },
+        { "command": "sona.guide.explainSelection", "when": "editorLangId == sona && editorHasSelection", "group": "guide@2" },
+        { "command": "sona.guide.focus", "when": "editorLangId == sona", "group": "guide@3" },
         {
           "command": "sona.run",
           "when": "editorLangId == sona",
@@ -436,6 +446,26 @@
     "configuration": {
       "title": "Sona",
       "properties": {
+        "sona.guide.mode": {
+          "type": "string", "enum": ["guided", "balanced", "expert"], "default": "guided",
+          "description": "Guidance detail. Explicit settings override .sona/learning.json; unset settings allow project preferences and familiarity-based scaffolding."
+        },
+        "sona.guide.style": {
+          "type": "string", "enum": ["simple", "visual", "technical"], "default": "simple",
+          "description": "Offline explanation style. Visual uses deterministic text diagrams."
+        },
+        "sona.guide.density": {
+          "type": "string", "enum": ["focused", "normal", "complete"], "default": "normal",
+          "description": "Guide Focus presentation density. The Problems list and complete JSON retain all canonical diagnostics."
+        },
+        "sona.guide.quiet": {
+          "type": "boolean", "default": false,
+          "description": "Show error-severity diagnostics in Guide Focus; preserve all diagnostics in complete JSON and the Problems list."
+        },
+        "sona.guide.showSetup": {
+          "type": "boolean", "default": true,
+          "description": "Offer an optional guidance-detail choice on first use of a Sona document."
+        },
         "sona.cli.pythonPath": {
           "type": "string",
           "default": "python",
@@ -446,19 +476,35 @@
           "default": 30000,
           "description": "CLI command timeout in milliseconds"
         },
+        "sona.displayPreference": {
+          "type": "string",
+          "enum": [
+            "standard",
+            "focused",
+            "readable"
+          ],
+          "default": "standard",
+          "description": "Local editor presentation preference. This is not a diagnosis and does not change Sona Guide facts.",
+          "enumDescriptions": [
+            "Default editor presentation",
+            "Reduced visual noise and fewer interruptions",
+            "More spacious text-oriented presentation"
+          ]
+        },
         "sona.userProfile": {
           "type": "string",
           "enum": [
-            "neurotypical",
-            "adhd",
-            "dyslexia"
+            "standard",
+            "focused",
+            "readable"
           ],
-          "default": "neurotypical",
-          "description": "UI profile for accessibility optimization",
+          "default": "standard",
+          "description": "Deprecated compatibility alias for sona.displayPreference. This is not a diagnosis and does not select Guide detail.",
+          "deprecationMessage": "Use sona.displayPreference instead.",
           "enumDescriptions": [
-            "Standard UI/UX for typical users",
-            "High-contrast, minimal distractions for ADHD",
-            "Dyslexia-friendly fonts and enhanced readability"
+            "Default editor presentation",
+            "Reduced visual noise and fewer interruptions",
+            "More spacious text-oriented presentation"
           ]
         },
         "sona.ai.autoSetup": {
@@ -535,7 +581,8 @@
     "compile": "tsc -p . && npm run bundle",
     "bundle": "esbuild src/extension.ts --bundle --minify --platform=node --format=cjs --target=node20 --supported:template-literal=false --external:vscode --outfile=out/extension.js --log-level=warning",
     "watch": "tsc -watch -p .",
-    "test": "node scripts/smoke-ai-console.js"
+    "test": "node scripts/smoke-ai-console.js",
+    "test:guide": "node scripts/smoke-guide.js"
   },
   "dependencies": {
     "vscode-languageclient": "10.1.0"

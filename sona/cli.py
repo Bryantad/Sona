@@ -1,5 +1,5 @@
 """
-Sona v0.15.5 Command Line Interface with AI Integration
+Sona v0.15.6 Command Line Interface with AI Integration
 
 Enhanced CLI with profile, benchmark, suggest, and explain commands
 powered by GPT-2 and cognitive assistance features.
@@ -15,6 +15,8 @@ import traceback
 from dataclasses import dataclass
 from pathlib import Path
 from time import perf_counter
+
+from .native_launcher import NativeProofLaunchError, probe_native_version
 
 # Import type configuration
 from .type_config import configure_types, get_type_config, get_type_logger
@@ -141,22 +143,17 @@ KNOWN_COMMANDS = {
     'model',
     'govern',
     'guardian',
+    'guide',
     'proof',
+    'why',
+    'fix',
+    'focus',
 }
 
 
 _NATIVE_PROOF_BINARY_ENV = "SONA_NATIVE_BINARY"
 _NATIVE_PROOF_DELEGATION_GUARD = "_SONA_NATIVE_PROOF_DELEGATED"
 _PYTHON_PROOF_ACTIONS = {"verify", "inspect"}
-
-
-class NativeProofLaunchError(Exception):
-    """A redacted failure to locate or start the Native Proof producer."""
-
-    def __init__(self, message: str, hint: str):
-        super().__init__(message)
-        self.message = message
-        self.hint = hint
 
 
 def _resolve_native_proof_binary(environment: dict[str, str] | None = None) -> Path:
@@ -174,7 +171,7 @@ def _resolve_native_proof_binary(environment: dict[str, str] | None = None) -> P
             )
         try:
             candidate = Path(expanded).resolve(strict=True)
-        except OSError as exc:
+        except (OSError, ValueError, RuntimeError) as exc:
             raise NativeProofLaunchError(
                 "The configured Native Core executable is unavailable.",
                 f"Set {_NATIVE_PROOF_BINARY_ENV} to a regular Native Core "
@@ -194,7 +191,13 @@ def _resolve_native_proof_binary(environment: dict[str, str] | None = None) -> P
                 "Install sona-native on PATH or set "
                 f"{_NATIVE_PROOF_BINARY_ENV} to the extracted Native Core executable.",
             )
-        candidate = Path(resolved).resolve()
+        try:
+            candidate = Path(resolved).resolve(strict=True)
+        except (OSError, ValueError, RuntimeError) as exc:
+            raise NativeProofLaunchError(
+                "The PATH-selected Native Core executable is unavailable.",
+                "Check sona-native on PATH or set SONA_NATIVE_BINARY.",
+            ) from exc
 
     launcher = Path(sys.argv[0])
     try:
@@ -230,7 +233,8 @@ def _delegate_native_proof(
     environment = dict(os.environ if environment is None else environment)
     if environment.get(_NATIVE_PROOF_DELEGATION_GUARD) == "1":
         safe_error(
-            "SonaProofLaunchError: Native Proof delegation returned to the Python CLI."
+            "SonaProofLaunchError [SONA-NATIVE-LAUNCH-005]: "
+            "Native Proof delegation returned to the Python CLI."
         )
         safe_error(
             f"  hint: Set {_NATIVE_PROOF_BINARY_ENV} to the standalone "
@@ -239,8 +243,9 @@ def _delegate_native_proof(
         return 1
     try:
         binary = _resolve_native_proof_binary(environment)
+        probe_native_version(binary, SONA_VERSION, environment)
     except NativeProofLaunchError as exc:
-        safe_error(f"SonaProofLaunchError: {exc.message}")
+        safe_error(f"SonaProofLaunchError [{exc.diagnostic_id}]: {exc.message}")
         safe_error(f"  hint: {exc.hint}")
         return 1
 
@@ -253,7 +258,10 @@ def _delegate_native_proof(
             shell=False,
         )
     except OSError:
-        safe_error("SonaProofLaunchError: Native Core could not be started safely.")
+        safe_error(
+            "SonaProofLaunchError [SONA-NATIVE-LAUNCH-001]: "
+            "Native Core could not be started safely."
+        )
         safe_error(
             "  hint: Check the sona-native installation or "
             f"{_NATIVE_PROOF_BINARY_ENV} configuration."
@@ -984,7 +992,7 @@ ENHANCED_COMMANDS = None  # lazy-loaded mapping
 
 
 # Version information
-SONA_VERSION = "0.15.5"
+SONA_VERSION = "0.15.6"
 AI_FEATURES_VERSION = "1.0.0"
 DEFAULT_OFFLINE_MODEL = "qwen2.5-coder:7b"
 
@@ -1014,7 +1022,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
     parser = SonaArgumentParser(
         prog='sona',
         description=(
-            'Sona v0.15.5 - simple programs with optional execution evidence'
+            'Sona v0.15.6 - simple programs with optional execution evidence'
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
@@ -1051,12 +1059,177 @@ def create_argument_parser() -> argparse.ArgumentParser:
         help='Available commands',
     )
 
+    from .guide.models import DENSITIES, MODES, STYLES
+    from .guide.profile import FAMILIARITY_VALUES
+    from .learning_cli import add_learning_parsers
+
+    add_learning_parsers(subparsers)
+
+    why_parser = subparsers.add_parser(
+        'why', help='Explain a diagnostic using the offline Sona Guide catalog',
+    )
+    why_parser.add_argument('diagnostic_id', help='Exact identifier printed by Sona')
+    why_parser.add_argument('--mode', choices=MODES, default=None, help='Override the project guidance mode')
+    why_parser.add_argument('--style', choices=STYLES, default=None, help='Override the project explanation style')
+    why_parser.add_argument(
+        '--project-root',
+        default='.',
+        help='Project root used to read .sona/learning.json',
+    )
+    why_parser.add_argument(
+        '--no-profile',
+        action='store_true',
+        help='Ignore the project-local Sona Guide learning profile',
+    )
+    why_parser.add_argument('--json', action='store_true', help='Emit the Guide schema-1 response')
+
+    fix_parser = subparsers.add_parser(
+        'fix',
+        help='Preview or apply deterministic Sona Guide source edits',
+    )
+    fix_parser.add_argument('file', help='Sona source file to inspect')
+    fix_parser.add_argument(
+        '--rule',
+        choices=['auto', 'undefined-name', 'stdlib-api-migration'],
+        default='auto',
+        help='Fix rule to run; auto uses every safe rule with available context',
+    )
+    fix_parser.add_argument('--diagnostic-json', help='Path to a canonical diagnostic JSON file, or - for stdin')
+    fix_parser.add_argument('--diagnostic-id', help='Canonical diagnostic identifier for source-backed fixes')
+    fix_parser.add_argument('--name', help='Undefined name reported by the diagnostic')
+    fix_parser.add_argument('--message', help='Canonical diagnostic message')
+    fix_parser.add_argument('--line', type=int, help='One-based diagnostic start line')
+    fix_parser.add_argument('--column', type=int, help='One-based diagnostic start column')
+    fix_parser.add_argument('--end-line', type=int, help='One-based diagnostic end line')
+    fix_parser.add_argument('--end-column', type=int, help='One-based diagnostic end column')
+    fix_parser.add_argument('--legacy-code', help='Legacy E#### code, when available')
+    fix_parser.add_argument('--apply', action='store_true', help='Write the previewed edits if stale checks pass')
+    fix_parser.add_argument(
+        '--project-root',
+        default='.',
+        help='Project root used for successful fix learning updates',
+    )
+    fix_parser.add_argument(
+        '--no-profile-update',
+        action='store_true',
+        help='Do not update .sona/learning.json after a successful deterministic fix',
+    )
+    fix_parser.add_argument('--json', action='store_true', help='Emit the Guide fix schema-1 response')
+
+    focus_parser = subparsers.add_parser(
+        'focus',
+        help='Group canonical diagnostics with deterministic Focus Mode rules',
+    )
+    focus_parser.add_argument('file', nargs='?', help='Sona source file to check')
+    focus_parser.add_argument(
+        '--density',
+        choices=DENSITIES,
+        default=None,
+        help='Diagnostic density for presentation',
+    )
+    focus_parser.add_argument(
+        '--diagnostics-json',
+        help='Path to canonical diagnostic JSON, or - for stdin',
+    )
+    focus_parser.add_argument(
+        '--project-root',
+        default='.',
+        help='Project root used to read .sona/learning.json',
+    )
+    focus_parser.add_argument(
+        '--no-profile',
+        action='store_true',
+        help='Ignore the project-local Sona Guide learning profile',
+    )
+    focus_parser.add_argument('--json', action='store_true', help='Emit the Focus schema-1 response')
+    focus_quiet = focus_parser.add_mutually_exclusive_group()
+    focus_quiet.add_argument('--quiet', action='store_true', default=None)
+    focus_quiet.add_argument('--no-quiet', action='store_false', dest='quiet')
+
+    guide_parser = subparsers.add_parser(
+        'guide',
+        help='Manage deterministic Sona Guide preferences and learning state',
+    )
+    guide_sub = guide_parser.add_subparsers(
+        dest='guide_cmd',
+        help='Sona Guide commands',
+    )
+    guide_request_parser = guide_sub.add_parser(
+        'request', help='Read an offline Guide schema-1 JSON request from stdin',
+    )
+    guide_request_parser.add_argument('--json', action='store_true', help='Emit shared editor/CLI JSON')
+    guide_request_parser.add_argument('--project-root', default='.')
+    guide_request_parser.add_argument('--no-profile', action='store_true')
+    for fact_kind in ('proof', 'guardian'):
+        fact_parser = guide_sub.add_parser(fact_kind, help='Explain checked facts without changing evidence or project state')
+        if fact_kind == 'proof':
+            fact_parser.add_argument('receipt')
+        fact_parser.add_argument('--project-root', default='.')
+        fact_parser.add_argument('--no-profile', action='store_true')
+        fact_parser.add_argument('--mode', choices=MODES, default=None)
+        fact_parser.add_argument('--style', choices=STYLES, default=None)
+        fact_parser.add_argument('--json', action='store_true')
+    guide_profile_common = argparse.ArgumentParser(add_help=False)
+    guide_profile_common.add_argument(
+        '--project-root',
+        default='.',
+        help='Project root containing .sona/learning.json',
+    )
+    guide_profile_common.add_argument(
+        '--json',
+        action='store_true',
+        help='Emit the Guide profile schema-1 response',
+    )
+    guide_profile_parser = guide_sub.add_parser(
+        'profile',
+        parents=[guide_profile_common],
+        help='Show or update the project-local Sona Guide profile',
+    )
+    guide_profile_sub = guide_profile_parser.add_subparsers(
+        dest='profile_cmd',
+        help='Profile actions',
+    )
+    guide_profile_sub.add_parser(
+        'show',
+        parents=[guide_profile_common],
+        help='Show the effective Sona Guide profile',
+    )
+    guide_profile_set = guide_profile_sub.add_parser(
+        'set',
+        parents=[guide_profile_common],
+        help='Set explicit guidance preferences',
+    )
+    guide_profile_set.add_argument('--mode', choices=MODES, dest='guidance_mode')
+    guide_profile_set.add_argument('--density', choices=DENSITIES, dest='diagnostic_density')
+    guide_profile_set.add_argument('--style', choices=STYLES, dest='explanation_style')
+    quiet_group = guide_profile_set.add_mutually_exclusive_group()
+    quiet_group.add_argument('--quiet', action='store_true', default=None, dest='quiet')
+    quiet_group.add_argument('--no-quiet', action='store_false', dest='quiet')
+    guide_profile_sub.add_parser(
+        'reset',
+        parents=[guide_profile_common],
+        help='Reset the Sona Guide profile to documented defaults',
+    )
+    guide_profile_learn = guide_profile_sub.add_parser(
+        'learn',
+        parents=[guide_profile_common],
+        help='Record explicit concept familiarity',
+    )
+    guide_profile_learn.add_argument('concept', help='Lowercase concept identifier, such as variables')
+    guide_profile_learn.add_argument(
+        '--familiarity',
+        choices=FAMILIARITY_VALUES,
+        default='learning',
+        help='Concept familiarity to record',
+    )
+
     # Run command (default)
     run_parser = subparsers.add_parser(
         'run',
         help='Execute a Sona file without creating a Proof Mode receipt',
     )
     run_parser.add_argument('file', help='Sona file to execute')
+    run_parser.add_argument('--json', action='store_true', help='Return execution streams and structured diagnostics as JSON')
     run_parser.add_argument(
         '--safe',
         action='store_true',
@@ -1810,6 +1983,10 @@ def create_argument_parser() -> argparse.ArgumentParser:
 def handle_run_command(args) -> int:
     """Handle the run command with centralized exit code logic"""
 
+    if getattr(args, 'json', False):
+        from .run_result import run_json
+        return run_json(args, handle_run_command)
+
     # Import here to avoid circular imports
     from sona.type_system.runtime_checker import TypeCheckAbort
 
@@ -1839,6 +2016,10 @@ def handle_run_command(args) -> int:
             logger = get_type_logger()
 
         code = read_text_safe(args.file)
+        if hasattr(args, '_run_packet'):
+            from hashlib import sha256
+            args._run_packet['source_sha256'] = 'sha256:' + sha256(code.encode('utf-8')).hexdigest()
+            args._run_packet['source_mapping'] = 'transformed' if _extract_python_blocks(code)[0] else 'original'
 
         if args.debug:
             safe_print(f"[DEBUG] Executing: {args.file}")
@@ -1865,6 +2046,10 @@ def handle_run_command(args) -> int:
         error_text = 'TypeCheckAbort'
         pass
     except Exception as e:
+        if hasattr(args, '_run_packet'):
+            runtime_diagnostic = getattr(e, 'diagnostic', None)
+            if runtime_diagnostic is not None:
+                args._run_packet['diagnostics'].append(runtime_diagnostic.to_dict())
         mode = _resolve_error_mode(args)
         _render_execution_error(
             e,
@@ -2256,6 +2441,9 @@ def handle_info_command(args) -> int:
         ("benchmark", "Benchmark performance"),
         ("suggest", "AI code suggestions"),
         ("explain", "AI code explanations"),
+        ("why", "Explain a diagnostic with Sona Guide"),
+        ("fix", "Preview deterministic Sona Guide fixes"),
+        ("focus", "Group diagnostics with Focus Mode"),
         ("check", "Validate syntax"),
         ("format", "Format Sona code"),
         ("transpile", "Transpile Sona to Python"),
@@ -2496,7 +2684,7 @@ def handle_repl_command(args) -> int:
         from sona.interpreter import SonaInterpreter
         interpreter = SonaInterpreter()
 
-        safe_print("Sona REPL v0.15.5 - Type 'exit' to quit; ':reset' clears state")
+        safe_print("Sona REPL v0.15.6 - Type 'exit' to quit; ':reset' clears state")
         if args.ai:
             try:
                 interpreter.enable_ai()
@@ -2708,7 +2896,7 @@ def handle_model_command(args) -> int:
                 if item is None:
                     continue
                 if item.provider_id in {'claude', 'codex'}:
-                    state, detail = 'unavailable', 'Provider is intentionally unavailable in 0.15.5.'
+                    state, detail = 'unavailable', 'Provider is intentionally unavailable in 0.15.6.'
                 elif not item.enabled:
                     state, detail = 'disabled', 'Descriptor is disabled.'
                 elif item.provider_id == 'deterministic':
@@ -2989,6 +3177,495 @@ def handle_probe_command(args) -> int:
     except Exception as e:  # pragma: no cover
         safe_print(f"[ERROR] probe error: {e}")
         return 1
+
+
+def handle_why_command(args) -> int:
+    import json
+
+    from .guide import GuideError, GuideRequest, explain, mode_for_concepts, render_text
+    from .guide.catalog import CATALOG
+
+    try:
+        profile_state = _guide_profile_for_args(args)
+        entry = CATALOG.get(args.diagnostic_id)
+        concepts = entry.concepts if entry is not None else ()
+        mode = mode_for_concepts(
+            profile_state.profile,
+            concepts,
+            explicit_mode=args.mode,
+        )
+        style = args.style or profile_state.profile.explanation_style
+        response = explain(GuideRequest(args.diagnostic_id, mode=mode, style=style))
+    except GuideError as exc:
+        if args.json:
+            safe_print(json.dumps({
+                "schema_version": 1, "status": "unavailable", "diagnostic": exc.to_dict(),
+            }, sort_keys=True))
+        else:
+            safe_error(f"{exc.diagnostic_id}: {exc.message}")
+            safe_error(f"  hint: {exc.hint}")
+        return 1
+    safe_print(json.dumps(response.to_dict(), sort_keys=True) if args.json else render_text(response))
+    return 0
+
+
+def _guide_profile_for_args(args):
+    from .guide import ProfileState, default_profile, load_profile_state
+
+    if getattr(args, "no_profile", False):
+        return ProfileState(default_profile(), persisted=False)
+    return load_profile_state(getattr(args, "project_root", "."))
+
+
+def _read_guide_source(path: Path) -> str:
+    for encoding in ("utf-8-sig", "utf-8", "utf-16", "utf-16-le", "utf-16-be"):
+        try:
+            with path.open("r", encoding=encoding, newline="") as source:
+                return source.read()
+        except UnicodeError:
+            continue
+    with path.open("r", encoding="utf-8", errors="replace", newline="") as source:
+        return source.read()
+
+
+def _guide_diagnostic_from_payload(payload: dict, default_file: str):
+    from .guide.adapters import diagnostic_from_payload
+
+    return diagnostic_from_payload(payload, default_file)
+
+
+def _guide_diagnostics_from_payload(payload, default_file: str):
+    from .guide import GuideError
+
+    if isinstance(payload, dict):
+        if isinstance(payload.get("diagnostics"), list):
+            payload = payload["diagnostics"]
+        elif isinstance(payload.get("visible_diagnostics"), list):
+            payload = payload["visible_diagnostics"]
+        else:
+            payload = [payload]
+    if not isinstance(payload, list):
+        raise GuideError(
+            "SONA-GUIDE-002",
+            "The diagnostic JSON must be an object or array.",
+            "Pass canonical diagnostic JSON from Sona.",
+        )
+    return tuple(_guide_diagnostic_from_payload(item, default_file) for item in payload)
+
+
+def _guide_diagnostics_from_json_argument(value: str, default_file: str):
+    import json
+
+    from .guide import GuideError
+
+    raw = sys.stdin.read() if value == "-" else Path(value).read_text(encoding="utf-8")
+    try:
+        return _guide_diagnostics_from_payload(json.loads(raw), default_file)
+    except json.JSONDecodeError as exc:
+        raise GuideError(
+            "SONA-GUIDE-002",
+            "The diagnostic JSON could not be parsed.",
+            "Pass a JSON object or array from Sona's canonical diagnostic output.",
+        ) from exc
+
+
+def _guide_diagnostic_from_args(args, default_file: str):
+    import json
+
+    from .developer_intelligence.diagnostics import SourceSpan, diagnostic
+    from .guide import GuideError
+
+    if getattr(args, "diagnostic_json", None):
+        if args.diagnostic_json == "-":
+            raw = sys.stdin.read()
+        else:
+            raw = Path(args.diagnostic_json).read_text(encoding="utf-8")
+        try:
+            return _guide_diagnostic_from_payload(json.loads(raw), default_file)
+        except json.JSONDecodeError as exc:
+            raise GuideError(
+                "SONA-GUIDE-002",
+                "The diagnostic JSON could not be parsed.",
+                "Pass a JSON object from Sona's canonical diagnostic output.",
+            ) from exc
+
+    if not getattr(args, "diagnostic_id", None):
+        return None
+    if getattr(args, "line", None) is None or getattr(args, "column", None) is None:
+        raise GuideError(
+            "SONA-GUIDE-002",
+            "The source-backed diagnostic is missing a location.",
+            "Pass --line and --column from the canonical diagnostic.",
+        )
+    name = getattr(args, "name", None)
+    message = getattr(args, "message", None)
+    if message is None:
+        if name:
+            message = f"Name '{name}' is not defined."
+        else:
+            message = "Diagnostic reported by Sona."
+    return diagnostic(
+        args.diagnostic_id,
+        "runtime",
+        message,
+        hint="",
+        span=SourceSpan(
+            file=default_file,
+            start_line=args.line,
+            start_column=args.column,
+            end_line=args.end_line or args.line,
+            end_column=args.end_column or (args.column + len(name) if name else args.column + 1),
+        ),
+        source="sona",
+        metadata={"name": name} if name else {},
+        legacy_code=getattr(args, "legacy_code", None),
+    )
+
+
+def _guide_fix_payload(
+    path: Path,
+    status: str,
+    fixes,
+    diagnostic=None,
+    learning_profile: dict | None = None,
+) -> dict:
+    return {
+        "schema_version": 1,
+        "command": "fix",
+        "status": status,
+        "file": str(path),
+        "diagnostic": diagnostic.to_dict() if diagnostic is not None else None,
+        "fixes": [fix.to_dict() for fix in fixes],
+        "learning_profile": learning_profile or {
+            "updated": False,
+            "profile_path": ".sona/learning.json",
+            "concepts": [],
+        },
+    }
+
+
+def _render_guide_fix_payload(payload: dict, *, apply_requested: bool) -> str:
+    header = "Sona Guide Fix" if payload["status"] == "applied" else "Sona Guide Fix Preview"
+    lines = [
+        header,
+        "",
+        f"Status       {payload['status'].upper()}",
+        f"File         {payload['file']}",
+        f"Fixes        {len(payload['fixes'])}",
+    ]
+    for index, fix in enumerate(payload["fixes"], start=1):
+        lines.extend((
+            "",
+            f"[{index}] {fix['title']}",
+            f"Rule         {fix['rule_id']}",
+            f"Confidence   {fix['confidence']}",
+            f"Reason       {fix['rationale']}",
+        ))
+        for edit in fix["edits"]:
+            span = edit["range"]
+            lines.extend((
+                f"Edit         {span['start_line']}:{span['start_column']}-{span['end_line']}:{span['end_column']}",
+                f"Expected     {edit['expected']!r}",
+                f"Replacement  {edit['replacement']!r}",
+            ))
+    if payload["status"] == "preview" and not apply_requested:
+        lines.extend(("", "No files changed. Re-run with --apply to write these edits."))
+    profile = payload.get("learning_profile") or {}
+    concepts = ", ".join(profile.get("concepts") or [])
+    if profile.get("updated"):
+        lines.extend(("", f"Learning     updated {concepts or 'profile'}"))
+    elif profile.get("diagnostic"):
+        diagnostic = profile["diagnostic"]
+        lines.extend((
+            "",
+            f"Learning     skipped ({diagnostic['diagnostic_id']})",
+            f"             {diagnostic['message']}",
+        ))
+    elif profile.get("reason") == "disabled":
+        lines.extend(("", "Learning     skipped (--no-profile-update)"))
+    return "\n".join(lines)
+
+
+def handle_fix_command(args) -> int:
+    import json
+
+    from .guide import (
+        GuideError,
+        GuideRequest,
+        apply_fixes,
+        concepts_for_fixes,
+        preview_diagnostic_fixes,
+        preview_stdlib_api_migration,
+        update_concepts,
+    )
+
+    target = Path(args.file)
+    try:
+        source = _read_guide_source(target)
+        diagnostic = _guide_diagnostic_from_args(args, str(target))
+        fixes = []
+        if args.rule in {"auto", "undefined-name"}:
+            if diagnostic is not None:
+                fixes.extend(preview_diagnostic_fixes(
+                    GuideRequest(diagnostic.diagnostic_id, diagnostic),
+                    source,
+                    document=str(target),
+                ))
+            elif args.rule == "undefined-name":
+                raise GuideError(
+                    "SONA-GUIDE-002",
+                    "The undefined-name rule needs a diagnostic.",
+                    "Pass --diagnostic-json or --diagnostic-id with --line and --column.",
+                )
+        if args.rule in {"auto", "stdlib-api-migration"}:
+            fixes.extend(preview_stdlib_api_migration(source, document=str(target)))
+        if not fixes:
+            raise GuideError(
+                "SONA-GUIDE-004",
+                "Sona Guide found no deterministic fix for this input.",
+                "Use an exact diagnostic location or review the source manually.",
+            )
+        status = "preview"
+        if args.apply:
+            updated = apply_fixes(source, fixes)
+            target.write_text(updated, encoding="utf-8", newline="")
+            status = "applied"
+        concepts = concepts_for_fixes(fixes)
+        learning_profile = {
+            "updated": False,
+            "profile_path": ".sona/learning.json",
+            "concepts": list(concepts),
+            "reason": "preview",
+        }
+        if status == "applied":
+            if args.no_profile_update:
+                learning_profile["reason"] = "disabled"
+            elif concepts:
+                try:
+                    state = update_concepts(args.project_root, concepts, familiarity="learning")
+                    learning_profile = {
+                        "updated": True,
+                        "profile_path": ".sona/learning.json",
+                        "concepts": list(concepts),
+                        "profile": state.profile.to_dict(),
+                    }
+                except GuideError as exc:
+                    learning_profile = {
+                        "updated": False,
+                        "profile_path": ".sona/learning.json",
+                        "concepts": list(concepts),
+                        "diagnostic": exc.to_dict(),
+                    }
+            else:
+                learning_profile["reason"] = "no-concepts"
+        payload = _guide_fix_payload(
+            target,
+            status,
+            fixes,
+            diagnostic,
+            learning_profile=learning_profile,
+        )
+    except GuideError as exc:
+        payload = {
+            "schema_version": 1,
+            "command": "fix",
+            "status": "unavailable",
+            "file": str(target),
+            "diagnostic": exc.to_dict(),
+            "fixes": [],
+        }
+        if args.json:
+            safe_print(json.dumps(payload, sort_keys=True))
+        else:
+            safe_error(f"{exc.diagnostic_id}: {exc.message}")
+            safe_error(f"  hint: {exc.hint}")
+        return 1
+    except OSError:
+        payload = {
+            "schema_version": 1,
+            "command": "fix",
+            "status": "unavailable",
+            "file": str(target),
+            "diagnostic": {
+                "diagnostic_id": "SONA-MODULE-001",
+                "category": "module",
+                "severity": "error",
+                "message": "The source file could not be read or written.",
+                "hint": "Check that the file exists and is accessible.",
+            },
+            "fixes": [],
+        }
+        if args.json:
+            safe_print(json.dumps(payload, sort_keys=True))
+        else:
+            safe_error("SONA-MODULE-001: The source file could not be read or written.")
+            safe_error("  hint: Check that the file exists and is accessible.")
+        return 1
+
+    safe_print(json.dumps(payload, sort_keys=True) if args.json else _render_guide_fix_payload(
+        payload,
+        apply_requested=args.apply,
+    ))
+    return 0
+
+
+def handle_focus_command(args) -> int:
+    import json
+
+    from .guide import GuideError, focus_diagnostics, render_focus_text
+
+    target = Path(args.file) if getattr(args, "file", None) else None
+    try:
+        profile_state = _guide_profile_for_args(args)
+        density = args.density or profile_state.profile.diagnostic_density
+        if getattr(args, "diagnostics_json", None):
+            diagnostics = _guide_diagnostics_from_json_argument(
+                args.diagnostics_json,
+                str(target or "<diagnostics>"),
+            )
+        else:
+            if target is None:
+                raise GuideError(
+                    "SONA-GUIDE-002",
+                    "Focus Mode needs a source file or diagnostic JSON.",
+                    "Pass a .sona file or --diagnostics-json.",
+                )
+            source = _read_guide_source(target)
+            from .developer_intelligence.frontend import analyze_frontend
+
+            diagnostics = analyze_frontend(source, file=str(target))
+        quiet = profile_state.profile.quiet if args.quiet is None else args.quiet
+        result = focus_diagnostics(diagnostics, density=density, quiet=quiet)
+    except GuideError as exc:
+        payload = {
+            "schema_version": 1,
+            "command": "focus",
+            "status": "unavailable",
+            "diagnostic": exc.to_dict(),
+        }
+        if args.json:
+            safe_print(json.dumps(payload, sort_keys=True))
+        else:
+            safe_error(f"{exc.diagnostic_id}: {exc.message}")
+            safe_error(f"  hint: {exc.hint}")
+        return 1
+    except OSError:
+        payload = {
+            "schema_version": 1,
+            "command": "focus",
+            "status": "unavailable",
+            "diagnostic": {
+                "diagnostic_id": "SONA-MODULE-001",
+                "category": "module",
+                "severity": "error",
+                "message": "The source file could not be read.",
+                "hint": "Check that the file exists and is accessible.",
+            },
+        }
+        if args.json:
+            safe_print(json.dumps(payload, sort_keys=True))
+        else:
+            safe_error("SONA-MODULE-001: The source file could not be read.")
+            safe_error("  hint: Check that the file exists and is accessible.")
+        return 1
+
+    safe_print(json.dumps(result.to_dict(), sort_keys=True) if args.json else render_focus_text(result))
+    return 0
+
+
+def handle_guide_command(args) -> int:
+    if getattr(args, "guide_cmd", None) in {"proof", "guardian"}:
+        from .fact_service import handle_fact_command
+        return handle_fact_command(args)
+    import json
+
+    from .guide import (
+        GuideError,
+        load_profile_state,
+        render_profile_text,
+        reset_profile,
+        set_preferences,
+        update_concepts,
+    )
+
+    if getattr(args, "guide_cmd", None) == "request":
+        from .guide.service import MAX_REQUEST_BYTES, request_json, unavailable
+        try:
+            profile = _guide_profile_for_args(args).profile
+            raw = sys.stdin.read(MAX_REQUEST_BYTES + 1)
+            payload = request_json(raw, profile=profile)
+        except GuideError as exc:
+            payload = unavailable(exc)
+        if args.json:
+            safe_print(json.dumps(payload, sort_keys=True))
+        elif payload["status"] == "unavailable":
+            safe_error(payload["diagnostic"]["diagnostic_id"] + ": " + payload["diagnostic"]["message"])
+        else:
+            safe_print(payload["text"])
+        return 1 if payload["status"] == "unavailable" else 0
+
+    if getattr(args, "guide_cmd", None) != "profile":
+        safe_error("SONA-GUIDE-002: Missing Sona Guide command.")
+        safe_error("  hint: Try `sona guide profile --help`.")
+        return 1
+
+    action = getattr(args, "profile_cmd", None) or "show"
+    try:
+        if action == "show":
+            state = load_profile_state(args.project_root)
+        elif action == "set":
+            if (
+                args.guidance_mode is None
+                and args.diagnostic_density is None
+                and args.explanation_style is None
+                and args.quiet is None
+            ):
+                raise GuideError(
+                    "SONA-GUIDE-002",
+                    "No Sona Guide preference was selected.",
+                    "Pass --mode, --density, --style, --quiet, or --no-quiet.",
+                )
+            state = set_preferences(
+                args.project_root,
+                guidance_mode=args.guidance_mode,
+                diagnostic_density=args.diagnostic_density,
+                explanation_style=args.explanation_style,
+                quiet=args.quiet,
+            )
+        elif action == "reset":
+            state = reset_profile(args.project_root)
+        elif action == "learn":
+            state = update_concepts(
+                args.project_root,
+                (args.concept,),
+                familiarity=args.familiarity,
+            )
+        else:
+            raise GuideError(
+                "SONA-GUIDE-002",
+                "The Sona Guide profile action is unknown.",
+                "Use show, set, reset, or learn.",
+            )
+    except GuideError as exc:
+        payload = {
+            "schema_version": 1,
+            "command": "guide profile",
+            "action": action,
+            "status": "unavailable",
+            "diagnostic": exc.to_dict(),
+        }
+        if getattr(args, "json", False):
+            safe_print(json.dumps(payload, sort_keys=True))
+        else:
+            safe_error(f"{exc.diagnostic_id}: {exc.message}")
+            safe_error(f"  hint: {exc.hint}")
+        return 1
+
+    payload = state.to_dict()
+    payload["command"] = "guide profile"
+    payload["action"] = action
+    safe_print(json.dumps(payload, sort_keys=True) if args.json else render_profile_text(state))
+    return 0
 
 
 def handle_proof_command(args) -> int:
@@ -3608,6 +4285,17 @@ def main() -> int:
         return handle_probe_command(args)
     elif args.command == 'proof':
         return handle_proof_command(args)
+    elif args.command == 'why':
+        return handle_why_command(args)
+    elif args.command == 'fix':
+        return handle_fix_command(args)
+    elif args.command == 'focus':
+        return handle_focus_command(args)
+    elif args.command == 'guide':
+        return handle_guide_command(args)
+    elif args.command in {'examples', 'learn'}:
+        from .learning_cli import handle_learning_command
+        return handle_learning_command(args)
     elif args.command in {'guard', 'guardian'}:
         return handle_guard_command(args)
     elif args.command == 'doctor':

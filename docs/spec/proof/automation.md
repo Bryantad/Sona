@@ -19,7 +19,7 @@ model response and a task-record hash do not establish runtime behavior.
 
 ## Supported workflow
 
-The honest 0.15.5 workflow is:
+The honest 0.15.6 workflow is:
 
 ```text
 AI proposes source or an intended action

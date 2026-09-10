@@ -36,7 +36,7 @@ current PowerShell session:
 
 ```powershell
 Expand-Archive `
-  .\sona-native-0.15.5-windows-x86_64.zip `
+  .\sona-native-0.15.6-windows-x86_64.zip `
   -DestinationPath .\sona-native
 
 $env:SONA_NATIVE_BINARY = (Resolve-Path .\sona-native\sona.exe).Path
@@ -47,7 +47,7 @@ On Linux or macOS, substitute the archive matching your platform and
 architecture:
 
 ```bash
-native_archive=sona-native-0.15.5-linux-x86_64-musl.tar.gz
+native_archive=sona-native-0.15.6-linux-x86_64-musl.tar.gz
 mkdir -p ./sona-native
 tar -xzf "$native_archive" -C ./sona-native
 chmod 755 ./sona-native/sona
@@ -55,13 +55,13 @@ export SONA_NATIVE_BINARY="$(pwd)/sona-native/sona"
 "$SONA_NATIVE_BINARY" --version
 ```
 
-Apple Silicon uses `sona-native-0.15.5-macos-aarch64.tar.gz`; Intel macOS and
+Apple Silicon uses `sona-native-0.15.6-macos-aarch64.tar.gz`; Intel macOS and
 Linux ARM64 use the corresponding archive listed in the platform guide.
 
 Expected Native Core version shape:
 
 ```text
-Sona native 0.15.5
+Sona native 0.15.6
 ```
 
 If Native Core is already installed as `sona-native` on `PATH`, you do not need
@@ -162,7 +162,7 @@ Fallback       false
 ```
 
 The remaining sections show capability decisions, observed effects, and the
-SHA-256 identities of the program, Native executable (for new 0.15.5
+SHA-256 identities of the program, Native executable (for new 0.15.6
 producers), stdout, stderr, and receipt. A build-supplied source revision is
 shown when available. These are self-hashed correlation fields, not
 authenticated runtime provenance. Output bodies, source text, and raw program

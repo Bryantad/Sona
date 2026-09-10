@@ -4,7 +4,7 @@ This page defines Guardian's technical behavior. For task-oriented setup, start
 with the [Guardian guide](guides/guardian.md) or the
 [combined Proof Mode and Guardian workflow](guides/proof-and-guardian.md).
 
-Sona `0.15.5` ships `guardian` as a local resilience facade. Guardian helps a
+Sona `0.15.6` ships `guardian` as a local resilience facade. Guardian helps a
 developer detect project drift, preserve suspect state, restore a trusted local
 snapshot, verify the restored project, and report what happened.
 

@@ -39,6 +39,7 @@ exports.deactivate = deactivate;
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 const child_process_1 = require("child_process");
+const crypto_1 = require("crypto");
 const vscode = __importStar(require("vscode"));
 const proofModeExplorer_1 = require("./proofModeExplorer");
 const proofModeModel_1 = require("./proofModeModel");
@@ -49,18 +50,21 @@ class SonaCliIntegration {
     outputChannel;
     statusBarItem;
     proofModeExplorer;
+    runtimeDiagnosticCollection;
     terminal;
-    userProfile;
+    displayPreference;
     constructor(context) {
         this.context = context;
         this.config = this.loadConfiguration();
         this.outputChannel = vscode.window.createOutputChannel("Sona");
         this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
         this.proofModeExplorer = new proofModeExplorer_1.ProofModeExplorerProvider();
-        this.userProfile = this.loadUserProfile();
+        this.runtimeDiagnosticCollection = vscode.languages.createDiagnosticCollection("sona-runtime");
+        this.displayPreference = this.loadDisplayPreference();
         this.initializeStatusBar();
-        this.context.subscriptions.push(this.proofModeExplorer, vscode.window.registerTreeDataProvider(proofModeExplorer_1.ProofModeExplorerProvider.viewType, this.proofModeExplorer));
+        this.context.subscriptions.push(this.runtimeDiagnosticCollection, this.proofModeExplorer, vscode.window.registerTreeDataProvider(proofModeExplorer_1.ProofModeExplorerProvider.viewType, this.proofModeExplorer));
         this.registerCommands();
+        this.registerRuntimeDiagnosticInvalidation();
         void this.checkSonaInstallation();
     }
     loadConfiguration() {
@@ -71,12 +75,28 @@ class SonaCliIntegration {
             autoSetup: config.get("ai.autoSetup", true)
         };
     }
-    loadUserProfile() {
-        const stored = this.context.globalState.get("sonaUserProfile");
+    loadDisplayPreference() {
+        const stored = this.context.globalState.get("sonaDisplayPreference")
+            || this.context.globalState.get("sonaUserProfile");
         if (stored) {
-            return stored;
+            return this.normalizeDisplayPreference(stored);
         }
-        return vscode.workspace.getConfiguration("sona").get("userProfile", "neurotypical");
+        const config = vscode.workspace.getConfiguration("sona");
+        return this.normalizeDisplayPreference(config.get("displayPreference")
+            || config.get("userProfile")
+            || "standard");
+    }
+    normalizeDisplayPreference(value) {
+        switch (value) {
+            case "focused":
+            case "adhd":
+                return "focused";
+            case "readable":
+            case "dyslexia":
+                return "readable";
+            default:
+                return "standard";
+        }
     }
     initializeStatusBar() {
         this.statusBarItem.text = "$(rocket) Sona";
@@ -172,7 +192,14 @@ class SonaCliIntegration {
         });
     }
     registerCommands() {
-        this.context.subscriptions.push(vscode.commands.registerCommand("sona.welcome", () => this.showWelcome()), vscode.commands.registerCommand("sona.setup.azure", () => this.setupAzure()), vscode.commands.registerCommand("sona.setup.manual", () => this.setupManual()), vscode.commands.registerCommand("sona.selectUserProfile", () => this.selectUserProfile()), vscode.commands.registerCommand("sona.run", () => this.runCurrentFile()), vscode.commands.registerCommand("sona.proofMode.run", () => this.runWithProofMode()), vscode.commands.registerCommand("sona.proofMode.verifyReceipt", candidate => this.verifyProofModeReceipt(candidate)), vscode.commands.registerCommand("sona.proofMode.inspectReceipt", candidate => this.inspectProofModeReceipt(candidate)), vscode.commands.registerCommand("sona.proofMode.openReceipt", candidate => this.openProofModeReceipt(candidate)), vscode.commands.registerCommand("sona.proofMode.refresh", () => this.refreshProofModeReceipt()), vscode.commands.registerCommand("sona.proofMode.explainWithGuardian", candidate => this.explainProofModeWithGuardian(candidate)), vscode.commands.registerCommand("sona.transpile", () => this.transpileCurrentFile()), vscode.commands.registerCommand("sona.repl", () => this.startRepl()), vscode.commands.registerCommand("sona.check", () => this.checkCurrentFile()), vscode.commands.registerCommand("sona.format", () => this.formatCurrentFile()), vscode.commands.registerCommand("sona.explain", () => this.explainSelection()), vscode.commands.registerCommand("sona.suggest", () => this.getSuggestions()), vscode.commands.registerCommand("sona.profile", () => this.profileCurrentFile()), vscode.commands.registerCommand("sona.benchmark", () => this.benchmarkCurrentFile()), vscode.commands.registerCommand("sona.info", () => this.showInfo()), vscode.commands.registerCommand("sona.help", () => this.showHelp()), vscode.commands.registerCommand("sona.checkAIConnection", () => this.checkAIConnection()), vscode.commands.registerCommand("sona.aiPlanSelection", () => this.planSelection()), vscode.commands.registerCommand("sona.aiReviewSelection", () => this.reviewSelection()));
+        this.context.subscriptions.push(vscode.commands.registerCommand("sona.welcome", () => this.showWelcome()), vscode.commands.registerCommand("sona.setup.azure", () => this.setupAzure()), vscode.commands.registerCommand("sona.setup.manual", () => this.setupManual()), vscode.commands.registerCommand("sona.selectUserProfile", () => this.selectDisplayPreference()), vscode.commands.registerCommand("sona.run", () => this.runCurrentFile()), vscode.commands.registerCommand("sona.proofMode.run", () => this.runWithProofMode()), vscode.commands.registerCommand("sona.proofMode.verifyReceipt", candidate => this.verifyProofModeReceipt(candidate)), vscode.commands.registerCommand("sona.proofMode.inspectReceipt", candidate => this.inspectProofModeReceipt(candidate)), vscode.commands.registerCommand("sona.proofMode.openReceipt", candidate => this.openProofModeReceipt(candidate)), vscode.commands.registerCommand("sona.proofMode.refresh", () => this.refreshProofModeReceipt()), vscode.commands.registerCommand("sona.proofMode.explainWithGuardian", candidate => this.explainProofModeWithGuardian(candidate)), vscode.commands.registerCommand("sona.transpile", () => this.transpileCurrentFile()), vscode.commands.registerCommand("sona.repl", () => this.startRepl()), vscode.commands.registerCommand("sona.check", () => this.checkCurrentFile()), vscode.commands.registerCommand("sona.format", () => this.formatCurrentFile()), vscode.commands.registerCommand("sona.explain", () => this.explainSelection()), vscode.commands.registerCommand("sona.suggest", () => this.getSuggestions()), vscode.commands.registerCommand("sona.profile", () => this.profileCurrentFile()), vscode.commands.registerCommand("sona.benchmark", () => this.benchmarkCurrentFile()), vscode.commands.registerCommand("sona.info", () => this.showInfo()), vscode.commands.registerCommand("sona.help", () => this.showHelp()), vscode.commands.registerCommand("sona.checkAIConnection", () => this.checkAIConnection()), vscode.commands.registerCommand("sona.aiPlanSelection", () => this.planSelection()), vscode.commands.registerCommand("sona.aiReviewSelection", () => this.reviewSelection()));
+    }
+    registerRuntimeDiagnosticInvalidation() {
+        this.context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(event => {
+            this.runtimeDiagnosticCollection.delete(event.document.uri);
+        }), vscode.workspace.onDidCloseTextDocument(document => {
+            this.runtimeDiagnosticCollection.delete(document.uri);
+        }));
     }
     activeSavedFile(requiredLanguage) {
         const editor = vscode.window.activeTextEditor;
@@ -296,26 +323,43 @@ class SonaCliIntegration {
         }
         vscode.window.showErrorMessage(`Manual setup failed: ${result.error}`);
     }
-    async selectUserProfile() {
+    async selectDisplayPreference() {
         const selected = await vscode.window.showQuickPick([
-            { label: "Neurotypical", description: "Standard UI/UX for typical users", value: "neurotypical" },
-            { label: "ADHD", description: "High-contrast, minimal distractions", value: "adhd" },
-            { label: "Dyslexia", description: "Dyslexia-friendly fonts and enhanced readability", value: "dyslexia" }
-        ], { placeHolder: "Select your cognitive profile for optimized experience" });
+            { label: "Standard", description: "Default editor presentation", value: "standard" },
+            { label: "Focused", description: "Reduced visual noise and fewer interruptions", value: "focused" },
+            { label: "Readable", description: "More spacious text-oriented presentation", value: "readable" }
+        ], { placeHolder: "Select a Sona display preference" });
         if (selected) {
-            this.userProfile = selected.value;
-            await this.context.globalState.update("sonaUserProfile", this.userProfile);
-            vscode.window.showInformationMessage(`Profile set to: ${selected.label}`);
+            this.displayPreference = selected.value;
+            await this.context.globalState.update("sonaDisplayPreference", this.displayPreference);
+            await this.context.globalState.update("sonaUserProfile", undefined);
+            vscode.window.showInformationMessage(`Display preference set to: ${selected.label}`);
         }
     }
     async runCurrentFile() {
+        if (!this.requireTrustedWorkspace("Run Sona")) {
+            return;
+        }
         const doc = this.activeSavedFile("sona");
         if (!doc) {
             return;
         }
         await doc.save();
-        const result = await this.runSonaCommand(["run", doc.fileName]);
-        this.showCommandResult("Sona Run Output", result, "Run failed");
+        const version = doc.version;
+        const text = doc.getText();
+        const sourceSha256 = this.normalizedSourceSha256(text);
+        const result = await this.runSonaCommand(["run", doc.fileName, "--json"]);
+        const packet = this.parseRunPacket(result.output);
+        if (!packet) {
+            this.runtimeDiagnosticCollection.delete(doc.uri);
+            this.showCommandResult("Sona Run Output", result, "Run failed");
+            return;
+        }
+        this.showRunPacket(packet, result);
+        this.publishRuntimeDiagnostics(doc, version, sourceSha256, packet);
+        if (!result.success && (!packet.diagnostics || packet.diagnostics.length === 0)) {
+            vscode.window.showErrorMessage("Run failed. Open the Sona output for details.");
+        }
     }
     requireTrustedWorkspace(action) {
         if (vscode.workspace.isTrusted) {
@@ -702,6 +746,108 @@ class SonaCliIntegration {
         }
         vscode.window.showErrorMessage(`${failurePrefix}: ${result.error}`);
     }
+    parseRunPacket(output) {
+        try {
+            const packet = JSON.parse(output);
+            if (packet?.schema_version === 1 && packet.command === "run") {
+                return packet;
+            }
+        }
+        catch {
+            return undefined;
+        }
+        return undefined;
+    }
+    normalizedSourceSha256(text) {
+        const normalized = text.replace(/^\uFEFF/, "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+        return `sha256:${(0, crypto_1.createHash)("sha256").update(normalized, "utf8").digest("hex")}`;
+    }
+    showRunPacket(packet, result) {
+        this.outputChannel.show();
+        this.outputChannel.appendLine("\n--- Sona Run Output ---");
+        const stdout = packet.streams?.stdout || "";
+        const stderr = packet.streams?.stderr || "";
+        if (stdout) {
+            this.outputChannel.append(stdout);
+            if (!stdout.endsWith("\n")) {
+                this.outputChannel.appendLine("");
+            }
+        }
+        if (stderr) {
+            this.outputChannel.append(stderr);
+            if (!stderr.endsWith("\n")) {
+                this.outputChannel.appendLine("");
+            }
+        }
+        if (packet.truncated?.stdout || packet.truncated?.stderr) {
+            this.outputChannel.appendLine("[WARN] Sona run output was truncated for the editor transport.");
+        }
+        if (packet.source_mapping && packet.source_mapping !== "original") {
+            this.outputChannel.appendLine("[WARN] Runtime diagnostics were not published because this run used transformed source mapping.");
+        }
+        if (!result.success && !stderr && !stdout) {
+            this.outputChannel.appendLine(result.error || `Command exited with code ${result.exitCode}`);
+        }
+    }
+    publishRuntimeDiagnostics(document, version, sourceSha256, packet) {
+        if (packet.source_mapping !== "original" || packet.source_sha256 !== sourceSha256 || document.version !== version) {
+            this.runtimeDiagnosticCollection.delete(document.uri);
+            return;
+        }
+        const diagnostics = Array.isArray(packet.diagnostics)
+            ? packet.diagnostics.map(item => this.runtimeDiagnosticFromCanonical(document, item)).filter((item) => !!item)
+            : [];
+        this.runtimeDiagnosticCollection.set(document.uri, diagnostics);
+    }
+    runtimeDiagnosticFromCanonical(document, item) {
+        if (!item || typeof item !== "object") {
+            return undefined;
+        }
+        const diagnostic = item;
+        const startLine = Number(diagnostic.start_line);
+        const startColumn = Number(diagnostic.start_column);
+        const endLine = Number(diagnostic.end_line || diagnostic.start_line);
+        const endColumn = Number(diagnostic.end_column || diagnostic.start_column);
+        if (![startLine, startColumn, endLine, endColumn].every(Number.isInteger)) {
+            return undefined;
+        }
+        try {
+            const range = new vscode.Range(this.positionFromCanonical(document, startLine, startColumn), this.positionFromCanonical(document, endLine, endColumn));
+            const message = typeof diagnostic.message === "string" ? diagnostic.message : "Sona runtime diagnostic.";
+            const rendered = new vscode.Diagnostic(range, message, this.diagnosticSeverity(diagnostic.severity));
+            rendered.source = "sona";
+            const identifier = typeof diagnostic.diagnostic_id === "string" ? diagnostic.diagnostic_id : "SONA-RUNTIME";
+            rendered.code = identifier;
+            rendered.data = diagnostic;
+            return rendered;
+        }
+        catch {
+            return undefined;
+        }
+    }
+    positionFromCanonical(document, lineNumber, column) {
+        if (lineNumber < 1 || lineNumber > document.lineCount || column < 1) {
+            throw new Error("Runtime diagnostic range is outside the document.");
+        }
+        const line = document.lineAt(lineNumber - 1).text;
+        const prefix = Array.from(line).slice(0, column - 1).join("");
+        if (column > Array.from(line).length + 1) {
+            throw new Error("Runtime diagnostic column is outside the line.");
+        }
+        return new vscode.Position(lineNumber - 1, prefix.length);
+    }
+    diagnosticSeverity(value) {
+        switch (value) {
+            case "warning":
+                return vscode.DiagnosticSeverity.Warning;
+            case "info":
+                return vscode.DiagnosticSeverity.Information;
+            case "hint":
+                return vscode.DiagnosticSeverity.Hint;
+            default:
+                return vscode.DiagnosticSeverity.Error;
+        }
+    }
     showJsonResult(title, result) {
         if (!result.success) {
             vscode.window.showErrorMessage(`${title} failed: ${result.error}`);
@@ -732,7 +878,7 @@ class SonaCliIntegration {
                 await this.setupManual();
             }
             else if (message.command === "selectProfile") {
-                await this.selectUserProfile();
+                await this.selectDisplayPreference();
             }
         }, undefined, this.context.subscriptions);
     }
@@ -747,11 +893,11 @@ class SonaCliIntegration {
         return `<!DOCTYPE html>
 <html>
 <body>
-  <h1>Welcome to Sona 0.15.5</h1>
-  <p>The AI-native programming language with cognitive accessibility features.</p>
+  <h1>Welcome to Sona 0.15.6</h1>
+  <p>The AI-native programming language with deterministic Guide, Proof Mode, and Guardian workflows.</p>
   <button onclick="vscode.postMessage({command: 'setupAzure'})">Setup Azure</button>
   <button onclick="vscode.postMessage({command: 'setupManual'})">Manual Setup</button>
-  <button onclick="vscode.postMessage({command: 'selectProfile'})">Select Profile</button>
+  <button onclick="vscode.postMessage({command: 'selectProfile'})">Display Preference</button>
   <script>const vscode = acquireVsCodeApi();</script>
 </body>
 </html>`;
@@ -783,6 +929,7 @@ class SonaCliIntegration {
     dispose() {
         this.statusBarItem.dispose();
         this.outputChannel.dispose();
+        this.runtimeDiagnosticCollection.dispose();
         this.terminal?.dispose();
     }
 }

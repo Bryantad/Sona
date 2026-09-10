@@ -91,7 +91,7 @@ fn print_help() {
     println!("Capabilities for run/exec/proof:");
     println!("  --allow-fs-read   allow native filesystem reads");
     println!("  --allow-fs-write  allow native filesystem writes");
-    println!("  --allow-network   grant network policy (HTTP remains unavailable in 0.15.5)");
+    println!("  --allow-network   grant network policy (HTTP remains unavailable in 0.15.6)");
     println!("Proof Mode options:");
     println!("  --summary         show a receipt confirmation after a successful proof");
     println!("  --guardian-root   bind a proof to an initialized Guardian project baseline");

@@ -1,0 +1,4 @@
+import fs;
+fs.write_text("practice.txt", "Sona file practice");
+let content = fs.read_text("practice.txt");
+print(content);

@@ -19,6 +19,7 @@ from pathlib import Path
 
 try:
     from lsprotocol.types import (  # type: ignore[import-not-found]
+        TEXT_DOCUMENT_CODE_ACTION,
         TEXT_DOCUMENT_COMPLETION,
         TEXT_DOCUMENT_DEFINITION,
         TEXT_DOCUMENT_DID_CHANGE,
@@ -26,6 +27,12 @@ try:
         TEXT_DOCUMENT_DID_OPEN,
         TEXT_DOCUMENT_DOCUMENT_SYMBOL,
         TEXT_DOCUMENT_HOVER,
+        WORKSPACE_DID_CHANGE_CONFIGURATION,
+        CodeAction,
+        CodeActionDisabledType,
+        CodeActionKind,
+        CodeActionOptions,
+        CodeActionParams,
         CompletionItem,
         CompletionItemKind,
         CompletionList,
@@ -40,9 +47,13 @@ try:
         Location,
         MarkupContent,
         MarkupKind,
+        OptionalVersionedTextDocumentIdentifier,
         Position,
         Range,
         SymbolKind,
+        TextEdit,
+        TextDocumentEdit,
+        WorkspaceEdit,
     )
     from pygls.server import LanguageServer  # type: ignore[import-not-found]
 
@@ -583,6 +594,167 @@ if _PYGLS_AVAILABLE:
             return None
 
 
+    def _field(value, name: str, default=None):
+        if isinstance(value, dict):
+            return value.get(name, default)
+        return getattr(value, name, default)
+
+
+    def _severity_name(value) -> str:
+        if value in {DiagnosticSeverity.Error, 1}:
+            return "error"
+        if value in {DiagnosticSeverity.Warning, 2}:
+            return "warning"
+        return "info"
+
+
+    def _source_position_from_lsp(
+        text: str,
+        position,
+    ) -> tuple[int, int]:
+        line_index = int(_field(position, "line", 0))
+        utf16_character = int(_field(position, "character", 0))
+        line_text = _line_at(text, line_index)
+        return line_index + 1, _codepoint_index(line_text, utf16_character) + 1
+
+
+    def _canonical_from_lsp_diagnostic(uri: str, text: str, lsp_diagnostic):
+        from .developer_intelligence.diagnostics import SourceSpan, diagnostic
+        from .guide.adapters import diagnostic_from_payload
+
+        data = _field(lsp_diagnostic, "data")
+        data = data if isinstance(data, dict) else {}
+        if data.get("diagnostic_id"):
+            return diagnostic_from_payload(data, uri)
+        lsp_range = _field(lsp_diagnostic, "range")
+        start = _field(lsp_range, "start", {})
+        end = _field(lsp_range, "end", start)
+        start_line, start_column = _source_position_from_lsp(text, start)
+        end_line, end_column = _source_position_from_lsp(text, end)
+
+        diagnostic_id = str(data.get("diagnostic_id") or _field(lsp_diagnostic, "code") or "")
+        if not diagnostic_id:
+            return None
+        return diagnostic(
+            diagnostic_id,
+            str(data.get("category") or "lsp"),
+            str(data.get("message") or _field(lsp_diagnostic, "message", "")),
+            severity=str(data.get("severity") or _severity_name(_field(lsp_diagnostic, "severity"))),
+            hint=str(data.get("hint") or ""),
+            span=SourceSpan(
+                file=str(data.get("file") or uri),
+                start_line=int(data.get("start_line") or start_line),
+                start_column=int(data.get("start_column") or start_column),
+                end_line=int(data.get("end_line") or end_line),
+                end_column=int(data.get("end_column") or end_column),
+            ),
+            source=str(data.get("source") or "sona-lsp"),
+            metadata=data.get("metadata") if isinstance(data.get("metadata"), dict) else {},
+            legacy_code=str(data["legacy_code"]) if data.get("legacy_code") else None,
+        )
+
+
+    def _code_action_kind_value(kind) -> str:
+        return kind.value if hasattr(kind, "value") else str(kind)
+
+
+    def _code_action_kind_allowed(context, kind) -> bool:
+        requested = _field(context, "only") or []
+        if not requested:
+            return True
+        action_kind = _code_action_kind_value(kind)
+        for item in requested:
+            prefix = _code_action_kind_value(item)
+            if action_kind == prefix or action_kind.startswith(f"{prefix}."):
+                return True
+        return False
+
+
+    def _guide_fix_to_lsp_action(
+        uri: str,
+        source: str,
+        fix,
+        *,
+        kind,
+        version: int,
+        diagnostics: list[Diagnostic] | None = None,
+    ) -> CodeAction:
+        edits = [
+            TextEdit(
+                range=Range(
+                    start=_position_from_one_based(source, edit.start_line, edit.start_column),
+                    end=_position_from_one_based(source, edit.end_line, edit.end_column),
+                ),
+                new_text=edit.replacement,
+            )
+            for edit in fix.edits
+        ]
+        return CodeAction(
+            title=f"Sona Guide: {fix.title}",
+            kind=kind,
+            diagnostics=diagnostics or None,
+            is_preferred=fix.confidence in {"exact", "unique"},
+            edit=WorkspaceEdit(document_changes=[TextDocumentEdit(
+                text_document=OptionalVersionedTextDocumentIdentifier(uri=uri, version=version),
+                edits=edits,
+            )]),
+            data={
+                "schema_version": 1,
+                "source": "sona-guide",
+                "rule_id": fix.rule_id,
+                "stale_protection": "document-version",
+                "document_version": version,
+                "fix": fix.to_dict(),
+            },
+        )
+
+
+    def _lsp_code_actions(params: CodeActionParams, source: str, version: int) -> list[CodeAction]:
+        from .guide import GuideRequest, preview_diagnostic_fixes, preview_stdlib_api_migration
+
+        uri = params.text_document.uri
+        context = _field(params, "context")
+        actions: list[CodeAction] = []
+
+        if _code_action_kind_allowed(context, CodeActionKind.QuickFix):
+            for lsp_diagnostic in _field(context, "diagnostics") or []:
+                if _field(lsp_diagnostic, "source") != "sona":
+                    continue
+                canonical = _canonical_from_lsp_diagnostic(uri, source, lsp_diagnostic)
+                if canonical is None:
+                    continue
+                fixes = preview_diagnostic_fixes(
+                    GuideRequest(canonical.diagnostic_id, canonical),
+                    source,
+                    document=uri,
+                )
+                actions.extend(
+                    _guide_fix_to_lsp_action(
+                        uri,
+                        source,
+                        fix,
+                        kind=CodeActionKind.QuickFix,
+                        version=version,
+                        diagnostics=[lsp_diagnostic],
+                    )
+                    for fix in fixes
+                )
+
+        if _code_action_kind_allowed(context, CodeActionKind.SourceFixAll):
+            actions.extend(
+                _guide_fix_to_lsp_action(
+                    uri,
+                    source,
+                    fix,
+                    kind=CodeActionKind.SourceFixAll,
+                    version=version,
+                )
+                for fix in preview_stdlib_api_migration(source, document=uri)
+            )
+
+        return actions
+
+
     def _lsp_diagnostics(uri: str, text: str) -> list[Diagnostic]:
         diagnostics: list[Diagnostic] = []
         try:
@@ -627,20 +799,106 @@ if _PYGLS_AVAILABLE:
                     severity=severity,
                     source="sona",
                     code=item.diagnostic_id,
+                    data=item.to_dict(),
                 )
             )
         return diagnostics
 
 
+    def _lsp_converter():
+        from pygls.protocol import default_converter
+        from pygls.protocol.json_rpc import JsonRPCRequestMessage
+
+        converter = default_converter()
+        # The generic pygls request adapter converts JSON keys to namedtuple
+        # fields, renaming keys such as metadata's "rule-id". Keep Guide JSON
+        # intact so transport cannot change canonical diagnostics.
+        converter.register_structure_hook(JsonRPCRequestMessage, lambda obj, cls: cls(**obj))
+        return converter
+
+
     class SonaLsp(LanguageServer):
         def __init__(self):
-            super().__init__("sona-lsp", "0.15.5")
+            super().__init__("sona-lsp", "0.15.6", converter_factory=_lsp_converter)
+            self.guide_options = {}
 
         def validate(self, uri: str, text: str) -> None:
             self.publish_diagnostics(uri, _lsp_diagnostics(uri, text))
 
 
     server = SonaLsp()
+
+
+    def _guide_profile(uri: str):
+        from pygls.uris import to_fs_path
+        from .guide.profile import default_profile, load_profile_state
+
+        path = to_fs_path(uri)
+        if not path:
+            return default_profile()
+        roots = list(server.workspace.folders)
+        if server.workspace.root_uri:
+            roots.append(server.workspace.root_uri)
+        candidates = []
+        for root_uri in roots:
+            root_path = to_fs_path(root_uri)
+            if root_path and Path(path).resolve().is_relative_to(Path(root_path).resolve()):
+                candidates.append(Path(root_path))
+        if not candidates:
+            return default_profile()
+        return load_profile_state(max(candidates, key=lambda root: len(root.parts))).profile
+
+
+    def _guide_for_document(payload):
+        from .guide.models import GuideError
+        from .guide.service import guide_request, unavailable
+
+        try:
+            if not isinstance(payload, dict):
+                return guide_request(payload)
+            if not isinstance(payload.get("document", ""), str):
+                return guide_request(payload)
+            options = payload.get("options", {})
+            if not isinstance(options, dict):
+                return guide_request(payload)
+            request = {**payload, "options": {**server.guide_options, **options}}
+            return guide_request(request, profile=_guide_profile(payload.get("document", "")))
+        except GuideError as exc:
+            return unavailable(exc)
+        except (OSError, ValueError, TypeError):
+            return unavailable(GuideError(
+                "SONA-GUIDE-005", "The project learning profile is unavailable.",
+                "Review the selected project and its .sona/learning.json profile.",
+            ))
+
+
+    @server.feature("sona/guide")
+    def guide_request(params):
+        return _guide_for_document(params)
+
+
+    @server.feature(WORKSPACE_DID_CHANGE_CONFIGURATION)
+    def guide_configuration(params):
+        from .guide.service import guide_request as validate_request
+
+        settings = _field(params, "settings", {})
+        options = _field(_field(settings, "sona", {}), "guide", {})
+        result = validate_request({
+            "schema_version": 1, "action": "concept", "concept_id": "variables", "options": options,
+        })
+        if result["status"] != "unavailable":
+            server.guide_options = dict(options)
+
+
+    def _concept_documentation(identifier: str | None, uri: str):
+        if not identifier:
+            return None
+        result = _guide_for_document({
+            "schema_version": 1, "action": "concept", "concept_id": identifier, "document": uri,
+        })
+        if result["status"] == "unavailable":
+            return None
+        return MarkupContent(kind=MarkupKind.PlainText, value=result["text"])
 
     @server.feature(TEXT_DOCUMENT_DID_OPEN)
     def did_open(params) -> None:
@@ -662,8 +920,38 @@ if _PYGLS_AVAILABLE:
         server.publish_diagnostics(params.text_document.uri, [])
 
 
+    @server.feature(
+        TEXT_DOCUMENT_CODE_ACTION,
+        CodeActionOptions(
+            code_action_kinds=[
+                CodeActionKind.QuickFix,
+                CodeActionKind.SourceFixAll,
+            ]
+        ),
+    )
+    def code_action(params: CodeActionParams) -> list[CodeAction]:
+        try:
+            document = server.workspace.text_documents.get(params.text_document.uri)
+            if document is None or type(document.version) is not int:
+                return []
+            actions = _lsp_code_actions(params, document.source, document.version)
+            workspace = _field(server.client_capabilities, "workspace")
+            supports_versions = _field(_field(workspace, "workspace_edit"), "document_changes")
+            if not supports_versions:
+                for action in actions:
+                    action.edit = None
+                    action.disabled = CodeActionDisabledType(
+                        reason="Sona Guide fixes require a client supporting versioned document edits.",
+                    )
+            return actions
+        except Exception:
+            return []
+
+
     @server.feature(TEXT_DOCUMENT_COMPLETION)
     def completion(params: CompletionParams) -> CompletionList:
+        from .guide.catalog import KEYWORD_CONCEPTS
+
         source = _document_source(params.text_document.uri)
         if source is None:
             return CompletionList(is_incomplete=False, items=[])
@@ -685,6 +973,10 @@ if _PYGLS_AVAILABLE:
                                 label=module,
                                 kind=CompletionItemKind.Module,
                                 detail="Sona standard-library module",
+                                documentation=_concept_documentation(
+                                    {"fs": "files", "io": "files", "guardian": "guardian"}.get(module, "modules"),
+                                    params.text_document.uri,
+                                ),
                             )
                         )
                 return CompletionList(is_incomplete=False, items=items)
@@ -700,6 +992,10 @@ if _PYGLS_AVAILABLE:
                                     label=name,
                                     kind=CompletionItemKind.Function,
                                     detail=f"{resolved_module}.{name}",
+                                    documentation=_concept_documentation(
+                                        {"fs": "files", "io": "files", "guardian": "guardian"}.get(resolved_module),
+                                        params.text_document.uri,
+                                    ),
                                 )
                             )
                 return CompletionList(is_incomplete=False, items=items)
@@ -723,6 +1019,10 @@ if _PYGLS_AVAILABLE:
                         label=declaration.name,
                         kind=kind_map[declaration.kind],
                         detail=declaration.detail,
+                        documentation=_concept_documentation({
+                            "variable": "variables", "constant": "variables",
+                            "function": "functions", "module": "modules",
+                        }.get(declaration.kind), params.text_document.uri),
                     )
                 )
             for keyword in _KEYWORDS:
@@ -732,6 +1032,7 @@ if _PYGLS_AVAILABLE:
                             label=keyword,
                             kind=CompletionItemKind.Keyword,
                             detail="Sona keyword",
+                            documentation=_concept_documentation(KEYWORD_CONCEPTS.get(keyword), params.text_document.uri),
                         )
                     )
             return CompletionList(is_incomplete=False, items=items)
@@ -741,6 +1042,8 @@ if _PYGLS_AVAILABLE:
 
     @server.feature(TEXT_DOCUMENT_HOVER)
     def hover(params: HoverParams) -> Hover | None:
+        from .guide.catalog import KEYWORD_CONCEPTS
+
         source = _document_source(params.text_document.uri)
         if source is None:
             return None
@@ -759,10 +1062,14 @@ if _PYGLS_AVAILABLE:
                 docs = _stdlib_docs(module)
                 if docs and word in docs.symbols:
                     description = docs.symbols[word] or "Sona standard-library member."
+                    guide = _concept_documentation(
+                        {"fs": "files", "io": "files", "guardian": "guardian"}.get(module),
+                        params.text_document.uri,
+                    )
                     return Hover(
                         contents=MarkupContent(
-                            kind=MarkupKind.Markdown,
-                            value=f"**{module}.{word}**\n\n{description}",
+                            kind=MarkupKind.PlainText,
+                            value=f"{module}.{word}\n\n{description}" + (f"\n\n{guide.value}" if guide else ""),
                         )
                     )
 
@@ -782,13 +1089,20 @@ if _PYGLS_AVAILABLE:
                     )
                 else:
                     description = declaration.detail + "."
+                concept = {"variable": "variables", "constant": "variables", "function": "functions", "module": "modules"}.get(declaration.kind)
+                if declaration.kind == "module":
+                    concept = {"fs": "files", "io": "files", "guardian": "guardian"}.get(module, "modules")
+                guide = _concept_documentation(concept, params.text_document.uri)
                 return Hover(
                     contents=MarkupContent(
-                        kind=MarkupKind.Markdown,
-                        value=f"**{declaration.name}**\n\n{description}",
+                        kind=MarkupKind.PlainText,
+                        value=f"{declaration.name}\n\n{description}" + (f"\n\n{guide.value}" if guide else ""),
                     )
                 )
 
+            guide = _concept_documentation(KEYWORD_CONCEPTS.get(word), params.text_document.uri)
+            if guide:
+                return Hover(contents=guide)
             docs = _stdlib_docs(word)
             if docs and docs.module_doc:
                 return Hover(

@@ -9,7 +9,7 @@ from pathlib import Path
 from sona.stdlib import native_guardian as guardian
 
 ROOT = Path(__file__).resolve().parents[2]
-CURRENT_VERSION = "0.15.5"
+CURRENT_VERSION = "0.15.6"
 
 
 def test_native_standalone_gate_passes(tmp_path: Path, native_binary: Path):

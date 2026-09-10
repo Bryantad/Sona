@@ -140,7 +140,7 @@ other than exactly `allow` or `deny` fail closed. The canonical policy identity
 covers only schema version and normalized capabilities, so validation-command
 paths and platform-specific exclusions do not change the identity.
 
-In 0.15.5, `guardian verify --run-validation` remains read-only. It reports each
+In 0.15.6, `guardian verify --run-validation` remains read-only. It reports each
 trusted command as `not-executed`; trusted validation commands run during the
 post-restore phase of an approved recovery.
 
@@ -258,7 +258,7 @@ scoped approval.
 
 For a project that should support controlled recovery, save a reviewed policy
 as `.sona/governance.json` **before** `guardian init`, then include that policy
-in the trusted baseline. A conservative 0.15.5 policy is:
+in the trusted baseline. A conservative 0.15.6 policy is:
 
 ```json
 {
@@ -342,7 +342,7 @@ sona guardian init --project-root .
 # status: already-initialized
 ```
 
-The 0.15.5 foundation deliberately has no in-place re-baseline command. Archive
+The 0.15.6 foundation deliberately has no in-place re-baseline command. Archive
 the existing Guardian evidence and establish a reviewed new project root when a
 new trust baseline is required. A later workflow may add an explicit,
 approval-gated refresh operation; `init` will not be repurposed to hide drift.

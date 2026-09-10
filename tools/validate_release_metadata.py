@@ -27,6 +27,14 @@ def require_contains(path: str, needle: str) -> None:
         fail(f"{path} does not contain {needle!r}")
 
 
+def release_numeric_suffix(version: str) -> str:
+    parts = version.split(".")
+    if len(parts) != 3 or not all(part.isdigit() for part in parts):
+        fail(f"unsupported release version format: {version!r}")
+    major, minor, patch = (int(part) for part in parts)
+    return f"{major}{minor:02d}{patch}"
+
+
 def parse_pyproject_version() -> str:
     payload = tomllib.loads(read("pyproject.toml"))
     return payload["project"]["version"]
@@ -233,7 +241,7 @@ def main() -> int:
         f"Sona {expected}",
     )
     require_contains("docs/guides/platform-installation-and-testing.md", expected)
-    workflow = ".github/workflows/release-platforms-0155.yml"
+    workflow = f".github/workflows/release-platforms-{release_numeric_suffix(expected)}.yml"
     require_contains(workflow, expected)
     for target in (
         "x86_64-unknown-linux-musl",

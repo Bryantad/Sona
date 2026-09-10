@@ -1,6 +1,6 @@
 # Trusted Workflow Examples
 
-These examples show the practical 0.15.5 workflow: select a small program,
+These examples show the practical 0.15.6 workflow: select a small program,
 grant only the capabilities it needs, run it through Proof Mode, and verify the
 receipt. They use real Sona operations and state their evidence limits.
 

@@ -101,10 +101,29 @@ async function main() {
 
   const cliSource = fs.readFileSync(path.join(root, "src", "sonaCliIntegration.ts"), "utf8");
   const proofModelSource = fs.readFileSync(path.join(root, "src", "proofModeModel.ts"), "utf8");
+  const readmeSource = fs.readFileSync(path.join(root, "README.md"), "utf8");
   assert(cliSource.includes('const commandArgs = ["-P", "-m", "sona", ...args]'));
   assert(cliSource.includes("delete env.PYTHONPATH"));
-  assert(cliSource.includes('"proof", "inspect"') || cliSource.includes('"proof",\n      "inspect"'));
+  assert(cliSource.includes("createDiagnosticCollection(\"sona-runtime\")"));
+  assert(cliSource.includes('["run", doc.fileName, "--json"]'));
+  assert(cliSource.includes("normalizedSourceSha256"));
+  assert(cliSource.includes('packet.source_mapping !== "original"'));
+  assert(cliSource.includes("document.version !== version"));
+  assert(cliSource.includes("rendered.source = \"sona\""));
+  assert(cliSource.includes("(rendered as any).data = diagnostic"));
+  assert(/"proof",\s*"inspect"/.test(cliSource));
   assert(cliSource.includes("requireTrustedWorkspace"));
+  assert(cliSource.includes("selectDisplayPreference"));
+  assert(!cliSource.includes('label: "ADHD"'));
+  assert(!cliSource.includes('label: "Dyslexia"'));
+  assert.strictEqual(packageJson.displayName, "Sona: Cognitive Developer Experience");
+  assert(packageJson.contributes.configuration.properties["sona.displayPreference"]);
+  assert.deepStrictEqual(
+    packageJson.contributes.configuration.properties["sona.displayPreference"].enum,
+    ["standard", "focused", "readable"]
+  );
+  assert(!JSON.stringify(packageJson).match(/\b(ADHD|Dyslexia|neurotypical|adhd|dyslexia)\b/));
+  assert(!readmeSource.match(/\b(ADHD|Dyslexia|neurotypical|adhd|dyslexia)\b/));
   assert(!proofModelSource.includes("createHash"));
   assert(!proofModelSource.includes("canonicalJson"));
   assert(!proofModelSource.includes("canonical_json"));

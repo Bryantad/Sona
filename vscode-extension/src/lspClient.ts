@@ -3,8 +3,11 @@ import * as vscode from "vscode";
 import { LanguageClient } from "vscode-languageclient/node";
 
 import { resolveSonaPythonPath } from "./pythonEnvironment";
+import { guardCodeActions, guideOptions } from "./guide";
+import { GuideOptions } from "./guideModel";
 
 let client: LanguageClient | undefined;
+let started: Promise<void> | undefined;
 let outputChannel: vscode.LogOutputChannel | undefined;
 let lspStartupBlocked = false;
 let lspBlockReason: string | undefined;
@@ -103,13 +106,19 @@ export function startSonaLsp(context: vscode.ExtensionContext): void {
     { command: pythonPath, args: ["-P", "-m", "sona.lsp_server", "--stdio"] },
     {
       documentSelector: [{ scheme: "file", language: "sona" }],
-      outputChannel: ensureOutputChannel()
+      outputChannel: ensureOutputChannel(),
+      middleware: {
+        async provideCodeActions(document, range, actionContext, token, next) {
+          return guardCodeActions(await next(document, range, actionContext, token), document.uri.toString());
+        }
+      }
     }
   );
   client.onDidChangeState(event => {
     appendOutput(`[sona-lsp] state: ${event.oldState} -> ${event.newState}`);
   });
-  client.start().catch(err => {
+  started = client.start();
+  started.then(() => updateGuideOptions(guideOptions(vscode.window.activeTextEditor?.document.uri))).catch(err => {
     lspStartupBlocked = true;
     lspBlockReason = err instanceof Error ? err.message : String(err);
     appendOutput(`[sona-lsp] failed to start: ${lspBlockReason}`);
@@ -121,12 +130,25 @@ export function startSonaLsp(context: vscode.ExtensionContext): void {
   });
 }
 
+export async function requestSonaGuide(context: vscode.ExtensionContext, payload: unknown): Promise<any> {
+  startSonaLsp(context);
+  if (!client || !started || lspStartupBlocked) throw new Error("The Sona language server is unavailable. Check the Sona LSP output and selected Python runtime.");
+  await started;
+  try { return await client.sendRequest("sona/guide", payload); }
+  catch { throw new Error("Sona Guide could not answer this request. Update the selected Sona runtime and reload VS Code."); }
+}
+
+export async function updateGuideOptions(options: GuideOptions): Promise<void> {
+  if (client?.isRunning()) await client.sendNotification("workspace/didChangeConfiguration", { settings: { sona: { guide: options } } });
+}
+
 export async function stopSonaLsp(): Promise<void> {
   if (!client) {
     return;
   }
   const toStop = client;
   client = undefined;
+  started = undefined;
   try {
     await toStop.stop();
   } catch (err) {

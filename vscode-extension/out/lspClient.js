@@ -34,12 +34,16 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.startSonaLsp = startSonaLsp;
+exports.requestSonaGuide = requestSonaGuide;
+exports.updateGuideOptions = updateGuideOptions;
 exports.stopSonaLsp = stopSonaLsp;
 const child_process_1 = require("child_process");
 const vscode = __importStar(require("vscode"));
 const node_1 = require("vscode-languageclient/node");
 const pythonEnvironment_1 = require("./pythonEnvironment");
+const guide_1 = require("./guide");
 let client;
+let started;
 let outputChannel;
 let lspStartupBlocked = false;
 let lspBlockReason;
@@ -127,12 +131,18 @@ function startSonaLsp(context) {
     appendOutput(`[sona-lsp] starting: ${pythonPath} -P -m sona.lsp_server --stdio`);
     client = new node_1.LanguageClient("sona-lsp", "Sona Language Server", { command: pythonPath, args: ["-P", "-m", "sona.lsp_server", "--stdio"] }, {
         documentSelector: [{ scheme: "file", language: "sona" }],
-        outputChannel: ensureOutputChannel()
+        outputChannel: ensureOutputChannel(),
+        middleware: {
+            async provideCodeActions(document, range, actionContext, token, next) {
+                return (0, guide_1.guardCodeActions)(await next(document, range, actionContext, token), document.uri.toString());
+            }
+        }
     });
     client.onDidChangeState(event => {
         appendOutput(`[sona-lsp] state: ${event.oldState} -> ${event.newState}`);
     });
-    client.start().catch(err => {
+    started = client.start();
+    started.then(() => updateGuideOptions((0, guide_1.guideOptions)(vscode.window.activeTextEditor?.document.uri))).catch(err => {
         lspStartupBlocked = true;
         lspBlockReason = err instanceof Error ? err.message : String(err);
         appendOutput(`[sona-lsp] failed to start: ${lspBlockReason}`);
@@ -143,12 +153,29 @@ function startSonaLsp(context) {
         }
     });
 }
+async function requestSonaGuide(context, payload) {
+    startSonaLsp(context);
+    if (!client || !started || lspStartupBlocked)
+        throw new Error("The Sona language server is unavailable. Check the Sona LSP output and selected Python runtime.");
+    await started;
+    try {
+        return await client.sendRequest("sona/guide", payload);
+    }
+    catch {
+        throw new Error("Sona Guide could not answer this request. Update the selected Sona runtime and reload VS Code.");
+    }
+}
+async function updateGuideOptions(options) {
+    if (client?.isRunning())
+        await client.sendNotification("workspace/didChangeConfiguration", { settings: { sona: { guide: options } } });
+}
 async function stopSonaLsp() {
     if (!client) {
         return;
     }
     const toStop = client;
     client = undefined;
+    started = undefined;
     try {
         await toStop.stop();
     }

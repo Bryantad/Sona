@@ -84,7 +84,17 @@ def test_native_delegation_forwards_arguments_without_a_shell_and_preserves_exit
 
     monkeypatch.setattr(cli, "_resolve_native_proof_binary", lambda _environment: native)
 
+    def probe(binary, expected_version, environment):
+        assert binary == native
+        assert expected_version == cli.SONA_VERSION
+        assert environment["PATH"] == "native-search-path"
+        observed["probed"] = True
+        return expected_version
+
+    monkeypatch.setattr(cli, "probe_native_version", probe)
+
     def run(arguments, **kwargs):
+        assert observed["probed"] is True
         observed["arguments"] = arguments
         observed["kwargs"] = kwargs
         return subprocess.CompletedProcess(arguments, 7)
@@ -133,6 +143,7 @@ def test_native_launch_os_error_is_redacted(
     native = tmp_path / "sona-native"
     native.write_bytes(b"native-placeholder")
     monkeypatch.setattr(cli, "_resolve_native_proof_binary", lambda _environment: native)
+    monkeypatch.setattr(cli, "probe_native_version", lambda _binary, version, _env: version)
     monkeypatch.setattr(
         cli.subprocess,
         "run",

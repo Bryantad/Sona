@@ -8,15 +8,26 @@ CLAIM_SURFACES = [
     ROOT / "README.md",
     ROOT / "RELEASE_NOTES_v0.15.4.md",
     ROOT / "RELEASE_NOTES_v0.15.5.md",
+    ROOT / "RELEASE_NOTES_v0.15.6.md",
     ROOT / "docs" / "getting-started" / "README.md",
     ROOT / "docs" / "GUARDIAN_REFERENCE.md",
     ROOT / "docs" / "guides" / "guardian.md",
     ROOT / "docs" / "guides" / "proof-and-guardian.md",
     ROOT / "docs" / "guides" / "proof-mode.md",
     ROOT / "docs" / "reference" / "native-proof-mode.md",
+    ROOT / "docs" / "release" / "0.15.6-acceptance-audit.md",
+    ROOT / "docs" / "release" / "0.15.6-finalization-checklist.md",
     ROOT / "docs" / "release" / "0.15.5-implementation-report.md",
+    ROOT / "docs" / "release" / "0.15.6-implementation-report.md",
     *sorted((ROOT / "docs" / "spec" / "proof").glob("*.md")),
     *sorted((ROOT / "examples" / "trusted-workflows").rglob("*.md")),
+]
+BRANDING_SURFACES = [
+    *CLAIM_SURFACES,
+    ROOT / "vscode-extension" / "README.md",
+    ROOT / "vscode-extension" / "package.json",
+    *sorted((ROOT / "vscode-extension" / "src").glob("*.ts")),
+    *sorted((ROOT / "vscode-extension" / "src" / "aiConsole").glob("*.ts")),
 ]
 
 
@@ -42,6 +53,19 @@ def test_current_claim_surfaces_do_not_use_rejected_positive_claims():
 
     for path in CLAIM_SURFACES:
         text = path.read_text(encoding="utf-8").lower()
+        for phrase in rejected:
+            assert phrase not in text, f"{path.relative_to(ROOT)}: {phrase}"
+
+
+def test_user_facing_surfaces_keep_proof_mode_branding():
+    rejected = [
+        "Sona Proof",
+        "Sona Proof system",
+        "Sona Proof Explorer",
+    ]
+
+    for path in BRANDING_SURFACES:
+        text = path.read_text(encoding="utf-8")
         for phrase in rejected:
             assert phrase not in text, f"{path.relative_to(ROOT)}: {phrase}"
 

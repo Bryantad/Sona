@@ -20,7 +20,7 @@ baseline.
 [![GitHub Sponsors](https://img.shields.io/badge/GitHub%20Sponsors-Sponsor-ea4aaa?logo=githubsponsors\&logoColor=white)](https://github.com/sponsors/Bryantad)
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-Support-ff5e5b?logo=kofi\&logoColor=white)](https://ko-fi.com/YOUR_HANDLE)
 
-Current release: `0.15.5`
+Current release: `0.15.6`
 
 ## Why Sona?
 
@@ -135,7 +135,7 @@ sona --version
 Expected output shape:
 
 ```text
-Sona 0.15.5
+Sona 0.15.6
 ```
 
 > Note: the source repository may be ahead of the latest published PyPI package.
@@ -186,13 +186,13 @@ Both `sona run <file.sona>` and `sona <file.sona>` are supported for local files
 * [Guardian Guide](docs/guides/guardian.md)
 * [Using Proof Mode and Guardian Together](docs/guides/proof-and-guardian.md)
 * [Platform Installation and Testing](docs/guides/platform-installation-and-testing.md)
-* [0.15.5 Standard Library Catalog](docs/reference/stdlib/README.md)
+* [0.15.6 Standard Library Catalog](docs/reference/stdlib/README.md)
 * [Accessibility Reference](docs/ACCESSIBILITY_REFERENCE.md)
 * [Guardian Reference](docs/GUARDIAN_REFERENCE.md)
 * [Diagnostics Guide](docs/errors/v0.14-diagnostics.md)
 * [Package Manifest](docs/packages/manifest.md)
 * [Native Independence Roadmap](docs/roadmap/SONA_NATIVE_INDEPENDENCE.md)
-* [0.15.5 Release Notes](RELEASE_NOTES_v0.15.5.md)
+* [0.15.6 Release Notes](RELEASE_NOTES_v0.15.6.md)
 
 ## Official Examples
 

@@ -1,0 +1,6 @@
+let ready = true;
+if ready {
+    print("Ready");
+} else {
+    print("Not ready");
+}

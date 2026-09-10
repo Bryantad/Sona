@@ -3,15 +3,17 @@ import * as vscode from "vscode";
 import { SonaAiConsoleViewProvider } from "./aiConsole/sonaAiConsoleView";
 import * as lspClient from "./lspClient";
 import * as sonaCliIntegration from "./sonaCliIntegration";
+import { activateGuide } from "./guide";
 
 function shouldStartLsp(doc: vscode.TextDocument | undefined): boolean {
   return Boolean(doc && doc.languageId === "sona");
 }
 
 export function activate(context: vscode.ExtensionContext): void {
-  console.log("Sona 0.15.5 Extension is now active.");
+  console.log("Sona 0.15.6 Extension is now active.");
 
   sonaCliIntegration.activate(context);
+  activateGuide(context);
 
   const aiConsoleProvider = new SonaAiConsoleViewProvider(context);
   context.subscriptions.push(
@@ -45,7 +47,7 @@ export function activate(context: vscode.ExtensionContext): void {
     setTimeout(() => {
       vscode.window
         .showInformationMessage(
-          "Welcome to Sona 0.15.5. Trusted developer workflows are ready to use.",
+          "Welcome to Sona 0.15.6. Trusted developer workflows are ready to use.",
           "Get Started",
           "Documentation"
         )

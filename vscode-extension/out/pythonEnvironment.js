@@ -43,14 +43,16 @@ function explicitConfigurationValue(configuration, key) {
         ?? inspected?.workspaceValue
         ?? inspected?.globalValue;
 }
-function resolveSonaPythonPath() {
-    const configuration = vscode.workspace.getConfiguration("sona");
+function resolveSonaPythonPath(resource) {
+    const configuration = vscode.workspace.getConfiguration("sona", resource);
     const configured = explicitConfigurationValue(configuration, "cli.pythonPath")
         || explicitConfigurationValue(configuration, "pythonPath");
     if (configured?.trim()) {
         return configured.trim();
     }
-    const workspace = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    const workspace = resource
+        ? vscode.workspace.getWorkspaceFolder(resource)?.uri.fsPath
+        : vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
     if (workspace) {
         const windowsCandidate = path.join(workspace, ".venv", "Scripts", "python.exe");
         const posixCandidate = path.join(workspace, ".venv", "bin", "python");

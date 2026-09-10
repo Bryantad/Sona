@@ -15,7 +15,7 @@ or operating system.
 
 ## Install both command surfaces
 
-Sona 0.15.5 has separate Python-compatible and Native Core command surfaces:
+Sona 0.15.6 has separate Python-compatible and Native Core command surfaces:
 
 | Command | Purpose |
 | --- | --- |
@@ -44,7 +44,7 @@ sona proof --help
 Expected shape:
 
 ```text
-Sona native 0.15.5
+Sona native 0.15.6
 ```
 
 ## First proof receipt
@@ -209,7 +209,7 @@ performed no such activity. See the [effect vocabulary](../spec/proof/effects.md
 for the complete mapping and limits.
 
 `--allow-network` records that network policy was granted, but Native Core HTTP
-remains unavailable in 0.15.5. Process and environment capabilities remain
+remains unavailable in 0.15.6. Process and environment capabilities remain
 disabled.
 
 The receipt-writing operation is owned by the Proof runner. Publishing the
@@ -265,7 +265,7 @@ launch errors are not exposed.
 
 ## VS Code Proof Mode Explorer
 
-The Sona `0.15.5` development extension adds a Proof Mode tree to the Sona
+The Sona `0.15.6` development extension adds a Proof Mode tree to the Sona
 activity bar. Its actions are thin clients over the installed CLI:
 
 ```text

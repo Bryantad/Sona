@@ -1,0 +1,6 @@
+# These fixtures are verified as bytes; checkout conversion breaks their hashes.
+/tests/proof/fixtures/*.json text eol=lf
+/examples/trusted-workflows/deployment-evidence/artifact/app.txt text eol=lf
+/vscode-extension/out/** text eol=lf
+/vscode-extension/src/** text eol=lf
+/examples/learning/*.sona text eol=lf

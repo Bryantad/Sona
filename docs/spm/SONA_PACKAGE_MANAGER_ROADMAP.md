@@ -5,7 +5,7 @@ Cargo-equivalent build manager.
 
 ## Current Foundation
 
-- Sona `0.15.5` development hardens local-path package installation without
+- Sona `0.15.6` development hardens local-path package installation without
   introducing a registry.
 - Schema-2 manifests and dependency locks are deterministic and atomically
   written.
