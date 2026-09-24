@@ -30,7 +30,14 @@ from sona.runtime.contracts import (
     ServiceDefinition,
     ServiceState,
 )
-from sona.runtime.events import EventEnvelope, EventField, EventSchema, MessageEnvelope
+from sona.runtime.events import (
+    EventEnvelope,
+    EventField,
+    EventSchema,
+    MessageEnvelope,
+    MessageField,
+    MessageSchema,
+)
 from sona.workflow.contracts import (
     RetryMode,
     RetryPolicy,
@@ -246,6 +253,75 @@ def test_event_and_message_envelopes_require_versioned_identified_json_data():
         MessageEnvelope("BuildResult", {1: "bad"})
     with pytest.raises(ValueError, match="65536 bytes"):
         MessageEnvelope("BuildResult", {"body": "x" * 70000})
+
+
+def test_message_schema_validates_type_version_fields_and_payload_bound():
+    schema = MessageSchema(
+        "BuildResult",
+        2,
+        (
+            MessageField("success", "boolean"),
+            MessageField("artifact", "string", required=False),
+        ),
+        maximum_payload_bytes=48,
+    )
+    schema.validate(MessageEnvelope("BuildResult", {"success": True}, schema_version=2))
+    with pytest.raises(ValueError, match="message type does not match"):
+        schema.validate(MessageEnvelope("Other", {"success": True}, schema_version=2))
+    with pytest.raises(ValueError, match="message version does not match"):
+        schema.validate(MessageEnvelope("BuildResult", {"success": True}, schema_version=1))
+    with pytest.raises(ValueError, match="message payload missing required"):
+        schema.validate_payload({"artifact": "sona.exe"})
+    with pytest.raises(ValueError, match="message payload contains unknown"):
+        schema.validate_payload({"success": True, "authority": "grant"})
+    with pytest.raises(ValueError, match="message field success must be boolean"):
+        schema.validate_payload({"success": 1})
+    with pytest.raises(ValueError, match="message payload exceeds maximum"):
+        schema.validate_payload({"success": True, "artifact": "x" * 60})
+
+
+def test_event_and_message_json_round_trip_and_reject_malformed_envelopes():
+    event = EventEnvelope(
+        "build.completed",
+        "builder",
+        {"artifact": "sona.exe"},
+        1,
+        "2026-09-24T08:00:00-04:00",
+    )
+    assert event.timestamp_utc == "2026-09-24T12:00:00Z"
+    assert EventEnvelope.from_json(event.to_json()) == event
+
+    message = MessageEnvelope("BuildResult", {"success": True})
+    assert MessageEnvelope.from_json(message.to_json()) == message
+    with pytest.raises(ValueError, match="duplicate JSON field"):
+        MessageEnvelope.from_json('{"message_type":"A","message_type":"B"}')
+    with pytest.raises(ValueError, match="versioned envelope schema"):
+        MessageEnvelope.from_json(
+            '{"correlation_id":null,"message_id":"'
+            + message.message_id
+            + '","message_type":"BuildResult","payload":{},"schema_version":1,"extra":true}'
+        )
+    with pytest.raises(ValueError, match="valid JSON"):
+        EventEnvelope.from_json("not-json")
+    with pytest.raises(ValueError, match="maximum encoded size"):
+        MessageEnvelope.from_json(" " * 70_000)
+
+
+def test_event_payload_nested_json_validation_and_schema_contract_bounds():
+    with pytest.raises(ValueError, match="keys must be strings"):
+        EventEnvelope("worker.ready", "worker", {"nested": {1: "bad"}}, 1, "2026-09-24T12:00:00Z")
+    with pytest.raises(ValueError, match="finite JSON-compatible numbers"):
+        MessageEnvelope("BuildResult", {"nested": [float("inf")]})
+    with pytest.raises(ValueError, match="positive integer"):
+        EventSchema("bad.version", True, ())
+    with pytest.raises(ValueError, match="positive integer"):
+        MessageSchema("BuildResult", 1.5, ())
+    with pytest.raises(ValueError, match="unsupported message field type"):
+        MessageField("x", [])
+    with pytest.raises(ValueError, match="field names must be unique"):
+        MessageSchema("BuildResult", 1, (MessageField("x", "string"), MessageField("x", "integer")))
+    with pytest.raises(ValueError, match="tuple of field definitions"):
+        MessageSchema("BuildResult", 1, (EventField("x", "string"),))
 
 
 def test_service_restart_health_and_resource_contracts():

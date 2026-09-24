@@ -15,7 +15,14 @@ from .contracts import (
     ServiceDefinition,
     ServiceState,
 )
-from .events import EventEnvelope, EventField, EventSchema, MessageEnvelope
+from .events import (
+    EventEnvelope,
+    EventField,
+    EventSchema,
+    MessageEnvelope,
+    MessageField,
+    MessageSchema,
+)
 
 __all__ = [
     "BackpressurePolicy",
@@ -30,6 +37,8 @@ __all__ = [
     "EventSchema",
     "HealthState",
     "MessageEnvelope",
+    "MessageField",
+    "MessageSchema",
     "ResourceBudget",
     "ResourceLimit",
     "RestartPolicy",
