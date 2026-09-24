@@ -39,6 +39,14 @@ from .services import (
     ServiceSnapshot,
     ServiceSupervisor,
 )
+from .health import HealthMonitor, HealthPolicy, HealthSnapshot
+from .state_machine import (
+    InvalidStateTransition,
+    StateMachine,
+    StateMachineDefinition,
+    StateMachineSnapshot,
+    StateTransition,
+)
 
 __all__ = [
     "BackpressurePolicy",
@@ -58,6 +66,10 @@ __all__ = [
     "EventField",
     "EventSchema",
     "HealthState",
+    "HealthMonitor",
+    "HealthPolicy",
+    "HealthSnapshot",
+    "InvalidStateTransition",
     "MessageEnvelope",
     "MessageField",
     "MessageSchema",
@@ -72,4 +84,8 @@ __all__ = [
     "ServiceState",
     "ServiceSupervisor",
     "SendReceipt",
+    "StateMachine",
+    "StateMachineDefinition",
+    "StateMachineSnapshot",
+    "StateTransition",
 ]

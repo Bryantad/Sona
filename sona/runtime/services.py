@@ -7,10 +7,11 @@ import math
 import threading
 import time
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 
-from .contracts import RestartMode, ServiceDefinition, ServiceState
+from .contracts import HealthState, RestartMode, ServiceDefinition, ServiceState
+from .health import HealthMonitor, HealthPolicy, HealthSnapshot
 
 ServiceTarget = Callable[["ServiceContext"], None]
 
@@ -28,6 +29,7 @@ class ServiceSnapshot:
     restarts: int
     last_failure_code: str | None
     updated_at_utc: str
+    health: HealthSnapshot
 
 
 @dataclass(slots=True)
@@ -52,10 +54,14 @@ class ServiceContext:
         service_id: str,
         cancel_event: threading.Event,
         mark_healthy: Callable[[], None],
+        heartbeat: Callable[[], None],
+        report_health: Callable[[HealthState, str | None], None],
     ) -> None:
         self.service_id = service_id
         self._cancel_event = cancel_event
         self._mark_healthy_callback = mark_healthy
+        self._heartbeat_callback = heartbeat
+        self._report_health_callback = report_health
 
     @property
     def cancellation_requested(self) -> bool:
@@ -70,14 +76,30 @@ class ServiceContext:
         """Report startup readiness; health is informational, not authorization."""
         self._mark_healthy_callback()
 
+    def heartbeat(self) -> None:
+        """Report liveness without promoting an unknown/degraded health state."""
+        self._heartbeat_callback()
+
+    def report_health(
+        self,
+        state: HealthState,
+        *,
+        diagnostic_code: str | None = None,
+    ) -> None:
+        """Report health data; it has no effect on capability or policy authority."""
+        self._report_health_callback(state, diagnostic_code)
+
 
 class ServiceSupervisor:
     """Own service threads, isolate failures, and cap per-service restarts."""
 
-    def __init__(self) -> None:
+    def __init__(self, *, health_monitor: HealthMonitor | None = None) -> None:
         self._condition = threading.Condition()
         self._records: dict[str, _ServiceRecord] = {}
         self._closed = False
+        if health_monitor is not None and not isinstance(health_monitor, HealthMonitor):
+            raise TypeError("health_monitor must be a HealthMonitor")
+        self._health_monitor = health_monitor or HealthMonitor()
 
     def register(
         self,
@@ -85,6 +107,7 @@ class ServiceSupervisor:
         target: ServiceTarget,
         *,
         parent_service_id: str | None = None,
+        health_policy: HealthPolicy = HealthPolicy(),
     ) -> None:
         if not isinstance(definition, ServiceDefinition):
             raise TypeError("definition must be a ServiceDefinition")
@@ -96,6 +119,8 @@ class ServiceSupervisor:
             inspect.signature(target).bind(object())
         except (TypeError, ValueError) as exc:
             raise TypeError("service target must accept a context argument") from exc
+        if not isinstance(health_policy, HealthPolicy):
+            raise TypeError("health_policy must be a HealthPolicy")
         if parent_service_id is not None and not isinstance(parent_service_id, str):
             raise ValueError("parent_service_id must be a registered service ID")
         with self._condition:
@@ -105,6 +130,7 @@ class ServiceSupervisor:
                 raise ValueError(f"service is already registered: {definition.service_id}")
             if parent_service_id is not None and parent_service_id not in self._records:
                 raise ValueError("parent service must be registered before its child")
+            self._health_monitor.register(definition.service_id, health_policy)
             now = _utc_now()
             self._records[definition.service_id] = _ServiceRecord(
                 definition=definition,
@@ -189,11 +215,14 @@ class ServiceSupervisor:
     def snapshot(self, service_id: str) -> ServiceSnapshot:
         with self._condition:
             record = self._get_record(service_id)
-            return _snapshot(record)
+            return _snapshot(record, self._health_monitor.snapshot(service_id))
 
     def snapshots(self) -> tuple[ServiceSnapshot, ...]:
         with self._condition:
-            return tuple(_snapshot(record) for record in self._records.values())
+            return tuple(
+                _snapshot(record, self._health_monitor.snapshot(service_id))
+                for service_id, record in self._records.items()
+            )
 
     def wait_for_state(
         self,
@@ -222,6 +251,8 @@ class ServiceSupervisor:
             record.definition.service_id,
             record.cancel_event,
             lambda: self._mark_healthy(record),
+            lambda: self._heartbeat(record),
+            lambda state, code: self._report_health(record, state, code),
         )
         while True:
             with self._condition:
@@ -265,7 +296,41 @@ class ServiceSupervisor:
                 raise ServiceLifecycleError(
                     f"cannot report healthy from state {record.state.value}"
                 )
+            self._health_monitor.report(record.definition.service_id, HealthState.HEALTHY)
             self._set_state(record, ServiceState.HEALTHY)
+
+    def _heartbeat(self, record: _ServiceRecord) -> None:
+        with self._condition:
+            if record.state not in {
+                ServiceState.STARTING,
+                ServiceState.HEALTHY,
+                ServiceState.DEGRADED,
+            }:
+                raise ServiceLifecycleError(
+                    f"cannot heartbeat from state {record.state.value}"
+                )
+            self._health_monitor.heartbeat(record.definition.service_id)
+
+    def _report_health(
+        self,
+        record: _ServiceRecord,
+        state: HealthState,
+        diagnostic_code: str | None,
+    ) -> None:
+        with self._condition:
+            if record.state not in {
+                ServiceState.STARTING,
+                ServiceState.HEALTHY,
+                ServiceState.DEGRADED,
+            }:
+                raise ServiceLifecycleError(
+                    f"cannot report health from state {record.state.value}"
+                )
+            self._health_monitor.report(
+                record.definition.service_id,
+                state,
+                diagnostic_code=diagnostic_code,
+            )
 
     def _stop_one(self, service_id: str, timeout: float | None) -> bool:
         with self._condition:
@@ -308,7 +373,9 @@ class ServiceSupervisor:
         self._condition.notify_all()
 
 
-def _snapshot(record: _ServiceRecord) -> ServiceSnapshot:
+def _snapshot(record: _ServiceRecord, health: HealthSnapshot) -> ServiceSnapshot:
+    if record.state in {ServiceState.STOPPING, ServiceState.STOPPED, ServiceState.FAILED}:
+        health = replace(health, state=HealthState.UNKNOWN)
     return ServiceSnapshot(
         service_id=record.definition.service_id,
         parent_service_id=record.parent_service_id,
@@ -317,6 +384,7 @@ def _snapshot(record: _ServiceRecord) -> ServiceSnapshot:
         restarts=record.restarts,
         last_failure_code=record.last_failure_code,
         updated_at_utc=record.updated_at_utc,
+        health=health,
     )
 
 

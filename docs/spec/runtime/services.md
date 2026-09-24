@@ -38,9 +38,17 @@ force-kill its thread. If it does not stop before the requested timeout,
 `stop()` returns `False` and its state remains `STOPPING` until the target
 actually exits.
 
-Snapshots report service ID, parent ID, state, attempt count, restart count,
-safe failure code, and UTC update time. Exception messages and tracebacks are
-not retained in snapshots. `wait_for_state()` requires a finite timeout.
+Snapshots report service ID, parent ID, lifecycle state, attempt count,
+restart count, safe failure code, UTC update time, and a separate health
+snapshot. The health subject uses its own `HealthPolicy`; see
+[`health-state-machines.md`](health-state-machines.md). `mark_healthy()` is
+both the startup-ready transition and an explicit HEALTHY report. Later,
+`context.heartbeat()` refreshes liveness, while `context.report_health()` can
+report DEGRADED/UNHEALTHY/UNKNOWN independently of service lifecycle. A
+stopped, stopping, or failed service is exposed with health UNKNOWN. Health
+does not itself trigger restarts or authorize operations. Exception messages
+and tracebacks are not retained in snapshots. `wait_for_state()` requires a
+finite timeout.
 
 ## Bounded restart policy
 
@@ -88,6 +96,6 @@ supervisor.start("indexer")
 # Owner later calls supervisor.close(timeout=5.0).
 ```
 
-No Sona service syntax, heartbeat protocol, health state machine, resource
-enforcement, persistence, or proof binding is introduced here. Those remain
-later phases and must reuse Guardian/Proof boundaries without weakening them.
+No Sona service syntax, health-driven restart, resource enforcement,
+persistence, or proof binding is introduced here. Those remain later phases
+and must reuse Guardian/Proof boundaries without weakening them.
