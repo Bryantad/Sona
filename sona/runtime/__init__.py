@@ -23,12 +23,27 @@ from .events import (
     MessageField,
     MessageSchema,
 )
+from .channels import (
+    BoundedChannel,
+    ChannelCancelledError,
+    ChannelClosedError,
+    ChannelError,
+    ChannelFullError,
+    ChannelTimeoutError,
+    SendReceipt,
+)
 
 __all__ = [
     "BackpressurePolicy",
+    "BoundedChannel",
     "CapabilityScope",
     "ChannelDefinition",
+    "ChannelCancelledError",
+    "ChannelClosedError",
+    "ChannelError",
+    "ChannelFullError",
     "ChannelState",
+    "ChannelTimeoutError",
     "EffectClass",
     "EffectOutcome",
     "EnforcementStatus",
@@ -44,4 +59,5 @@ __all__ = [
     "RestartPolicy",
     "ServiceDefinition",
     "ServiceState",
+    "SendReceipt",
 ]

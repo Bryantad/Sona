@@ -165,11 +165,21 @@ class ChannelDefinition:
 
     def __post_init__(self) -> None:
         identifier = r"[A-Za-z0-9][A-Za-z0-9._:-]{0,127}"
-        if not re.fullmatch(identifier, self.channel_id):
+        if not isinstance(self.channel_id, str) or not re.fullmatch(identifier, self.channel_id):
             raise ValueError("channel_id must be a safe identifier")
-        if not re.fullmatch(identifier, self.message_type):
+        if not isinstance(self.message_type, str) or not re.fullmatch(
+            identifier, self.message_type
+        ):
             raise ValueError("message_type must be a safe identifier")
-        if self.capacity <= 0:
-            raise ValueError("channel capacity must be positive")
-        if self.schema_version != 1:
+        if isinstance(self.capacity, bool) or not isinstance(self.capacity, int):
+            raise ValueError("channel capacity must be an integer")
+        if not 1 <= self.capacity <= 65_536:
+            raise ValueError("channel capacity must be between 1 and 65536")
+        if not isinstance(self.backpressure, BackpressurePolicy):
+            raise ValueError("backpressure must be a BackpressurePolicy")
+        if (
+            isinstance(self.schema_version, bool)
+            or not isinstance(self.schema_version, int)
+            or self.schema_version != 1
+        ):
             raise ValueError("channel definition requires schema_version 1")

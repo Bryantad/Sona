@@ -359,5 +359,5 @@ def test_channel_contract_requires_finite_capacity_and_explicit_backpressure():
     channel = ChannelDefinition("build-results", "BuildResult", 32)
     assert channel.capacity == 32
     assert channel.backpressure is BackpressurePolicy.BLOCK
-    with pytest.raises(ValueError, match="capacity must be positive"):
+    with pytest.raises(ValueError, match="capacity must be between 1 and 65536"):
         ChannelDefinition("unbounded", "BuildResult", 0)
