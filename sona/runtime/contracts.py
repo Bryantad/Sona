@@ -140,7 +140,13 @@ class ResourceBudget:
 class EffectClass(StrEnum):
     FS_READ = "FS.READ"
     FS_WRITE = "FS.WRITE"
+    FS_APPEND = "FS.APPEND"
+    FS_CREATE = "FS.CREATE"
+    FS_DELETE = "FS.DELETE"
+    FS_RENAME = "FS.RENAME"
+    FS_LIST = "FS.LIST"
     NETWORK_REQUEST = "NETWORK.REQUEST"
+    NETWORK_CONNECT = "NETWORK.CONNECT"
     PROCESS_EXECUTE = "PROCESS.EXECUTE"
     ENV_READ = "ENV.READ"
     MODEL_INFERENCE = "MODEL.INFERENCE"
@@ -148,9 +154,33 @@ class EffectClass(StrEnum):
     EVENT_EMIT = "EVENT.EMIT"
     SERVICE_START = "SERVICE.START"
     SERVICE_STOP = "SERVICE.STOP"
+    STDIN_READ = "STDIN.READ"
+    STDOUT_WRITE = "STDOUT.WRITE"
+    STDERR_WRITE = "STDERR.WRITE"
+    CONSOLE_FLUSH = "CONSOLE.FLUSH"
+    CLOCK_READ = "CLOCK.READ"
+    CLOCK_SLEEP = "CLOCK.SLEEP"
+    RANDOM_READ = "RANDOM.READ"
+    RANDOM_SEED = "RANDOM.SEED"
+
+
+class EffectDecision(StrEnum):
+    ALLOWED = "allowed"
+    DENIED = "denied"
+    NOT_REQUIRED = "not_required"
+    UNKNOWN = "unknown"
+
+
+class EffectResult(StrEnum):
+    NOT_ATTEMPTED = "not_attempted"
+    FAILED = "failed"
+    SUCCEEDED = "succeeded"
+    UNKNOWN = "unknown"
 
 
 class EffectOutcome(StrEnum):
+    """Legacy combined outcome; new records separate decision from result."""
+
     ALLOWED = "allowed"
     DENIED = "denied"
     FAILED = "failed"
