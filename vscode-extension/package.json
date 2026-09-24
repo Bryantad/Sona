@@ -1,7 +1,7 @@
 {
   "name": "sona-ai-native-programming",
   "displayName": "Sona: Cognitive Developer Experience",
-  "description": "AI-native programming with Sona diagnostics, a CLI-backed Proof Mode Explorer, Guardian workflows, local runtime integration, and the preview Sona AI Console.",
+  "description": "AI-native programming with Sona diagnostics, a Proof Mode Explorer, a read-only Runtime view, Guardian workflows, and a preview Sona AI Console.",
   "version": "0.15.6",
   "publisher": "Waycoreinc",
   "icon": "assets/icon.png",
@@ -63,6 +63,10 @@
           "name": "Proof Mode"
         },
         {
+          "id": "sona.runtimeView",
+          "name": "Sona Runtime"
+        },
+        {
           "id": "sona.aiConsole",
           "name": "Sona AI Console",
           "type": "webview"
@@ -70,6 +74,7 @@
       ]
     },
     "commands": [
+      { "command": "sona.runtime.refresh", "title": "Refresh Sona Runtime", "category": "Sona Runtime" },
       { "command": "sona.guide.explainDiagnostic", "title": "Explain Diagnostic (Offline)", "category": "Sona Guide" },
       { "command": "sona.guide.explainSelection", "title": "Explain Selection (Offline)", "category": "Sona Guide" },
       { "command": "sona.guide.focus", "title": "Show Focused Diagnostics", "category": "Sona Guide" },
@@ -347,6 +352,11 @@
       ],
       "view/title": [
         {
+          "command": "sona.runtime.refresh",
+          "when": "view == sona.runtimeView",
+          "group": "navigation"
+        },
+        {
           "command": "sona.proofMode.run",
           "when": "view == sona.proofModeExplorer && editorLangId == sona && isWorkspaceTrusted",
           "group": "navigation@1"
@@ -560,8 +570,10 @@
   "activationEvents": [
     "onLanguage:sona",
     "onView:sona.proofModeExplorer",
+    "onView:sona.runtimeView",
     "onView:sona.aiConsole",
     "onCommand:sona.proofMode.run",
+    "onCommand:sona.runtime.refresh",
     "onCommand:sona.proofMode.verifyReceipt",
     "onCommand:sona.proofMode.inspectReceipt",
     "onCommand:sona.proofMode.openReceipt",
@@ -582,7 +594,8 @@
     "bundle": "esbuild src/extension.ts --bundle --minify --platform=node --format=cjs --target=node20 --supported:template-literal=false --external:vscode --outfile=out/extension.js --log-level=warning",
     "watch": "tsc -watch -p .",
     "test": "node scripts/smoke-ai-console.js",
-    "test:guide": "node scripts/smoke-guide.js"
+    "test:guide": "node scripts/smoke-guide.js",
+    "test:runtime": "node scripts/smoke-runtime.js"
   },
   "dependencies": {
     "vscode-languageclient": "10.1.0"

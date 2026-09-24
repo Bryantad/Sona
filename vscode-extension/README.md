@@ -22,6 +22,15 @@ It also uses the stabilized language server for diagnostics, completion, hover,
 local definition lookup, and document symbols. Guardian review and AI remain
 outside the receipt verification chain, and Native HTTP remains unavailable.
 
+## 0.16.0 Development Preview
+
+The development branch adds a read-only **Sona Runtime** view backed by
+`sona runtime status --format json`. It shows registered model descriptors,
+persisted workflow snapshots, resource-reporting scope, and the current limits
+of process-local service visibility. Model registration is not model readiness;
+the view does not start or resume work. Proof verification remains in the
+separate Proof Mode Explorer.
+
 ## How to Use Sona in VS Code
 
 1. Install Python 3.11 or newer and the Sona CLI:

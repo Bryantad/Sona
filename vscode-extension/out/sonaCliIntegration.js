@@ -44,12 +44,14 @@ const vscode = __importStar(require("vscode"));
 const proofModeExplorer_1 = require("./proofModeExplorer");
 const proofModeModel_1 = require("./proofModeModel");
 const pythonEnvironment_1 = require("./pythonEnvironment");
+const runtimeView_1 = require("./runtimeView");
 class SonaCliIntegration {
     context;
     config;
     outputChannel;
     statusBarItem;
     proofModeExplorer;
+    runtimeView;
     runtimeDiagnosticCollection;
     terminal;
     displayPreference;
@@ -59,11 +61,13 @@ class SonaCliIntegration {
         this.outputChannel = vscode.window.createOutputChannel("Sona");
         this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
         this.proofModeExplorer = new proofModeExplorer_1.ProofModeExplorerProvider();
+        this.runtimeView = new runtimeView_1.RuntimeViewProvider(() => this.runSonaCommand(["runtime", "status", "--format", "json"]));
         this.runtimeDiagnosticCollection = vscode.languages.createDiagnosticCollection("sona-runtime");
         this.displayPreference = this.loadDisplayPreference();
         this.initializeStatusBar();
-        this.context.subscriptions.push(this.runtimeDiagnosticCollection, this.proofModeExplorer, vscode.window.registerTreeDataProvider(proofModeExplorer_1.ProofModeExplorerProvider.viewType, this.proofModeExplorer));
+        this.context.subscriptions.push(this.runtimeDiagnosticCollection, this.proofModeExplorer, this.runtimeView, vscode.window.registerTreeDataProvider(proofModeExplorer_1.ProofModeExplorerProvider.viewType, this.proofModeExplorer), vscode.window.registerTreeDataProvider(runtimeView_1.RuntimeViewProvider.viewType, this.runtimeView));
         this.registerCommands();
+        void this.runtimeView.refresh();
         this.registerRuntimeDiagnosticInvalidation();
         void this.checkSonaInstallation();
     }
@@ -192,7 +196,7 @@ class SonaCliIntegration {
         });
     }
     registerCommands() {
-        this.context.subscriptions.push(vscode.commands.registerCommand("sona.welcome", () => this.showWelcome()), vscode.commands.registerCommand("sona.setup.azure", () => this.setupAzure()), vscode.commands.registerCommand("sona.setup.manual", () => this.setupManual()), vscode.commands.registerCommand("sona.selectUserProfile", () => this.selectDisplayPreference()), vscode.commands.registerCommand("sona.run", () => this.runCurrentFile()), vscode.commands.registerCommand("sona.proofMode.run", () => this.runWithProofMode()), vscode.commands.registerCommand("sona.proofMode.verifyReceipt", candidate => this.verifyProofModeReceipt(candidate)), vscode.commands.registerCommand("sona.proofMode.inspectReceipt", candidate => this.inspectProofModeReceipt(candidate)), vscode.commands.registerCommand("sona.proofMode.openReceipt", candidate => this.openProofModeReceipt(candidate)), vscode.commands.registerCommand("sona.proofMode.refresh", () => this.refreshProofModeReceipt()), vscode.commands.registerCommand("sona.proofMode.explainWithGuardian", candidate => this.explainProofModeWithGuardian(candidate)), vscode.commands.registerCommand("sona.transpile", () => this.transpileCurrentFile()), vscode.commands.registerCommand("sona.repl", () => this.startRepl()), vscode.commands.registerCommand("sona.check", () => this.checkCurrentFile()), vscode.commands.registerCommand("sona.format", () => this.formatCurrentFile()), vscode.commands.registerCommand("sona.explain", () => this.explainSelection()), vscode.commands.registerCommand("sona.suggest", () => this.getSuggestions()), vscode.commands.registerCommand("sona.profile", () => this.profileCurrentFile()), vscode.commands.registerCommand("sona.benchmark", () => this.benchmarkCurrentFile()), vscode.commands.registerCommand("sona.info", () => this.showInfo()), vscode.commands.registerCommand("sona.help", () => this.showHelp()), vscode.commands.registerCommand("sona.checkAIConnection", () => this.checkAIConnection()), vscode.commands.registerCommand("sona.aiPlanSelection", () => this.planSelection()), vscode.commands.registerCommand("sona.aiReviewSelection", () => this.reviewSelection()));
+        this.context.subscriptions.push(vscode.commands.registerCommand("sona.welcome", () => this.showWelcome()), vscode.commands.registerCommand("sona.setup.azure", () => this.setupAzure()), vscode.commands.registerCommand("sona.setup.manual", () => this.setupManual()), vscode.commands.registerCommand("sona.selectUserProfile", () => this.selectDisplayPreference()), vscode.commands.registerCommand("sona.run", () => this.runCurrentFile()), vscode.commands.registerCommand("sona.proofMode.run", () => this.runWithProofMode()), vscode.commands.registerCommand("sona.proofMode.verifyReceipt", candidate => this.verifyProofModeReceipt(candidate)), vscode.commands.registerCommand("sona.proofMode.inspectReceipt", candidate => this.inspectProofModeReceipt(candidate)), vscode.commands.registerCommand("sona.proofMode.openReceipt", candidate => this.openProofModeReceipt(candidate)), vscode.commands.registerCommand("sona.proofMode.refresh", () => this.refreshProofModeReceipt()), vscode.commands.registerCommand("sona.runtime.refresh", () => this.runtimeView.refresh()), vscode.commands.registerCommand("sona.proofMode.explainWithGuardian", candidate => this.explainProofModeWithGuardian(candidate)), vscode.commands.registerCommand("sona.transpile", () => this.transpileCurrentFile()), vscode.commands.registerCommand("sona.repl", () => this.startRepl()), vscode.commands.registerCommand("sona.check", () => this.checkCurrentFile()), vscode.commands.registerCommand("sona.format", () => this.formatCurrentFile()), vscode.commands.registerCommand("sona.explain", () => this.explainSelection()), vscode.commands.registerCommand("sona.suggest", () => this.getSuggestions()), vscode.commands.registerCommand("sona.profile", () => this.profileCurrentFile()), vscode.commands.registerCommand("sona.benchmark", () => this.benchmarkCurrentFile()), vscode.commands.registerCommand("sona.info", () => this.showInfo()), vscode.commands.registerCommand("sona.help", () => this.showHelp()), vscode.commands.registerCommand("sona.checkAIConnection", () => this.checkAIConnection()), vscode.commands.registerCommand("sona.aiPlanSelection", () => this.planSelection()), vscode.commands.registerCommand("sona.aiReviewSelection", () => this.reviewSelection()));
     }
     registerRuntimeDiagnosticInvalidation() {
         this.context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(event => {

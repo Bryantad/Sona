@@ -141,6 +141,9 @@ KNOWN_COMMANDS = {
     'perf-log',
     'ai',
     'model',
+    'workflow',
+    'service',
+    'runtime',
     'govern',
     'guardian',
     'guide',
@@ -1654,6 +1657,32 @@ def create_argument_parser() -> argparse.ArgumentParser:
     model_health = model_sub.add_parser('health', help='Show model registry health')
     model_health.add_argument('--format', choices=['text', 'json'], default='json')
 
+    workflow_parser = subparsers.add_parser(
+        'workflow', help='Inspect durable workflow state without resuming work'
+    )
+    workflow_sub = workflow_parser.add_subparsers(dest='workflow_cmd')
+    workflow_list = workflow_sub.add_parser('list', help='List validated workflow snapshots')
+    workflow_list.add_argument('--root', default='.sona', help='Workflow journal root (default: .sona)')
+    workflow_list.add_argument('--format', choices=['text', 'json'], default='json')
+    workflow_inspect = workflow_sub.add_parser('inspect', help='Inspect one workflow snapshot')
+    workflow_inspect.add_argument('workflow_id')
+    workflow_inspect.add_argument('--root', default='.sona', help='Workflow journal root (default: .sona)')
+    workflow_inspect.add_argument('--format', choices=['text', 'json'], default='json')
+
+    service_parser = subparsers.add_parser(
+        'service', help='Inspect current-process supervised-service capability'
+    )
+    service_sub = service_parser.add_subparsers(dest='service_cmd')
+    service_status = service_sub.add_parser('status', help='Explain visible service runtime state')
+    service_status.add_argument('--format', choices=['text', 'json'], default='json')
+
+    runtime_parser = subparsers.add_parser(
+        'runtime', help='Inspect model, workflow, service, and trust runtime state'
+    )
+    runtime_sub = runtime_parser.add_subparsers(dest='runtime_cmd')
+    runtime_status = runtime_sub.add_parser('status', help='Show a read-only runtime summary')
+    runtime_status.add_argument('--format', choices=['text', 'json'], default='json')
+
     govern_parser = subparsers.add_parser('govern', help='Validate and explain governance policy')
     govern_sub = govern_parser.add_subparsers(dest='govern_cmd')
     govern_validate = govern_sub.add_parser('validate')
@@ -1957,6 +1986,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
     _doctor_parser = subparsers.add_parser(  # noqa: F841
         'doctor', help='Diagnose environment & feature readiness'
     )
+    _doctor_parser.add_argument('--format', choices=['text', 'json'], default='text')
 
     # build-info command
     _build_info_parser = subparsers.add_parser(  # noqa: F841
@@ -2923,6 +2953,213 @@ def handle_model_command(args) -> int:
         raise ValueError("missing model command")
     except Exception as exc:
         safe_error(f"[ERROR] model command failed: {exc}")
+        return 1
+
+
+def _workflow_store(root: str):
+    from sona.workflow import WorkflowJournalStore
+
+    path = Path(root).expanduser()
+    journal_dir = path / "workflows"
+    if not journal_dir.exists() and not journal_dir.is_symlink():
+        return None
+    return WorkflowJournalStore(path)
+
+
+def _workflow_summary(snapshot, *, include_steps: bool = False) -> dict:
+    summary = {
+        "workflow_id": str(snapshot.definition.workflow_id),
+        "schema_version": snapshot.schema_version,
+        "state": snapshot.state.value,
+        "created_at_utc": snapshot.created_at_utc,
+        "started_at_utc": snapshot.started_at_utc,
+        "finished_at_utc": snapshot.finished_at_utc,
+        "progress": {
+            "completed_steps": snapshot.progress.completed_steps,
+            "total_steps": snapshot.progress.total_steps,
+            "percent_complete": snapshot.progress.percent_complete,
+        },
+        "tasks": len(snapshot.tasks),
+        "steps": len(snapshot.steps),
+    }
+    if include_steps:
+        task_states = {item.task_id: item.state.value for item in snapshot.tasks}
+        step_states = {item.step_id: item for item in snapshot.steps}
+        summary["tasks"] = [
+            {
+                "task_id": str(task.task_id),
+                "state": task_states[task.task_id],
+                "steps": [
+                    {
+                        "step_id": str(step.step_id),
+                        "operation": step.operation,
+                        "depends_on": [str(item) for item in step.depends_on],
+                        "state": step_states[step.step_id].state.value,
+                        "attempt_count": step_states[step.step_id].attempt_count,
+                        "failure_code": step_states[step.step_id].failure_code,
+                    }
+                    for step in task.steps
+                ],
+            }
+            for task in snapshot.definition.tasks
+        ]
+    return summary
+
+
+def handle_workflow_command(args) -> int:
+    import json
+
+    try:
+        store = _workflow_store(args.root)
+        snapshots = store.load_latest() if store is not None else ()
+        command = getattr(args, "workflow_cmd", None)
+        if command == "list":
+            payload = {
+                "schema_version": 1,
+                "status": "ok",
+                "workflows": [_workflow_summary(item) for item in snapshots],
+            }
+        elif command == "inspect":
+            workflow_id = str(args.workflow_id)
+            match = next(
+                (item for item in snapshots if str(item.definition.workflow_id) == workflow_id),
+                None,
+            )
+            if match is None:
+                raise ValueError("unknown workflow ID")
+            payload = {
+                "schema_version": 1,
+                "status": "ok",
+                "workflow": _workflow_summary(match, include_steps=True),
+                "recovery": "inert; inspect never resumes or executes work",
+            }
+        else:
+            raise ValueError("missing workflow command; use list or inspect")
+
+        if args.format == "json":
+            print(json.dumps(payload, sort_keys=True))
+        elif command == "list":
+            if not payload["workflows"]:
+                safe_print("No persisted workflows.")
+            for item in payload["workflows"]:
+                safe_print(
+                    f"{item['workflow_id']}  {item['state']}  "
+                    f"{item['progress']['completed_steps']}/{item['progress']['total_steps']} steps"
+                )
+        else:
+            item = payload["workflow"]
+            safe_print(
+                f"Workflow {item['workflow_id']}\n"
+                f"State       {item['state']}\n"
+                f"Progress    {item['progress']['completed_steps']}/"
+                f"{item['progress']['total_steps']} steps"
+            )
+            for task in item["tasks"]:
+                safe_print(f"Task {task['task_id']}  {task['state']}")
+                for step in task["steps"]:
+                    safe_print(f"  {step['operation']}  {step['state']}")
+        return 0
+    except Exception as exc:
+        safe_error(f"[ERROR] workflow inspection failed: {exc}")
+        return 1
+
+
+def _service_status_payload() -> dict:
+    return {
+        "schema_version": 1,
+        "status": "process_local",
+        "scope": "current-cli-process",
+        "registered_services": None,
+        "detail": (
+            "ServiceSupervisor state is in-process; this standalone command "
+            "cannot observe services owned by another process."
+        ),
+    }
+
+
+def _runtime_status_payload() -> dict:
+    from sona.developer_intelligence.redaction import redact
+
+    registry = _registry_for_workspace()
+    models = [
+        {"model_id": item.model_id, "provider_id": item.provider_id, "enabled": item.enabled}
+        for item in registry.list()
+    ]
+    store = _workflow_store(".sona")
+    workflows = store.load_latest() if store is not None else ()
+    return redact(
+        {
+            "schema_version": 1,
+            "status": "ok",
+            "models": {"registered": len(models), "items": models},
+            "workflows": {
+                "persisted": len(workflows),
+                "active": sum(
+                    item.state.value
+                    in {"ready", "running", "blocked", "retrying", "canceling"}
+                    for item in workflows
+                ),
+                "items": [_workflow_summary(item) for item in workflows],
+                "journal_root": ".sona/workflows",
+            },
+            "services": _service_status_payload(),
+            "guardian": {
+                "scope": "project-local",
+                "inspect_with": "sona guardian check --project-root .",
+            },
+            "proof": {
+                "receipt_schema": "schema-1",
+                "scope": "per-execution receipt; no global Proof status",
+            },
+            "resource_limits": {
+                "status": "api_only",
+                "configured_budgets": None,
+                "classification": ["enforced", "observed", "unsupported"],
+                "measurement": "no global collector or budget registry",
+            },
+        }
+    )
+
+
+def handle_runtime_command(args) -> int:
+    import json
+
+    try:
+        if getattr(args, "runtime_cmd", None) != "status":
+            raise ValueError("missing runtime command; use status")
+        payload = _runtime_status_payload()
+        if args.format == "json":
+            print(json.dumps(payload, sort_keys=True))
+        else:
+            safe_print(f"Runtime: {payload['status']}")
+            safe_print(f"Models: {payload['models']['registered']} registered")
+            safe_print(
+                f"Workflows: {payload['workflows']['persisted']} persisted, "
+                f"{payload['workflows']['active']} active"
+            )
+            safe_print(f"Services: {payload['services']['status']} (current process only)")
+            safe_print("Guardian: project-local; query with `sona guardian check`.")
+            safe_print("Proof: per-execution schema-1 receipts.")
+        return 0
+    except Exception as exc:
+        safe_error(f"[ERROR] runtime status unavailable: {exc}")
+        return 1
+
+
+def handle_service_command(args) -> int:
+    import json
+
+    try:
+        if getattr(args, "service_cmd", None) != "status":
+            raise ValueError("missing service command; use status")
+        payload = _service_status_payload()
+        if args.format == "json":
+            print(json.dumps(payload, sort_keys=True))
+        else:
+            safe_print(payload["detail"])
+        return 0
+    except Exception as exc:
+        safe_error(f"[ERROR] service status unavailable: {exc}")
         return 1
 
 
@@ -3940,6 +4177,19 @@ def handle_doctor_command(_args) -> int:
         except ImportError:
             diag["breaker"] = {"enabled": False, "error": "Import failed"}
 
+        try:
+            diag["runtime"] = _runtime_status_payload()
+        except Exception:
+            diag["runtime"] = {
+                "schema_version": 1,
+                "status": "unavailable",
+                "diagnostic_code": "SONA-RUNTIME-STATUS-UNAVAILABLE",
+            }
+
+        if getattr(_args, "format", "text") == "json":
+            safe_print(json.dumps(diag, indent=2, sort_keys=True))
+            return 0
+
         # Add stdlib health check
         safe_print("\n[DOCTOR] Sona Doctor - System Health Check")
         safe_print("=" * 50)
@@ -4208,6 +4458,15 @@ def main() -> int:
 
     elif args.command == 'model':
         return handle_model_command(args)
+
+    elif args.command == 'workflow':
+        return handle_workflow_command(args)
+
+    elif args.command == 'service':
+        return handle_service_command(args)
+
+    elif args.command == 'runtime':
+        return handle_runtime_command(args)
 
     elif args.command == 'govern':
         return handle_govern_command(args)

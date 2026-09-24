@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased — 0.16.0 development
+
+- Adds a read-only Sona Runtime tree view backed by `sona runtime status`.
+- Adds a refresh action and shows registered models, persisted workflows, and
+  explicit process-local / per-execution trust scopes without starting work.
+- Keeps model registration distinct from loaded readiness and leaves Proof
+  receipt verification in the existing Proof Mode Explorer.
+
 ## 0.15.5
 
 - Adds a CLI-backed Proof Mode Explorer for running Native Proof Mode,

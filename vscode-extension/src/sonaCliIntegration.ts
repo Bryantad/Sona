@@ -7,6 +7,7 @@ import * as vscode from "vscode";
 import { ProofModeExplorerProvider, ProofModeTreeItem } from "./proofModeExplorer";
 import { parseProofModeCliOutput, ProofModeModel } from "./proofModeModel";
 import { resolveSonaPythonPath } from "./pythonEnvironment";
+import { RuntimeViewProvider } from "./runtimeView";
 
 interface SonaConfig {
   pythonPath: string;
@@ -47,6 +48,7 @@ export class SonaCliIntegration {
   private readonly outputChannel: vscode.OutputChannel;
   private readonly statusBarItem: vscode.StatusBarItem;
   private readonly proofModeExplorer: ProofModeExplorerProvider;
+  private readonly runtimeView: RuntimeViewProvider;
   private readonly runtimeDiagnosticCollection: vscode.DiagnosticCollection;
   private terminal: vscode.Terminal | undefined;
   private displayPreference: string;
@@ -57,18 +59,27 @@ export class SonaCliIntegration {
     this.outputChannel = vscode.window.createOutputChannel("Sona");
     this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
     this.proofModeExplorer = new ProofModeExplorerProvider();
+    this.runtimeView = new RuntimeViewProvider(
+      () => this.runSonaCommand(["runtime", "status", "--format", "json"])
+    );
     this.runtimeDiagnosticCollection = vscode.languages.createDiagnosticCollection("sona-runtime");
     this.displayPreference = this.loadDisplayPreference();
     this.initializeStatusBar();
     this.context.subscriptions.push(
       this.runtimeDiagnosticCollection,
       this.proofModeExplorer,
+      this.runtimeView,
       vscode.window.registerTreeDataProvider(
         ProofModeExplorerProvider.viewType,
         this.proofModeExplorer
+      ),
+      vscode.window.registerTreeDataProvider(
+        RuntimeViewProvider.viewType,
+        this.runtimeView
       )
     );
     this.registerCommands();
+    void this.runtimeView.refresh();
     this.registerRuntimeDiagnosticInvalidation();
     void this.checkSonaInstallation();
   }
@@ -230,6 +241,7 @@ export class SonaCliIntegration {
         candidate => this.openProofModeReceipt(candidate)
       ),
       vscode.commands.registerCommand("sona.proofMode.refresh", () => this.refreshProofModeReceipt()),
+      vscode.commands.registerCommand("sona.runtime.refresh", () => this.runtimeView.refresh()),
       vscode.commands.registerCommand(
         "sona.proofMode.explainWithGuardian",
         candidate => this.explainProofModeWithGuardian(candidate)

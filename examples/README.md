@@ -61,3 +61,19 @@ deferred, and a bounded local deployment-evidence reference.
 
 See [learning and examples](../docs/guides/learning-and-examples.md) for the
 installed CLI, nine initial lessons, local progress, and executable-doc contract.
+
+## 0.16.0 runtime demonstrations (development)
+
+These Python API examples are separate from the installed `.sona` lesson
+catalog; they demonstrate the current experimental runtime contracts directly.
+
+| Directory | Demonstrates | Infrastructure |
+| --- | --- | --- |
+| [`local-ai`](local-ai/README.md) | Direct GGUF inference through llama.cpp, with no Ollama/cloud fallback. | Optional local GGUF file and `llama-cpp-python`. |
+| [`durable-workflow`](durable-workflow/README.md) | Three dependent steps, process interruption, inert reopen, and explicit recovery. | None; writes only to its selected journal root. |
+| [`supervised-service`](supervised-service/README.md) | One bounded service restart and cooperative shutdown. | None; in-process threads. |
+| [`events`](events/README.md) | Typed event validation and a bounded typed-message channel. | None. |
+
+`tests/examples/test_runtime_examples_0160.py` runs the three infrastructure-free
+demonstrations. The direct-model example runs when CI provides `SONA_TEST_GGUF`;
+otherwise that single integration case is explicitly skipped.
