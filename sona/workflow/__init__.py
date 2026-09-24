@@ -26,6 +26,7 @@ from .ledger import (
     WorkflowTaskSnapshot,
     WorkflowTransitionError,
 )
+from .persistence import WorkflowJournalStore, WorkflowPersistenceError
 
 __all__ = [
     "RetryMode",
@@ -39,8 +40,10 @@ __all__ = [
     "UnknownWorkflow",
     "WorkflowDefinition",
     "WorkflowId",
+    "WorkflowJournalStore",
     "WorkflowLedger",
     "WorkflowLedgerError",
+    "WorkflowPersistenceError",
     "WorkflowProgress",
     "WorkflowSnapshot",
     "WorkflowState",

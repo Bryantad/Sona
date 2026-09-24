@@ -1,12 +1,14 @@
-"""In-memory workflow lifecycle and progress ledger (no step execution)."""
+"""Workflow lifecycle ledger with optional durable journal (no step execution)."""
 
 from __future__ import annotations
 
 import re
 from collections.abc import Callable
+from copy import deepcopy
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from threading import RLock
+from typing import Protocol
 
 from .contracts import (
     StepDefinition,
@@ -88,6 +90,14 @@ class WorkflowSnapshot:
     terminal_outcome: WorkflowState | None
 
 
+class WorkflowSnapshotStore(Protocol):
+    """Persistence boundary used by the ledger; storage never executes work."""
+
+    def append(self, snapshot: WorkflowSnapshot, *, event_type: str) -> None: ...
+
+    def load_latest(self) -> tuple[WorkflowSnapshot, ...]: ...
+
+
 @dataclass(slots=True)
 class _StepRecord:
     definition: StepDefinition
@@ -122,17 +132,24 @@ class _WorkflowRecord:
 
 
 class WorkflowLedger:
-    """Validate workflow transitions and report progress without executing.
+    """Validate lifecycle transitions; optionally persist before accepting them.
 
-    The ledger is process-local and intentionally has no persistence or
-    automatic recovery. It serializes one active step per workflow; bounded
-    concurrency and durable journal semantics are later runtime phases.
+    The ledger serializes one active step per workflow. When a journal store is
+    configured, each accepted state transition is committed before it is
+    returned; persistence failures roll back the in-memory state. Restore is
+    explicit and inert, converting interrupted active work to BLOCKED.
     """
 
-    def __init__(self, *, clock: Callable[[], datetime] | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        clock: Callable[[], datetime] | None = None,
+        store: WorkflowSnapshotStore | None = None,
+    ) -> None:
         self._clock = clock or (lambda: datetime.now(UTC))
         self._lock = RLock()
         self._workflows: dict[WorkflowId, _WorkflowRecord] = {}
+        self._store = store
 
     def create(self, definition: WorkflowDefinition) -> WorkflowSnapshot:
         if not isinstance(definition, WorkflowDefinition):
@@ -162,6 +179,11 @@ class WorkflowLedger:
                         created_at_utc=now,
                     )
             self._workflows[definition.workflow_id] = record
+            try:
+                self._persist(record, "workflow.created")
+            except Exception:
+                del self._workflows[definition.workflow_id]
+                raise
             return self._snapshot(record)
 
     def prepare(self, workflow_id: WorkflowId) -> WorkflowSnapshot:
@@ -170,6 +192,7 @@ class WorkflowLedger:
             record = self._get(workflow_id)
             if record.state is not WorkflowState.CREATED:
                 raise WorkflowTransitionError("only a created workflow can be prepared")
+            before = deepcopy(record)
             now = self._timestamp()
             for step in record.steps.values():
                 step.state = (
@@ -177,12 +200,14 @@ class WorkflowLedger:
                 )
             record.state = WorkflowState.READY
             self._refresh_tasks(record, now)
+            self._commit_transition(record, before, "workflow.prepared")
             return self._snapshot(record)
 
     def start_step(self, workflow_id: WorkflowId, step_id: StepId) -> WorkflowSnapshot:
         """Claim one ready step; this records intent but does not run its operation."""
         with self._lock:
             record = self._get(workflow_id)
+            before = deepcopy(record)
             step = self._get_step(record, step_id)
             if record.state is not WorkflowState.READY or record.active_step_id is not None:
                 raise WorkflowTransitionError("workflow is not available to start a step")
@@ -198,11 +223,13 @@ class WorkflowLedger:
             record.state = WorkflowState.RUNNING
             record.started_at_utc = record.started_at_utc or now
             self._refresh_tasks(record, now)
+            self._commit_transition(record, before, "step.started")
             return self._snapshot(record)
 
     def succeed_step(self, workflow_id: WorkflowId, step_id: StepId) -> WorkflowSnapshot:
         with self._lock:
             record = self._get(workflow_id)
+            before = deepcopy(record)
             step = self._require_active_step(record, step_id)
             now = self._timestamp()
             step.state = StepState.SUCCEEDED
@@ -215,6 +242,7 @@ class WorkflowLedger:
                 ):
                     dependent.state = StepState.READY
             self._derive_workflow_state(record, now)
+            self._commit_transition(record, before, "step.succeeded")
             return self._snapshot(record)
 
     def fail_step(
@@ -229,6 +257,7 @@ class WorkflowLedger:
             raise WorkflowLedgerError("failure_code must be a safe diagnostic identifier")
         with self._lock:
             record = self._get(workflow_id)
+            before = deepcopy(record)
             step = self._require_active_step(record, step_id)
             now = self._timestamp()
             step.state = StepState.FAILED
@@ -242,6 +271,7 @@ class WorkflowLedger:
             record.state = WorkflowState.FAILED
             record.finished_at_utc = now
             self._refresh_tasks(record, now)
+            self._commit_transition(record, before, "step.failed")
             return self._snapshot(record)
 
     def block_step(
@@ -258,6 +288,7 @@ class WorkflowLedger:
             raise WorkflowLedgerError("failure_code must be a safe diagnostic identifier")
         with self._lock:
             record = self._get(workflow_id)
+            before = deepcopy(record)
             step = self._get_step(record, step_id)
             if record.state is not WorkflowState.READY or step.state is not StepState.READY:
                 raise WorkflowTransitionError("only a ready step can be blocked")
@@ -265,11 +296,13 @@ class WorkflowLedger:
             step.state = StepState.BLOCKED
             step.failure_code = failure_code
             self._derive_workflow_state(record, now)
+            self._commit_transition(record, before, "step.blocked")
             return self._snapshot(record)
 
     def unblock_step(self, workflow_id: WorkflowId, step_id: StepId) -> WorkflowSnapshot:
         with self._lock:
             record = self._get(workflow_id)
+            before = deepcopy(record)
             step = self._get_step(record, step_id)
             if record.state not in (WorkflowState.READY, WorkflowState.BLOCKED):
                 raise WorkflowTransitionError("workflow cannot release a blocked step")
@@ -284,6 +317,7 @@ class WorkflowLedger:
             step.state = StepState.READY
             step.failure_code = None
             self._derive_workflow_state(record, now)
+            self._commit_transition(record, before, "step.unblocked")
             return self._snapshot(record)
 
     def cancel(self, workflow_id: WorkflowId) -> WorkflowSnapshot:
@@ -292,6 +326,7 @@ class WorkflowLedger:
             record = self._get(workflow_id)
             if record.state in _TERMINAL_WORKFLOW_STATES or record.state is WorkflowState.CANCELING:
                 raise WorkflowTransitionError("workflow cannot transition to canceling")
+            before = deepcopy(record)
             now = self._timestamp()
             active = record.steps.get(record.active_step_id) if record.active_step_id else None
             for step in record.steps.values():
@@ -307,6 +342,7 @@ class WorkflowLedger:
             else:
                 record.state = WorkflowState.CANCELING
             self._refresh_tasks(record, now)
+            self._commit_transition(record, before, "workflow.cancel_requested")
             return self._snapshot(record)
 
     def finish_step_cancellation(
@@ -314,6 +350,7 @@ class WorkflowLedger:
     ) -> WorkflowSnapshot:
         with self._lock:
             record = self._get(workflow_id)
+            before = deepcopy(record)
             step = self._get_step(record, step_id)
             if (
                 record.state is not WorkflowState.CANCELING
@@ -328,11 +365,118 @@ class WorkflowLedger:
             record.state = WorkflowState.CANCELED
             record.finished_at_utc = now
             self._refresh_tasks(record, now)
+            self._commit_transition(record, before, "step.cancellation_finished")
             return self._snapshot(record)
 
     def snapshot(self, workflow_id: WorkflowId) -> WorkflowSnapshot:
         with self._lock:
             return self._snapshot(self._get(workflow_id))
+
+    def restore(self) -> tuple[WorkflowSnapshot, ...]:
+        """Load persisted state inertly; interrupted active steps become BLOCKED.
+
+        No operation is invoked. A step that was RUNNING or CANCELING at the
+        last durable journal point becomes recovery-required and must be
+        explicitly released before a new attempt can start.
+        """
+        if self._store is None:
+            raise WorkflowLedgerError("workflow ledger has no persistence store")
+        with self._lock:
+            if self._workflows:
+                raise WorkflowLedgerError("restore requires an empty workflow ledger")
+            snapshots = self._store.load_latest()
+            records = [self._record_from_snapshot(item) for item in snapshots]
+            if len({item.definition.workflow_id for item in records}) != len(records):
+                raise WorkflowLedgerError("persistence store returned duplicate workflow IDs")
+            recovered: list[WorkflowSnapshot] = []
+            for record in records:
+                active = next(
+                    (
+                        step
+                        for step in record.steps.values()
+                        if step.state in {StepState.RUNNING, StepState.CANCELING}
+                    ),
+                    None,
+                )
+                if active is not None:
+                    before = deepcopy(record)
+                    active.state = StepState.BLOCKED
+                    active.failure_code = "SONA-WORKFLOW-RECOVERY-REQUIRED"
+                    record.active_step_id = None
+                    record.state = WorkflowState.BLOCKED
+                    record.finished_at_utc = None
+                    self._refresh_tasks(record, active.created_at_utc)
+                    self._persist(record, "workflow.recovery_required")
+                    if record.state is not WorkflowState.BLOCKED:
+                        record = before
+                        raise WorkflowLedgerError("interrupted workflow recovery state is invalid")
+                recovered.append(self._snapshot(record))
+            self._workflows = {item.definition.workflow_id: item for item in records}
+            return tuple(recovered)
+
+    def _persist(self, record: _WorkflowRecord, event_type: str) -> None:
+        if self._store is not None:
+            self._store.append(self._snapshot(record), event_type=event_type)
+
+    def _commit_transition(
+        self,
+        record: _WorkflowRecord,
+        before: _WorkflowRecord,
+        event_type: str,
+    ) -> None:
+        try:
+            self._persist(record, event_type)
+        except Exception:
+            self._workflows[record.definition.workflow_id] = before
+            raise
+
+    @staticmethod
+    def _record_from_snapshot(snapshot: WorkflowSnapshot) -> _WorkflowRecord:
+        if snapshot.schema_version != 1 or not isinstance(snapshot.definition, WorkflowDefinition):
+            raise WorkflowLedgerError("persisted workflow snapshot is unsupported")
+        tasks = {item.task_id: item for item in snapshot.tasks}
+        steps = {item.step_id: item for item in snapshot.steps}
+        record = _WorkflowRecord(
+            definition=snapshot.definition,
+            state=snapshot.state,
+            created_at_utc=snapshot.created_at_utc,
+            started_at_utc=snapshot.started_at_utc,
+            finished_at_utc=snapshot.finished_at_utc,
+        )
+        for task in snapshot.definition.tasks:
+            task_snapshot = tasks.get(task.task_id)
+            if task_snapshot is None:
+                raise WorkflowLedgerError("persisted workflow task is missing")
+            record.tasks[task.task_id] = _TaskRecord(
+                definition=task,
+                state=task_snapshot.state,
+                created_at_utc=task_snapshot.created_at_utc,
+                started_at_utc=task_snapshot.started_at_utc,
+                finished_at_utc=task_snapshot.finished_at_utc,
+            )
+            for definition in task.steps:
+                item = steps.get(definition.step_id)
+                if item is None or item.task_id != task.task_id:
+                    raise WorkflowLedgerError("persisted workflow step identity is invalid")
+                record.steps[definition.step_id] = _StepRecord(
+                    definition=definition,
+                    task_id=task.task_id,
+                    state=item.state,
+                    created_at_utc=item.created_at_utc,
+                    started_at_utc=item.started_at_utc,
+                    finished_at_utc=item.finished_at_utc,
+                    attempt_count=item.attempt_count,
+                    failure_code=item.failure_code,
+                )
+        active_steps = [
+            item
+            for item in record.steps.values()
+            if item.state in {StepState.RUNNING, StepState.CANCELING}
+        ]
+        if len(active_steps) > 1:
+            raise WorkflowLedgerError("persisted workflow has multiple active steps")
+        record.active_step_id = active_steps[0].definition.step_id if active_steps else None
+        return record
 
     def _derive_workflow_state(self, record: _WorkflowRecord, now: str) -> None:
         states = tuple(step.state for step in record.steps.values())
