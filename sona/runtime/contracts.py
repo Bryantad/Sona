@@ -76,6 +76,8 @@ class ResourceUnit(StrEnum):
 
 @dataclass(frozen=True, slots=True)
 class ResourceLimit:
+    """A configured value, or zero when status explicitly says unsupported."""
+
     resource: str
     amount: int
     unit: ResourceUnit
@@ -84,8 +86,12 @@ class ResourceLimit:
     def __post_init__(self) -> None:
         if not self.resource.strip():
             raise ValueError("resource name is required")
-        if self.amount <= 0:
-            raise ValueError("resource amount must be positive")
+        if isinstance(self.amount, bool) or not isinstance(self.amount, int):
+            raise ValueError("resource amount must be an integer")
+        if self.amount < 0 or (
+            self.amount == 0 and self.status is not EnforcementStatus.UNSUPPORTED
+        ):
+            raise ValueError("resource amount must be positive unless unsupported")
 
 
 @dataclass(frozen=True, slots=True)

@@ -1,4 +1,4 @@
-"""Deterministic Sona Guide explanations, independent of optional AI providers."""
+"""Deterministic Sona Guide core with a separate opt-in local reasoning layer."""
 
 from .cascade import focus_diagnostics, render_focus_text
 from .explain import explain
@@ -8,6 +8,12 @@ from .fixes import (
     explain_with_fixes,
     preview_diagnostic_fixes,
     preview_stdlib_api_migration,
+)
+from .local_reasoning import (
+    GuideContextManager,
+    GuideLocalReasoning,
+    GuideLocalReasoningError,
+    explain_with_local_model,
 )
 from .models import (
     DiagnosticRelation,
@@ -37,8 +43,11 @@ __all__ = [
     "FAMILIARITY_VALUES",
     "DiagnosticRelation",
     "FocusResult",
+    "GuideContextManager",
     "GuideError",
     "GuideFix",
+    "GuideLocalReasoning",
+    "GuideLocalReasoningError",
     "GuideRequest",
     "GuideResponse",
     "LearningProfile",
@@ -49,6 +58,7 @@ __all__ = [
     "default_profile",
     "explain",
     "explain_with_fixes",
+    "explain_with_local_model",
     "focus_diagnostics",
     "load_profile_state",
     "mode_for_concepts",

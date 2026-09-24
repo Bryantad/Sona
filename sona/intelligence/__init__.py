@@ -26,6 +26,16 @@ from .llama_cpp_runtime import (
     discover_runtime,
 )
 from .registry import LocalModelRegistry, ModelInspection, ModelRegistryError
+from .service import (
+    InferenceJobSnapshot,
+    InferenceQueueFull,
+    InferenceWaitTimeout,
+    LocalAIService,
+    LocalAIServiceError,
+    LocalAIServiceLimits,
+    LocalAIServiceSnapshot,
+    UnknownInferenceJob,
+)
 
 __all__ = [
     "HardwareProfile",
@@ -33,11 +43,18 @@ __all__ = [
     "InferenceChunk",
     "InferenceContext",
     "InferenceJobId",
+    "InferenceJobSnapshot",
+    "InferenceQueueFull",
     "InferenceRequest",
     "InferenceResponse",
     "InferenceState",
     "InferenceTimeout",
+    "InferenceWaitTimeout",
     "LlamaCppRuntimeAdapter",
+    "LocalAIService",
+    "LocalAIServiceError",
+    "LocalAIServiceLimits",
+    "LocalAIServiceSnapshot",
     "LocalModelProvider",
     "LocalModelRegistry",
     "LocalRuntimeError",
@@ -50,6 +67,7 @@ __all__ = [
     "ResidencyPolicy",
     "RuntimeAdapter",
     "RuntimeDiscovery",
+    "UnknownInferenceJob",
     "discover_runtime",
     "new_inference_job_id",
 ]
