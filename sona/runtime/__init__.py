@@ -11,6 +11,7 @@ from .contracts import (
     HealthState,
     ResourceBudget,
     ResourceLimit,
+    RestartMode,
     RestartPolicy,
     ServiceDefinition,
     ServiceState,
@@ -31,6 +32,12 @@ from .channels import (
     ChannelFullError,
     ChannelTimeoutError,
     SendReceipt,
+)
+from .services import (
+    ServiceContext,
+    ServiceLifecycleError,
+    ServiceSnapshot,
+    ServiceSupervisor,
 )
 
 __all__ = [
@@ -56,8 +63,13 @@ __all__ = [
     "MessageSchema",
     "ResourceBudget",
     "ResourceLimit",
+    "RestartMode",
     "RestartPolicy",
     "ServiceDefinition",
+    "ServiceContext",
+    "ServiceLifecycleError",
+    "ServiceSnapshot",
     "ServiceState",
+    "ServiceSupervisor",
     "SendReceipt",
 ]

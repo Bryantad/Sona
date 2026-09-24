@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import re
 from dataclasses import dataclass
 from enum import StrEnum
@@ -36,10 +37,24 @@ class RestartPolicy:
     delay_seconds: float = 0.0
 
     def __post_init__(self) -> None:
-        if self.maximum_restarts < 0:
-            raise ValueError("maximum_restarts cannot be negative")
-        if self.delay_seconds < 0:
-            raise ValueError("restart delay cannot be negative")
+        if (
+            isinstance(self.maximum_restarts, bool)
+            or not isinstance(self.maximum_restarts, int)
+            or not 0 <= self.maximum_restarts <= 1000
+        ):
+            raise ValueError("maximum_restarts must be an integer between 0 and 1000")
+        if isinstance(self.delay_seconds, bool) or not isinstance(self.delay_seconds, (int, float)):
+            raise ValueError("restart delay must be finite and between 0 and 86400 seconds")
+        try:
+            delay_seconds = float(self.delay_seconds)
+        except (OverflowError, ValueError) as exc:
+            raise ValueError(
+                "restart delay must be finite and between 0 and 86400 seconds"
+            ) from exc
+        if not math.isfinite(delay_seconds) or not 0 <= delay_seconds <= 86_400:
+            raise ValueError("restart delay must be finite and between 0 and 86400 seconds")
+        if not isinstance(self.mode, RestartMode):
+            raise ValueError("mode must be a RestartMode")
         if self.mode is RestartMode.NEVER and self.maximum_restarts != 0:
             raise ValueError("never restart policy requires maximum_restarts=0")
         if self.mode is not RestartMode.NEVER and self.maximum_restarts < 1:
@@ -54,9 +69,21 @@ class ServiceDefinition:
     schema_version: int = 1
 
     def __post_init__(self) -> None:
-        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:-]{0,127}", self.service_id):
+        if not isinstance(self.service_id, str) or not re.fullmatch(
+            r"[A-Za-z0-9][A-Za-z0-9._:-]{0,127}", self.service_id
+        ):
             raise ValueError("service_id must be a safe identifier")
-        if self.schema_version != 1:
+        if not isinstance(self.restart_policy, RestartPolicy):
+            raise ValueError("restart_policy must be a RestartPolicy")
+        if self.resource_budget_id is not None and (
+            not isinstance(self.resource_budget_id, str) or not self.resource_budget_id.strip()
+        ):
+            raise ValueError("resource_budget_id must be a non-empty identifier when provided")
+        if (
+            isinstance(self.schema_version, bool)
+            or not isinstance(self.schema_version, int)
+            or self.schema_version != 1
+        ):
             raise ValueError("service definition requires schema_version 1")
 
 
