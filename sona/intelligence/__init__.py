@@ -1,0 +1,55 @@
+"""Contracts for model-agnostic local intelligence runtimes."""
+
+from .contracts import (
+    HardwareProfile,
+    InferenceChunk,
+    InferenceContext,
+    InferenceJobId,
+    InferenceRequest,
+    InferenceResponse,
+    InferenceState,
+    LocalModelProvider,
+    ModelFormat,
+    ModelIdentity,
+    ModelState,
+    ResidencyPolicy,
+    RuntimeAdapter,
+    new_inference_job_id,
+)
+from .llama_cpp_runtime import (
+    InferenceCancelled,
+    InferenceTimeout,
+    LlamaCppRuntimeAdapter,
+    LocalRuntimeError,
+    LocalRuntimeUnavailable,
+    RuntimeDiscovery,
+    discover_runtime,
+)
+from .registry import LocalModelRegistry, ModelInspection, ModelRegistryError
+
+__all__ = [
+    "HardwareProfile",
+    "InferenceCancelled",
+    "InferenceChunk",
+    "InferenceContext",
+    "InferenceJobId",
+    "InferenceRequest",
+    "InferenceResponse",
+    "InferenceState",
+    "InferenceTimeout",
+    "LlamaCppRuntimeAdapter",
+    "LocalModelProvider",
+    "LocalModelRegistry",
+    "LocalRuntimeError",
+    "LocalRuntimeUnavailable",
+    "ModelFormat",
+    "ModelIdentity",
+    "ModelInspection",
+    "ModelRegistryError",
+    "ModelState",
+    "ResidencyPolicy",
+    "RuntimeAdapter",
+    "RuntimeDiscovery",
+    "discover_runtime",
+    "new_inference_job_id",
+]

@@ -68,6 +68,9 @@ local-ai = [
 	"transformers>=4.43",
 	"accelerate>=0.33",
 ]
+llama-cpp = [
+	"llama-cpp-python==0.3.35",
+]
 toml = [
 	"tomli-w>=1.0.0",
 ]
