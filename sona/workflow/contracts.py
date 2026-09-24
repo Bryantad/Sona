@@ -5,6 +5,7 @@ from __future__ import annotations
 import uuid
 from dataclasses import dataclass
 from enum import StrEnum
+from math import isfinite
 from typing import NewType
 
 WorkflowId = NewType("WorkflowId", str)
@@ -86,11 +87,24 @@ class RetryPolicy:
     maximum_delay_seconds: float = 60.0
 
     def __post_init__(self) -> None:
-        if self.maximum_attempts < 1:
-            raise ValueError("maximum_attempts must be at least one")
+        if (
+            isinstance(self.maximum_attempts, bool)
+            or not isinstance(self.maximum_attempts, int)
+            or not 1 <= self.maximum_attempts <= 1000
+        ):
+            raise ValueError("maximum_attempts must be between one and 1000")
+        if self.mode is not RetryMode.NONE and not isinstance(self.mode, RetryMode):
+            raise ValueError("retry mode is unsupported")
         if self.mode is RetryMode.NONE and self.maximum_attempts != 1:
             raise ValueError("retry mode none requires exactly one attempt")
-        if self.delay_seconds < 0 or self.maximum_delay_seconds < 0:
+        delays = (self.delay_seconds, self.maximum_delay_seconds)
+        if any(
+            isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            or not isfinite(value)
+            or value < 0
+            for value in delays
+        ):
             raise ValueError("retry delays cannot be negative")
         if self.delay_seconds > self.maximum_delay_seconds:
             raise ValueError("delay_seconds cannot exceed maximum_delay_seconds")

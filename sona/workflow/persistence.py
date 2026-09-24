@@ -50,6 +50,16 @@ _EVENT_TYPES = {
     "workflow.cancel_requested",
     "step.cancellation_finished",
     "workflow.recovery_required",
+    "step.retrying",
+    "step.retry_ready",
+    "workflow.recovery_resumed",
+    "workflow.recovery_failed",
+}
+_EVENT_TYPES_V1 = _EVENT_TYPES - {
+    "step.retrying",
+    "step.retry_ready",
+    "workflow.recovery_resumed",
+    "workflow.recovery_failed",
 }
 _ROOT_LOCKS: dict[str, threading.RLock] = {}
 _ROOT_LOCKS_GUARD = threading.Lock()
@@ -107,9 +117,18 @@ class WorkflowJournalStore:
         self._workflows_root.mkdir(exist_ok=True)
         self._validate_tree()
 
-    def append(self, snapshot: WorkflowSnapshot, *, event_type: str) -> None:
+    def append(
+        self,
+        snapshot: WorkflowSnapshot,
+        *,
+        event_type: str,
+        details: dict[str, str] | None = None,
+    ) -> None:
         if event_type not in _EVENT_TYPES:
             raise WorkflowPersistenceError("workflow journal event type is unsupported")
+        if details is None:
+            details = {}
+        _validate_event_details(event_type, details)
         _validate_snapshot(snapshot)
         workflow_id = str(snapshot.definition.workflow_id)
         with self._lock:
@@ -136,13 +155,14 @@ class WorkflowJournalStore:
             if sequence > self.maximum_events_per_workflow:
                 raise WorkflowPersistenceError("workflow journal event limit reached")
             event: dict[str, Any] = {
-                "event_schema": 1,
+                "event_schema": 2,
                 "event_id": str(uuid.uuid4()),
                 "event_type": event_type,
                 "sequence": sequence,
                 "workflow_id": workflow_id,
                 "previous_hash": previous_hash,
                 "snapshot": _snapshot_to_dict(snapshot),
+                "details": details,
             }
             event["event_hash"] = _hash_event(event)
             data = _canonical_json(event)
@@ -218,7 +238,7 @@ class WorkflowJournalStore:
             if len(raw) > self.maximum_record_bytes:
                 raise WorkflowPersistenceError("workflow journal record exceeds its byte limit")
             event = _parse_canonical_object(raw)
-            required = {
+            required_v1 = {
                 "event_schema",
                 "event_id",
                 "event_type",
@@ -228,12 +248,17 @@ class WorkflowJournalStore:
                 "snapshot",
                 "event_hash",
             }
+            required = required_v1 | {"details"} if event.get("event_schema") == 2 else required_v1
             if set(event) != required:
                 raise WorkflowPersistenceError("workflow journal record fields are invalid")
-            if event["event_schema"] != 1 or event["sequence"] != sequence:
+            if event["event_schema"] not in {1, 2} or event["sequence"] != sequence:
                 raise WorkflowPersistenceError("workflow journal schema or sequence is invalid")
             if event["event_type"] not in _EVENT_TYPES:
                 raise WorkflowPersistenceError("workflow journal event type is invalid")
+            if event["event_schema"] == 1 and event["event_type"] not in _EVENT_TYPES_V1:
+                raise WorkflowPersistenceError("workflow event requires a newer journal schema")
+            if event["event_schema"] == 2:
+                _validate_event_details(event["event_type"], event["details"])
             if event["previous_hash"] != previous_hash or event["event_hash"] != _hash_event(event):
                 raise WorkflowPersistenceError("workflow journal hash chain is invalid")
             try:
@@ -258,6 +283,10 @@ class WorkflowJournalStore:
                 "workflow.cancel_requested": {WorkflowState.CANCELING, WorkflowState.CANCELED},
                 "step.cancellation_finished": {WorkflowState.CANCELED},
                 "workflow.recovery_required": {WorkflowState.BLOCKED},
+                "step.retrying": {WorkflowState.RETRYING},
+                "step.retry_ready": {WorkflowState.READY},
+                "workflow.recovery_resumed": {WorkflowState.READY},
+                "workflow.recovery_failed": {WorkflowState.FAILED},
             }
             if snapshot.state not in expected_states[event["event_type"]]:
                 raise WorkflowPersistenceError("workflow event type does not match its snapshot")
@@ -371,6 +400,11 @@ def _snapshot_to_dict(snapshot: WorkflowSnapshot) -> dict[str, Any]:
                 "started_at_utc": item.started_at_utc,
                 "finished_at_utc": item.finished_at_utc,
                 "failure_code": item.failure_code,
+                **(
+                    {"retry_after_utc": item.retry_after_utc}
+                    if snapshot.schema_version >= 2
+                    else {}
+                ),
             }
             for item in snapshot.steps
         ],
@@ -401,7 +435,7 @@ def _snapshot_from_dict(value: Any) -> WorkflowSnapshot:
         "finished_at_utc",
         "terminal_outcome",
     }
-    if set(value) != required or value["schema_version"] != 1:
+    if set(value) != required or value["schema_version"] not in {1, 2}:
         raise WorkflowPersistenceError("workflow snapshot schema or fields are invalid")
     try:
         definition_value = value["definition"]
@@ -465,6 +499,20 @@ def _snapshot_from_dict(value: Any) -> WorkflowSnapshot:
             )
             for item in value["tasks"]
         )
+        step_snapshot_fields = {
+            "step_id",
+            "task_id",
+            "state",
+            "attempt_count",
+            "created_at_utc",
+            "started_at_utc",
+            "finished_at_utc",
+            "failure_code",
+        }
+        if value["schema_version"] >= 2:
+            step_snapshot_fields.add("retry_after_utc")
+        if any(set(item) != step_snapshot_fields for item in value["steps"]):
+            raise ValueError("workflow step snapshot fields")
         step_snapshots = tuple(
             WorkflowStepSnapshot(
                 step_id=StepId(item["step_id"]),
@@ -475,6 +523,7 @@ def _snapshot_from_dict(value: Any) -> WorkflowSnapshot:
                 started_at_utc=item["started_at_utc"],
                 finished_at_utc=item["finished_at_utc"],
                 failure_code=item["failure_code"],
+                retry_after_utc=item.get("retry_after_utc"),
             )
             for item in value["steps"]
         )
@@ -483,7 +532,7 @@ def _snapshot_from_dict(value: Any) -> WorkflowSnapshot:
             raise ValueError("progress fields")
         outcome = WorkflowState(value["terminal_outcome"]) if value["terminal_outcome"] else None
         snapshot = WorkflowSnapshot(
-            schema_version=1,
+            schema_version=value["schema_version"],
             definition=definition,
             state=WorkflowState(value["state"]),
             tasks=task_snapshots,
@@ -507,7 +556,9 @@ def _snapshot_from_dict(value: Any) -> WorkflowSnapshot:
 
 
 def _validate_snapshot(snapshot: WorkflowSnapshot) -> None:
-    if snapshot.schema_version != 1 or not isinstance(snapshot.definition, WorkflowDefinition):
+    if snapshot.schema_version not in {1, 2} or not isinstance(
+        snapshot.definition, WorkflowDefinition
+    ):
         raise WorkflowPersistenceError("workflow snapshot identity is invalid")
     if len(snapshot.steps) != sum(len(task.steps) for task in snapshot.definition.tasks):
         raise WorkflowPersistenceError("workflow snapshot step count is inconsistent")
@@ -540,6 +591,21 @@ def _validate_snapshot(snapshot: WorkflowSnapshot) -> None:
             )
         if item.failure_code is not None and not _SAFE_FAILURE.fullmatch(item.failure_code):
             raise WorkflowPersistenceError("workflow failure code is invalid")
+        if item.state is StepState.RETRYING:
+            if item.retry_after_utc is None or not _valid_timestamp(item.retry_after_utc):
+                raise WorkflowPersistenceError("retrying step has no valid retry-after timestamp")
+            if (
+                definition.retry.mode is RetryMode.NONE
+                or item.attempt_count >= definition.retry.maximum_attempts
+                or item.failure_code is None
+            ):
+                raise WorkflowPersistenceError("retrying step has no configured retry remaining")
+        elif item.retry_after_utc is not None:
+            raise WorkflowPersistenceError("non-retrying step has a retry-after timestamp")
+        if snapshot.schema_version == 1 and item.retry_after_utc is not None:
+            raise WorkflowPersistenceError(
+                "schema-1 workflow state cannot contain retry scheduling"
+            )
         if item.state is StepState.READY and any(
             observed_steps[dependency].state is not StepState.SUCCEEDED
             for dependency in definition.depends_on
@@ -561,6 +627,8 @@ def _validate_snapshot(snapshot: WorkflowSnapshot) -> None:
             expected_task_state = TaskState.CANCELING
         elif any(state is StepState.RUNNING for state in states):
             expected_task_state = TaskState.RUNNING
+        elif any(state is StepState.RETRYING for state in states):
+            expected_task_state = TaskState.RETRYING
         elif any(state in {StepState.FAILED, StepState.SKIPPED} for state in states):
             expected_task_state = TaskState.FAILED
         elif all(
@@ -621,7 +689,8 @@ def _validate_snapshot(snapshot: WorkflowSnapshot) -> None:
             state in {StepState.SUCCEEDED, StepState.FAILED, StepState.CANCELED, StepState.SKIPPED}
             for state in step_states
         ),
-        WorkflowState.RETRYING: False,
+        WorkflowState.RETRYING: any(state is StepState.RETRYING for state in step_states)
+        and not active,
     }[snapshot.state]
     if not workflow_state_valid:
         raise WorkflowPersistenceError("workflow state is inconsistent with its steps")
@@ -673,6 +742,19 @@ def _hash_event(event: dict[str, Any]) -> str:
     unsigned = dict(event)
     unsigned.pop("event_hash", None)
     return "sha256:" + hashlib.sha256(_canonical_json(unsigned)).hexdigest()
+
+
+def _validate_event_details(event_type: str, details: Any) -> None:
+    if not isinstance(details, dict) or any(
+        not isinstance(key, str) or not isinstance(value, str) for key, value in details.items()
+    ):
+        raise WorkflowPersistenceError("workflow journal event details are invalid")
+    expected = {
+        "workflow.recovery_resumed": {"recovery_decision": "retry_from_start"},
+        "workflow.recovery_failed": {"recovery_decision": "mark_failed"},
+    }.get(event_type, {})
+    if details != expected:
+        raise WorkflowPersistenceError("workflow journal event details are invalid")
 
 
 def _atomic_publish_new(destination: Path, data: bytes) -> None:

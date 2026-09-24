@@ -21,6 +21,12 @@ completion, failure, blocking, and cancellation.
   ready only after all dependencies succeeded.
 - `fail_step` terminates the workflow, marks pending steps skipped, and stores
   only a bounded safe failure code, never exception text.
+- `schedule_retry` records a bounded fixed/exponential retry-after time when
+  the step has a retry budget. Exhausting the budget turns the step failure
+  terminal; non-retryable failures use `fail_step`.
+- `release_due_retries` changes only retries whose persisted due time has
+  arrived. It does not sleep, spawn a timer, or execute work; the owner polls
+  this API and separately decides when to call `start_step`.
 - `block_step` records an external/policy block; `unblock_step` releases it
   only when declared dependencies have succeeded.
 - `cancel` marks pending steps canceled. If a step is active, its state becomes
@@ -36,17 +42,23 @@ accepts one active step per workflow. `restore()` explicitly reads persisted
 state but never executes a step. A step last recorded as `RUNNING` or
 `CANCELING` is conservatively restored as `BLOCKED` with
 `SONA-WORKFLOW-RECOVERY-REQUIRED`; the owner must make a separate recovery
-decision. IDs, dependencies, retry policy, attempt counts, timestamps,
-terminal state, and safe failure codes survive reopen. Retry policy is stored,
-but automatic retry/backoff and policy-bound approval records remain future
+decision using `resume_step`: retry from the beginning (only if budget remains)
+or mark failed. Recovery decisions are recorded in the journal. A
+`RETRYING` state and its UTC retry-after deadline survive reopen; restore never
+releases a due retry automatically. Retry attempts are capped at 1000, delays
+must be finite, and exponential backoff doubles per failed attempt up to the
+configured maximum. This is a scheduling contract, not an executor or
+background timer. Trusted policy/capability approval records remain future
 work.
 
 ## Durable format and publication
 
 Each workflow has an append-only directory under the caller-selected store
 root. `event-00000001.json`, etc., are canonical UTF-8 JSON records containing
-the schema version, event identity/type, sequence, complete version-1 state
-snapshot, previous record hash, and current SHA-256 hash. A staged file is
+the event schema, event identity/type, sequence, complete versioned workflow
+snapshot, previous record hash, and current SHA-256 hash. Event schema 2 adds
+allowlisted recovery-decision detail; schema-1 journal records remain readable.
+A staged file is
 flushed before it is atomically published without replacing an existing event.
 The `snapshot.json` file is a replaceable cache; the journal is authoritative
 and a missing/stale cache is rebuilt from validated records. A partial/corrupt
@@ -79,6 +91,8 @@ is trustworthy.
 The focused contract tests cover dependency ordering (including cross-task
 dependencies), progress, transitions, safe failure codes, blocking and
 unblocking, cancellation acknowledgment, duplicate and unknown identities,
-timezone-aware clocks, inert restore, recovery-required conversion, journal
-limits, atomic cache rebuilding, hash-chain/canonical validation, persistence
-failure rollback, and the guarantee that an operation string is inert.
+timezone-aware clocks, inert restore, recovery-required conversion, explicit
+recovery decisions, fixed/exponential backoff, retry budget exhaustion,
+durable retry-after timestamps, real process restart, journal limits, atomic
+cache rebuilding, hash-chain/canonical validation, persistence failure
+rollback, and the guarantee that an operation string is inert.

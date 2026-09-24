@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import hashlib
 import json
+from dataclasses import replace
 
 import pytest
 
 from sona.workflow import (
+    RecoveryDecision,
     RetryMode,
     RetryPolicy,
     StepDefinition,
@@ -76,8 +78,26 @@ def test_persistent_ledger_roundtrips_identity_dependencies_retry_and_terminal_s
     assert snapshot.steps[1].attempt_count == 1
     assert snapshot.steps[1].failure_code == "SONA-WORKFLOW-RECOVERY-REQUIRED"
     assert reopened.snapshot(definition.workflow_id) == snapshot
-    assert reopened.unblock_step(definition.workflow_id, second).state is WorkflowState.READY
+    assert (
+        reopened.resume_step(
+            definition.workflow_id,
+            second,
+            decision=RecoveryDecision.RETRY_FROM_START,
+        ).state
+        is WorkflowState.READY
+    )
     assert reopened.start_step(definition.workflow_id, second).steps[1].attempt_count == 2
+
+
+def test_schema1_workflow_journal_state_remains_readable(tmp_path):
+    store = WorkflowJournalStore(tmp_path / "state")
+    definition, _, _ = _definition()
+    initial = WorkflowLedger().create(definition)
+    legacy = replace(initial, schema_version=1)
+
+    store.append(legacy, event_type="workflow.created")
+
+    assert store.load_latest() == (legacy,)
 
 
 def test_terminal_state_roundtrips_and_journal_is_append_only(tmp_path):

@@ -17,6 +17,7 @@ from .contracts import (
     new_workflow_id,
 )
 from .ledger import (
+    RecoveryDecision,
     UnknownWorkflow,
     WorkflowLedger,
     WorkflowLedgerError,
@@ -29,6 +30,7 @@ from .ledger import (
 from .persistence import WorkflowJournalStore, WorkflowPersistenceError
 
 __all__ = [
+    "RecoveryDecision",
     "RetryMode",
     "RetryPolicy",
     "StepDefinition",

@@ -6,11 +6,13 @@ import re
 from collections.abc import Callable
 from copy import deepcopy
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
+from enum import StrEnum
 from threading import RLock
 from typing import Protocol
 
 from .contracts import (
+    RetryMode,
     StepDefinition,
     StepId,
     StepState,
@@ -48,6 +50,11 @@ class WorkflowTransitionError(WorkflowLedgerError):
     """The requested state transition is invalid and made no state change."""
 
 
+class RecoveryDecision(StrEnum):
+    RETRY_FROM_START = "retry_from_start"
+    MARK_FAILED = "mark_failed"
+
+
 @dataclass(frozen=True, slots=True)
 class WorkflowStepSnapshot:
     step_id: StepId
@@ -58,6 +65,7 @@ class WorkflowStepSnapshot:
     started_at_utc: str | None
     finished_at_utc: str | None
     failure_code: str | None
+    retry_after_utc: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -93,7 +101,13 @@ class WorkflowSnapshot:
 class WorkflowSnapshotStore(Protocol):
     """Persistence boundary used by the ledger; storage never executes work."""
 
-    def append(self, snapshot: WorkflowSnapshot, *, event_type: str) -> None: ...
+    def append(
+        self,
+        snapshot: WorkflowSnapshot,
+        *,
+        event_type: str,
+        details: dict[str, str] | None = None,
+    ) -> None: ...
 
     def load_latest(self) -> tuple[WorkflowSnapshot, ...]: ...
 
@@ -108,6 +122,7 @@ class _StepRecord:
     finished_at_utc: str | None = None
     attempt_count: int = 0
     failure_code: str | None = None
+    retry_after_utc: str | None = None
 
 
 @dataclass(slots=True)
@@ -219,6 +234,7 @@ class WorkflowLedger:
             step.state = StepState.RUNNING
             step.attempt_count += 1
             step.started_at_utc = step.started_at_utc or now
+            step.retry_after_utc = None
             record.active_step_id = step_id
             record.state = WorkflowState.RUNNING
             record.started_at_utc = record.started_at_utc or now
@@ -260,19 +276,78 @@ class WorkflowLedger:
             before = deepcopy(record)
             step = self._require_active_step(record, step_id)
             now = self._timestamp()
-            step.state = StepState.FAILED
-            step.failure_code = failure_code
-            step.finished_at_utc = now
-            record.active_step_id = None
-            for pending in record.steps.values():
-                if pending.state in (StepState.CREATED, StepState.READY, StepState.BLOCKED):
-                    pending.state = StepState.SKIPPED
-                    pending.finished_at_utc = now
-            record.state = WorkflowState.FAILED
-            record.finished_at_utc = now
-            self._refresh_tasks(record, now)
+            self._mark_failed(record, step, failure_code, now)
             self._commit_transition(record, before, "step.failed")
             return self._snapshot(record)
+
+    def schedule_retry(
+        self,
+        workflow_id: WorkflowId,
+        step_id: StepId,
+        *,
+        failure_code: str = "SONA-WORKFLOW-STEP-RETRYABLE",
+    ) -> WorkflowSnapshot:
+        """Schedule one bounded retry; due work is released only by an explicit poll."""
+        if not isinstance(failure_code, str) or not _SAFE_FAILURE_CODE.fullmatch(failure_code):
+            raise WorkflowLedgerError("failure_code must be a safe diagnostic identifier")
+        with self._lock:
+            record = self._get(workflow_id)
+            before = deepcopy(record)
+            step = self._require_active_step(record, step_id)
+            policy = step.definition.retry
+            if policy.mode is RetryMode.NONE or step.attempt_count >= policy.maximum_attempts:
+                self._mark_failed(record, step, failure_code, self._timestamp())
+                self._commit_transition(record, before, "step.failed")
+                return self._snapshot(record)
+
+            now = self._timestamp()
+            current = datetime.fromisoformat(now.replace("Z", "+00:00"))
+            delay = self._retry_delay(
+                policy.mode, policy.delay_seconds, policy.maximum_delay_seconds, step.attempt_count
+            )
+            try:
+                retry_after = (current + timedelta(seconds=delay)).astimezone(UTC)
+            except OverflowError as exc:
+                raise WorkflowLedgerError(
+                    "retry delay exceeds the supported timestamp range"
+                ) from exc
+            step.state = StepState.RETRYING
+            step.failure_code = failure_code
+            step.finished_at_utc = None
+            step.retry_after_utc = retry_after.isoformat(timespec="milliseconds").replace(
+                "+00:00", "Z"
+            )
+            record.active_step_id = None
+            record.state = WorkflowState.RETRYING
+            self._refresh_tasks(record, now)
+            self._commit_transition(record, before, "step.retrying")
+            return self._snapshot(record)
+
+    def release_due_retries(self) -> tuple[WorkflowSnapshot, ...]:
+        """Release only retries whose durable retry-after timestamp has passed."""
+        with self._lock:
+            now = self._timestamp()
+            now_value = datetime.fromisoformat(now.replace("Z", "+00:00"))
+            released: list[WorkflowSnapshot] = []
+            for record in self._workflows.values():
+                retrying = [
+                    step for step in record.steps.values() if step.state is StepState.RETRYING
+                ]
+                for step in retrying:
+                    if step.retry_after_utc is None:
+                        raise WorkflowLedgerError("retrying step has no durable retry-after time")
+                    due = datetime.fromisoformat(step.retry_after_utc.replace("Z", "+00:00"))
+                    if due > now_value:
+                        continue
+                    before = deepcopy(record)
+                    step.state = StepState.READY
+                    step.retry_after_utc = None
+                    step.failure_code = None
+                    record.state = WorkflowState.READY
+                    self._refresh_tasks(record, now)
+                    self._commit_transition(record, before, "step.retry_ready")
+                    released.append(self._snapshot(record))
+            return tuple(released)
 
     def block_step(
         self,
@@ -308,6 +383,10 @@ class WorkflowLedger:
                 raise WorkflowTransitionError("workflow cannot release a blocked step")
             if step.state is not StepState.BLOCKED:
                 raise WorkflowTransitionError("only a blocked step can be released")
+            if step.failure_code == "SONA-WORKFLOW-RECOVERY-REQUIRED":
+                raise WorkflowTransitionError(
+                    "interrupted work requires an explicit resume decision"
+                )
             if not all(
                 record.steps[dependency].state is StepState.SUCCEEDED
                 for dependency in step.definition.depends_on
@@ -320,22 +399,82 @@ class WorkflowLedger:
             self._commit_transition(record, before, "step.unblocked")
             return self._snapshot(record)
 
+    def resume_step(
+        self,
+        workflow_id: WorkflowId,
+        step_id: StepId,
+        *,
+        decision: RecoveryDecision,
+    ) -> WorkflowSnapshot:
+        """Explicitly retry interrupted work from its beginning or mark it failed."""
+        if not isinstance(decision, RecoveryDecision):
+            raise WorkflowLedgerError("recovery decision is unsupported")
+        with self._lock:
+            record = self._get(workflow_id)
+            before = deepcopy(record)
+            step = self._get_step(record, step_id)
+            if (
+                record.state is not WorkflowState.BLOCKED
+                or step.state is not StepState.BLOCKED
+                or step.failure_code != "SONA-WORKFLOW-RECOVERY-REQUIRED"
+            ):
+                raise WorkflowTransitionError("step is not awaiting an interrupted-work decision")
+            now = self._timestamp()
+            if decision is RecoveryDecision.RETRY_FROM_START:
+                if step.attempt_count >= step.definition.retry.maximum_attempts:
+                    raise WorkflowTransitionError("step has no remaining configured retry attempts")
+                if not all(
+                    record.steps[dependency].state is StepState.SUCCEEDED
+                    for dependency in step.definition.depends_on
+                ):
+                    raise WorkflowTransitionError("step dependencies are not complete")
+                step.state = StepState.READY
+                step.failure_code = None
+                step.retry_after_utc = None
+                record.state = WorkflowState.READY
+                self._refresh_tasks(record, now)
+                event_type = "workflow.recovery_resumed"
+            else:
+                self._mark_failed(
+                    record,
+                    step,
+                    "SONA-WORKFLOW-RECOVERY-REJECTED",
+                    now,
+                )
+                event_type = "workflow.recovery_failed"
+            self._commit_transition(
+                record,
+                before,
+                event_type,
+                details={"recovery_decision": decision.value},
+            )
+            return self._snapshot(record)
+
     def cancel(self, workflow_id: WorkflowId) -> WorkflowSnapshot:
         """Request cancellation; an active step must acknowledge it separately."""
         with self._lock:
             record = self._get(workflow_id)
             if record.state in _TERMINAL_WORKFLOW_STATES or record.state is WorkflowState.CANCELING:
                 raise WorkflowTransitionError("workflow cannot transition to canceling")
+            if any(
+                step.failure_code == "SONA-WORKFLOW-RECOVERY-REQUIRED"
+                for step in record.steps.values()
+            ):
+                raise WorkflowTransitionError(
+                    "interrupted work requires an explicit recovery decision before cancellation"
+                )
             before = deepcopy(record)
             now = self._timestamp()
             active = record.steps.get(record.active_step_id) if record.active_step_id else None
             for step in record.steps.values():
                 if step is active:
                     step.state = StepState.CANCELING
+                    step.retry_after_utc = None
                     continue
                 if step.state not in _TERMINAL_STEP_STATES:
                     step.state = StepState.CANCELED
                     step.finished_at_utc = now
+                    step.retry_after_utc = None
             if active is None:
                 record.state = WorkflowState.CANCELED
                 record.finished_at_utc = now
@@ -414,25 +553,38 @@ class WorkflowLedger:
             self._workflows = {item.definition.workflow_id: item for item in records}
             return tuple(recovered)
 
-    def _persist(self, record: _WorkflowRecord, event_type: str) -> None:
+    def _persist(
+        self,
+        record: _WorkflowRecord,
+        event_type: str,
+        *,
+        details: dict[str, str] | None = None,
+    ) -> None:
         if self._store is not None:
-            self._store.append(self._snapshot(record), event_type=event_type)
+            if details is None:
+                self._store.append(self._snapshot(record), event_type=event_type)
+            else:
+                self._store.append(self._snapshot(record), event_type=event_type, details=details)
 
     def _commit_transition(
         self,
         record: _WorkflowRecord,
         before: _WorkflowRecord,
         event_type: str,
+        *,
+        details: dict[str, str] | None = None,
     ) -> None:
         try:
-            self._persist(record, event_type)
+            self._persist(record, event_type, details=details)
         except Exception:
             self._workflows[record.definition.workflow_id] = before
             raise
 
     @staticmethod
     def _record_from_snapshot(snapshot: WorkflowSnapshot) -> _WorkflowRecord:
-        if snapshot.schema_version != 1 or not isinstance(snapshot.definition, WorkflowDefinition):
+        if snapshot.schema_version not in {1, 2} or not isinstance(
+            snapshot.definition, WorkflowDefinition
+        ):
             raise WorkflowLedgerError("persisted workflow snapshot is unsupported")
         tasks = {item.task_id: item for item in snapshot.tasks}
         steps = {item.step_id: item for item in snapshot.steps}
@@ -467,6 +619,7 @@ class WorkflowLedger:
                     finished_at_utc=item.finished_at_utc,
                     attempt_count=item.attempt_count,
                     failure_code=item.failure_code,
+                    retry_after_utc=item.retry_after_utc,
                 )
         active_steps = [
             item
@@ -478,6 +631,42 @@ class WorkflowLedger:
         record.active_step_id = active_steps[0].definition.step_id if active_steps else None
         return record
 
+    @staticmethod
+    def _retry_delay(mode: RetryMode, base: float, maximum: float, attempt: int) -> float:
+        if mode is RetryMode.FIXED:
+            return min(base, maximum)
+        if mode is RetryMode.EXPONENTIAL:
+            delay = min(base, maximum)
+            for _ in range(max(0, attempt - 1)):
+                if delay == 0:
+                    return 0.0
+                if delay >= maximum / 2:
+                    return maximum
+                delay *= 2
+            return min(delay, maximum)
+        return 0.0
+
+    def _mark_failed(
+        self,
+        record: _WorkflowRecord,
+        step: _StepRecord,
+        failure_code: str,
+        now: str,
+    ) -> None:
+        step.state = StepState.FAILED
+        step.failure_code = failure_code
+        step.finished_at_utc = now
+        step.retry_after_utc = None
+        record.active_step_id = None
+        for pending in record.steps.values():
+            if pending.state in (StepState.CREATED, StepState.READY, StepState.BLOCKED):
+                pending.state = StepState.SKIPPED
+                pending.finished_at_utc = now
+                pending.retry_after_utc = None
+        record.state = WorkflowState.FAILED
+        record.finished_at_utc = now
+        self._refresh_tasks(record, now)
+
     def _derive_workflow_state(self, record: _WorkflowRecord, now: str) -> None:
         states = tuple(step.state for step in record.steps.values())
         if all(state is StepState.SUCCEEDED for state in states):
@@ -485,6 +674,8 @@ class WorkflowLedger:
             record.finished_at_utc = now
         elif any(state is StepState.RUNNING for state in states):
             record.state = WorkflowState.RUNNING
+        elif any(state is StepState.RETRYING for state in states):
+            record.state = WorkflowState.RETRYING
         elif any(state is StepState.READY for state in states):
             record.state = WorkflowState.READY
         elif any(state in (StepState.BLOCKED, StepState.CREATED) for state in states):
@@ -500,6 +691,8 @@ class WorkflowLedger:
                 task.state = TaskState.CANCELING
             elif any(state is StepState.RUNNING for state in states):
                 task.state = TaskState.RUNNING
+            elif any(state is StepState.RETRYING for state in states):
+                task.state = TaskState.RETRYING
             elif any(state in (StepState.FAILED, StepState.SKIPPED) for state in states):
                 task.state = TaskState.FAILED
             elif all(state in _TERMINAL_STEP_STATES for state in states):
@@ -537,6 +730,7 @@ class WorkflowLedger:
                 started_at_utc=record.steps[item.step_id].started_at_utc,
                 finished_at_utc=record.steps[item.step_id].finished_at_utc,
                 failure_code=record.steps[item.step_id].failure_code,
+                retry_after_utc=record.steps[item.step_id].retry_after_utc,
             )
             for task in record.definition.tasks
             for item in task.steps
@@ -554,7 +748,7 @@ class WorkflowLedger:
         completed = sum(item.state in _TERMINAL_STEP_STATES for item in steps)
         total = len(steps)
         return WorkflowSnapshot(
-            schema_version=1,
+            schema_version=2,
             definition=record.definition,
             state=record.state,
             tasks=tasks,
