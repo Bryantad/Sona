@@ -103,7 +103,7 @@ class ResourceUnit(StrEnum):
 
 @dataclass(frozen=True, slots=True)
 class ResourceLimit:
-    """A configured value, or zero when status explicitly says unsupported."""
+    """A configured value whose status declares enforcement strength honestly."""
 
     resource: str
     amount: int
@@ -111,14 +111,20 @@ class ResourceLimit:
     status: EnforcementStatus
 
     def __post_init__(self) -> None:
-        if not self.resource.strip():
-            raise ValueError("resource name is required")
+        identifier = r"[A-Za-z][A-Za-z0-9._:-]{0,127}"
+        if not isinstance(self.resource, str) or not re.fullmatch(identifier, self.resource):
+            raise ValueError("resource must be a safe identifier")
+        if not isinstance(self.unit, ResourceUnit):
+            raise TypeError("unit must be a ResourceUnit")
+        if not isinstance(self.status, EnforcementStatus):
+            raise TypeError("status must be an EnforcementStatus")
         if isinstance(self.amount, bool) or not isinstance(self.amount, int):
             raise ValueError("resource amount must be an integer")
-        if self.amount < 0 or (
-            self.amount == 0 and self.status is not EnforcementStatus.UNSUPPORTED
-        ):
-            raise ValueError("resource amount must be positive unless unsupported")
+        if self.status is EnforcementStatus.UNSUPPORTED:
+            if self.amount != 0:
+                raise ValueError("unsupported resource limits must use amount=0")
+        elif self.amount < 1:
+            raise ValueError("enforced or observed resource limits must be positive")
 
 
 @dataclass(frozen=True, slots=True)
@@ -128,10 +134,19 @@ class ResourceBudget:
     schema_version: int = 1
 
     def __post_init__(self) -> None:
-        if not self.budget_id.strip():
-            raise ValueError("budget_id is required")
-        if self.schema_version != 1:
+        identifier = r"[A-Za-z0-9][A-Za-z0-9._:-]{0,127}"
+        if not isinstance(self.budget_id, str) or not re.fullmatch(identifier, self.budget_id):
+            raise ValueError("budget_id must be a safe identifier")
+        if (
+            isinstance(self.schema_version, bool)
+            or not isinstance(self.schema_version, int)
+            or self.schema_version != 1
+        ):
             raise ValueError("resource budget requires schema_version 1")
+        if not isinstance(self.limits, tuple) or any(
+            not isinstance(item, ResourceLimit) for item in self.limits
+        ):
+            raise TypeError("limits must be a tuple of ResourceLimit values")
         keys = [(item.resource, item.unit) for item in self.limits]
         if len(set(keys)) != len(keys):
             raise ValueError("resource limits must be unique by resource and unit")
