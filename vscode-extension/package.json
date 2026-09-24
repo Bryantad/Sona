@@ -618,9 +618,10 @@
     "@typespec/ts-http-runtime": "0.3.0",
     "brace-expansion": "5.0.9",
     "cheerio": "1.0.0-rc.12",
-    "fast-uri": "3.1.5",
-    "js-yaml": "4.3.1",
+    "fast-uri": "3.1.6",
+    "js-yaml": "4.3.2",
     "minimatch": "10.2.6",
+    "qs": "6.16.0",
     "undici": "7.29.0"
   }
 }
