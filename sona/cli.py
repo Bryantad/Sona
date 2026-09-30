@@ -1,5 +1,5 @@
 """
-Sona v0.15.6 Command Line Interface with AI Integration
+Sona v0.16.0 Command Line Interface with AI Integration
 
 Enhanced CLI with profile, benchmark, suggest, and explain commands
 powered by GPT-2 and cognitive assistance features.
@@ -995,7 +995,7 @@ ENHANCED_COMMANDS = None  # lazy-loaded mapping
 
 
 # Version information
-SONA_VERSION = "0.15.6"
+SONA_VERSION = "0.16.0"
 AI_FEATURES_VERSION = "1.0.0"
 DEFAULT_OFFLINE_MODEL = "qwen2.5-coder:7b"
 
@@ -1025,7 +1025,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
     parser = SonaArgumentParser(
         prog='sona',
         description=(
-            'Sona v0.15.6 - simple programs with optional execution evidence'
+            'Sona v0.16.0 - simple programs with optional execution evidence'
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
@@ -1644,11 +1644,52 @@ def create_argument_parser() -> argparse.ArgumentParser:
     ai_task.add_argument('--format', choices=['text', 'json'], default='json')
     ai_task.add_argument('--no-receipt', action='store_true')
 
-    model_parser = subparsers.add_parser('model', help='Inspect and register developer-intelligence models')
+    model_parser = subparsers.add_parser(
+        'model', help='Manage local GGUF models and AI provider descriptors'
+    )
     model_sub = model_parser.add_subparsers(dest='model_cmd')
-    model_sub.add_parser('list', help='List registered models')
-    model_inspect = model_sub.add_parser('inspect', help='Inspect a model descriptor')
+    model_list = model_sub.add_parser(
+        'list', help='List local GGUF models and provider descriptors'
+    )
+    model_list.add_argument('--format', choices=['text', 'json'], default='json')
+    model_add = model_sub.add_parser('add', help='Register a local GGUF model artifact')
+    model_add.add_argument('path', help='Path to an existing GGUF model file')
+    model_add.add_argument(
+        '--id',
+        dest='model_id',
+        default=None,
+        help='Stable model ID (defaults to a normalized filename)',
+    )
+    model_add.add_argument(
+        '--context',
+        type=int,
+        default=4096,
+        help='Declared context-token limit (default: 4096)',
+    )
+    model_add.add_argument('--device', choices=['auto', 'cpu', 'cuda'], default='auto')
+    model_add.add_argument('--architecture', default=None)
+    model_add.add_argument('--quantization', default=None)
+    model_add.add_argument(
+        '--set-default',
+        action='store_true',
+        help='Select this model as the default after registration',
+    )
+    model_inspect = model_sub.add_parser(
+        'inspect', help='Inspect model metadata and local runtime preflight without loading it'
+    )
     model_inspect.add_argument('model_id')
+    model_inspect.add_argument(
+        '--verify-hash',
+        action='store_true',
+        help='Hash the artifact when inspecting a local model',
+    )
+    model_inspect.add_argument('--format', choices=['text', 'json'], default='json')
+    model_remove = model_sub.add_parser(
+        'remove', help='Remove a model from the registry without deleting its artifact'
+    )
+    model_remove.add_argument('model_id')
+    model_default = model_sub.add_parser('default', help='Set the default local GGUF model')
+    model_default.add_argument('model_id')
     model_register = model_sub.add_parser('register', help='Register a schema-1 model manifest')
     model_register.add_argument('manifest')
     model_register.add_argument('--scope', choices=['workspace', 'user'], default='workspace')
@@ -2714,7 +2755,7 @@ def handle_repl_command(args) -> int:
         from sona.interpreter import SonaInterpreter
         interpreter = SonaInterpreter()
 
-        safe_print("Sona REPL v0.15.6 - Type 'exit' to quit; ':reset' clears state")
+        safe_print("Sona REPL v0.16.0 - Type 'exit' to quit; ':reset' clears state")
         if args.ai:
             try:
                 interpreter.enable_ai()
@@ -2890,18 +2931,253 @@ def _registry_for_workspace():
     return registry
 
 
+def _local_model_registry():
+    from sona.intelligence import LocalModelRegistry
+
+    sona_home = Path(os.getenv('SONA_HOME', Path.home() / '.sona'))
+    return LocalModelRegistry(sona_home / 'models.json')
+
+
 def handle_model_command(args) -> int:
     import json
-    import shutil
+    import re
+    from dataclasses import asdict
+
     from sona.developer_intelligence.models import descriptor_from_manifest
     from sona.developer_intelligence.redaction import redact
+    from sona.intelligence import (
+        ModelFormat,
+        ModelIdentity,
+        assess_model_preflight,
+        discover_hardware_profile,
+        discover_runtime,
+    )
     try:
-        registry = _registry_for_workspace()
         command = getattr(args, 'model_cmd', None)
+        local_registry = _local_model_registry()
+        if command == 'add':
+            source = Path(args.path).expanduser()
+            if args.model_id:
+                model_id = args.model_id
+            else:
+                model_id = re.sub(r'[^A-Za-z0-9._:-]+', '-', source.stem).strip('.-_:')
+                if not model_id or not model_id[0].isalnum():
+                    raise ValueError('could not derive a safe model ID; provide --id')
+            identity = ModelIdentity(
+                model_id=model_id,
+                provider_id='local',
+                runtime_id='llama-cpp',
+                format=ModelFormat.GGUF,
+                path=str(source),
+                context_tokens=args.context,
+                architecture=args.architecture,
+                quantization=args.quantization,
+                device=args.device,
+            )
+            added = local_registry.add(identity)
+            if args.set_default:
+                local_registry.set_default(added.model_id)
+            print(json.dumps({
+                'schema_version': 1,
+                'status': 'ok',
+                'model': asdict(added),
+                'default_model_id': local_registry.default_model_id,
+            }, sort_keys=True))
+            return 0
+        if command == 'remove':
+            removed = local_registry.remove(args.model_id)
+            print(json.dumps({
+                'schema_version': 1,
+                'status': 'ok',
+                'removed_model_id': removed.model_id,
+                'artifact_deleted': False,
+                'default_model_id': local_registry.default_model_id,
+            }, sort_keys=True))
+            return 0
+        if command == 'default':
+            selected = local_registry.set_default(args.model_id)
+            print(json.dumps({
+                'schema_version': 1,
+                'status': 'ok',
+                'default_model_id': selected.model_id,
+            }, sort_keys=True))
+            return 0
+        registry = _registry_for_workspace()
         if command == 'list':
-            print(json.dumps(redact({"schema_version": 1, "models": [item.to_dict() for item in registry.list()]}), indent=2, default=str))
+            local_models = []
+            for identity in local_registry.list():
+                inspection = local_registry.inspect(identity.model_id)
+                local_models.append({
+                    **asdict(identity),
+                    'is_default': identity.model_id == local_registry.default_model_id,
+                    'artifact_exists': inspection.artifact_exists,
+                    'artifact_size_bytes': inspection.artifact_size_bytes,
+                    'format_valid': inspection.format_valid,
+                    'architecture': (
+                        inspection.metadata.architecture if inspection.metadata else None
+                    ),
+                    'quantization': (
+                        inspection.metadata.quantization if inspection.metadata else None
+                    ),
+                })
+            payload = redact({
+                'schema_version': 1,
+                'models': [item.to_dict() for item in registry.list()],
+                'local_models': local_models,
+                'default_local_model_id': local_registry.default_model_id,
+            })
+            if args.format == 'json':
+                print(json.dumps(payload, indent=2, default=str))
+            else:
+                if not local_models:
+                    safe_print('No local GGUF models are registered.')
+                for item in local_models:
+                    marker = ' (default)' if item['is_default'] else ''
+                    safe_print(f"{item['model_id']}{marker}  {item['device']}  {item['path']}")
+                safe_print(f"{len(registry.list())} AI provider descriptors registered.")
             return 0
         if command == 'inspect':
+            local_identity = local_registry.get(args.model_id)
+            if local_identity is not None:
+                inspection = local_registry.inspect(args.model_id, verify_hash=args.verify_hash)
+                if not inspection.artifact_exists or not inspection.format_valid:
+                    status = 'unavailable'
+                elif args.verify_hash and inspection.hash_verified is False:
+                    status = 'integrity_mismatch'
+                elif args.verify_hash and inspection.hash_verified is None:
+                    status = 'integrity_unverifiable'
+                else:
+                    status = 'ok'
+                runtime = discover_runtime()
+                hardware = discover_hardware_profile(
+                    runtime_available=runtime.available and runtime.cpu_supported
+                )
+                preflight = assess_model_preflight(
+                    local_identity,
+                    inspection.metadata,
+                    hardware,
+                    runtime,
+                    artifact_size_bytes=inspection.artifact_size_bytes,
+                )
+                payload = {
+                    'schema_version': 1,
+                    'status': status,
+                    'model': asdict(local_identity),
+                    'is_default': local_identity.model_id == local_registry.default_model_id,
+                    'artifact_exists': inspection.artifact_exists,
+                    'artifact_size_bytes': inspection.artifact_size_bytes,
+                    'format_valid': inspection.format_valid,
+                    'hash_verified': inspection.hash_verified,
+                    'gguf_metadata': asdict(inspection.metadata) if inspection.metadata else None,
+                    'metadata_error': inspection.metadata_error,
+                    'runtime': asdict(runtime),
+                    'hardware': asdict(hardware),
+                    'compatibility': preflight,
+                }
+                if args.format == 'text':
+                    def display(value, fallback='unknown'):
+                        if value is None:
+                            return fallback
+                        return ''.join(
+                            character if character.isprintable() else ' '
+                            for character in str(value)
+                        ).strip() or fallback
+
+                    def format_bytes(value):
+                        if value is None:
+                            return 'unknown'
+                        units = ('B', 'KiB', 'MiB', 'GiB', 'TiB')
+                        amount = float(value)
+                        unit = units[0]
+                        for unit in units:
+                            if amount < 1024 or unit == units[-1]:
+                                break
+                            amount /= 1024
+                        return f'{amount:.1f} {unit}' if unit != 'B' else f'{int(amount)} B'
+
+                    metadata = inspection.metadata
+                    runtime_label = (
+                        f"llama.cpp {display(runtime.version)}"
+                        if runtime.available
+                        else 'llama.cpp unavailable'
+                    )
+                    status_label = {
+                        'preflight_pass': 'PRE-FLIGHT PASSED',
+                        'runtime_unavailable': 'RUNTIME UNAVAILABLE',
+                        'blocked': 'BLOCKED',
+                    }.get(str(preflight['status']), display(preflight['status']).upper())
+                    integrity = (
+                        'VERIFIED'
+                        if inspection.hash_verified is True
+                        else 'MISMATCH'
+                        if inspection.hash_verified is False
+                        else 'RECORDED, NOT RECOMPUTED'
+                        if inspection.expected_sha256
+                        else 'NO HASH RECORDED'
+                    )
+                    safe_print('Sona Model Inspection')
+                    safe_print(f"Model          {display(local_identity.model_id)}")
+                    safe_print(
+                        f"Name           {display(metadata.model_name) if metadata else 'unknown'}"
+                    )
+                    safe_print(
+                        f"Format         GGUF v{metadata.version if metadata else 'unknown'}"
+                    )
+                    safe_print(f"Size           {format_bytes(inspection.artifact_size_bytes)}")
+                    safe_print(
+                        "Architecture   "
+                        f"{display(metadata.architecture if metadata else None)}"
+                    )
+                    safe_print(
+                        f"Quantization   {display(metadata.quantization if metadata else None)}"
+                    )
+                    model_context = metadata.context_length if metadata else None
+                    safe_print(
+                        f"Context        {local_identity.context_tokens:,} tokens configured; "
+                        f"{model_context:,} tokens declared"
+                        if model_context is not None
+                        else (
+                            f"Context        {local_identity.context_tokens:,} tokens "
+                            "configured; model limit unknown"
+                        )
+                    )
+                    safe_print(f"Runtime        {runtime_label}")
+                    safe_print(
+                        f"Device         {display(local_identity.device)} "
+                        f"(effective: {display(preflight['effective_device'])})"
+                    )
+                    gpu_offload = (
+                        "available in build"
+                        if runtime.gpu_offload_compiled
+                        else "not compiled"
+                    )
+                    safe_print(f"GPU offload    {gpu_offload}")
+                    safe_print(
+                        f"CPU            {display(hardware.cpu_model)} "
+                        f"({hardware.logical_cpu_count or 'unknown'} logical CPUs)"
+                    )
+                    safe_print(f"Physical RAM   {format_bytes(hardware.physical_memory_bytes)}")
+                    gpu_label = (
+                        f"{display(hardware.accelerator_name)} "
+                        f"({format_bytes(hardware.accelerator_memory_bytes)})"
+                        if hardware.accelerator_name
+                        else 'not detected'
+                    )
+                    safe_print(f"Accelerator    {gpu_label}")
+                    safe_print(f"Integrity      {integrity}")
+                    safe_print(f"Preflight      {status_label}")
+                    for blocker in preflight['blockers']:
+                        safe_print(f"  - {display(blocker)}")
+                    for warning in preflight['resource_warnings']:
+                        safe_print(f"  ! {display(warning)}")
+                    safe_print(
+                        'Note           Preflight does not load weights or certify '
+                        'architecture support, '
+                        'memory headroom, load success, or performance.'
+                    )
+                else:
+                    print(json.dumps(redact(payload), indent=2, default=str))
+                return 0 if status == 'ok' and preflight['status'] != 'blocked' else 1
             item = registry.get(args.model_id)
             if item is None:
                 raise ValueError(f"unknown model: {args.model_id}")
@@ -2926,7 +3202,7 @@ def handle_model_command(args) -> int:
                 if item is None:
                     continue
                 if item.provider_id in {'claude', 'codex'}:
-                    state, detail = 'unavailable', 'Provider is intentionally unavailable in 0.15.6.'
+                    state, detail = 'unavailable', 'Provider is intentionally unavailable in 0.16.0.'
                 elif not item.enabled:
                     state, detail = 'disabled', 'Descriptor is disabled.'
                 elif item.provider_id == 'deterministic':
@@ -3081,6 +3357,21 @@ def _runtime_status_payload() -> dict:
     from sona.developer_intelligence.redaction import redact
 
     registry = _registry_for_workspace()
+    local_registry = _local_model_registry()
+    local_models = []
+    for identity in local_registry.list():
+        inspection = local_registry.inspect(identity.model_id)
+        local_models.append({
+            'model_id': identity.model_id,
+            'runtime_id': identity.runtime_id,
+            'format': identity.format.value,
+            'context_tokens': identity.context_tokens,
+            'device': identity.device,
+            'is_default': identity.model_id == local_registry.default_model_id,
+            'artifact_exists': inspection.artifact_exists,
+            'artifact_size_bytes': inspection.artifact_size_bytes,
+            'hash_recorded': identity.sha256 is not None,
+        })
     models = [
         {"model_id": item.model_id, "provider_id": item.provider_id, "enabled": item.enabled}
         for item in registry.list()
@@ -3092,6 +3383,15 @@ def _runtime_status_payload() -> dict:
             "schema_version": 1,
             "status": "ok",
             "models": {"registered": len(models), "items": models},
+            "local_models": {
+                "registered": len(local_models),
+                "default_model_id": local_registry.default_model_id,
+                "items": local_models,
+                "load_state": (
+                    "not_observable; the standalone CLI cannot inspect another "
+                    "process's resident model"
+                ),
+            },
             "workflows": {
                 "persisted": len(workflows),
                 "active": sum(
@@ -3133,6 +3433,10 @@ def handle_runtime_command(args) -> int:
         else:
             safe_print(f"Runtime: {payload['status']}")
             safe_print(f"Models: {payload['models']['registered']} registered")
+            safe_print(
+                f"Direct GGUF models: {payload['local_models']['registered']} registered; "
+                "load state is not observable from this process"
+            )
             safe_print(
                 f"Workflows: {payload['workflows']['persisted']} persisted, "
                 f"{payload['workflows']['active']} active"

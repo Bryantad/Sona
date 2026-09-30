@@ -138,6 +138,30 @@ export async function requestSonaGuide(context: vscode.ExtensionContext, payload
   catch { throw new Error("Sona Guide could not answer this request. Update the selected Sona runtime and reload VS Code."); }
 }
 
+export async function requestSonaLocalModelEdit(context: vscode.ExtensionContext, payload: unknown): Promise<any> {
+  startSonaLsp(context);
+  if (!client || !started || lspStartupBlocked) throw new Error("The Sona language server is unavailable. Check the Sona LSP output and selected Python runtime.");
+  await started;
+  try { return await client.sendRequest("sona/guide/local_model_edit", payload); }
+  catch { throw new Error("Sona Guide direct local inference failed. No provider fallback was attempted."); }
+}
+
+export async function prepareSonaGuideBufferEdit(context: vscode.ExtensionContext, payload: unknown): Promise<any> {
+  startSonaLsp(context);
+  if (!client || !started || lspStartupBlocked) throw new Error("The Sona language server is unavailable. Check the Sona LSP output and selected Python runtime.");
+  await started;
+  try { return await client.sendRequest("sona/guide/prepare_buffer_edit", payload); }
+  catch { throw new Error("Editor capability preparation failed. No editor-buffer change was applied."); }
+}
+
+export async function consumeSonaGuideBufferEdit(context: vscode.ExtensionContext, payload: unknown): Promise<any> {
+  startSonaLsp(context);
+  if (!client || !started || lspStartupBlocked) throw new Error("The Sona language server is unavailable. Check the Sona LSP output and selected Python runtime.");
+  await started;
+  try { return await client.sendRequest("sona/guide/consume_buffer_edit", payload); }
+  catch { throw new Error("Editor capability consumption failed. No editor-buffer change was applied."); }
+}
+
 export async function updateGuideOptions(options: GuideOptions): Promise<void> {
   if (client?.isRunning()) await client.sendNotification("workspace/didChangeConfiguration", { settings: { sona: { guide: options } } });
 }

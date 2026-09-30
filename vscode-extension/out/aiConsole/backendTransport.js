@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CliDeveloperIntelligenceTransport = void 0;
 exports.isDeveloperTask = isDeveloperTask;
 const child_process_1 = require("child_process");
+const MAX_TASK_RESPONSE_BYTES = 2 * 1024 * 1024;
 class CliDeveloperIntelligenceTransport {
     pythonPath;
     workspacePath;
@@ -25,7 +26,7 @@ class CliDeveloperIntelligenceTransport {
         return new Promise(resolve => {
             const payload = {
                 schema_version: 1,
-                task_type: "suggest",
+                task_type: request.taskType || "suggest",
                 instruction: request.prompt,
                 provider_id: providerId,
                 target_files: request.context.currentFile ? [request.context.currentFile] : [],
@@ -59,7 +60,14 @@ class CliDeveloperIntelligenceTransport {
                 child.kill();
                 finish({ agentId: request.agentId, status: "error", text: "Sona backend task timed out." });
             }, this.timeoutMs);
-            child.stdout.on("data", value => { stdout += value.toString(); });
+            child.stdout.on("data", value => {
+                if (Buffer.byteLength(stdout, "utf8") + value.length > MAX_TASK_RESPONSE_BYTES) {
+                    child.kill();
+                    finish({ agentId: request.agentId, status: "error", text: "Sona backend response exceeded its size limit." });
+                    return;
+                }
+                stdout += value.toString();
+            });
             child.stderr.on("data", value => { stderr += value.toString(); });
             child.on("error", error => finish({ agentId: request.agentId, status: "error", text: error.message }));
             child.on("close", code => {

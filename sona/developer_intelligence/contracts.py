@@ -38,6 +38,13 @@ class TaskStatus(StringEnum):
     FAILED = "failed"
 
 
+def maximum_output_tokens_for(task_type: TaskType) -> int:
+    """Keep generated edit proposals bounded while allowing useful selections."""
+    if task_type in {TaskType.EDIT, TaskType.FIX, TaskType.REFACTOR}:
+        return 2048
+    return 256
+
+
 def _plain(value: Any) -> Any:
     if isinstance(value, Enum):
         return value.value

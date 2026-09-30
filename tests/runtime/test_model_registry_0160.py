@@ -20,14 +20,12 @@ def _model(path, *, model_id="local-coder", digest=None):
         path=str(path),
         context_tokens=8192,
         sha256=digest,
-        architecture="test-architecture",
-        quantization="Q4_K_M",
     )
 
 
-def test_registry_adds_and_reopens_gguf_model_with_stable_default(tmp_path):
+def test_registry_adds_and_reopens_gguf_model_with_stable_default(tmp_path, write_gguf):
     artifact = tmp_path / "coder.gguf"
-    artifact.write_bytes(b"GGUF" + b"model payload")
+    write_gguf(artifact)
     registry_path = tmp_path / "registry" / "models.json"
 
     registry = LocalModelRegistry(registry_path)
@@ -37,17 +35,23 @@ def test_registry_adds_and_reopens_gguf_model_with_stable_default(tmp_path):
     assert registry.default_model_id == "local-coder"
 
     reopened = LocalModelRegistry(registry_path)
-    inspection = reopened.inspect("local-coder")
+    inspection = reopened.inspect("local-coder", verify_hash=True)
     assert reopened.default() == added
     assert inspection.artifact_exists is True
     assert inspection.format_valid is True
     assert inspection.artifact_size_bytes == artifact.stat().st_size
-    assert inspection.hash_verified is None
+    assert inspection.hash_verified is True
+    assert inspection.expected_sha256 == added.sha256
+    assert inspection.metadata.architecture == "llama"
+    assert inspection.metadata.quantization == "Q4_K_M"
+    assert added.architecture == "llama"
+    assert added.quantization == "Q4_K_M"
 
 
-def test_registry_verifies_optional_artifact_hash_and_uses_canonical_json(tmp_path):
+def test_registry_verifies_optional_artifact_hash_and_uses_canonical_json(tmp_path, write_gguf):
     artifact = tmp_path / "model.gguf"
-    contents = b"GGUF" + b"artifact"
+    write_gguf(artifact)
+    contents = artifact.read_bytes()
     artifact.write_bytes(contents)
     digest = hashlib.sha256(contents).hexdigest()
     registry_path = tmp_path / "models.json"
@@ -61,22 +65,22 @@ def test_registry_verifies_optional_artifact_hash_and_uses_canonical_json(tmp_pa
         json.loads(raw), ensure_ascii=False, sort_keys=True, separators=(",", ":")
     )
 
-    artifact.write_bytes(b"GGUF" + b"modified")
+    write_gguf(artifact, model_name="Modified model")
     assert registry.inspect("local-coder", verify_hash=True).hash_verified is False
 
 
-def test_registry_rejects_missing_non_gguf_mismatched_hash_and_duplicate(tmp_path):
+def test_registry_rejects_missing_non_gguf_mismatched_hash_and_duplicate(tmp_path, write_gguf):
     registry = LocalModelRegistry(tmp_path / "models.json")
     with pytest.raises(ModelRegistryError, match="does not exist"):
         registry.add(_model(tmp_path / "missing.gguf"))
 
     wrong_format = tmp_path / "not-a-model.gguf"
     wrong_format.write_bytes(b"NOPE" + b"payload")
-    with pytest.raises(ModelRegistryError, match="valid GGUF header"):
+    with pytest.raises(ModelRegistryError, match="valid supported GGUF"):
         registry.add(_model(wrong_format))
 
     artifact = tmp_path / "valid.gguf"
-    artifact.write_bytes(b"GGUF" + b"payload")
+    write_gguf(artifact)
     with pytest.raises(ModelRegistryError, match="does not match"):
         registry.add(_model(artifact, digest="0" * 64))
 
@@ -85,11 +89,11 @@ def test_registry_rejects_missing_non_gguf_mismatched_hash_and_duplicate(tmp_pat
         registry.add(_model(artifact))
 
 
-def test_registry_set_default_remove_and_missing_model_are_consistent(tmp_path):
+def test_registry_set_default_remove_and_missing_model_are_consistent(tmp_path, write_gguf):
     artifact_a = tmp_path / "a.gguf"
     artifact_b = tmp_path / "b.gguf"
-    artifact_a.write_bytes(b"GGUF-a")
-    artifact_b.write_bytes(b"GGUF-b")
+    write_gguf(artifact_a, model_name="A")
+    write_gguf(artifact_b, model_name="B")
     registry = LocalModelRegistry(tmp_path / "models.json")
     registry.add(_model(artifact_b, model_id="b"))
     registry.add(_model(artifact_a, model_id="a"))

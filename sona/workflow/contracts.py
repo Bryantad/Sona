@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from enum import StrEnum
 from math import isfinite
 from typing import NewType
@@ -11,6 +12,7 @@ from typing import NewType
 WorkflowId = NewType("WorkflowId", str)
 TaskId = NewType("TaskId", str)
 StepId = NewType("StepId", str)
+_MAX_TEMPORAL_SECONDS = 31_536_000.0
 
 
 def _new_id() -> str:
@@ -34,6 +36,20 @@ def _validate_uuid(value: str, name: str) -> None:
         uuid.UUID(value)
     except (ValueError, AttributeError) as exc:
         raise ValueError(f"{name} must be a UUID") from exc
+
+
+def _normalize_timestamp(value: str | None, name: str) -> str | None:
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        raise ValueError(f"{name} must be a timezone-aware ISO-8601 timestamp")
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise ValueError(f"{name} must be a timezone-aware ISO-8601 timestamp") from exc
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        raise ValueError(f"{name} must be a timezone-aware ISO-8601 timestamp")
+    return parsed.astimezone(UTC).isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
 
 class WorkflowState(StrEnum):
@@ -117,6 +133,9 @@ class StepDefinition:
     depends_on: tuple[StepId, ...] = ()
     retry: RetryPolicy = RetryPolicy()
     timeout_seconds: float | None = None
+    delay_seconds: float = 0.0
+    deadline_utc: str | None = None
+    expires_at_utc: str | None = None
 
     def __post_init__(self) -> None:
         _validate_uuid(str(self.step_id), "step_id")
@@ -128,8 +147,28 @@ class StepDefinition:
             raise ValueError("a step cannot depend on itself")
         if len(set(self.depends_on)) != len(self.depends_on):
             raise ValueError("step dependencies must be unique")
-        if self.timeout_seconds is not None and self.timeout_seconds <= 0:
-            raise ValueError("step timeout must be positive")
+        if self.timeout_seconds is not None and (
+            isinstance(self.timeout_seconds, bool)
+            or not isinstance(self.timeout_seconds, (int, float))
+            or not isfinite(self.timeout_seconds)
+            or not 0 < self.timeout_seconds <= _MAX_TEMPORAL_SECONDS
+        ):
+            raise ValueError("step timeout must be finite, positive, and at most 365 days")
+        if (
+            isinstance(self.delay_seconds, bool)
+            or not isinstance(self.delay_seconds, (int, float))
+            or not isfinite(self.delay_seconds)
+            or not 0 <= self.delay_seconds <= _MAX_TEMPORAL_SECONDS
+        ):
+            raise ValueError("delay_seconds must be finite and between zero and 365 days")
+        object.__setattr__(
+            self, "deadline_utc", _normalize_timestamp(self.deadline_utc, "deadline_utc")
+        )
+        object.__setattr__(
+            self,
+            "expires_at_utc",
+            _normalize_timestamp(self.expires_at_utc, "expires_at_utc"),
+        )
 
 
 @dataclass(frozen=True, slots=True)

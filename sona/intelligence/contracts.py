@@ -6,6 +6,7 @@ enforce resource budgets, grant capabilities, or promise hardware performance.
 
 from __future__ import annotations
 
+import json
 import re
 import uuid
 from collections.abc import Iterator
@@ -46,6 +47,8 @@ class InferenceState(StrEnum):
 
 _SAFE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
+_MAX_OUTPUT_JSON_SCHEMA_BYTES = 16 * 1024
+_MAX_SYSTEM_PROMPT_BYTES = 16 * 1024
 InferenceJobId = NewType("InferenceJobId", str)
 
 
@@ -90,6 +93,8 @@ class ModelIdentity:
             _validate_safe_id(value, name)
         if not self.path.strip():
             raise ValueError("model path is required")
+        if self.device not in {"auto", "cpu", "cuda"}:
+            raise ValueError("device must be auto, cpu, or cuda")
         if (
             isinstance(self.context_tokens, bool)
             or not isinstance(self.context_tokens, int)
@@ -156,6 +161,8 @@ class InferenceRequest:
     request_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     maximum_output_tokens: int = 512
     timeout_seconds: float = 60.0
+    output_json_schema: str | None = field(default=None, repr=False)
+    system_prompt: str | None = field(default=None, repr=False)
 
     def __post_init__(self) -> None:
         _validate_safe_id(self.model_id, "model_id")
@@ -164,6 +171,34 @@ class InferenceRequest:
             raise ValueError("maximum_output_tokens must be positive")
         if self.timeout_seconds <= 0:
             raise ValueError("timeout_seconds must be positive")
+        if self.output_json_schema is not None:
+            if not isinstance(self.output_json_schema, str):
+                raise ValueError("output_json_schema must be a JSON object string")
+            if len(self.output_json_schema) > _MAX_OUTPUT_JSON_SCHEMA_BYTES:
+                raise ValueError("output_json_schema must be a JSON object under 16 KiB")
+            try:
+                schema_bytes = self.output_json_schema.encode("utf-8", errors="strict")
+            except UnicodeError as exc:
+                raise ValueError("output_json_schema must be a valid UTF-8 JSON object") from exc
+            if len(schema_bytes) > _MAX_OUTPUT_JSON_SCHEMA_BYTES:
+                raise ValueError("output_json_schema must be a JSON object under 16 KiB")
+            try:
+                schema_value = json.loads(self.output_json_schema)
+            except json.JSONDecodeError as exc:
+                raise ValueError("output_json_schema must be a valid UTF-8 JSON object") from exc
+            if not isinstance(schema_value, dict):
+                raise ValueError("output_json_schema must be a JSON object under 16 KiB")
+        if self.system_prompt is not None:
+            if not isinstance(self.system_prompt, str):
+                raise ValueError("system_prompt must be text")
+            if len(self.system_prompt) > _MAX_SYSTEM_PROMPT_BYTES:
+                raise ValueError("system_prompt must be under 16 KiB")
+            try:
+                system_prompt_bytes = self.system_prompt.encode("utf-8", errors="strict")
+            except UnicodeError as exc:
+                raise ValueError("system_prompt must be valid UTF-8 text") from exc
+            if len(system_prompt_bytes) > _MAX_SYSTEM_PROMPT_BYTES:
+                raise ValueError("system_prompt must be under 16 KiB")
 
 
 @dataclass(frozen=True, slots=True)

@@ -1,6 +1,7 @@
 # Sona Guide
 
-Sona 0.15.6 provides deterministic explanations from the local Sona catalog.
+Sona 0.16.0 retains deterministic explanations from the local Sona catalog and
+adds an optional, approval-gated local-model proposal path.
 
 ## Explain a diagnostic
 

@@ -1,11 +1,11 @@
 """Deterministic provider/model routing."""
 from __future__ import annotations
 
-from dataclasses import dataclass
 import math
+from dataclasses import dataclass
 from typing import Any
 
-from .contracts import TaskRequest
+from .contracts import TaskRequest, maximum_output_tokens_for
 from .governance import evaluate
 from .models import ModelDescriptor, ModelRegistry
 
@@ -52,7 +52,7 @@ def route(request: TaskRequest, registry: ModelRegistry, config: dict[str, Any],
             candidates = [item for _index, item in sorted(indexed, key=lambda pair: (pair[1].locality != "local", pair[0]))]
     for item in candidates:
         if item.provider_id in {"claude", "codex"}:
-            explanations.append(f"{item.model_id}: provider is unavailable in Sona 0.15.6")
+            explanations.append(f"{item.model_id}: provider is unavailable in Sona 0.16.0")
             continue
         if not item.enabled:
             explanations.append(f"{item.model_id}: disabled")
@@ -85,7 +85,10 @@ def route(request: TaskRequest, registry: ModelRegistry, config: dict[str, Any],
                     explanations.append(f"{item.model_id}: unknown remote cost requires approval" if not require_known else f"{item.model_id}: policy requires known remote cost")
                     continue
             else:
-                estimate = estimated_tokens * input_cost / 1_000_000 + 256 * output_cost / 1_000_000
+                estimate = (
+                    estimated_tokens * input_cost / 1_000_000
+                    + maximum_output_tokens_for(request.task_type) * output_cost / 1_000_000
+                )
                 maximum = min(
                     request.constraints.maximum_estimated_cost_usd if request.constraints.maximum_estimated_cost_usd is not None else float("inf"),
                     float(policy.get("limits", {}).get("maximum_estimated_cost_usd", 0.25)),

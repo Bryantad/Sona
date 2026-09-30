@@ -8,13 +8,27 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Callable
 
-from .config import resolve_config, resolve_credential
 from .cognitive import analyze_source
-from .contracts import BudgetEstimate, ExecutionReceipt, TaskPlan, TaskRequest, TaskResult, TaskStatus
+from .config import resolve_config, resolve_credential
+from .contracts import (
+    BudgetEstimate,
+    ExecutionReceipt,
+    TaskPlan,
+    TaskRequest,
+    TaskResult,
+    TaskStatus,
+    maximum_output_tokens_for,
+)
 from .diagnostics import diagnostic
 from .governance import append_audit, load_policy, policy_hash
 from .models import ModelRegistry
-from .providers import DeterministicProvider, HuggingFaceEndpointProvider, HuggingFaceLocalProvider, JsonHttpProvider, OllamaProvider
+from .providers import (
+    DeterministicProvider,
+    HuggingFaceEndpointProvider,
+    HuggingFaceLocalProvider,
+    JsonHttpProvider,
+    OllamaProvider,
+)
 from .receipts import build_task_receipt, write_receipt
 from .routing import route
 
@@ -92,10 +106,14 @@ class DeveloperIntelligenceService:
             return self._receipt(request, result, started) if write_task_receipt else result
         model = routed.model
         input_tokens = math.ceil((len(request.instruction) + len(request.context.selected_text or "")) / 4)
+        maximum_output_tokens = maximum_output_tokens_for(request.task_type)
         estimated_cost = None
         if model.input_cost_per_million_usd is not None and model.output_cost_per_million_usd is not None:
-            estimated_cost = input_tokens * model.input_cost_per_million_usd / 1_000_000 + 256 * model.output_cost_per_million_usd / 1_000_000
-        estimate = BudgetEstimate(estimated_input_tokens=input_tokens, maximum_output_tokens=256, estimated_cost_usd=estimated_cost, method="characters_per_token_v1")
+            estimated_cost = (
+                input_tokens * model.input_cost_per_million_usd / 1_000_000
+                + maximum_output_tokens * model.output_cost_per_million_usd / 1_000_000
+            )
+        estimate = BudgetEstimate(estimated_input_tokens=input_tokens, maximum_output_tokens=maximum_output_tokens, estimated_cost_usd=estimated_cost, method="characters_per_token_v1")
         try:
             if model.provider_id == "deterministic":
                 response = DeterministicProvider().execute(request, model)

@@ -10,7 +10,7 @@ function shouldStartLsp(doc: vscode.TextDocument | undefined): boolean {
 }
 
 export function activate(context: vscode.ExtensionContext): void {
-  console.log("Sona 0.15.6 Extension is now active.");
+  console.log("Sona 0.16.0 Extension is now active.");
 
   sonaCliIntegration.activate(context);
   activateGuide(context);
@@ -47,7 +47,7 @@ export function activate(context: vscode.ExtensionContext): void {
     setTimeout(() => {
       vscode.window
         .showInformationMessage(
-          "Welcome to Sona 0.15.6. Trusted developer workflows are ready to use.",
+          "Welcome to Sona 0.16.0. Trusted developer workflows are ready to use.",
           "Get Started",
           "Documentation"
         )

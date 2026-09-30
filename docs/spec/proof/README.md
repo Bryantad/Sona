@@ -19,6 +19,8 @@ Start here:
 - `automation.md` defines the boundary between AI metadata, runtime evidence,
   and advisory review.
 - `compatibility.md` defines schema-1 compatibility.
+- `future-runtime-evidence.md` is a non-normative proposal for a future
+  model/workflow evidence receipt; it does not change schema-1.
 - `threat-model.md` defines claims and non-claims.
 
 ## Interoperability certification

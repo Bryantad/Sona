@@ -37,6 +37,7 @@ from .profile import (
     set_preferences,
     update_concepts,
 )
+from .proposals import validate_source_proposal
 from .render import render_text
 
 __all__ = [
@@ -71,4 +72,5 @@ __all__ = [
     "save_profile",
     "set_preferences",
     "update_concepts",
+    "validate_source_proposal",
 ]

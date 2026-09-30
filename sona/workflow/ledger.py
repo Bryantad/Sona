@@ -66,6 +66,8 @@ class WorkflowStepSnapshot:
     finished_at_utc: str | None
     failure_code: str | None
     retry_after_utc: str | None = None
+    not_before_utc: str | None = None
+    attempt_started_at_utc: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -123,6 +125,8 @@ class _StepRecord:
     attempt_count: int = 0
     failure_code: str | None = None
     retry_after_utc: str | None = None
+    not_before_utc: str | None = None
+    attempt_started_at_utc: str | None = None
 
 
 @dataclass(slots=True)
@@ -192,6 +196,11 @@ class WorkflowLedger:
                         task_id=task.task_id,
                         state=StepState.CREATED,
                         created_at_utc=now,
+                        not_before_utc=(
+                            self._timestamp_after(now, step.delay_seconds)
+                            if step.delay_seconds
+                            else None
+                        ),
                     )
             self._workflows[definition.workflow_id] = record
             try:
@@ -209,11 +218,25 @@ class WorkflowLedger:
                 raise WorkflowTransitionError("only a created workflow can be prepared")
             before = deepcopy(record)
             now = self._timestamp()
+            now_value = self._datetime(now)
             for step in record.steps.values():
+                dependencies_ready = not step.definition.depends_on
                 step.state = (
-                    StepState.READY if not step.definition.depends_on else StepState.BLOCKED
+                    StepState.READY
+                    if dependencies_ready
+                    and not self._is_future(step.not_before_utc, now_value)
+                    else StepState.BLOCKED
                 )
-            record.state = WorkflowState.READY
+                step.failure_code = (
+                    "SONA-WORKFLOW-DELAYED"
+                    if dependencies_ready and step.state is StepState.BLOCKED
+                    else None
+                )
+            record.state = (
+                WorkflowState.READY
+                if any(step.state is StepState.READY for step in record.steps.values())
+                else WorkflowState.BLOCKED
+            )
             self._refresh_tasks(record, now)
             self._commit_transition(record, before, "workflow.prepared")
             return self._snapshot(record)
@@ -224,6 +247,8 @@ class WorkflowLedger:
             record = self._get(workflow_id)
             before = deepcopy(record)
             step = self._get_step(record, step_id)
+            if step.failure_code == "SONA-WORKFLOW-RECOVERY-REQUIRED":
+                raise WorkflowTransitionError("step is awaiting an explicit recovery decision")
             if record.state is not WorkflowState.READY or record.active_step_id is not None:
                 raise WorkflowTransitionError("workflow is not available to start a step")
             if step.state is not StepState.READY:
@@ -231,9 +256,17 @@ class WorkflowLedger:
             if step.attempt_count >= step.definition.retry.maximum_attempts:
                 raise WorkflowTransitionError("step exhausted its declared maximum attempts")
             now = self._timestamp()
+            now_value = self._datetime(now)
+            if self._temporal_failure_code(step, now_value, include_timeout=False):
+                raise WorkflowTransitionError(
+                    "step deadline or expiration has passed; call expire_due_steps first"
+                )
+            if self._is_future(step.not_before_utc, now_value):
+                raise WorkflowTransitionError("step delay has not elapsed")
             step.state = StepState.RUNNING
             step.attempt_count += 1
             step.started_at_utc = step.started_at_utc or now
+            step.attempt_started_at_utc = now
             step.retry_after_utc = None
             record.active_step_id = step_id
             record.state = WorkflowState.RUNNING
@@ -248,6 +281,13 @@ class WorkflowLedger:
             before = deepcopy(record)
             step = self._require_active_step(record, step_id)
             now = self._timestamp()
+            deadline_failure = self._temporal_failure_code(
+                step, self._datetime(now), include_timeout=True
+            )
+            if deadline_failure is not None:
+                self._mark_failed(record, step, deadline_failure, now)
+                self._commit_transition(record, before, "step.temporal_expired")
+                return self._snapshot(record)
             step.state = StepState.SUCCEEDED
             step.finished_at_utc = now
             record.active_step_id = None
@@ -256,7 +296,11 @@ class WorkflowLedger:
                     record.steps[dependency].state is StepState.SUCCEEDED
                     for dependency in dependent.definition.depends_on
                 ):
-                    dependent.state = StepState.READY
+                    if self._is_future(dependent.not_before_utc, self._datetime(now)):
+                        dependent.failure_code = "SONA-WORKFLOW-DELAYED"
+                    else:
+                        dependent.state = StepState.READY
+                        dependent.failure_code = None
             self._derive_workflow_state(record, now)
             self._commit_transition(record, before, "step.succeeded")
             return self._snapshot(record)
@@ -349,6 +393,64 @@ class WorkflowLedger:
                     released.append(self._snapshot(record))
             return tuple(released)
 
+    def release_due_delays(self) -> tuple[WorkflowSnapshot, ...]:
+        """Release dependency-ready delayed steps after their durable not-before time."""
+        with self._lock:
+            now = self._timestamp()
+            now_value = self._datetime(now)
+            released: list[WorkflowSnapshot] = []
+            for record in self._workflows.values():
+                for step in record.steps.values():
+                    if (
+                        step.state is not StepState.BLOCKED
+                        or step.failure_code != "SONA-WORKFLOW-DELAYED"
+                        or self._is_future(step.not_before_utc, now_value)
+                        or not all(
+                            record.steps[item].state is StepState.SUCCEEDED
+                            for item in step.definition.depends_on
+                        )
+                    ):
+                        continue
+                    before = deepcopy(record)
+                    step.state = StepState.READY
+                    step.failure_code = None
+                    record.state = WorkflowState.READY
+                    self._refresh_tasks(record, now)
+                    self._commit_transition(record, before, "step.delay_released")
+                    released.append(self._snapshot(record))
+            return tuple(released)
+
+    def expire_due_steps(self) -> tuple[WorkflowSnapshot, ...]:
+        """Apply due deadlines/expiration; running work requires owner cancellation."""
+        with self._lock:
+            now = self._timestamp()
+            now_value = self._datetime(now)
+            changed: list[WorkflowSnapshot] = []
+            for record in self._workflows.values():
+                for step in record.steps.values():
+                    if step.state in _TERMINAL_STEP_STATES or step.state is StepState.CANCELING:
+                        continue
+                    is_running = step.state is StepState.RUNNING
+                    failure_code = self._temporal_failure_code(
+                        step, now_value, include_timeout=is_running
+                    )
+                    if failure_code is None:
+                        continue
+                    before = deepcopy(record)
+                    if is_running:
+                        step.state = StepState.CANCELING
+                        step.failure_code = failure_code
+                        record.state = WorkflowState.CANCELING
+                        event_type = "step.timeout_requested"
+                        self._refresh_tasks(record, now)
+                    else:
+                        self._mark_failed(record, step, failure_code, now)
+                        event_type = "step.temporal_expired"
+                    self._commit_transition(record, before, event_type)
+                    changed.append(self._snapshot(record))
+                    break
+            return tuple(changed)
+
     def block_step(
         self,
         workflow_id: WorkflowId,
@@ -387,12 +489,19 @@ class WorkflowLedger:
                 raise WorkflowTransitionError(
                     "interrupted work requires an explicit resume decision"
                 )
+            now = self._timestamp()
+            now_value = self._datetime(now)
+            if self._temporal_failure_code(step, now_value, include_timeout=False):
+                raise WorkflowTransitionError(
+                    "step deadline or expiration has passed; call expire_due_steps first"
+                )
+            if self._is_future(step.not_before_utc, now_value):
+                raise WorkflowTransitionError("step delay has not elapsed")
             if not all(
                 record.steps[dependency].state is StepState.SUCCEEDED
                 for dependency in step.definition.depends_on
             ):
                 raise WorkflowTransitionError("step dependencies are not complete")
-            now = self._timestamp()
             step.state = StepState.READY
             step.failure_code = None
             self._derive_workflow_state(record, now)
@@ -420,6 +529,13 @@ class WorkflowLedger:
             ):
                 raise WorkflowTransitionError("step is not awaiting an interrupted-work decision")
             now = self._timestamp()
+            expired_code = self._temporal_failure_code(
+                step, self._datetime(now), include_timeout=False
+            )
+            if expired_code is not None:
+                self._mark_failed(record, step, expired_code, now)
+                self._commit_transition(record, before, "step.temporal_expired")
+                return self._snapshot(record)
             if decision is RecoveryDecision.RETRY_FROM_START:
                 if step.attempt_count >= step.definition.retry.maximum_attempts:
                     raise WorkflowTransitionError("step has no remaining configured retry attempts")
@@ -431,6 +547,7 @@ class WorkflowLedger:
                 step.state = StepState.READY
                 step.failure_code = None
                 step.retry_after_utc = None
+                step.attempt_started_at_utc = None
                 record.state = WorkflowState.READY
                 self._refresh_tasks(record, now)
                 event_type = "workflow.recovery_resumed"
@@ -498,12 +615,19 @@ class WorkflowLedger:
             ):
                 raise WorkflowTransitionError("step has no pending cancellation to finish")
             now = self._timestamp()
-            step.state = StepState.CANCELED
-            step.finished_at_utc = now
-            record.active_step_id = None
-            record.state = WorkflowState.CANCELED
-            record.finished_at_utc = now
-            self._refresh_tasks(record, now)
+            if step.failure_code in {
+                "SONA-WORKFLOW-TIMED-OUT",
+                "SONA-WORKFLOW-DEADLINE-MISSED",
+                "SONA-WORKFLOW-EXPIRED",
+            }:
+                self._mark_failed(record, step, step.failure_code, now)
+            else:
+                step.state = StepState.CANCELED
+                step.finished_at_utc = now
+                record.active_step_id = None
+                record.state = WorkflowState.CANCELED
+                record.finished_at_utc = now
+                self._refresh_tasks(record, now)
             self._commit_transition(record, before, "step.cancellation_finished")
             return self._snapshot(record)
 
@@ -582,7 +706,7 @@ class WorkflowLedger:
 
     @staticmethod
     def _record_from_snapshot(snapshot: WorkflowSnapshot) -> _WorkflowRecord:
-        if snapshot.schema_version not in {1, 2} or not isinstance(
+        if snapshot.schema_version not in {1, 2, 3} or not isinstance(
             snapshot.definition, WorkflowDefinition
         ):
             raise WorkflowLedgerError("persisted workflow snapshot is unsupported")
@@ -620,6 +744,8 @@ class WorkflowLedger:
                     attempt_count=item.attempt_count,
                     failure_code=item.failure_code,
                     retry_after_utc=item.retry_after_utc,
+                    not_before_utc=item.not_before_utc,
+                    attempt_started_at_utc=item.attempt_started_at_utc,
                 )
         active_steps = [
             item
@@ -672,6 +798,8 @@ class WorkflowLedger:
         if all(state is StepState.SUCCEEDED for state in states):
             record.state = WorkflowState.SUCCEEDED
             record.finished_at_utc = now
+        elif any(state is StepState.CANCELING for state in states):
+            record.state = WorkflowState.CANCELING
         elif any(state is StepState.RUNNING for state in states):
             record.state = WorkflowState.RUNNING
         elif any(state is StepState.RETRYING for state in states):
@@ -731,6 +859,8 @@ class WorkflowLedger:
                 finished_at_utc=record.steps[item.step_id].finished_at_utc,
                 failure_code=record.steps[item.step_id].failure_code,
                 retry_after_utc=record.steps[item.step_id].retry_after_utc,
+                not_before_utc=record.steps[item.step_id].not_before_utc,
+                attempt_started_at_utc=record.steps[item.step_id].attempt_started_at_utc,
             )
             for task in record.definition.tasks
             for item in task.steps
@@ -748,7 +878,7 @@ class WorkflowLedger:
         completed = sum(item.state in _TERMINAL_STEP_STATES for item in steps)
         total = len(steps)
         return WorkflowSnapshot(
-            schema_version=2,
+            schema_version=3,
             definition=record.definition,
             state=record.state,
             tasks=tasks,
@@ -792,3 +922,56 @@ class WorkflowLedger:
         if current.tzinfo is None or current.utcoffset() is None:
             raise WorkflowLedgerError("workflow clock must return a timezone-aware datetime")
         return current.astimezone(UTC).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+
+    @staticmethod
+    def _timestamp_after(timestamp: str, seconds: float) -> str:
+        try:
+            value = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+            result = value + timedelta(seconds=seconds)
+        except (OverflowError, ValueError) as exc:
+            raise WorkflowLedgerError(
+                "workflow delay exceeds the supported timestamp range"
+            ) from exc
+        return result.astimezone(UTC).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+
+    @staticmethod
+    def _datetime(timestamp: str) -> datetime:
+        return datetime.fromisoformat(timestamp.replace("Z", "+00:00")).astimezone(UTC)
+
+    @classmethod
+    def _is_future(cls, timestamp: str | None, now: datetime) -> bool:
+        return timestamp is not None and cls._datetime(timestamp) > now
+
+    @classmethod
+    def _temporal_failure_code(
+        cls,
+        step: _StepRecord,
+        now: datetime,
+        *,
+        include_timeout: bool,
+    ) -> str | None:
+        cutoffs: list[tuple[datetime, str]] = []
+        if step.definition.expires_at_utc is not None:
+            cutoffs.append(
+                (cls._datetime(step.definition.expires_at_utc), "SONA-WORKFLOW-EXPIRED")
+            )
+        if step.definition.deadline_utc is not None:
+            cutoffs.append(
+                (
+                    cls._datetime(step.definition.deadline_utc),
+                    "SONA-WORKFLOW-DEADLINE-MISSED",
+                )
+            )
+        if (
+            include_timeout
+            and step.attempt_started_at_utc is not None
+            and step.definition.timeout_seconds is not None
+        ):
+            timeout_at = cls._datetime(step.attempt_started_at_utc) + timedelta(
+                seconds=step.definition.timeout_seconds
+            )
+            cutoffs.append((timeout_at, "SONA-WORKFLOW-TIMED-OUT"))
+        due = [(at, code) for at, code in cutoffs if at <= now]
+        if not due:
+            return None
+        return min(due, key=lambda item: item[0])[1]

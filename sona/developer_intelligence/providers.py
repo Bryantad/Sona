@@ -7,7 +7,7 @@ import urllib.request
 from pathlib import Path
 from typing import Any, Protocol
 
-from .contracts import TaskRequest
+from .contracts import TaskRequest, maximum_output_tokens_for
 from .models import ModelDescriptor
 
 
@@ -85,7 +85,10 @@ class OllamaProvider:
             host=model.configuration.get("host"),
             timeout=float(model.configuration.get("timeout", 30.0)),
         )
-        values = backend.generate_completion(_developer_prompt(request), max_new_tokens=256)
+        maximum_tokens = maximum_output_tokens_for(request.task_type)
+        values = backend.generate_completion(
+            _developer_prompt(request), max_new_tokens=maximum_tokens
+        )
         text = values[0] if values else ""
         if str(text).startswith("Error:"):
             raise RuntimeError(str(text))
@@ -102,7 +105,12 @@ class JsonHttpProvider:
         self.maximum_response_bytes = maximum_response_bytes
 
     def execute(self, request: TaskRequest, model: ModelDescriptor) -> dict[str, Any]:
-        payload = json.dumps({"model": model.provider_model_name, "messages": [{"role": "user", "content": _developer_prompt(request)}], "stream": False}).encode()
+        payload = json.dumps({
+            "model": model.provider_model_name,
+            "messages": [{"role": "user", "content": _developer_prompt(request)}],
+            "max_tokens": maximum_output_tokens_for(request.task_type),
+            "stream": False,
+        }).encode()
         headers = {"Content-Type": "application/json"}
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
@@ -135,7 +143,13 @@ class HuggingFaceEndpointProvider:
         self.maximum_response_bytes = maximum_response_bytes
 
     def execute(self, request: TaskRequest, model: ModelDescriptor) -> dict[str, Any]:
-        payload = json.dumps({"inputs": _developer_prompt(request), "parameters": {"max_new_tokens": 256, "return_full_text": False}}).encode()
+        payload = json.dumps({
+            "inputs": _developer_prompt(request),
+            "parameters": {
+                "max_new_tokens": maximum_output_tokens_for(request.task_type),
+                "return_full_text": False,
+            },
+        }).encode()
         headers = {"Content-Type": "application/json"}
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
@@ -171,5 +185,8 @@ class HuggingFaceLocalProvider:
         tokenizer = AutoTokenizer.from_pretrained(str(path), local_files_only=True)
         local_model = AutoModelForCausalLM.from_pretrained(str(path), local_files_only=True)
         generator = pipeline("text-generation", model=local_model, tokenizer=tokenizer)
-        result = generator(_developer_prompt(request), max_new_tokens=256)
+        result = generator(
+            _developer_prompt(request),
+            max_new_tokens=maximum_output_tokens_for(request.task_type),
+        )
         return {"summary": str(result[0].get("generated_text", "")), "status": "ok"}

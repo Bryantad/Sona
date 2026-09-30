@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.16.0
+
+- Added direct local GGUF inference, model registration and inspection, and a
+  persistent local inference service without implicit remote fallback.
+- Added durable workflows, inert recovery, bounded retry/scheduling contracts,
+  typed events and messages, supervised services, state machines, and runtime
+  effect/capability foundations.
+- Added approval-gated Sona Guide local edits with deterministic validation and
+  one-shot `EDITOR.BUFFER_REPLACE` authorization; editor changes remain unsaved.
+- Preserved Proof schema-1 compatibility and Guardian's independent trust role.
+
 ## 0.15.6
 
 - Added the deterministic Sona Guide layer for Guided, Balanced, and Expert

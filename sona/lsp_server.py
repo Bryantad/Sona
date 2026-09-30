@@ -10,8 +10,10 @@ from __future__ import annotations
 
 import argparse
 import ast
+import asyncio
 import re
 import sys
+from threading import Lock
 from collections.abc import Iterable
 from dataclasses import dataclass
 from functools import lru_cache
@@ -570,6 +572,31 @@ def _qualified_module_at(
 
 
 server = None
+_LOCAL_GUIDE_MODEL = None
+_LOCAL_GUIDE_MODEL_LOCK = Lock()
+
+
+def _get_local_guide_model():
+    global _LOCAL_GUIDE_MODEL
+    with _LOCAL_GUIDE_MODEL_LOCK:
+        if _LOCAL_GUIDE_MODEL is None:
+            from .guide.local_model import GuideLocalModel
+
+            _LOCAL_GUIDE_MODEL = GuideLocalModel()
+        return _LOCAL_GUIDE_MODEL
+
+
+def _close_local_guide_model() -> None:
+    global _LOCAL_GUIDE_MODEL
+    with _LOCAL_GUIDE_MODEL_LOCK:
+        model = _LOCAL_GUIDE_MODEL
+    if model is not None:
+        if model.close():
+            with _LOCAL_GUIDE_MODEL_LOCK:
+                if _LOCAL_GUIDE_MODEL is model:
+                    _LOCAL_GUIDE_MODEL = None
+        else:
+            _eprint("WARNING: Direct local Guide model cleanup did not complete before shutdown.")
 
 if _PYGLS_AVAILABLE:
 
@@ -819,7 +846,7 @@ if _PYGLS_AVAILABLE:
 
     class SonaLsp(LanguageServer):
         def __init__(self):
-            super().__init__("sona-lsp", "0.15.6", converter_factory=_lsp_converter)
+            super().__init__("sona-lsp", "0.16.0", converter_factory=_lsp_converter)
             self.guide_options = {}
 
         def validate(self, uri: str, text: str) -> None:
@@ -829,24 +856,36 @@ if _PYGLS_AVAILABLE:
     server = SonaLsp()
 
 
-    def _guide_profile(uri: str):
+    def _workspace_root_for_document(uri: str) -> Path | None:
         from pygls.uris import to_fs_path
-        from .guide.profile import default_profile, load_profile_state
 
+        if not isinstance(uri, str) or not uri.lower().startswith("file:"):
+            return None
         path = to_fs_path(uri)
         if not path:
-            return default_profile()
+            return None
         roots = list(server.workspace.folders)
         if server.workspace.root_uri:
             roots.append(server.workspace.root_uri)
         candidates = []
         for root_uri in roots:
             root_path = to_fs_path(root_uri)
-            if root_path and Path(path).resolve().is_relative_to(Path(root_path).resolve()):
-                candidates.append(Path(root_path))
-        if not candidates:
+            try:
+                resolved_root = Path(root_path).resolve() if root_path else None
+                if resolved_root and Path(path).resolve().is_relative_to(resolved_root):
+                    candidates.append(resolved_root)
+            except (OSError, ValueError):
+                continue
+        return max(candidates, key=lambda root: len(root.parts)) if candidates else None
+
+
+    def _guide_profile(uri: str):
+        from .guide.profile import default_profile, load_profile_state
+
+        root = _workspace_root_for_document(uri)
+        if root is None:
             return default_profile()
-        return load_profile_state(max(candidates, key=lambda root: len(root.parts))).profile
+        return load_profile_state(root).profile
 
 
     def _guide_for_document(payload):
@@ -862,7 +901,12 @@ if _PYGLS_AVAILABLE:
             if not isinstance(options, dict):
                 return guide_request(payload)
             request = {**payload, "options": {**server.guide_options, **options}}
-            return guide_request(request, profile=_guide_profile(payload.get("document", "")))
+            inference = _get_local_guide_model() if payload.get("action") == "local_model_proposal" else None
+            return guide_request(
+                request,
+                profile=_guide_profile(payload.get("document", "")),
+                local_inference=inference,
+            )
         except GuideError as exc:
             return unavailable(exc)
         except (OSError, ValueError, TypeError):
@@ -875,6 +919,179 @@ if _PYGLS_AVAILABLE:
     @server.feature("sona/guide")
     def guide_request(params):
         return _guide_for_document(params)
+
+
+    @server.feature("sona/guide/local_model_edit")
+    async def guide_local_model_edit(params):
+        """Run direct local inference off the LSP event loop; never use a remote fallback."""
+        return await asyncio.to_thread(_guide_for_document, params)
+
+
+    def _guide_buffer_edit(params, *, consume: bool):
+        import hashlib
+
+        from pygls.uris import to_fs_path
+
+        from .guide.editor_authorization import (
+            consume_editor_buffer_edit, discard_editor_buffer_edit, prepare_editor_buffer_edit,
+        )
+
+        def burn_handle() -> None:
+            if consume and isinstance(params, dict) and isinstance(params.get("handle"), str):
+                discard_editor_buffer_edit(params["handle"])
+
+        required = {
+            "schema_version",
+            "document",
+            "document_version",
+            "selection",
+            "expected_source_sha256",
+            "proposed_source",
+            "replacement",
+        }
+        allowed = required | ({"handle"} if consume else set())
+        if not isinstance(params, dict) or set(params) != allowed:
+            burn_handle()
+            return {
+                "schema_version": 1,
+                "status": "unavailable",
+                "diagnostic_id": "SONA-GUIDE-AUTH-INVALID-REQUEST",
+                "message": "The editor-buffer authorization request is invalid.",
+            }
+        uri = params.get("document")
+        version = params.get("document_version")
+        expected_source_hash = params.get("expected_source_sha256")
+        proposed_source = params.get("proposed_source")
+        replacement = params.get("replacement")
+        selection = params.get("selection")
+        if (
+            type(params.get("schema_version")) is not int
+            or params.get("schema_version") != 1
+            or not isinstance(uri, str)
+            or isinstance(version, bool)
+            or not isinstance(version, int)
+            or not isinstance(expected_source_hash, str)
+            or not re.fullmatch(r"[0-9a-f]{64}", expected_source_hash)
+            or not isinstance(proposed_source, str)
+            or len(proposed_source) > 256 * 1024
+            or not isinstance(replacement, str)
+            or not isinstance(selection, dict)
+            or (consume and not isinstance(params.get("handle"), str))
+        ):
+            burn_handle()
+            return {
+                "schema_version": 1,
+                "status": "unavailable",
+                "diagnostic_id": "SONA-GUIDE-AUTH-INVALID-REQUEST",
+                "message": "The editor-buffer authorization request is invalid.",
+            }
+
+        document = server.workspace.text_documents.get(uri)
+        if document is None or type(document.version) is not int or document.version != version:
+            burn_handle()
+            return {
+                "schema_version": 1,
+                "status": "denied",
+                "diagnostic_id": "SONA-GUIDE-003",
+                "message": (
+                    "The document changed during Guide authorization; "
+                    "request a fresh proposal."
+                ),
+            }
+        source = document.source
+        try:
+            source_hash = hashlib.sha256(source.encode("utf-8", errors="strict")).hexdigest()
+        except (AttributeError, UnicodeError, TypeError):
+            burn_handle()
+            return {
+                "schema_version": 1,
+                "status": "unavailable",
+                "diagnostic_id": "SONA-GUIDE-AUTH-INVALID-SOURCE",
+                "message": "The current editor buffer could not be checked safely.",
+            }
+        if source_hash != expected_source_hash:
+            burn_handle()
+            return {
+                "schema_version": 1,
+                "status": "denied",
+                "diagnostic_id": "SONA-GUIDE-003",
+                "message": (
+                    "The document changed during Guide authorization; "
+                    "request a fresh proposal."
+                ),
+            }
+        root = _workspace_root_for_document(uri)
+        file_path = to_fs_path(uri)
+        if root is None or not file_path:
+            burn_handle()
+            return {
+                "schema_version": 1,
+                "status": "denied",
+                "diagnostic_id": "SONA-GUIDE-AUTH-LOCAL-WORKSPACE-REQUIRED",
+                "message": "A local Sona file in a workspace is required.",
+            }
+        if Path(file_path).suffix.lower() not in {".sona", ".smod"}:
+            burn_handle()
+            return {
+                "schema_version": 1,
+                "status": "denied",
+                "diagnostic_id": "SONA-GUIDE-AUTH-SONA-DOCUMENT-REQUIRED",
+                "message": "Editor-buffer authorization is available only for Sona source documents.",
+            }
+        def utf16_offset(line: int, character: int) -> int:
+            lines = source.splitlines(keepends=True)
+            if source.endswith(("\n", "\r")):
+                lines.append("")
+            if line < 0 or character < 0 or line >= max(1, len(lines)):
+                raise ValueError("selection is outside the document")
+            line_text = lines[line] if lines else ""
+            content = line_text.rstrip("\r\n")
+            units = 0
+            for index, char in enumerate(content):
+                if units == character:
+                    return sum(len(item) for item in lines[:line]) + index
+                units += len(char.encode("utf-16-le")) // 2
+                if units > character:
+                    raise ValueError("selection splits a UTF-16 character")
+            if units == character:
+                return sum(len(item) for item in lines[:line]) + len(content)
+            raise ValueError("selection is outside the line")
+
+        try:
+            start = selection["start"]
+            end = selection["end"]
+            if (not isinstance(start, dict) or not isinstance(end, dict)
+                    or set(start) != {"line", "character"} or set(end) != {"line", "character"}
+                    or any(type(value) is not int for value in (*start.values(), *end.values()))):
+                raise ValueError("invalid selection")
+            begin = utf16_offset(start["line"], start["character"])
+            finish = utf16_offset(end["line"], end["character"])
+            if finish < begin or source[:begin] + replacement + source[finish:] != proposed_source:
+                raise ValueError("proposal does not match selected replacement")
+        except (KeyError, ValueError, TypeError):
+            burn_handle()
+            return {
+                "schema_version": 1, "status": "denied",
+                "diagnostic_id": "SONA-GUIDE-AUTH-SELECTION-MISMATCH",
+                "message": "The selection or replacement no longer matches the validated proposal.",
+            }
+
+        common = (root, uri, version, selection, source, proposed_source, replacement)
+        if consume:
+            return consume_editor_buffer_edit(params["handle"], *common)
+        return prepare_editor_buffer_edit(*common)
+
+
+    @server.feature("sona/guide/prepare_buffer_edit")
+    async def guide_prepare_buffer_edit(params):
+        """Mint a short-lived exact capability after the user has approved the diff."""
+        return await asyncio.to_thread(_guide_buffer_edit, params, consume=False)
+
+
+    @server.feature("sona/guide/consume_buffer_edit")
+    async def guide_consume_buffer_edit(params):
+        """Consume the exact one-shot capability immediately before buffer replacement."""
+        return await asyncio.to_thread(_guide_buffer_edit, params, consume=True)
 
 
     @server.feature(WORKSPACE_DID_CHANGE_CONFIGURATION)
@@ -1196,10 +1413,16 @@ def main(argv: Iterable[str] | None = None) -> int:
 
     if args.tcp and not args.stdio:
         _eprint(f"Starting Sona LSP on tcp://{args.host}:{args.port}")
-        server.start_tcp(args.host, args.port)
+        try:
+            server.start_tcp(args.host, args.port)
+        finally:
+            _close_local_guide_model()
         return 0
 
-    server.start_io()
+    try:
+        server.start_io()
+    finally:
+        _close_local_guide_model()
     return 0
 
 

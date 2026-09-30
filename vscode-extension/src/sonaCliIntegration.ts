@@ -1055,7 +1055,7 @@ export class SonaCliIntegration {
     return `<!DOCTYPE html>
 <html>
 <body>
-  <h1>Welcome to Sona 0.15.6</h1>
+  <h1>Welcome to Sona 0.16.0</h1>
   <p>The AI-native programming language with deterministic Guide, Proof Mode, and Guardian workflows.</p>
   <button onclick="vscode.postMessage({command: 'setupAzure'})">Setup Azure</button>
   <button onclick="vscode.postMessage({command: 'setupManual'})">Manual Setup</button>

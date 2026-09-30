@@ -11,8 +11,9 @@ completion, failure, blocking, and cancellation.
 
 ## Lifecycle
 
-- `create` records a schema-1 workflow in `CREATED` state and rejects duplicate
-  workflow IDs in the same ledger.
+- `create` records a workflow in `CREATED` state and rejects duplicate
+  workflow IDs in the same ledger. Newly written snapshots use schema 3;
+  schema-1 and schema-2 snapshots remain readable.
 - `prepare` moves dependency-free steps to `READY` and steps with dependencies
   to `BLOCKED`.
 - `start_step` claims one ready step per workflow and increments its attempt
@@ -27,6 +28,13 @@ completion, failure, blocking, and cancellation.
 - `release_due_retries` changes only retries whose persisted due time has
   arrived. It does not sleep, spawn a timer, or execute work; the owner polls
   this API and separately decides when to call `start_step`.
+- `release_due_delays` releases a step only after its persisted not-before time
+  and dependencies are satisfied. It is an explicit poll; restore never
+  releases delayed work.
+- `expire_due_steps` applies absolute deadlines and expiration. Pending work
+  fails with a stable code. For an active timed-out, expired, or overdue step,
+  it requests cancellation; the owner must stop the operation and acknowledge
+  with `finish_step_cancellation`. Sona does not forcibly preempt the owner.
 - `block_step` records an external/policy block; `unblock_step` releases it
   only when declared dependencies have succeeded.
 - `cancel` marks pending steps canceled. If a step is active, its state becomes
@@ -50,6 +58,32 @@ must be finite, and exponential backoff doubles per failed attempt up to the
 configured maximum. This is a scheduling contract, not an executor or
 background timer. Trusted policy/capability approval records remain future
 work.
+
+## Time-aware steps
+
+`StepDefinition.delay_seconds` schedules a step relative to workflow creation.
+The computed `not_before_utc` is stored in the workflow snapshot so reopen does
+not restart the delay. Steps remain blocked until an explicit
+`release_due_delays()` poll observes both the due time and successful
+dependencies. A delay is bounded to 365 days.
+
+`deadline_utc` is the latest completion time for a step. `timeout_seconds` is a
+per-attempt duration, measured from the persisted `attempt_started_at_utc`.
+`expires_at_utc` is an absolute validity cutoff for the step and its pending
+retries. The first due cutoff determines the stable failure code. A ready,
+blocked, or retrying step that reaches a cutoff fails before another attempt
+can start. A running step moves to `CANCELING`; its owner must stop the work
+and acknowledge cancellation before the ledger records the timeout/deadline/
+expiration as terminal failure. No timer thread is created, and workflow
+restore remains inert and requires the existing explicit recovery decision.
+
+These temporal fields are written in workflow snapshot schema 3. Readers
+continue to accept schema-1 and schema-2 snapshots; schema-3 timestamps are
+canonical UTC with millisecond precision. Deadline and expiration timestamps
+must be timezone-aware ISO-8601 values. `timeout_seconds` and `delay_seconds`
+must be finite and no greater than 365 days. These are durable scheduling
+contracts only: they do not promise operating-system preemption, exact wall
+clock behavior across clock changes, or execution of a workflow step.
 
 ## Durable format and publication
 
@@ -95,4 +129,6 @@ timezone-aware clocks, inert restore, recovery-required conversion, explicit
 recovery decisions, fixed/exponential backoff, retry budget exhaustion,
 durable retry-after timestamps, real process restart, journal limits, atomic
 cache rebuilding, hash-chain/canonical validation, persistence failure
-rollback, and the guarantee that an operation string is inert.
+rollback, and the guarantee that an operation string is inert. Time-aware tests
+cover delayed release after reopen, per-attempt timeout persistence,
+deadline/expiration failure, and owner-acknowledged cancellation.

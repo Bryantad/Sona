@@ -13,7 +13,9 @@ ROOT = Path(__file__).resolve().parents[2]
 EXAMPLES = ROOT / "examples"
 
 
-def _run(relative_script: str, *arguments: str, cwd: Path) -> subprocess.CompletedProcess[str]:
+def _run(
+    relative_script: str, *arguments: str, cwd: Path, timeout: int = 30
+) -> subprocess.CompletedProcess[str]:
     environment = os.environ.copy()
     environment["PYTHONPATH"] = str(ROOT)
     return subprocess.run(
@@ -22,7 +24,7 @@ def _run(relative_script: str, *arguments: str, cwd: Path) -> subprocess.Complet
         env=environment,
         text=True,
         capture_output=True,
-        timeout=30,
+        timeout=timeout,
         check=False,
     )
 
@@ -68,6 +70,6 @@ def test_direct_local_model_example_runs_when_gguf_fixture_is_configured(tmp_pat
     model_path = os.getenv("SONA_TEST_GGUF")
     if not model_path:
         pytest.skip("SONA_TEST_GGUF is not configured")
-    result = _run("local-ai/run_local.py", model_path, "--device", "cpu", cwd=tmp_path)
+    result = _run("local-ai/run_local.py", model_path, "--device", "cpu", cwd=tmp_path, timeout=180)
     assert result.returncode == 0, result.stdout + result.stderr
     assert "Provider: local (local; no fallback)" in result.stdout

@@ -6,6 +6,32 @@ export type GuideOptions = {
   quiet?: boolean;
 };
 
+const MAX_AI_REPLACEMENT_BYTES = 64 * 1024;
+const MAX_AI_PROPOSAL_ENVELOPE_BYTES = 66 * 1024;
+
+export function parseEditProposal(responseText: string): string {
+  if (typeof responseText !== "string" || Buffer.byteLength(responseText, "utf8") > MAX_AI_PROPOSAL_ENVELOPE_BYTES) {
+    throw new Error("Sona Guide returned an oversized or invalid edit proposal.");
+  }
+  let payload: unknown;
+  try {
+    payload = JSON.parse(responseText);
+  } catch {
+    throw new Error("Sona Guide could not parse the model's edit proposal. No changes were applied.");
+  }
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    throw new Error("Sona Guide returned an invalid edit proposal. No changes were applied.");
+  }
+  const record = payload as Record<string, unknown>;
+  if (Object.keys(record).length !== 1 || typeof record.replacement !== "string") {
+    throw new Error("Sona Guide expected one replacement string. No changes were applied.");
+  }
+  if (Buffer.byteLength(record.replacement, "utf8") > MAX_AI_REPLACEMENT_BYTES) {
+    throw new Error("Sona Guide's proposed replacement exceeds 64 KiB.");
+  }
+  return record.replacement;
+}
+
 type Position = { line: number; character: number };
 type Range = { start: Position; end: Position };
 

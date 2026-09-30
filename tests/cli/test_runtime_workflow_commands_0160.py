@@ -115,6 +115,36 @@ def test_runtime_and_service_status_do_not_claim_cross_process_visibility(
     assert service["registered_services"] is None
 
 
+def test_runtime_status_lists_persistent_gguf_identities_without_claiming_readiness(
+    tmp_path, monkeypatch, capsys, write_gguf
+):
+    from sona.intelligence import LocalModelRegistry, ModelFormat, ModelIdentity
+
+    sona_home = tmp_path / "sona-home"
+    monkeypatch.setenv("SONA_HOME", str(sona_home))
+    artifact = tmp_path / "runtime-model.gguf"
+    write_gguf(artifact)
+    registry = LocalModelRegistry(sona_home / "models.json")
+    registry.add(ModelIdentity(
+        model_id="runtime-model",
+        provider_id="local",
+        runtime_id="llama-cpp",
+        format=ModelFormat.GGUF,
+        path=str(artifact),
+        context_tokens=2048,
+    ))
+    registry.set_default("runtime-model")
+
+    code, output, error = _execute(["runtime", "status", "--format", "json"], capsys)
+    assert code == 0 and error == ""
+    local_models = json.loads(output)["local_models"]
+    assert local_models["registered"] == 1
+    assert local_models["default_model_id"] == "runtime-model"
+    assert local_models["items"][0]["artifact_exists"] is True
+    assert local_models["items"][0]["hash_recorded"] is True
+    assert "not_observable" in local_models["load_state"]
+
+
 def test_doctor_parser_offers_machine_readable_format():
     args = cli.create_argument_parser().parse_args(["doctor", "--format", "json"])
     assert args.format == "json"

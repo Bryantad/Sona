@@ -54,6 +54,9 @@ job history may retain them until eviction or successful service shutdown;
 closing clears the retained job history. A timed-out close leaves the service
 active until native work cooperatively stops. No reasoning
 payload is appended to Native Proof schema-1, a Guardian baseline, or the
-deterministic Guide catalog. The current API augments reviewed diagnostic
-explanations only; concepts, selection mode, and editor/CLI UX remain future
-integration work.
+deterministic Guide catalog. This specific API augments reviewed diagnostic
+explanations only. It is separate from the 0.16.0 local edit-proposal path,
+which validates a replacement, previews a diff, requires explicit approval,
+and applies through a narrowly scoped editor-buffer capability. Broader
+concept reasoning and additional selection-mode/editor/CLI experiences remain
+future work.

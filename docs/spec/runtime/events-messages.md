@@ -3,10 +3,9 @@
 ## Scope
 
 `sona.runtime.events` defines versioned event and message schemas, validated
-envelopes, and a JSON transport representation. It is a data contract, not yet
-a publisher/subscriber event bus, durable event journal, channel, scheduler,
-or workflow executor. Queueing, delivery, ordering, retries, and backpressure
-belong to later runtime slices.
+envelopes, and a JSON transport representation. `sona.runtime.EventBus` adds
+typed synchronous publish/subscribe dispatch. This remains an in-process API,
+not a durable event journal, distributed bus, scheduler, or workflow executor.
 
 Receiving or constructing an event/message never grants a capability, approves
 an operation, proves that an effect occurred, or authorizes execution. These
@@ -52,6 +51,31 @@ top-level JSON keys, and validates the decoded envelope. This representation
 is transport-friendly; it does not itself provide authentication, encryption,
 durability, or canonical signed bytes.
 
+## Event bus
+
+Register each exact `(event_type, schema_version)` before subscribing. A
+subscription names that exact version and has a stable caller-supplied ID or a
+generated UUID. `publish(event)` snapshots the event through its validated
+JSON representation, validates it against the registered schema, and invokes
+matching subscribers in registration order on the publisher's thread. Each
+subscriber receives an independent envelope copy so one handler cannot mutate
+what another handler sees. Concurrent publisher calls may invoke a handler
+concurrently; the bus does not serialize handlers across separate publishes.
+The number of schemas and subscriptions is bounded by `maximum_schemas`
+(default 4,096) and `maximum_subscribers` (default 1,024), each with a maximum
+of 65,536; adding beyond either limit fails with `EventBusFullError`.
+
+Handlers are synchronous, so a slow handler blocks its publish call; this is
+the bus's bounded-by-call-stack backpressure behavior and it creates no queue.
+Use `BoundedChannel` when consumers need decoupled, bounded buffering and an
+explicit `BLOCK`, `REJECT`, or `DROP_OLDEST` policy. Handler exceptions do not
+stop fan-out to later subscribers; after fan-out, `EventDeliveryError` reports
+failed subscription IDs and counts but omits raw exception text. Delivery is
+not transactional: successful handlers may already have acted when this error
+is raised. The caller owns retry/idempotency decisions. Unsubscribing or closing
+the bus does not interrupt a publish that already captured its subscriber
+snapshot.
+
 ## Example
 
 ```python
@@ -78,10 +102,10 @@ built; that requires an independently governed execution/evidence path.
 
 ## Boundaries and deferred work
 
-- There is no dispatch API or subscriber lifecycle in this slice.
-- There is no event persistence, delivery guarantee, deduplication, or replay.
-- There are no channels or queueing semantics here; Phase 10 owns bounded
-  channel behavior and explicit backpressure.
+- Event dispatch is synchronous and process-local; there is no event
+  persistence, delivery guarantee, deduplication, or replay.
+- Bounded channel behavior and explicit buffered backpressure are separate
+  runtime primitives; use the event bus for synchronous fan-out.
 - `CapabilityScope`, Guardian policy, workflow approval, and Proof receipts are
   not embedded in these payloads as trusted grants.
 - The event JSON form is not the Native Proof receipt format and does not

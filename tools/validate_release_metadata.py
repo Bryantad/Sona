@@ -94,9 +94,10 @@ def validate_dependency_and_toolchain_contracts() -> None:
         fail("esbuild must be pinned to 0.25.8")
     security_overrides = extension.get("overrides", {})
     for package, version in {
-        "brace-expansion": "5.0.9",
-        "fast-uri": "3.1.5",
-        "js-yaml": "4.3.1",
+        "brace-expansion": "5.0.12",
+        "fast-uri": "3.1.8",
+        "markdown-it": "14.3.2",
+        "js-yaml": "4.3.2",
         "minimatch": "10.2.6",
         "cheerio": "1.0.0-rc.12",
         "undici": "7.29.0",
@@ -112,9 +113,10 @@ def validate_dependency_and_toolchain_contracts() -> None:
     if root_package.get("devDependencies", {}).get("esbuild") != "0.25.8":
         fail("extension lockfile does not pin esbuild 0.25.8")
     for package, version in {
-        "brace-expansion": "5.0.9",
-        "fast-uri": "3.1.5",
-        "js-yaml": "4.3.1",
+        "brace-expansion": "5.0.12",
+        "fast-uri": "3.1.8",
+        "markdown-it": "14.3.2",
+        "js-yaml": "4.3.2",
         "minimatch": "10.2.6",
     }.items():
         locked = lock.get("packages", {}).get(f"node_modules/{package}", {})
@@ -224,7 +226,10 @@ def main() -> int:
     if expected not in output:
         fail(f"CLI version output {output!r} does not contain {expected!r}")
 
-    require_contains("README.md", f"Current release: `{expected}`")
+    require_contains(
+        "README.md",
+        f"Current release candidate: `{expected}` (unpublished; certification in progress)",
+    )
     require_contains("CHANGELOG.md", f"## {expected}")
     for path in (
         "docs/README.md",

@@ -25,6 +25,7 @@ from .contracts import (
     ModelFormat,
     ModelIdentity,
 )
+from .gguf import GGUFFormatError, read_gguf_metadata
 
 
 class LocalRuntimeError(RuntimeError):
@@ -74,9 +75,11 @@ def discover_runtime() -> RuntimeDiscovery:
         version=str(getattr(module, "__version__", "unknown")),
         cpu_supported=callable(getattr(module, "Llama", None)),
         gpu_offload_compiled=gpu_supported,
-        diagnostic=None
-        if callable(getattr(module, "Llama", None))
-        else "llama.cpp Python binding is incomplete.",
+        diagnostic=(
+            None
+            if callable(getattr(module, "Llama", None))
+            else "llama.cpp Python binding is incomplete."
+        ),
     )
 
 
@@ -122,12 +125,15 @@ class LlamaCppRuntimeAdapter:
         if not path.is_file():
             raise LocalRuntimeError("model artifact is not a readable GGUF file")
         try:
-            with path.open("rb") as artifact:
-                has_gguf_header = artifact.read(4) == b"GGUF"
-        except OSError as exc:
-            raise LocalRuntimeError("model artifact is not a readable GGUF file") from exc
-        if not has_gguf_header:
-            raise LocalRuntimeError("model artifact is not a readable GGUF file")
+            metadata = read_gguf_metadata(path)
+        except GGUFFormatError as exc:
+            raise LocalRuntimeError("model artifact is not a valid supported GGUF file") from exc
+        if model.architecture and model.architecture != metadata.architecture:
+            raise LocalRuntimeError("configured architecture does not match GGUF metadata")
+        if metadata.context_length is not None and model.context_tokens > metadata.context_length:
+            raise LocalRuntimeError(
+                "configured context exceeds the GGUF-declared architecture context"
+            )
         if model.sha256 is not None:
             digest = hashlib.sha256()
             try:
@@ -195,16 +201,23 @@ class LlamaCppRuntimeAdapter:
             if loaded is None:
                 raise LocalRuntimeError("model is not loaded in the direct local runtime")
             identity, model = loaded
-            prompt = request.prompt
+            user_prompt = request.prompt
             if request.context is not None and request.context.text:
-                prompt = f"{prompt}\n\n{request.context.text}"
+                user_prompt = f"{user_prompt}\n\n{request.context.text}"
+            prompt = user_prompt
+            if request.system_prompt is not None:
+                prompt = f"{request.system_prompt}\n\n{user_prompt}"
             try:
                 prompt_tokens = model.tokenize(prompt.encode("utf-8"), add_bos=True, special=False)
             except Exception as exc:
                 raise LocalRuntimeError(
                     "llama.cpp could not tokenize the inference prompt"
                 ) from exc
-            if len(prompt_tokens) + request.maximum_output_tokens > identity.context_tokens:
+            chat_template_reserve = 128 if request.system_prompt is not None else 0
+            if (
+                len(prompt_tokens) + request.maximum_output_tokens + chat_template_reserve
+                > identity.context_tokens
+            ):
                 raise LocalRuntimeError(
                     "prompt and requested output exceed the configured model context"
                 )
@@ -223,30 +236,76 @@ class LlamaCppRuntimeAdapter:
                     return True
                 return False
 
-            criteria_type = getattr(self._binding(), "StoppingCriteriaList", None)
+            module = self._binding()
+            grammar_options: dict[str, Any] = {}
+            if request.output_json_schema is not None:
+                grammar_type = getattr(module, "LlamaGrammar", None)
+                grammar_factory = getattr(grammar_type, "from_json_schema", None)
+                if not callable(grammar_factory):
+                    raise LocalRuntimeUnavailable(
+                        "this llama.cpp binding does not support constrained JSON output"
+                    )
+                try:
+                    grammar_options = {
+                        "grammar": grammar_factory(request.output_json_schema, verbose=False)
+                    }
+                except Exception as exc:
+                    raise LocalRuntimeError(
+                        "llama.cpp could not prepare the requested JSON output constraint"
+                    ) from exc
+
+            criteria_type = getattr(module, "StoppingCriteriaList", None)
             criteria = criteria_type([should_stop]) if callable(criteria_type) else should_stop
             chunks: Any = None
             sequence = 0
             try:
-                chunks = model.create_completion(
-                    prompt=prompt_tokens,
-                    max_tokens=request.maximum_output_tokens,
-                    stream=True,
-                    stopping_criteria=criteria,
-                )
+                if request.system_prompt is not None:
+                    chat_completion = getattr(model, "create_chat_completion", None)
+                    if not callable(chat_completion):
+                        raise LocalRuntimeUnavailable(
+                            "this llama.cpp model does not expose chat-template completion"
+                        )
+                    if cancellation is not None and cancellation.cancelled:
+                        raise InferenceCancelled("local inference was canceled")
+                    chunks = chat_completion(
+                        messages=[
+                            {"role": "system", "content": request.system_prompt},
+                            {"role": "user", "content": user_prompt},
+                        ],
+                        max_tokens=request.maximum_output_tokens,
+                        stream=True,
+                        temperature=0.0,
+                        **grammar_options,
+                    )
+                else:
+                    if request.output_json_schema is not None:
+                        grammar_options["temperature"] = 0.0
+                    chunks = model.create_completion(
+                        prompt=prompt_tokens,
+                        max_tokens=request.maximum_output_tokens,
+                        stream=True,
+                        stopping_criteria=criteria,
+                        **grammar_options,
+                    )
                 for item in chunks:
                     if cancellation is not None and cancellation.cancelled:
                         stop_reason[0] = "canceled"
                         break
+                    if request.system_prompt is not None and self._monotonic() >= deadline:
+                        stop_reason[0] = "timeout"
+                        break
                     choices = item.get("choices") if isinstance(item, dict) else None
-                    text = (
-                        choices[0].get("text", "")
-                        if choices and isinstance(choices[0], dict)
-                        else ""
-                    )
+                    choice = choices[0] if choices and isinstance(choices[0], dict) else {}
+                    if request.system_prompt is not None:
+                        delta = choice.get("delta")
+                        text = delta.get("content", "") if isinstance(delta, dict) else ""
+                    else:
+                        text = choice.get("text", "")
                     if text:
                         yield InferenceChunk(request.request_id, sequence, str(text))
                         sequence += 1
+                if stop_reason[0] is None and cancellation is not None and cancellation.cancelled:
+                    stop_reason[0] = "canceled"
                 if stop_reason[0] == "canceled":
                     raise InferenceCancelled("local inference was canceled")
                 if stop_reason[0] == "timeout" or self._monotonic() >= deadline:
@@ -277,6 +336,8 @@ class LlamaCppRuntimeAdapter:
             prompt = request.prompt
             if request.context is not None and request.context.text:
                 prompt = f"{prompt}\n\n{request.context.text}"
+            if request.system_prompt is not None:
+                prompt = f"{request.system_prompt}\n\n{prompt}"
             input_tokens = len(model.tokenize(prompt.encode("utf-8"), add_bos=True, special=False))
             output_tokens = len(
                 model.tokenize("".join(text_parts).encode("utf-8"), add_bos=False, special=False)

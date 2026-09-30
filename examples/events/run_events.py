@@ -8,6 +8,7 @@ from sona.runtime import (
     BackpressurePolicy,
     BoundedChannel,
     ChannelDefinition,
+    EventBus,
     EventEnvelope,
     EventField,
     EventSchema,
@@ -23,6 +24,10 @@ def main() -> int:
         version=1,
         fields=(EventField("artifact", "string"),),
     )
+    bus = EventBus()
+    bus.register_schema(event_schema)
+    observed_events: list[EventEnvelope] = []
+    bus.subscribe("build.completed", 1, observed_events.append)
     event = EventEnvelope(
         event_type="build.completed",
         source="example.build",
@@ -30,7 +35,10 @@ def main() -> int:
         schema_version=1,
         timestamp_utc=datetime.now(UTC).isoformat(),
     )
-    event_schema.validate(event)
+    receipt = bus.publish(event)
+    if receipt.delivered_count != 1 or not observed_events:
+        print("The build event was not delivered to its subscriber.")
+        return 1
 
     message_schema = MessageSchema(
         "BuildResult",
@@ -48,11 +56,12 @@ def main() -> int:
     )
     message = MessageEnvelope(
         "BuildResult",
-        {"artifact": event.payload["artifact"], "success": True},
+        {"artifact": observed_events[0].payload["artifact"], "success": True},
     )
     channel.send(message)
     received = channel.receive(timeout=1)
     channel.close()
+    bus.close()
     if received is None:
         print("No message received.")
         return 1

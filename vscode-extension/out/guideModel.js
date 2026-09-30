@@ -1,10 +1,36 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.parseEditProposal = parseEditProposal;
 exports.selectionRequest = selectionRequest;
 exports.diagnosticRequest = diagnosticRequest;
 exports.guideText = guideText;
 exports.checkedFix = checkedFix;
 exports.previewCommand = previewCommand;
+const MAX_AI_REPLACEMENT_BYTES = 64 * 1024;
+const MAX_AI_PROPOSAL_ENVELOPE_BYTES = 66 * 1024;
+function parseEditProposal(responseText) {
+    if (typeof responseText !== "string" || Buffer.byteLength(responseText, "utf8") > MAX_AI_PROPOSAL_ENVELOPE_BYTES) {
+        throw new Error("Sona Guide returned an oversized or invalid edit proposal.");
+    }
+    let payload;
+    try {
+        payload = JSON.parse(responseText);
+    }
+    catch {
+        throw new Error("Sona Guide could not parse the model's edit proposal. No changes were applied.");
+    }
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+        throw new Error("Sona Guide returned an invalid edit proposal. No changes were applied.");
+    }
+    const record = payload;
+    if (Object.keys(record).length !== 1 || typeof record.replacement !== "string") {
+        throw new Error("Sona Guide expected one replacement string. No changes were applied.");
+    }
+    if (Buffer.byteLength(record.replacement, "utf8") > MAX_AI_REPLACEMENT_BYTES) {
+        throw new Error("Sona Guide's proposed replacement exceeds 64 KiB.");
+    }
+    return record.replacement;
+}
 function canonicalPosition(source, position) {
     const line = source.split(/\r?\n/)[position.line];
     if (line === undefined || position.character < 0 || position.character > line.length) {

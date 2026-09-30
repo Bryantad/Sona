@@ -1,5 +1,25 @@
 """Contracts for Sona's trusted runtime and typed communication."""
 
+from .capabilities import (
+    CapabilityAuditFullError,
+    CapabilityAuthority,
+    CapabilityCheckResult,
+    CapabilityPolicy,
+    CapabilityPolicyDecision,
+    CapabilityPolicyError,
+    CapabilityRequest,
+    CapabilityRequestResult,
+    CapabilityToken,
+)
+from .channels import (
+    BoundedChannel,
+    ChannelCancelledError,
+    ChannelClosedError,
+    ChannelError,
+    ChannelFullError,
+    ChannelTimeoutError,
+    SendReceipt,
+)
 from .contracts import (
     BackpressurePolicy,
     CapabilityScope,
@@ -19,6 +39,17 @@ from .contracts import (
     ServiceDefinition,
     ServiceState,
 )
+from .effects import EffectJournal, EffectJournalFullError, EffectRecord
+from .event_bus import (
+    EventBus,
+    EventBusClosedError,
+    EventBusError,
+    EventBusFullError,
+    EventDeliveryError,
+    EventDeliveryReceipt,
+    EventSchemaNotRegistered,
+    EventSubscription,
+)
 from .events import (
     EventEnvelope,
     EventField,
@@ -27,41 +58,7 @@ from .events import (
     MessageField,
     MessageSchema,
 )
-from .channels import (
-    BoundedChannel,
-    ChannelCancelledError,
-    ChannelClosedError,
-    ChannelError,
-    ChannelFullError,
-    ChannelTimeoutError,
-    SendReceipt,
-)
-from .services import (
-    ServiceContext,
-    ServiceLifecycleError,
-    ServiceSnapshot,
-    ServiceSupervisor,
-)
 from .health import HealthMonitor, HealthPolicy, HealthSnapshot
-from .state_machine import (
-    InvalidStateTransition,
-    StateMachine,
-    StateMachineDefinition,
-    StateMachineSnapshot,
-    StateTransition,
-)
-from .effects import EffectJournal, EffectJournalFullError, EffectRecord
-from .capabilities import (
-    CapabilityAuditFullError,
-    CapabilityAuthority,
-    CapabilityCheckResult,
-    CapabilityPolicy,
-    CapabilityPolicyDecision,
-    CapabilityPolicyError,
-    CapabilityRequest,
-    CapabilityRequestResult,
-    CapabilityToken,
-)
 from .proposals import (
     AcceptedProposal,
     ProposalApproval,
@@ -76,6 +73,19 @@ from .resources import (
     ResourceBudgetReporter,
     ResourceLimitReport,
     ResourceMeasurement,
+)
+from .services import (
+    ServiceContext,
+    ServiceLifecycleError,
+    ServiceSnapshot,
+    ServiceSupervisor,
+)
+from .state_machine import (
+    InvalidStateTransition,
+    StateMachine,
+    StateMachineDefinition,
+    StateMachineSnapshot,
+    StateTransition,
 )
 from .tasks import (
     BoundedTaskGroup,
@@ -120,8 +130,16 @@ __all__ = [
     "EffectResult",
     "EnforcementStatus",
     "EventEnvelope",
+    "EventBus",
+    "EventBusClosedError",
+    "EventBusError",
+    "EventBusFullError",
+    "EventDeliveryError",
+    "EventDeliveryReceipt",
     "EventField",
+    "EventSchemaNotRegistered",
     "EventSchema",
+    "EventSubscription",
     "HealthState",
     "HealthMonitor",
     "HealthPolicy",

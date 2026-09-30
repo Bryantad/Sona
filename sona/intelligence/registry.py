@@ -13,6 +13,7 @@ from threading import RLock
 from typing import Any
 
 from .contracts import ModelFormat, ModelIdentity
+from .gguf import GGUFFormatError, GGUFMetadata, read_gguf_metadata
 
 REGISTRY_SCHEMA_VERSION = 1
 MAX_REGISTRY_BYTES = 16_000_000
@@ -33,6 +34,8 @@ class ModelInspection:
     format_valid: bool | None
     expected_sha256: str | None
     hash_verified: bool | None
+    metadata: GGUFMetadata | None = None
+    metadata_error: str | None = None
 
 
 def _identity_from_data(payload: Any) -> ModelIdentity:
@@ -62,14 +65,6 @@ def _hash_file(path: Path) -> str:
         for chunk in iter(lambda: source.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
-
-
-def _is_gguf(path: Path) -> bool:
-    try:
-        with path.open("rb") as artifact:
-            return artifact.read(4) == b"GGUF"
-    except OSError as exc:
-        raise ModelRegistryError("model artifact could not be read") from exc
 
 
 class LocalModelRegistry:
@@ -115,20 +110,55 @@ class LocalModelRegistry:
             ) from exc
         if not resolved.is_file():
             raise ModelRegistryError("model artifact path must name a regular file")
-        if identity.format is ModelFormat.GGUF and not _is_gguf(resolved):
-            raise ModelRegistryError("model artifact does not have a valid GGUF header")
-        normalized = replace(identity, path=str(resolved))
-        if normalized.sha256 is not None:
+        if identity.format is ModelFormat.GGUF:
             try:
-                actual_hash = _hash_file(resolved)
-            except OSError as exc:
+                metadata = read_gguf_metadata(resolved)
+            except GGUFFormatError as exc:
                 raise ModelRegistryError(
-                    "model artifact could not be read for hash verification"
+                    f"model artifact is not a valid supported GGUF file: {exc}"
                 ) from exc
-            if actual_hash != normalized.sha256:
+            if metadata.tensor_count == 0:
+                raise ModelRegistryError("GGUF artifact contains no model tensors")
+            if identity.architecture and identity.architecture != metadata.architecture:
                 raise ModelRegistryError(
-                    "model artifact SHA-256 does not match the declared identity"
+                    "declared model architecture does not match GGUF metadata"
                 )
+            if (
+                identity.quantization
+                and metadata.quantization
+                and identity.quantization != metadata.quantization
+            ):
+                raise ModelRegistryError(
+                    "declared model quantization does not match GGUF metadata"
+                )
+            if (
+                metadata.context_length is not None
+                and identity.context_tokens > metadata.context_length
+            ):
+                raise ModelRegistryError(
+                    "configured context exceeds the GGUF-declared architecture context"
+                )
+        else:
+            metadata = None
+        try:
+            actual_hash = _hash_file(resolved)
+        except OSError as exc:
+            raise ModelRegistryError(
+                "model artifact could not be read for hash verification"
+            ) from exc
+        if identity.sha256 is not None and actual_hash != identity.sha256:
+            raise ModelRegistryError(
+                "model artifact SHA-256 does not match the declared identity"
+            )
+        # New registrations always capture the artifact identity. Older registry
+        # records without a digest remain readable and retain their old meaning.
+        normalized = replace(
+            identity,
+            path=str(resolved),
+            sha256=actual_hash,
+            architecture=identity.architecture or (metadata.architecture if metadata else None),
+            quantization=identity.quantization or (metadata.quantization if metadata else None),
+        )
         with self._lock:
             if normalized.model_id in self._models:
                 raise ModelRegistryError(f"model id already exists: {normalized.model_id}")
@@ -145,7 +175,14 @@ class LocalModelRegistry:
         path = Path(identity.path)
         if not path.is_file():
             return ModelInspection(identity, False, None, None, identity.sha256, None)
-        format_valid = _is_gguf(path) if identity.format is ModelFormat.GGUF else False
+        metadata: GGUFMetadata | None = None
+        metadata_error: str | None = None
+        if identity.format is ModelFormat.GGUF:
+            try:
+                metadata = read_gguf_metadata(path)
+            except GGUFFormatError as exc:
+                metadata_error = str(exc)
+        format_valid = metadata is not None if identity.format is ModelFormat.GGUF else False
         verified: bool | None = None
         if verify_hash and identity.sha256 is not None:
             try:
@@ -158,7 +195,16 @@ class LocalModelRegistry:
             size = path.stat().st_size
         except OSError as exc:
             raise ModelRegistryError("model artifact metadata could not be read") from exc
-        return ModelInspection(identity, True, size, format_valid, identity.sha256, verified)
+        return ModelInspection(
+            identity,
+            True,
+            size,
+            format_valid,
+            identity.sha256,
+            verified,
+            metadata,
+            metadata_error,
+        )
 
     def remove(self, model_id: str) -> ModelIdentity:
         with self._lock:

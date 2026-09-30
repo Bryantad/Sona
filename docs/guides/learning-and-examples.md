@@ -1,6 +1,6 @@
 # Learn while you build
 
-Sona 0.15.6 includes these commands for executable examples and lessons.
+Sona 0.16.0 includes these commands for executable examples and lessons.
 
 ## Start with a real example
 

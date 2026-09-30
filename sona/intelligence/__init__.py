@@ -16,6 +16,8 @@ from .contracts import (
     RuntimeAdapter,
     new_inference_job_id,
 )
+from .gguf import GGUFFormatError, GGUFMetadata, read_gguf_metadata
+from .hardware import discover_hardware_profile
 from .llama_cpp_runtime import (
     InferenceCancelled,
     InferenceTimeout,
@@ -25,6 +27,7 @@ from .llama_cpp_runtime import (
     RuntimeDiscovery,
     discover_runtime,
 )
+from .preflight import assess_model_preflight
 from .registry import LocalModelRegistry, ModelInspection, ModelRegistryError
 from .service import (
     InferenceJobSnapshot,
@@ -49,6 +52,8 @@ __all__ = [
     "InferenceResponse",
     "InferenceState",
     "InferenceTimeout",
+    "GGUFFormatError",
+    "GGUFMetadata",
     "InferenceWaitTimeout",
     "LlamaCppRuntimeAdapter",
     "LocalAIService",
@@ -69,5 +74,8 @@ __all__ = [
     "RuntimeDiscovery",
     "UnknownInferenceJob",
     "discover_runtime",
+    "discover_hardware_profile",
+    "read_gguf_metadata",
+    "assess_model_preflight",
     "new_inference_job_id",
 ]

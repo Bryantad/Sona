@@ -57,6 +57,21 @@ function isString(value) {
 }
 function parseRuntimeSnapshot(output) {
     const parsed = JSON.parse(output);
+    const localModelsValid = !isRecord(parsed) || parsed.local_models === undefined || (isRecord(parsed.local_models) &&
+        isCount(parsed.local_models.registered) &&
+        (parsed.local_models.default_model_id === null || isString(parsed.local_models.default_model_id)) &&
+        isString(parsed.local_models.load_state) &&
+        Array.isArray(parsed.local_models.items) &&
+        parsed.local_models.items.every(item => isRecord(item) &&
+            isString(item.model_id) &&
+            isString(item.runtime_id) &&
+            isString(item.format) &&
+            isCount(item.context_tokens) &&
+            isString(item.device) &&
+            typeof item.is_default === "boolean" &&
+            typeof item.artifact_exists === "boolean" &&
+            (item.artifact_size_bytes === null || isCount(item.artifact_size_bytes)) &&
+            typeof item.hash_recorded === "boolean"));
     if (!isRecord(parsed) ||
         parsed.schema_version !== 1 ||
         parsed.status !== "ok" ||
@@ -88,7 +103,8 @@ function parseRuntimeSnapshot(output) {
         !isRecord(parsed.proof) ||
         !isString(parsed.proof.receipt_schema) ||
         !isString(parsed.proof.scope) ||
-        !isRecord(parsed.resource_limits)
+        !localModelsValid
+        || !isRecord(parsed.resource_limits)
         || !isString(parsed.resource_limits.status)
         || !(parsed.resource_limits.configured_budgets === null || isCount(parsed.resource_limits.configured_budgets))
         || !Array.isArray(parsed.resource_limits.classification)
@@ -155,8 +171,13 @@ class RuntimeViewProvider {
         this.changed.dispose();
     }
     createItems(snapshot) {
+        const localModels = snapshot.local_models?.items || [];
         const models = [
-            new RuntimeTreeItem(`${snapshot.models.registered} registered · load state not probed`, undefined, [], undefined, "database"),
+            new RuntimeTreeItem(`${localModels.length} direct GGUF · ${snapshot.models.registered} provider descriptors`, undefined, [], snapshot.local_models?.load_state || "Direct model registry not reported by this Sona runtime", "database"),
+            ...localModels.map(model => new RuntimeTreeItem(model.model_id, undefined, [], `${model.runtime_id} · ${model.format} · ${model.context_tokens} context · ${model.device}`
+                + `${model.is_default ? " · default" : ""}`
+                + `${model.artifact_exists ? " · artifact present" : " · artifact missing"}`
+                + `${model.hash_recorded ? " · SHA-256 recorded" : " · no SHA-256"}`, model.artifact_exists ? "symbol-class" : "warning")),
             ...snapshot.models.items.map(model => new RuntimeTreeItem(model.model_id, undefined, [], `${model.provider_id} · ${model.enabled ? "enabled" : "disabled"}`, "symbol-class"))
         ];
         const workflows = [
@@ -164,7 +185,7 @@ class RuntimeViewProvider {
             ...snapshot.workflows.items.map(workflow => new RuntimeTreeItem(workflow.workflow_id, undefined, [], `${workflow.state} · ${Math.round(workflow.progress.percent_complete)}%`, workflow.state === "failed" ? "error" : "history"))
         ];
         return [
-            group("Local AI", models, String(snapshot.models.registered)),
+            group("Local AI", models, `${localModels.length} direct GGUF · ${snapshot.models.registered} provider descriptors`),
             group("Workflows", workflows, String(snapshot.workflows.active)),
             group("Services", [new RuntimeTreeItem(snapshot.services.detail, undefined, [], undefined, "info")], "Process-local"),
             group("Guardian", [new RuntimeTreeItem(snapshot.guardian.inspect_with, undefined, [], undefined, "shield")], "Project-scoped"),

@@ -1,6 +1,6 @@
 # Sona Documentation
 
-This folder contains the current user-facing documentation for Sona `0.15.6`.
+This folder contains the current user-facing documentation for Sona `0.16.0`.
 Historical planning notes, implementation journals, test reports, and retired
 feature drafts are intentionally not part of the published branch structure.
 
@@ -15,7 +15,8 @@ feature drafts are intentionally not part of the published branch structure.
 - [Using Proof Mode and Guardian Together](guides/proof-and-guardian.md)
 - [Platform Installation and Testing](guides/platform-installation-and-testing.md)
 - [Proof Mode Technical Reference](reference/native-proof-mode.md)
-- [0.15.6 Standard Library Catalog](reference/stdlib/README.md)
+- [0.16.0 Release Notes](../RELEASE_NOTES_v0.16.0.md)
+- [0.16.0 Standard Library Catalog](reference/stdlib/README.md)
 - [Accessibility Reference](ACCESSIBILITY_REFERENCE.md)
 - [Guardian Reference](GUARDIAN_REFERENCE.md)
 - [Diagnostics Guide](errors/v0.14-diagnostics.md)
@@ -28,10 +29,10 @@ feature drafts are intentionally not part of the published branch structure.
 - [0.15.6 executable learning and installed examples](guides/learning-and-examples.md)
 - [Native command ownership and version checks](guides/native-command-selection.md)
 
-Sona `0.15.6` keeps Python as the compatibility engine and ships Native Core as
+Sona `0.16.0` keeps Python as the compatibility engine and ships Native Core as
 a bounded preview. LLVM code generation, self-hosting, package publishing,
 cross-file LSP indexing, formatter support, debugger support, and benchmark
-expansion remain staged roadmap items, not completed `0.15.6` features.
+expansion remain staged roadmap items, not completed `0.16.0` features.
 
 - [Native Independence](roadmap/SONA_NATIVE_INDEPENDENCE.md)
 - [Compiler Architecture](compiler/ARCHITECTURE.md)

@@ -35,6 +35,9 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.startSonaLsp = startSonaLsp;
 exports.requestSonaGuide = requestSonaGuide;
+exports.requestSonaLocalModelEdit = requestSonaLocalModelEdit;
+exports.prepareSonaGuideBufferEdit = prepareSonaGuideBufferEdit;
+exports.consumeSonaGuideBufferEdit = consumeSonaGuideBufferEdit;
 exports.updateGuideOptions = updateGuideOptions;
 exports.stopSonaLsp = stopSonaLsp;
 const child_process_1 = require("child_process");
@@ -163,6 +166,42 @@ async function requestSonaGuide(context, payload) {
     }
     catch {
         throw new Error("Sona Guide could not answer this request. Update the selected Sona runtime and reload VS Code.");
+    }
+}
+async function requestSonaLocalModelEdit(context, payload) {
+    startSonaLsp(context);
+    if (!client || !started || lspStartupBlocked)
+        throw new Error("The Sona language server is unavailable. Check the Sona LSP output and selected Python runtime.");
+    await started;
+    try {
+        return await client.sendRequest("sona/guide/local_model_edit", payload);
+    }
+    catch {
+        throw new Error("Sona Guide direct local inference failed. No provider fallback was attempted.");
+    }
+}
+async function prepareSonaGuideBufferEdit(context, payload) {
+    startSonaLsp(context);
+    if (!client || !started || lspStartupBlocked)
+        throw new Error("The Sona language server is unavailable. Check the Sona LSP output and selected Python runtime.");
+    await started;
+    try {
+        return await client.sendRequest("sona/guide/prepare_buffer_edit", payload);
+    }
+    catch {
+        throw new Error("Editor capability preparation failed. No editor-buffer change was applied.");
+    }
+}
+async function consumeSonaGuideBufferEdit(context, payload) {
+    startSonaLsp(context);
+    if (!client || !started || lspStartupBlocked)
+        throw new Error("The Sona language server is unavailable. Check the Sona LSP output and selected Python runtime.");
+    await started;
+    try {
+        return await client.sendRequest("sona/guide/consume_buffer_edit", payload);
+    }
+    catch {
+        throw new Error("Editor capability consumption failed. No editor-buffer change was applied.");
     }
 }
 async function updateGuideOptions(options) {

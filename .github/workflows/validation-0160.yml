@@ -1,0 +1,120 @@
+name: Sona 0.16.0 cross-platform validation
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/0.16.0-trusted-runtime]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sona-0160-validation-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  python-and-extension:
+    name: Python, examples, and extension on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install the source runtime and test dependencies
+        run: |
+          python -m pip install --upgrade pip build setuptools wheel
+          python -m pip install -e ".[dev]"
+
+      - name: Run the complete Python, Proof, Guardian, Guide, and example suite
+        # Hosted runners do not provision the multi-gigabyte GGUF fixture; its
+        # opt-in direct-inference tests skip unless a fixture is explicitly set.
+        run: python -m pytest -q -ra
+
+      - name: Run the official manifest examples
+        run: python tools/run_examples.py
+
+      - name: Install locked editor dependencies
+        working-directory: vscode-extension
+        run: npm ci --omit=optional --no-audit --fund=false
+
+      - name: Compile and run editor, Guide, and Runtime smokes
+        working-directory: vscode-extension
+        env:
+          SONA_TEST_PYTHON: python
+        run: |
+          npm run compile
+          npm test
+          npm run test:guide
+          npm run test:runtime
+
+  rust:
+    name: Rust formatting, lint, and workspace tests on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@1.94.0
+        with:
+          components: rustfmt, clippy
+
+      - name: Check formatting
+        run: cargo fmt --manifest-path native/Cargo.toml --all -- --check
+
+      - name: Run strict Clippy
+        run: cargo clippy --manifest-path native/Cargo.toml --workspace --all-targets --all-features --locked -- -D warnings
+
+      - name: Run locked workspace tests
+        run: cargo test --manifest-path native/Cargo.toml --workspace --all-features --locked
+
+  package-smoke:
+    name: Build and install wheel and source distribution
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build source distributions
+        run: |
+          python -m pip install --upgrade pip build setuptools wheel
+          python -m build --outdir "${RUNNER_TEMP}/sona-dist"
+
+      - name: Install each built archive into an isolated target and import release modules
+        shell: bash
+        run: |
+          wheel="$(find "${RUNNER_TEMP}/sona-dist" -maxdepth 1 -name '*.whl' -print -quit)"
+          sdist="$(find "${RUNNER_TEMP}/sona-dist" -maxdepth 1 -name '*.tar.gz' -print -quit)"
+          test -n "$wheel"
+          test -n "$sdist"
+          python -m pip install --target "${RUNNER_TEMP}/wheel-install" "$wheel"
+          cd "${RUNNER_TEMP}"
+          PYTHONPATH="${RUNNER_TEMP}/wheel-install" python -c "import sona.guide.editor_authorization, sona.guide.local_model, sona.intelligence.gguf, sona.runtime.event_bus, sona.workflow.persistence"
+          python -m pip install --no-build-isolation --target "${RUNNER_TEMP}/sdist-install" "$sdist"
+          PYTHONPATH="${RUNNER_TEMP}/sdist-install" python -c "import sona.guide.editor_authorization, sona.guide.local_model, sona.intelligence.gguf, sona.runtime.event_bus, sona.workflow.persistence"

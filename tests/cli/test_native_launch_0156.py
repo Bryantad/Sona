@@ -35,13 +35,13 @@ def test_mismatch_never_starts_proof(tmp_path, monkeypatch, capsys, version, sel
 
 @pytest.mark.parametrize("output,code", [
     (b"", 0),
-    (b"Sona 0.15.6\n", 0),
-    (b"Sona native 0.15.6\nprivate error detail", 0),
-    (b"Sona native 0.15.6\n", 3),
+    (b"Sona 0.16.0\n", 0),
+    (b"Sona native 0.16.0\nprivate error detail", 0),
+    (b"Sona native 0.16.0\n", 3),
     (b"Sona native \xff\n", 0),
-    (b"Sona native 0.15.6\n\n", 0),
+    (b"Sona native 0.16.0\n\n", 0),
     (b"Sona native 0.15\n", 0),
-    (b"Sona native 0.15.6\x1b[2J", 0),
+    (b"Sona native 0.16.0\x1b[2J", 0),
 ])
 def test_invalid_probe_fails_without_echoing_output(monkeypatch, output, code):
     monkeypatch.setattr(native_launcher, "_probe_output", lambda *_: (code, output))
@@ -70,11 +70,11 @@ def test_real_probe_uses_no_stdin_and_discards_stderr():
     returncode, output = native_launcher._probe_output(
         [sys.executable, "-c",
          "import sys; assert sys.stdin.read() == ''; "
-         "sys.stderr.write('private diagnostic'); print('Sona native 0.15.6')"],
+         "sys.stderr.write('private diagnostic'); print('Sona native 0.16.0')"],
         os.environ.copy(),
     )
     assert returncode == 0
-    assert output == b"Sona native 0.15.6\r\n" if os.name == "nt" else output == b"Sona native 0.15.6\n"
+    assert output == b"Sona native 0.16.0\r\n" if os.name == "nt" else output == b"Sona native 0.16.0\n"
 
 
 def test_real_probe_timeout_is_redacted_and_child_is_reaped(monkeypatch):

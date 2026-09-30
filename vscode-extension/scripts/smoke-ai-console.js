@@ -8,6 +8,11 @@ const root = path.resolve(__dirname, "..");
 const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 
 async function main() {
+  assert.strictEqual(
+    packageJson.displayName,
+    "Sona",
+    "Keep the VS Code extension's permanent display name as Sona."
+  );
   assertCommand("sona.aiConsole.focus");
   assertCommand("sona.aiConsole.clear");
   assertCommand("sona.aiConsole.selectAgent");
@@ -116,7 +121,6 @@ async function main() {
   assert(cliSource.includes("selectDisplayPreference"));
   assert(!cliSource.includes('label: "ADHD"'));
   assert(!cliSource.includes('label: "Dyslexia"'));
-  assert.strictEqual(packageJson.displayName, "Sona: Cognitive Developer Experience");
   assert(packageJson.contributes.configuration.properties["sona.displayPreference"]);
   assert.deepStrictEqual(
     packageJson.contributes.configuration.properties["sona.displayPreference"].enum,

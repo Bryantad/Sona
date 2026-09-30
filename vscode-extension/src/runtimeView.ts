@@ -11,6 +11,18 @@ interface RuntimeModel {
   enabled: boolean;
 }
 
+interface RuntimeLocalModel {
+  model_id: string;
+  runtime_id: string;
+  format: string;
+  context_tokens: number;
+  device: string;
+  is_default: boolean;
+  artifact_exists: boolean;
+  artifact_size_bytes: number | null;
+  hash_recorded: boolean;
+}
+
 interface RuntimeWorkflow {
   workflow_id: string;
   state: string;
@@ -25,6 +37,12 @@ interface RuntimeSnapshot {
   schema_version: number;
   status: string;
   models: { registered: number; items: RuntimeModel[] };
+  local_models?: {
+    registered: number;
+    default_model_id: string | null;
+    items: RuntimeLocalModel[];
+    load_state: string;
+  };
   workflows: { persisted: number; active: number; items: RuntimeWorkflow[] };
   services: { status: string; detail: string };
   guardian: { scope: string; inspect_with: string };
@@ -67,6 +85,25 @@ function isString(value: unknown): value is string {
 
 function parseRuntimeSnapshot(output: string): RuntimeSnapshot {
   const parsed: unknown = JSON.parse(output);
+  const localModelsValid = !isRecord(parsed) || parsed.local_models === undefined || (
+    isRecord(parsed.local_models) &&
+    isCount(parsed.local_models.registered) &&
+    (parsed.local_models.default_model_id === null || isString(parsed.local_models.default_model_id)) &&
+    isString(parsed.local_models.load_state) &&
+    Array.isArray(parsed.local_models.items) &&
+    parsed.local_models.items.every(item =>
+      isRecord(item) &&
+      isString(item.model_id) &&
+      isString(item.runtime_id) &&
+      isString(item.format) &&
+      isCount(item.context_tokens) &&
+      isString(item.device) &&
+      typeof item.is_default === "boolean" &&
+      typeof item.artifact_exists === "boolean" &&
+      (item.artifact_size_bytes === null || isCount(item.artifact_size_bytes)) &&
+      typeof item.hash_recorded === "boolean"
+    )
+  );
   if (
     !isRecord(parsed) ||
     parsed.schema_version !== 1 ||
@@ -103,7 +140,8 @@ function parseRuntimeSnapshot(output: string): RuntimeSnapshot {
     !isRecord(parsed.proof) ||
     !isString(parsed.proof.receipt_schema) ||
     !isString(parsed.proof.scope) ||
-    !isRecord(parsed.resource_limits)
+    !localModelsValid
+    || !isRecord(parsed.resource_limits)
     || !isString(parsed.resource_limits.status)
     || !(parsed.resource_limits.configured_budgets === null || isCount(parsed.resource_limits.configured_budgets))
     || !Array.isArray(parsed.resource_limits.classification)
@@ -188,14 +226,25 @@ export class RuntimeViewProvider implements vscode.TreeDataProvider<RuntimeTreeI
   }
 
   private createItems(snapshot: RuntimeSnapshot): RuntimeTreeItem[] {
+    const localModels = snapshot.local_models?.items || [];
     const models = [
       new RuntimeTreeItem(
-        `${snapshot.models.registered} registered · load state not probed`,
+        `${localModels.length} direct GGUF · ${snapshot.models.registered} provider descriptors`,
         undefined,
         [],
-        undefined,
+        snapshot.local_models?.load_state || "Direct model registry not reported by this Sona runtime",
         "database"
       ),
+      ...localModels.map(model => new RuntimeTreeItem(
+        model.model_id,
+        undefined,
+        [],
+        `${model.runtime_id} · ${model.format} · ${model.context_tokens} context · ${model.device}`
+          + `${model.is_default ? " · default" : ""}`
+          + `${model.artifact_exists ? " · artifact present" : " · artifact missing"}`
+          + `${model.hash_recorded ? " · SHA-256 recorded" : " · no SHA-256"}`,
+        model.artifact_exists ? "symbol-class" : "warning"
+      )),
       ...snapshot.models.items.map(
         model => new RuntimeTreeItem(
           model.model_id,
@@ -227,7 +276,11 @@ export class RuntimeViewProvider implements vscode.TreeDataProvider<RuntimeTreeI
     ];
 
     return [
-      group("Local AI", models, String(snapshot.models.registered)),
+      group(
+        "Local AI",
+        models,
+        `${localModels.length} direct GGUF · ${snapshot.models.registered} provider descriptors`
+      ),
       group("Workflows", workflows, String(snapshot.workflows.active)),
       group(
         "Services",

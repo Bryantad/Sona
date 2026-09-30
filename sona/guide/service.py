@@ -12,10 +12,12 @@ from .explain import explain
 from .fixes import explain_with_fixes
 from .models import DENSITIES, MODES, STYLES, GuideError, GuideRequest
 from .profile import LearningProfile, default_profile, mode_for_concepts
+from .proposals import validate_source_proposal
 from .render import render_text
+from .service_limits import MAX_PROPOSAL_SOURCE_BYTES
 
 MAX_REQUEST_BYTES = 1024 * 1024
-MAX_SOURCE_BYTES = 256 * 1024
+MAX_SOURCE_BYTES = MAX_PROPOSAL_SOURCE_BYTES
 
 
 def unavailable(error: GuideError) -> dict:
@@ -25,7 +27,8 @@ def unavailable(error: GuideError) -> dict:
 def _invalid() -> GuideError:
     return GuideError(
         "SONA-GUIDE-002", "The Guide request is invalid or exceeds its size limit.",
-        "Use a schema-1 diagnostic, selection, focus, or concept request with documented fields.",
+        "Use a documented schema-1 diagnostic, selection, focus, concept, or "
+        "proposal-validation request.",
     )
 
 
@@ -50,13 +53,23 @@ def request_json(raw: str, *, profile: LearningProfile | None = None) -> dict:
     return guide_request(payload, profile=profile)
 
 
-def guide_request(payload, *, profile: LearningProfile | None = None) -> dict:
+def guide_request(
+    payload,
+    *,
+    profile: LearningProfile | None = None,
+    local_inference=None,
+) -> dict:
     try:
         if not isinstance(payload, dict) or type(payload.get("schema_version")) is not int or payload["schema_version"] != 1:
             raise _invalid()
         if len(json.dumps(payload, ensure_ascii=False).encode("utf-8")) > MAX_REQUEST_BYTES:
             raise _invalid()
-        if set(payload) - {"schema_version", "action", "diagnostic", "diagnostic_id", "source", "document", "selection", "options", "diagnostics", "concept_id"}:
+        allowed_fields = {
+            "schema_version", "action", "diagnostic", "diagnostic_id", "source",
+            "proposed_source", "document", "selection", "options", "diagnostics",
+            "concept_id", "instruction", "model_id",
+        }
+        if set(payload) - allowed_fields:
             raise _invalid()
         options = payload.get("options", {})
         if not isinstance(options, dict) or set(options) - {"mode", "style", "density", "quiet"}:
@@ -77,6 +90,41 @@ def guide_request(payload, *, profile: LearningProfile | None = None) -> dict:
         if not isinstance(document, str) or not document or len(document) > 4096:
             raise _invalid()
         action = payload.get("action")
+        if action == "local_model_proposal":
+            instruction = payload.get("instruction")
+            model_id = payload.get("model_id")
+            if (
+                source is None
+                or not isinstance(instruction, str)
+                or not instruction.strip()
+                or len(instruction.encode("utf-8")) > 4096
+                or (model_id is not None and (not isinstance(model_id, str) or len(model_id) > 128))
+            ):
+                raise _invalid()
+            if local_inference is None:
+                raise GuideError(
+                    "SONA-GUIDE-006",
+                    "Direct local model inference is unavailable in this Guide host.",
+                    "Use the Sona language server with the optional llama.cpp runtime installed.",
+                )
+            return local_inference.propose_replacement(
+                source,
+                instruction,
+                model_id=model_id,
+            )
+        if action == "validate_proposal":
+            proposed_source = payload.get("proposed_source")
+            if source is None or not isinstance(proposed_source, str):
+                raise _invalid()
+            try:
+                result = validate_source_proposal(
+                    source,
+                    proposed_source,
+                    document=document,
+                )
+            except ValueError:
+                raise _invalid()
+            return result
         if action == "diagnostic":
             item = diagnostic_from_payload(payload["diagnostic"], document) if "diagnostic" in payload else None
             identifier = item.diagnostic_id if item else payload.get("diagnostic_id", "")

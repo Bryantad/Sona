@@ -1,8 +1,8 @@
 {
   "name": "sona-ai-native-programming",
-  "displayName": "Sona: Cognitive Developer Experience",
-  "description": "AI-native programming with Sona diagnostics, a Proof Mode Explorer, a read-only Runtime view, Guardian workflows, and a preview Sona AI Console.",
-  "version": "0.15.6",
+  "displayName": "Sona",
+  "description": "AI-native programming with Sona diagnostics, approval-gated local Guide edits, a Proof Mode Explorer, read-only Runtime view, Guardian workflows, and a preview Sona AI Console.",
+  "version": "0.16.0",
   "publisher": "Waycoreinc",
   "icon": "assets/icon.png",
   "engines": {
@@ -77,6 +77,7 @@
       { "command": "sona.runtime.refresh", "title": "Refresh Sona Runtime", "category": "Sona Runtime" },
       { "command": "sona.guide.explainDiagnostic", "title": "Explain Diagnostic (Offline)", "category": "Sona Guide" },
       { "command": "sona.guide.explainSelection", "title": "Explain Selection (Offline)", "category": "Sona Guide" },
+      { "command": "sona.guide.proposeEdit", "title": "Propose Local AI Edit…", "category": "Sona Guide" },
       { "command": "sona.guide.focus", "title": "Show Focused Diagnostics", "category": "Sona Guide" },
       { "command": "sona.guide.setup", "title": "Choose Guidance Detail", "category": "Sona Guide" },
       { "command": "sona.guide.explainProof", "title": "Explain Proof Mode Receipt (Offline)", "category": "Sona Guide" },
@@ -248,6 +249,7 @@
       "commandPalette": [
         { "command": "sona.guide.explainDiagnostic", "when": "editorLangId == sona" },
         { "command": "sona.guide.explainSelection", "when": "editorLangId == sona && editorHasSelection" },
+        { "command": "sona.guide.proposeEdit", "when": "editorLangId == sona && editorHasSelection" },
         { "command": "sona.guide.focus", "when": "editorLangId == sona" },
         {
           "command": "sona.aiConsole.focus",
@@ -409,6 +411,7 @@
       "sona.contextMenu": [
         { "command": "sona.guide.explainDiagnostic", "when": "editorLangId == sona", "group": "guide@1" },
         { "command": "sona.guide.explainSelection", "when": "editorLangId == sona && editorHasSelection", "group": "guide@2" },
+        { "command": "sona.guide.proposeEdit", "when": "editorLangId == sona && editorHasSelection", "group": "guide@2.5" },
         { "command": "sona.guide.focus", "when": "editorLangId == sona", "group": "guide@3" },
         {
           "command": "sona.run",
@@ -471,6 +474,10 @@
         "sona.guide.quiet": {
           "type": "boolean", "default": false,
           "description": "Show error-severity diagnostics in Guide Focus; preserve all diagnostics in complete JSON and the Problems list."
+        },
+        "sona.guide.localModelId": {
+          "type": "string", "default": "",
+          "description": "Optional registered direct GGUF model ID for Guide AI edits. Leave blank to use the default local model."
         },
         "sona.guide.showSetup": {
           "type": "boolean", "default": true,
@@ -616,9 +623,10 @@
     "@azure/core-util": "1.13.0",
     "@azure/logger": "1.3.0",
     "@typespec/ts-http-runtime": "0.3.0",
-    "brace-expansion": "5.0.9",
+    "brace-expansion": "5.0.12",
     "cheerio": "1.0.0-rc.12",
-    "fast-uri": "3.1.6",
+    "fast-uri": "3.1.8",
+    "markdown-it": "14.3.2",
     "js-yaml": "4.3.2",
     "minimatch": "10.2.6",
     "qs": "6.16.0",

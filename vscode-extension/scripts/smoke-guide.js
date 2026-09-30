@@ -4,6 +4,7 @@ const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 const Module = require("node:module");
 const os = require("node:os");
+const { createHash } = require("node:crypto");
 const { requestCheckedFacts, checkedFactArguments } = require("../out/guideFacts.js");
 
 const root = path.resolve(__dirname, "../..");
@@ -76,6 +77,12 @@ async function main() {
   assert(selection.concepts.some(concept => concept.id === "collections"));
   assert(selection.text.includes("no program was executed"));
   assert.throws(() => model.guideText({ schema_version: 2 }), /contract/);
+  assert.equal(model.parseEditProposal('{"replacement":"let value = 1;"}'), "let value = 1;");
+  assert.equal(model.parseEditProposal('{"replacement":""}'), "");
+  assert.throws(() => model.parseEditProposal("```sona\\nlet x = 1;\\n```"), /parse/);
+  assert.throws(() => model.parseEditProposal('{"replacement":"x","approved":true}'), /one replacement/);
+  assert.throws(() => model.parseEditProposal('{"replacement":"x","capability":"self-minted"}'), /one replacement/);
+  assert.throws(() => model.parseEditProposal(JSON.stringify({ replacement: "x".repeat(65 * 1024) })), /64 KiB/);
 
   const data = { schema_version: 1, source: "sona-guide", document_version: 4, fix: response.fixes[0] };
   const expected = "let quantity = 3;\nprint(quantity);\n";
@@ -88,14 +95,42 @@ async function main() {
   const disposable = { dispose() {} };
   const errors = [];
   let text = source, version = 4, editsApplied = 0, staleAtConfirmation = false;
-  let provider;
-  const document = {
-    uri: { toString: () => uri }, languageId: "sona", isClosed: false,
-    get version() { return version; }, getText: () => text, positionAt: offset => ({ offset })
+  let staleDuringAuthorization = false;
+  let selectionChangesDuringAuthorization = false;
+  let selectionStart = source.indexOf("quant)"), selectionEnd = selectionStart + "quant".length;
+  let confirmationAction = "Apply fix";
+  let proposalText = '{"replacement":"3"}';
+  let proposalDiffs = 0, localInferenceCalls = 0;
+  let authorizationCalls = 0, consumeCalls = 0, authorizationDecision = "authorized";
+  let localModelSetting = "test-local-model";
+  let sourceEditorPinned = false, sourceDocumentClosed = false;
+  let localModelResponse = {
+    schema_version: 1, status: "ok", provider_id: "local", runtime_id: "llama-cpp",
+    model_id: "test-local-model", proposal: proposalText
   };
-  const editor = { document, async edit(callback) {
+  let expectedProposalSelection = "quantity";
+  let expectedProposalBefore = expected;
+  let expectedProposalAfter = expected.replace("print(quantity)", "print(3)");
+  let changeSelectionDuringPrompt = false;
+  let provider;
+  const positionAt = offset => {
+    const prefix = text.slice(0, offset);
+    const parts = prefix.split("\n");
+    return { offset, line: parts.length - 1, character: parts.at(-1).length };
+  };
+  const document = {
+    uri: { scheme: "file", fsPath: "/workspace/guide-preview.sona", path: "/guide-preview.sona", toString: () => uri },
+    languageId: "sona", get isClosed() { return sourceDocumentClosed; },
+    get version() { return version; },
+    getText: range => range ? text.slice(range.start.offset, range.end.offset) : text,
+    positionAt, offsetAt: position => position.offset
+  };
+  const editor = { document, get selection() {
+    return { isEmpty: selectionStart === selectionEnd, start: positionAt(selectionStart), end: positionAt(selectionEnd) };
+  }, async edit(callback) {
     const edits = [];
     callback({ replace: (range, replacement) => edits.push({ start: range.start.offset, end: range.end.offset, replacement }) });
+    if (!edits.length) return false;
     for (const edit of edits.sort((a, b) => b.start - a.start)) text = text.slice(0, edit.start) + edit.replacement + text.slice(edit.end);
     version++; editsApplied++;
     return true;
@@ -105,25 +140,42 @@ async function main() {
     Range: class { constructor(start, end) { this.start = start; this.end = end; } },
     ViewColumn: { Beside: 2 }, ConfigurationTarget: { Global: 1 },
     workspace: {
+      isTrusted: true,
+      workspaceFolders: [{ name: "workspace", uri: { scheme: "file", fsPath: root } }],
       textDocuments: [document],
-      getConfiguration: () => ({ inspect: () => undefined, get: () => false }),
+      getConfiguration: () => ({ inspect: () => undefined, get: (key, fallback) => key === "localModelId" ? localModelSetting : key === "ai.qwen.enabled" ? true : fallback }),
+      getWorkspaceFolder: () => ({ name: "workspace", uri: { scheme: "file", fsPath: root } }),
       registerTextDocumentContentProvider: (_, value) => { provider = value; return disposable; },
       onDidChangeConfiguration: () => disposable,
       openTextDocument: async value => ({ uri: value, getText: () => provider.provideTextDocumentContent(value) })
     },
     window: {
-      activeTextEditor: undefined,
+      activeTextEditor: editor,
       onDidChangeActiveTextEditor: () => disposable,
-      showTextDocument: async () => editor,
-      showInformationMessage: async () => { if (staleAtConfirmation) version++; return "Apply fix"; },
+      showTextDocument: async (value, options) => {
+        if (value === document && options?.preview === false) sourceEditorPinned = true;
+        return editor;
+      },
+      showInputBox: async () => {
+        if (changeSelectionDuringPrompt) { selectionStart = 0; selectionEnd = 1; }
+        return "replace the selected expression with its computed value";
+      },
+      showInformationMessage: async () => { if (staleAtConfirmation) version++; return confirmationAction; },
       showErrorMessage: message => { errors.push(message); }
     },
     commands: {
       registerCommand: (name, handler) => { registered.set(name, handler); return disposable; },
-      executeCommand: async (name, before, after) => {
+      executeCommand: async (name, before, after, title) => {
         assert.equal(name, "vscode.diff");
-        assert.equal(provider.provideTextDocumentContent(before), source);
-        assert.equal(provider.provideTextDocumentContent(after), expected);
+        if (title === "Sona Guide: Local AI Edit Proposal") {
+          if (!sourceEditorPinned) sourceDocumentClosed = true;
+          proposalDiffs++;
+          assert.equal(provider.provideTextDocumentContent(before), expectedProposalBefore);
+          assert.equal(provider.provideTextDocumentContent(after), expectedProposalAfter);
+        } else {
+          assert.equal(provider.provideTextDocumentContent(before), source);
+          assert.equal(provider.provideTextDocumentContent(after), expected);
+        }
       }
     }
   };
@@ -131,7 +183,62 @@ async function main() {
   Module._load = function(name, parent, isMain) {
     if (name === "vscode") return fakeVscode;
     if (name === "./lspClient" && parent.filename.endsWith(`${path.sep}guide.js`)) {
-      return { requestSonaGuide: async (_, payload) => cli(payload), updateGuideOptions: async () => {} };
+      return {
+        requestSonaGuide: async (_, payload) => cli(payload),
+        requestSonaLocalModelEdit: async (_, payload) => {
+          localInferenceCalls++;
+          assert.equal(payload.action, "local_model_proposal");
+          assert.equal(payload.source, expectedProposalSelection);
+          assert.equal(payload.instruction, "replace the selected expression with its computed value");
+          assert.equal(payload.model_id, localModelSetting);
+          return { ...localModelResponse, proposal: proposalText };
+        },
+        prepareSonaGuideBufferEdit: async (_, payload) => {
+          authorizationCalls++;
+          if (staleAtConfirmation) {
+            return {
+              schema_version: 1, status: "denied", diagnostic_id: "SONA-GUIDE-003",
+              message: "The document changed before Guardian authorization."
+            };
+          }
+          if (authorizationDecision === "no-capability") {
+            return {
+              schema_version: 1, status: "authorized", effect: "EDITOR.BUFFER_REPLACE",
+              source_sha256: `sha256:${createHash("sha256").update(text).digest("hex")}`,
+              proposed_sha256: `sha256:${createHash("sha256").update(payload.proposed_source).digest("hex")}`,
+              replacement_sha256: `sha256:${createHash("sha256").update(payload.replacement).digest("hex")}`
+            };
+          }
+          if (authorizationDecision !== "authorized") {
+            return {
+              schema_version: 1, status: "denied", diagnostic_id: "SONA-GUIDE-AUTH-DENIED",
+              message: "Guardian did not authorize this editor-buffer change."
+            };
+          }
+          assert.equal(payload.document, uri);
+          assert.equal(payload.document_version, version);
+          assert.equal(payload.expected_source_sha256, createHash("sha256").update(text).digest("hex"));
+          return {
+            schema_version: 1, status: "prepared", handle: `one-shot-${authorizationCalls}`, effect: "EDITOR.BUFFER_REPLACE",
+            source_sha256: `sha256:${createHash("sha256").update(text).digest("hex")}`,
+            proposed_sha256: `sha256:${createHash("sha256").update(payload.proposed_source).digest("hex")}`,
+            replacement_sha256: `sha256:${createHash("sha256").update(payload.replacement).digest("hex")}`
+          };
+        },
+        consumeSonaGuideBufferEdit: async (_, payload) => {
+          consumeCalls++;
+          assert.equal(payload.handle, `one-shot-${authorizationCalls}`);
+          if (staleDuringAuthorization) version++;
+          if (selectionChangesDuringAuthorization) { selectionStart = 0; selectionEnd = 1; }
+          return {
+            schema_version: 1, status: "authorized", effect: "EDITOR.BUFFER_REPLACE",
+            source_sha256: `sha256:${createHash("sha256").update(text).digest("hex")}`,
+            proposed_sha256: `sha256:${createHash("sha256").update(payload.proposed_source).digest("hex")}`,
+            replacement_sha256: `sha256:${createHash("sha256").update(payload.replacement).digest("hex")}`
+          };
+        },
+        updateGuideOptions: async () => {}
+      };
     }
     return originalLoad.call(this, name, parent, isMain);
   };
@@ -147,18 +254,104 @@ async function main() {
   await registered.get(action.command.command)(...action.command.arguments);
   assert.equal(editsApplied, 0);
   assert.equal(text, source);
-  assert(errors.at(-1).includes("SONA-GUIDE-003"));
+  assert(errors.at(-1).includes("SONA-GUIDE-003"), errors.at(-1));
   staleAtConfirmation = false; version = 4;
   await registered.get(action.command.command)(...action.command.arguments);
   assert.equal(editsApplied, 1);
   assert.equal(text, expected);
+  selectionStart = text.indexOf("quantity", text.indexOf("print("));
+  selectionEnd = selectionStart + "quantity".length;
+  confirmationAction = "Apply proposal";
+  changeSelectionDuringPrompt = true;
+  await registered.get("sona.guide.proposeEdit")();
+  changeSelectionDuringPrompt = false;
+  assert.equal(editsApplied, 1, "a changed selection must prevent the buffer edit");
+  assert(errors.at(-1).includes("selection changed"), errors.at(-1));
+  selectionStart = text.indexOf("quantity", text.indexOf("print("));
+  selectionEnd = selectionStart + "quantity".length;
+  await registered.get("sona.guide.proposeEdit")();
+  assert.equal(editsApplied, 2);
+  assert.equal(text, expected.replace("print(quantity)", "print(3)"));
+  selectionStart = text.indexOf("3", text.indexOf("print("));
+  selectionEnd = selectionStart + 1;
+  expectedProposalSelection = "3";
+  expectedProposalBefore = text;
+  expectedProposalAfter = text.replace("print(3)", "print(4)");
+  const callsBeforeCancel = authorizationCalls;
+  const consumesBeforeCancel = consumeCalls;
+  confirmationAction = "Cancel";
+  proposalText = '{"replacement":"4"}';
+  await registered.get("sona.guide.proposeEdit")();
+  assert.equal(authorizationCalls, callsBeforeCancel, "cancelling the diff must not ask Guardian for a grant");
+  assert.equal(consumeCalls, consumesBeforeCancel, "cancelling the diff must not consume a capability");
+  confirmationAction = "Apply proposal";
+  const appliedText = text, editsBeforeRejectedProposal = editsApplied;
+  selectionStart = text.indexOf("3", text.indexOf("print("));
+  selectionEnd = selectionStart + 1;
+  expectedProposalSelection = "3";
+  proposalText = '{"replacement":"("}';
+  await registered.get("sona.guide.proposeEdit")();
+  assert.equal(editsApplied, editsBeforeRejectedProposal);
+  assert.equal(text, appliedText);
+  assert.equal(proposalDiffs, 3);
+  assert(errors.at(-1).includes("SONA-PROPOSAL-VALIDATION-FAILED"));
+  proposalText = '{"replacement":"4"}';
+  expectedProposalBefore = appliedText;
+  expectedProposalAfter = appliedText.replace("print(3)", "print(4)");
+  staleAtConfirmation = true;
+  await registered.get("sona.guide.proposeEdit")();
+  assert.equal(editsApplied, editsBeforeRejectedProposal);
+  assert.equal(text, appliedText);
+  assert(errors.at(-1).includes("SONA-GUIDE-003"), errors.at(-1));
+  staleAtConfirmation = false;
+  version = 4;
+  staleDuringAuthorization = true;
+  proposalText = '{"replacement":"4"}';
+  await registered.get("sona.guide.proposeEdit")();
+  assert.equal(editsApplied, editsBeforeRejectedProposal);
+  assert.equal(text, appliedText);
+  assert(errors.at(-1).includes("SONA-GUIDE-003"), errors.at(-1));
+  staleDuringAuthorization = false;
+  version = 4;
+  selectionChangesDuringAuthorization = true;
+  await registered.get("sona.guide.proposeEdit")();
+  assert.equal(editsApplied, editsBeforeRejectedProposal);
+  assert.equal(text, appliedText);
+  assert(errors.at(-1).includes("selection changed after authorization"), errors.at(-1));
+  selectionChangesDuringAuthorization = false;
+  selectionStart = text.indexOf("3", text.indexOf("print("));
+  selectionEnd = selectionStart + 1;
+  authorizationDecision = "denied";
+  await registered.get("sona.guide.proposeEdit")();
+  assert.equal(editsApplied, editsBeforeRejectedProposal);
+  assert.equal(text, appliedText);
+  assert(errors.at(-1).includes("SONA-GUIDE-AUTH-DENIED"), errors.at(-1));
+  assert.equal(proposalDiffs, 7);
+  authorizationDecision = "no-capability";
+  await registered.get("sona.guide.proposeEdit")();
+  assert.equal(editsApplied, editsBeforeRejectedProposal, "approval without a minted capability must not apply");
+  assert.equal(text, appliedText);
+  assert(errors.at(-1).includes("SONA-GUIDE-AUTH-DENIED"), errors.at(-1));
+  assert.equal(proposalDiffs, 8);
+  authorizationDecision = "authorized";
+  proposalText = '{"replacement":"("}';
+  const callsBeforeRejectedProvider = localInferenceCalls;
+  localModelResponse = { ...localModelResponse, provider_id: "remote", runtime_id: "https" };
+  await registered.get("sona.guide.proposeEdit")();
+  assert.equal(localInferenceCalls, callsBeforeRejectedProvider + 1);
+  assert.equal(proposalDiffs, 8);
+  assert(errors.at(-1).includes("no provider fallback"));
   for (const subscription of subscriptions) subscription.dispose();
   const packageJson = JSON.parse(fs.readFileSync(path.join(root, "vscode-extension/package.json"), "utf8"));
-  for (const command of ["explainDiagnostic", "explainSelection", "focus", "setup", "explainProof", "explainGuardian"]) {
+  for (const command of ["explainDiagnostic", "explainSelection", "proposeEdit", "focus", "setup", "explainProof", "explainGuardian"]) {
     assert(registered.has(`sona.guide.${command}`));
     assert(packageJson.contributes.commands.some(item => item.command === `sona.guide.${command}`));
   }
   fakeVscode.workspace.isTrusted = false;
+  const callsBeforeUntrustedProposal = localInferenceCalls;
+  await registered.get("sona.guide.proposeEdit")();
+  assert.equal(localInferenceCalls, callsBeforeUntrustedProposal);
+  assert(errors.at(-1).includes("trusted workspace"));
   await registered.get("sona.guide.explainProof")();
   assert(errors.at(-1).includes("trusted workspace"));
   fakeVscode.workspace.isTrusted = true;

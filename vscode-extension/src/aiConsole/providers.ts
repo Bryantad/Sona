@@ -20,6 +20,7 @@ export interface AgentRequest {
   agentId: SonaAgentId;
   prompt: string;
   context: AgentContext;
+  taskType?: "suggest" | "edit";
 }
 
 export interface AgentResponse {

@@ -36,4 +36,7 @@ assert.equal(runtime.schema_version, 1);
 assert.equal(runtime.status, "ok");
 assert.equal(runtime.services.status, "process_local");
 assert.equal(runtime.proof.receipt_schema, "schema-1");
+assert.equal(typeof runtime.local_models.registered, "number");
+assert(runtime.local_models.load_state.includes("not_observable"));
+assert(bundle.includes("direct GGUF"));
 console.log("Sona Runtime CLI/view contract checks passed.");

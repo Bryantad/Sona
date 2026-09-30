@@ -6,7 +6,15 @@ from pathlib import Path
 
 import pytest
 
-from sona.developer_intelligence import DeveloperIntelligenceService, ModelRegistry, TaskConstraints, TaskRequest, TaskStatus, TaskType
+from sona.developer_intelligence import (
+    DeveloperIntelligenceService,
+    ModelRegistry,
+    TaskConstraints,
+    TaskRequest,
+    TaskStatus,
+    TaskType,
+)
+from sona.developer_intelligence.contracts import maximum_output_tokens_for
 from sona.developer_intelligence.models import descriptor_from_manifest
 from sona.developer_intelligence.providers import HuggingFaceEndpointProvider
 
@@ -109,3 +117,18 @@ def test_huggingface_endpoint_uses_bounded_standard_library_request(monkeypatch)
     assert response["summary"] == "result"
     assert captured["timeout"] == 2.5
     assert captured["body"]["parameters"]["max_new_tokens"] == 256
+
+    edit_response = HuggingFaceEndpointProvider(
+        endpoint="https://fixture.invalid", timeout=2.5
+    ).execute(TaskRequest(TaskType.EDIT, "return an edit"), model)
+    assert edit_response["summary"] == "result"
+    assert captured["body"]["parameters"]["max_new_tokens"] == 2048
+
+
+def test_edit_generation_budget_is_bounded_and_visible_in_task_result(tmp_path):
+    assert maximum_output_tokens_for(TaskType.EDIT) == 2048
+    result = DeveloperIntelligenceService(tmp_path).execute(
+        TaskRequest(TaskType.EDIT, "propose an edit"), write_task_receipt=False
+    )
+    assert result.status is TaskStatus.PROPOSED
+    assert result.budget.maximum_output_tokens == 2048

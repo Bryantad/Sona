@@ -1,4 +1,4 @@
-# Sona: Cognitive Developer Experience
+# Sona
 
 [![Source Version](https://img.shields.io/github/v/tag/Bryantad/Sona?label=source&sort=semver)](https://github.com/Bryantad/Sona/tags)
 [![Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/Waycoreinc.sona-ai-native-programming?label=marketplace)](https://marketplace.visualstudio.com/items?itemName=Waycoreinc.sona-ai-native-programming)
@@ -30,6 +30,11 @@ persisted workflow snapshots, resource-reporting scope, and the current limits
 of process-local service visibility. Model registration is not model readiness;
 the view does not start or resume work. Proof verification remains in the
 separate Proof Mode Explorer.
+
+The preview also includes direct local-model Guide proposals, deterministic
+syntax validation, diff review, and capability-authorized editor-buffer
+replacement. The source document is kept open through the preview; applying an
+approved proposal changes the unsaved editor buffer only.
 
 ## How to Use Sona in VS Code
 
@@ -80,6 +85,22 @@ separate Proof Mode Explorer.
 
 See the full quickstart in `docs/QUICKSTART.md`.
 
+## Direct Local GGUF Models
+
+The CLI can register GGUF artifacts for the direct llama.cpp runtime without
+Ollama:
+
+```powershell
+sona model add D:\Models\qwen.gguf --id qwen-coder --context 8192 --device auto --set-default
+sona model list
+sona model inspect qwen-coder --verify-hash
+```
+
+Registration stores the model identity and artifact digest; it does not load
+the model. `sona model remove <id>` only removes the registry entry and leaves
+the model file untouched. The direct runtime remains an experimental optional
+dependency and requires `pip install "sona-lang[llama-cpp]"`.
+
 ## Features
 
 - Syntax highlighting for `.sona` and `.smod`.
@@ -90,6 +111,23 @@ See the full quickstart in `docs/QUICKSTART.md`.
 - Optional AI-assisted explain and suggestion commands.
 - Preview Sona AI Console with local Sona-owned chat, selectable agent modes, and provider-ready routing.
 - Sona Guide workflows for focused diagnostics, explanation detail, and local learning examples.
+- Approval-gated **Propose Local AI Edit** for selected Sona code, with deterministic syntax validation, diff review, and one-shot `EDITOR.BUFFER_REPLACE` authorization (Guardian trust is checked when configured).
+
+The edit command requires a trusted local workspace, a selected range, a
+registered GGUF model, and the optional llama.cpp runtime. It uses a short-lived
+one-shot `EDITOR.BUFFER_REPLACE` capability bound to opaque workspace/document
+identity, version, selection, and source/candidate/replacement hashes. Guardian
+is optional when uninitialized; when state exists, drift or invalid trust state
+blocks the edit. The capability is not `FS.WRITE` and grants no save, execution,
+Guardian mutation, or Proof authority. The edit changes the editor buffer only;
+it is not saved or run.
+
+The command uses the direct local runtime in the language-server process; it
+does not use Ollama or fall back to a remote provider. Leave the Sona Guide
+`localModelId` setting empty to use the default from `sona model default`, or
+set it to a registered model ID. If the candidate contains any Sona syntax
+errors, the proposal is rejected. See the [runtime effect and trust contract](../docs/spec/runtime/effects-capabilities-trust.md)
+for the exact authorization boundary and limitations.
 
 ## Language Server
 
@@ -118,6 +156,7 @@ is a separate CLI-backed command, not an LSP formatting capability.
 | **Sona: Inspect Receipt** | Displays verified receipt facts in the Proof Mode Explorer. |
 | **Sona: Open Receipt** | Opens the current receipt as a document. |
 | **Sona: Explain with Guardian** | Runs the existing local Guardian receipt review for a trusted workspace. |
+| **Sona Guide: Propose Local AI Edit…** | Requests a bounded local-model replacement, validates and previews it, then requires explicit approval and a one-shot exact-resource editor capability; configured Guardian state must remain trusted. |
 | **Sona: Check Syntax** | Checks syntax for the active Sona file. |
 | **Sona: Format Code** | Formats Sona code. |
 | **Sona: Start REPL** | Starts an interactive Sona shell. |
@@ -144,7 +183,7 @@ is a separate CLI-backed command, not an LSP formatting capability.
 
 Sona AI Console is a preview feature. Claude and Codex are placeholder agent modes unless a proper provider integration is added; the extension does not control external AI extensions.
 
-For receipts produced by the new 0.15.6 Native runtime, the explorer also
+For receipts produced by the 0.16.0 Native runtime, the explorer also
 shows the validated Native executable digest and an optional build-supplied
 source revision. These are correlation identities from the shared verifier,
 not authenticated provenance.
@@ -162,6 +201,7 @@ invokes Python in safe-path mode and does not add the workspace to
 
 ## Release Notes
 
+- [0.16.0 release candidate notes](https://github.com/Bryantad/Sona/blob/main/RELEASE_NOTES_v0.16.0.md)
 - [0.15.6 release notes](https://github.com/Bryantad/Sona/blob/main/RELEASE_NOTES_v0.15.6.md)
 
 ## License

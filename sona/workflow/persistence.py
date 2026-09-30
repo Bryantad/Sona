@@ -11,6 +11,7 @@ import threading
 import uuid
 import warnings
 from contextlib import suppress
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -52,12 +53,18 @@ _EVENT_TYPES = {
     "workflow.recovery_required",
     "step.retrying",
     "step.retry_ready",
+    "step.delay_released",
+    "step.timeout_requested",
+    "step.temporal_expired",
     "workflow.recovery_resumed",
     "workflow.recovery_failed",
 }
 _EVENT_TYPES_V1 = _EVENT_TYPES - {
     "step.retrying",
     "step.retry_ready",
+    "step.delay_released",
+    "step.timeout_requested",
+    "step.temporal_expired",
     "workflow.recovery_resumed",
     "workflow.recovery_failed",
 }
@@ -267,6 +274,10 @@ class WorkflowJournalStore:
             except (ValueError, TypeError, AttributeError) as exc:
                 raise WorkflowPersistenceError("workflow journal identity is invalid") from exc
             snapshot = _snapshot_from_dict(event["snapshot"])
+            if event["event_schema"] == 1 and snapshot.schema_version != 1:
+                raise WorkflowPersistenceError(
+                    "schema-1 journal records require schema-1 workflow snapshots"
+                )
             if (
                 str(snapshot.definition.workflow_id) != event["workflow_id"]
                 or directory.name != event["workflow_id"]
@@ -274,17 +285,20 @@ class WorkflowJournalStore:
                 raise WorkflowPersistenceError("workflow journal identity does not match snapshot")
             expected_states = {
                 "workflow.created": {WorkflowState.CREATED},
-                "workflow.prepared": {WorkflowState.READY},
+                "workflow.prepared": {WorkflowState.READY, WorkflowState.BLOCKED},
                 "step.started": {WorkflowState.RUNNING},
                 "step.succeeded": {WorkflowState.READY, WorkflowState.SUCCEEDED},
                 "step.failed": {WorkflowState.FAILED},
                 "step.blocked": {WorkflowState.BLOCKED},
                 "step.unblocked": {WorkflowState.READY},
                 "workflow.cancel_requested": {WorkflowState.CANCELING, WorkflowState.CANCELED},
-                "step.cancellation_finished": {WorkflowState.CANCELED},
+                "step.cancellation_finished": {WorkflowState.CANCELED, WorkflowState.FAILED},
                 "workflow.recovery_required": {WorkflowState.BLOCKED},
                 "step.retrying": {WorkflowState.RETRYING},
                 "step.retry_ready": {WorkflowState.READY},
+                "step.delay_released": {WorkflowState.READY},
+                "step.timeout_requested": {WorkflowState.CANCELING},
+                "step.temporal_expired": {WorkflowState.FAILED},
                 "workflow.recovery_resumed": {WorkflowState.READY},
                 "workflow.recovery_failed": {WorkflowState.FAILED},
             }
@@ -372,6 +386,15 @@ def _snapshot_to_dict(snapshot: WorkflowSnapshot) -> dict[str, Any]:
                                 "maximum_delay_seconds": step.retry.maximum_delay_seconds,
                             },
                             "timeout_seconds": step.timeout_seconds,
+                            **(
+                                {
+                                    "delay_seconds": step.delay_seconds,
+                                    "deadline_utc": step.deadline_utc,
+                                    "expires_at_utc": step.expires_at_utc,
+                                }
+                                if snapshot.schema_version >= 3
+                                else {}
+                            ),
                         }
                         for step in task.steps
                     ],
@@ -405,6 +428,14 @@ def _snapshot_to_dict(snapshot: WorkflowSnapshot) -> dict[str, Any]:
                     if snapshot.schema_version >= 2
                     else {}
                 ),
+                **(
+                    {
+                        "not_before_utc": item.not_before_utc,
+                        "attempt_started_at_utc": item.attempt_started_at_utc,
+                    }
+                    if snapshot.schema_version >= 3
+                    else {}
+                ),
             }
             for item in snapshot.steps
         ],
@@ -435,7 +466,7 @@ def _snapshot_from_dict(value: Any) -> WorkflowSnapshot:
         "finished_at_utc",
         "terminal_outcome",
     }
-    if set(value) != required or value["schema_version"] not in {1, 2}:
+    if set(value) != required or value["schema_version"] not in {1, 2, 3}:
         raise WorkflowPersistenceError("workflow snapshot schema or fields are invalid")
     try:
         definition_value = value["definition"]
@@ -447,13 +478,18 @@ def _snapshot_from_dict(value: Any) -> WorkflowSnapshot:
                 raise ValueError("task definition fields")
             steps = []
             for step_value in task_value["steps"]:
-                if set(step_value) != {
+                step_definition_fields = {
                     "step_id",
                     "operation",
                     "depends_on",
                     "retry",
                     "timeout_seconds",
-                }:
+                }
+                if value["schema_version"] >= 3:
+                    step_definition_fields.update(
+                        {"delay_seconds", "deadline_utc", "expires_at_utc"}
+                    )
+                if set(step_value) != step_definition_fields:
                     raise ValueError("step definition fields")
                 retry_value = step_value["retry"]
                 if set(retry_value) != {
@@ -463,8 +499,7 @@ def _snapshot_from_dict(value: Any) -> WorkflowSnapshot:
                     "maximum_delay_seconds",
                 }:
                     raise ValueError("retry policy fields")
-                steps.append(
-                    StepDefinition(
+                step_definition = StepDefinition(
                         step_id=StepId(step_value["step_id"]),
                         operation=step_value["operation"],
                         depends_on=tuple(StepId(item) for item in step_value["depends_on"]),
@@ -475,8 +510,18 @@ def _snapshot_from_dict(value: Any) -> WorkflowSnapshot:
                             maximum_delay_seconds=retry_value["maximum_delay_seconds"],
                         ),
                         timeout_seconds=step_value["timeout_seconds"],
+                        delay_seconds=step_value.get("delay_seconds", 0.0),
+                        deadline_utc=step_value.get("deadline_utc"),
+                        expires_at_utc=step_value.get("expires_at_utc"),
                     )
-                )
+                if value["schema_version"] >= 3 and (
+                    step_value["deadline_utc"] != step_definition.deadline_utc
+                    or step_value["expires_at_utc"] != step_definition.expires_at_utc
+                ):
+                    raise WorkflowPersistenceError(
+                        "temporal definition timestamps are not canonical UTC"
+                    )
+                steps.append(step_definition)
             tasks.append(
                 TaskDefinition(
                     task_id=TaskId(task_value["task_id"]),
@@ -511,6 +556,8 @@ def _snapshot_from_dict(value: Any) -> WorkflowSnapshot:
         }
         if value["schema_version"] >= 2:
             step_snapshot_fields.add("retry_after_utc")
+        if value["schema_version"] >= 3:
+            step_snapshot_fields.update({"not_before_utc", "attempt_started_at_utc"})
         if any(set(item) != step_snapshot_fields for item in value["steps"]):
             raise ValueError("workflow step snapshot fields")
         step_snapshots = tuple(
@@ -524,6 +571,8 @@ def _snapshot_from_dict(value: Any) -> WorkflowSnapshot:
                 finished_at_utc=item["finished_at_utc"],
                 failure_code=item["failure_code"],
                 retry_after_utc=item.get("retry_after_utc"),
+                not_before_utc=item.get("not_before_utc"),
+                attempt_started_at_utc=item.get("attempt_started_at_utc"),
             )
             for item in value["steps"]
         )
@@ -556,7 +605,7 @@ def _snapshot_from_dict(value: Any) -> WorkflowSnapshot:
 
 
 def _validate_snapshot(snapshot: WorkflowSnapshot) -> None:
-    if snapshot.schema_version not in {1, 2} or not isinstance(
+    if snapshot.schema_version not in {1, 2, 3} or not isinstance(
         snapshot.definition, WorkflowDefinition
     ):
         raise WorkflowPersistenceError("workflow snapshot identity is invalid")
@@ -611,9 +660,38 @@ def _validate_snapshot(snapshot: WorkflowSnapshot) -> None:
             for dependency in definition.depends_on
         ):
             raise WorkflowPersistenceError("ready workflow step has incomplete dependencies")
-        for timestamp in (item.created_at_utc, item.started_at_utc, item.finished_at_utc):
+        for timestamp in (
+            item.created_at_utc,
+            item.started_at_utc,
+            item.finished_at_utc,
+            item.not_before_utc,
+            item.attempt_started_at_utc,
+        ):
             if timestamp is not None and not _valid_timestamp(timestamp):
                 raise WorkflowPersistenceError("workflow step timestamp is invalid")
+        if snapshot.schema_version >= 3:
+            if definition.delay_seconds == 0 and item.not_before_utc is not None:
+                raise WorkflowPersistenceError("undelayed workflow step has a not-before time")
+            if definition.delay_seconds > 0:
+                if item.not_before_utc is None:
+                    raise WorkflowPersistenceError("delayed workflow step has no not-before time")
+                try:
+                    expected_not_before = datetime.fromisoformat(
+                        item.created_at_utc.replace("Z", "+00:00")
+                    ) + timedelta(seconds=definition.delay_seconds)
+                except (OverflowError, ValueError) as exc:
+                    raise WorkflowPersistenceError("workflow delay timestamp is invalid") from exc
+                expected_not_before_text = (
+                    expected_not_before.astimezone(UTC)
+                    .isoformat(timespec="milliseconds")
+                    .replace("+00:00", "Z")
+                )
+                if item.not_before_utc != expected_not_before_text:
+                    raise WorkflowPersistenceError("workflow not-before time is inconsistent")
+            if item.state in {StepState.RUNNING, StepState.CANCELING} and (
+                item.attempt_started_at_utc is None
+            ):
+                raise WorkflowPersistenceError("active workflow step has no attempt start time")
     for item in snapshot.tasks:
         for timestamp in (item.created_at_utc, item.started_at_utc, item.finished_at_utc):
             if timestamp is not None and not _valid_timestamp(timestamp):

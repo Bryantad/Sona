@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
-import { requestSonaGuide, updateGuideOptions } from "./lspClient";
-import { checkedFix, diagnosticRequest, GuideOptions, guideText, previewCommand, selectionRequest } from "./guideModel";
+import { createHash } from "crypto";
+import { requestSonaGuide, requestSonaLocalModelEdit, prepareSonaGuideBufferEdit, consumeSonaGuideBufferEdit, updateGuideOptions } from "./lspClient";
+import { checkedFix, diagnosticRequest, GuideOptions, guideText, parseEditProposal, previewCommand, selectionRequest } from "./guideModel";
 import { requestCheckedFacts } from "./guideFacts";
 import { resolveSonaPythonPath } from "./pythonEnvironment";
 
@@ -133,6 +134,166 @@ async function previewFix(documentUri: string, data: unknown) {
   // didChange recomputes canonical diagnostics. Editor application does not write a learning profile.
 }
 
+function sha256(text: string): string {
+  return createHash("sha256").update(text, "utf8").digest("hex");
+}
+
+async function proposeLocalEdit(context: vscode.ExtensionContext) {
+  if (!vscode.workspace.isTrusted) {
+    throw new Error("AI edit proposals require a trusted workspace before starting a local provider.");
+  }
+  const editor = sourceEditor();
+  const document = editor.document;
+  if (document.uri.scheme !== "file") throw new Error("AI edit proposals require a local Sona file.");
+  if (editor.selection.isEmpty) throw new Error("Select the Sona code you want the local model to replace.");
+  const original = document.getText();
+  const originalVersion = document.version;
+  const selectedRange = new vscode.Range(editor.selection.start, editor.selection.end);
+  const selectedText = document.getText(selectedRange);
+  if (Buffer.byteLength(selectedText, "utf8") > 8 * 1024) {
+    throw new Error("The selected code exceeds the 8 KiB local Guide context limit.");
+  }
+  const folder = vscode.workspace.getWorkspaceFolder(document.uri);
+  if (!folder || folder.uri.scheme !== "file") throw new Error("Choose a local workspace folder first.");
+  const instruction = await vscode.window.showInputBox({
+    title: "Sona Guide: Propose a local AI edit",
+    prompt: "Describe the change. Only the selected code is sent as source context.",
+    placeHolder: "For example: simplify this function without changing its behavior",
+    validateInput(value) {
+      if (!value.trim()) return "Enter an edit instruction.";
+      if (Buffer.byteLength(value, "utf8") > 4096) return "Keep the instruction under 4 KiB.";
+      return undefined;
+    }
+  });
+  if (instruction === undefined) return;
+
+  const modelId = vscode.workspace.getConfiguration("sona.guide", folder.uri)
+    .get<string>("localModelId", "").trim();
+  const response = await requestSonaLocalModelEdit(context, {
+    schema_version: 1,
+    action: "local_model_proposal",
+    document: document.uri.toString(),
+    source: selectedText,
+    instruction,
+    ...(modelId ? { model_id: modelId } : {})
+  });
+  if (response?.schema_version !== 1
+      || response.status !== "ok"
+      || response.provider_id !== "local"
+      || response.runtime_id !== "llama-cpp"
+      || typeof response.model_id !== "string"
+      || (modelId.length > 0 && response.model_id !== modelId)
+      || typeof response.proposal !== "string") {
+    const diagnostic = response?.diagnostic;
+    const message = typeof diagnostic?.message === "string"
+      ? diagnostic.message : "Direct local inference failed; no provider fallback was attempted.";
+    throw new Error(message);
+  }
+  const replacement = parseEditProposal(response.proposal);
+
+  if (document.isClosed || document.version !== originalVersion || document.getText() !== original) {
+    throw new Error("SONA-GUIDE-003: The document changed while the model was responding. Request a fresh proposal.");
+  }
+  const start = document.offsetAt(selectedRange.start);
+  const end = document.offsetAt(selectedRange.end);
+  const proposed = original.slice(0, start) + replacement + original.slice(end);
+  const validation = await requestSonaGuide(context, {
+    schema_version: 1,
+    action: "validate_proposal",
+    document: document.uri.toString(),
+    source: original,
+    proposed_source: proposed
+  });
+  if (validation?.schema_version !== 1
+      || validation.status !== "valid"
+      || validation.validation_code !== "SONA-PROPOSAL-VALID"
+      || validation.source_sha256 !== sha256(original)
+      || validation.proposed_sha256 !== sha256(proposed)) {
+    const code = typeof validation?.validation_code === "string"
+      ? validation.validation_code : "SONA-PROPOSAL-VALIDATION-FAILED";
+    throw new Error(`${code}: Sona rejected the proposed edit. No changes were applied.`);
+  }
+
+  const beforeUri = virtualDocument(original, "proposal-before.sona");
+  const afterUri = virtualDocument(proposed, "proposal-after.sona");
+  // Keep the source document alive while the temporary diff preview replaces the active editor.
+  await vscode.window.showTextDocument(document, { preview: false, preserveFocus: true });
+  await vscode.commands.executeCommand("vscode.diff", beforeUri, afterUri, "Sona Guide: Local AI Edit Proposal", { preview: true });
+  const choice = await vscode.window.showInformationMessage(
+    "Sona validated this local-model proposal. Review the diff before applying it to the editor buffer.",
+    "Apply proposal"
+  );
+  if (choice !== "Apply proposal") return;
+  if (document.isClosed) {
+    throw new Error("SONA-GUIDE-003: The source document was closed during review. Reopen it and request a fresh proposal. No changes were applied.");
+  }
+  const activeEditor = await vscode.window.showTextDocument(document);
+  const selection = {
+    start: { line: selectedRange.start.line, character: selectedRange.start.character },
+    end: { line: selectedRange.end.line, character: selectedRange.end.character }
+  };
+  const selectionMatches = () => activeEditor.selection.start.line === selection.start.line
+    && activeEditor.selection.start.character === selection.start.character
+    && activeEditor.selection.end.line === selection.end.line
+    && activeEditor.selection.end.character === selection.end.character;
+  if (document.version !== originalVersion || sha256(document.getText()) !== validation.source_sha256 || !selectionMatches()) {
+    throw new Error("SONA-GUIDE-003: The document or selection changed after preview. Request a fresh proposal.");
+  }
+  const authorizationRequest = {
+    schema_version: 1,
+    document: document.uri.toString(),
+    document_version: originalVersion,
+    selection,
+    expected_source_sha256: validation.source_sha256,
+    proposed_source: proposed,
+    replacement
+  };
+  const prepared = await prepareSonaGuideBufferEdit(context, authorizationRequest);
+  if (prepared?.schema_version !== 1 || prepared.status !== "prepared"
+      || typeof prepared.handle !== "string"
+      || prepared.effect !== "EDITOR.BUFFER_REPLACE"
+      || prepared.source_sha256 !== `sha256:${validation.source_sha256}`
+      || prepared.proposed_sha256 !== `sha256:${validation.proposed_sha256}`
+      || prepared.replacement_sha256 !== `sha256:${sha256(replacement)}`) {
+    const diagnostic = typeof prepared?.message === "string"
+      ? prepared.message : "Trusted policy did not authorize this editor-buffer change.";
+    const code = typeof prepared?.diagnostic_id === "string"
+      ? prepared.diagnostic_id : "SONA-GUIDE-AUTH-DENIED";
+    throw new Error(`${code}: ${diagnostic} No changes were applied.`);
+  }
+  if (document.isClosed || document.version !== originalVersion || sha256(document.getText()) !== validation.source_sha256 || !selectionMatches()) {
+    throw new Error("SONA-GUIDE-003: The document or selection changed during capability preparation. Request a fresh proposal.");
+  }
+  const authorization = await consumeSonaGuideBufferEdit(context, {
+    ...authorizationRequest,
+    handle: prepared.handle
+  });
+  if (authorization?.schema_version !== 1 || authorization.status !== "authorized"
+      || authorization.effect !== "EDITOR.BUFFER_REPLACE"
+      || authorization.source_sha256 !== prepared.source_sha256
+      || authorization.proposed_sha256 !== prepared.proposed_sha256
+      || authorization.replacement_sha256 !== prepared.replacement_sha256) {
+    const diagnostic = typeof authorization?.message === "string"
+      ? authorization.message : "The exact one-shot editor capability was denied.";
+    const code = typeof authorization?.diagnostic_id === "string"
+      ? authorization.diagnostic_id : "SONA-GUIDE-AUTH-DENIED";
+    throw new Error(`${code}: ${diagnostic} No changes were applied.`);
+  }
+  if (document.isClosed || document.version !== originalVersion || sha256(document.getText()) !== validation.source_sha256 || !selectionMatches()) {
+    throw new Error("SONA-GUIDE-003: The document or selection changed after authorization. Request a fresh proposal.");
+  }
+  let sourceStillCurrent = false;
+  const applied = await activeEditor.edit(builder => {
+    if (document.version !== originalVersion || sha256(document.getText()) !== validation.source_sha256 || !selectionMatches()) return;
+    builder.replace(selectedRange, replacement);
+    sourceStillCurrent = true;
+  });
+  if (!applied || !sourceStillCurrent) {
+    throw new Error("SONA-GUIDE-003: The document changed before approval could be applied. No edit was made.");
+  }
+  void vscode.window.showInformationMessage("Authorized proposal applied to the editor buffer only; save the file when ready.");
+}
+
 async function chooseMode(context: vscode.ExtensionContext) {
   const choice = await vscode.window.showQuickPick([
     { label: "Guided", description: "Explanations, examples, and next steps", value: "guided" },
@@ -161,6 +322,7 @@ export function activateGuide(context: vscode.ExtensionContext) {
   register("sona.guide.focus", () => showFocus(context));
   register("sona.guide.setup", () => chooseMode(context));
   register("sona.guide.previewFix", previewFix);
+  register("sona.guide.proposeEdit", () => proposeLocalEdit(context));
   register("sona.guide.explainProof", () => explainCheckedFacts("proof"));
   register("sona.guide.explainGuardian", () => explainCheckedFacts("guardian"));
   const syncOptions = () => { void updateGuideOptions(guideOptions(vscode.window.activeTextEditor?.document.uri)); };

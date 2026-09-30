@@ -1155,7 +1155,7 @@ def command_assemble(args: argparse.Namespace) -> dict[str, Any]:
         "portable_assets": sorted(PORTABLE_ASSETS),
         "artifacts": [inspections[name] for name in sorted(inspections)],
         "mobile": {
-            "android": "experimental compile/Python-only evaluation; not a 0.15.6 release target",
+            "android": f"experimental compile/Python-only evaluation; not a {VERSION} release target",
             "ios": "compile-only evaluation; no standalone CLI release target",
         },
         "status": "pass",
